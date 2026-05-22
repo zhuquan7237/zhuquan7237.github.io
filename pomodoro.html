@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>番茄闹钟</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #333;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 30px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 400px;
+            width: 90%;
+            backdrop-filter: blur(10px);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #888;
+            font-size: 14px;
+        }
+
+        .mode-selector {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .mode-btn {
+            padding: 10px 20px;
+            border: 2px solid #e0e0e0;
+            background: white;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .mode-btn:hover {
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .mode-btn.active {
+            background: #667eea;
+            border-color: #667eea;
+            color: white;
+        }
+
+        .timer-container {
+            position: relative;
+            width: 250px;
+            height: 250px;
+            margin: 0 auto 30px;
+        }
+
+        .progress-ring {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .progress-ring-bg {
+            fill: none;
+            stroke: #e0e0e0;
+            stroke-width: 8;
+        }
+
+        .progress-ring-fill {
+            fill: none;
+            stroke: #667eea;
+            stroke-width: 8;
+            stroke-linecap: round;
+            transform: rotate(-90deg);
+            transform-origin: center;
+            transition: stroke-dashoffset 0.1s ease;
+        }
+
+        .timer-display {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .time {
+            font-size: 56px;
+            font-weight: 700;
+            color: #333;
+            letter-spacing: 2px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .label {
+            font-size: 14px;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .control-btn {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            font-size: 24px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: scale(1.05);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.5);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #667eea;
+            border: 2px solid #e0e0e0;
+        }
+
+        .btn-secondary:hover {
+            border-color: #667eea;
+            background: #f5f5ff;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        .tasks-section {
+            margin-top: 20px;
+        }
+
+        .task-input-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .task-input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .task-input:focus {
+            border-color: #667eea;
+        }
+
+        .add-task-btn {
+            padding: 12px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .add-task-btn:hover {
+            background: #5a6fd6;
+        }
+
+        .task-list {
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .task-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            transition: all 0.3s;
+        }
+
+        .task-item:hover {
+            background: #eef0f5;
+        }
+
+        .task-checkbox {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #667eea;
+            border-radius: 50%;
+            margin-right: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .task-checkbox.checked {
+            background: #667eea;
+            color: white;
+        }
+
+        .task-text {
+            flex: 1;
+            font-size: 14px;
+        }
+
+        .task-text.completed {
+            text-decoration: line-through;
+            color: #888;
+        }
+
+        .delete-btn {
+            background: none;
+            border: none;
+            color: #ff6b6b;
+            cursor: pointer;
+            font-size: 18px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .task-item:hover .delete-btn {
+            opacity: 1;
+        }
+
+        .sound-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            cursor: pointer;
+            font-size: 20px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .sound-toggle:hover {
+            transform: scale(1.1);
+        }
+
+        .sound-toggle.muted {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+
+        .timer-container.running {
+            animation: pulse 2s infinite;
+        }
+
+        .complete-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            animation: confetti-fall 3s ease-out forwards;
+        }
+
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(-100px) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="sound-toggle" id="soundToggle" title="切换声音">🔔</button>
+    
+    <div class="container">
+        <div class="header">
+            <h1>🍅 番茄闹钟</h1>
+            <p>专注工作，高效休息</p>
+        </div>
+
+        <div class="mode-selector">
+            <button class="mode-btn active" data-mode="work" data-time="25">专注</button>
+            <button class="mode-btn" data-mode="short" data-time="5">短休息</button>
+            <button class="mode-btn" data-mode="long" data-time="15">长休息</button>
+        </div>
+
+        <div class="timer-container" id="timerContainer">
+            <svg class="progress-ring" viewBox="0 0 250 250">
+                <circle class="progress-ring-bg" cx="125" cy="125" r="110"/>
+                <circle class="progress-ring-fill" cx="125" cy="125" r="110" 
+                        stroke-dasharray="691" stroke-dashoffset="0" id="progressRing"/>
+            </svg>
+            <div class="timer-display">
+                <div class="time" id="timeDisplay">25:00</div>
+                <div class="label" id="statusLabel">准备开始专注</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="control-btn btn-secondary" id="resetBtn" title="重置">↺</button>
+            <button class="control-btn btn-primary" id="startBtn" title="开始">▶</button>
+            <button class="control-btn btn-secondary" id="skipBtn" title="跳过">⏭</button>
+        </div>
+
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-value" id="completedSessions">0</div>
+                <div class="stat-label">完成番茄</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="totalFocusTime">0</div>
+                <div class="stat-label">专注分钟</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="currentStreak">0</div>
+                <div class="stat-label">连续次数</div>
+            </div>
+        </div>
+
+        <div class="tasks-section">
+            <div class="task-input-container">
+                <input type="text" class="task-input" id="taskInput" placeholder="添加当前任务...">
+                <button class="add-task-btn" id="addTaskBtn">添加</button>
+            </div>
+            <div class="task-list" id="taskList"></div>
+        </div>
+    </div>
+
+    <div class="complete-animation" id="completeAnimation"></div>
+
+    <script>
+        class PomodoroTimer {
+            constructor() {
+                this.timeLeft = 25 * 60;
+                this.totalTime = 25 * 60;
+                this.isRunning = false;
+                this.interval = null;
+                this.currentMode = 'work';
+                this.soundEnabled = true;
+                
+                this.stats = {
+                    completedSessions: 0,
+                    totalFocusTime: 0,
+                    currentStreak: 0
+                };
+                
+                this.tasks = [];
+                
+                this.initElements();
+                this.initEventListeners();
+                this.loadData();
+                this.updateDisplay();
+            }
+
+            initElements() {
+                this.timeDisplay = document.getElementById('timeDisplay');
+                this.statusLabel = document.getElementById('statusLabel');
+                this.progressRing = document.getElementById('progressRing');
+                this.startBtn = document.getElementById('startBtn');
+                this.resetBtn = document.getElementById('resetBtn');
+                this.skipBtn = document.getElementById('skipBtn');
+                this.timerContainer = document.getElementById('timerContainer');
+                this.soundToggle = document.getElementById('soundToggle');
+                this.completeAnimation = document.getElementById('completeAnimation');
+                
+                this.completedSessionsEl = document.getElementById('completedSessions');
+                this.totalFocusTimeEl = document.getElementById('totalFocusTime');
+                this.currentStreakEl = document.getElementById('currentStreak');
+            }
+
+            initEventListeners() {
+                // 模式切换
+                document.querySelectorAll('.mode-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => this.switchMode(e.target));
+                });
+
+                // 控制按钮
+                this.startBtn.addEventListener('click', () => this.toggleTimer());
+                this.resetBtn.addEventListener('click', () => this.reset());
+                this.skipBtn.addEventListener('click', () => this.skip());
+                this.soundToggle.addEventListener('click', () => this.toggleSound());
+
+                // 任务管理
+                document.getElementById('addTaskBtn').addEventListener('click', () => this.addTask());
+                document.getElementById('taskInput').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.addTask();
+                });
+
+                // 键盘快捷键
+                document.addEventListener('keydown', (e) => {
+                    if (e.code === 'Space' && e.target.tagName !== 'INPUT') {
+                        e.preventDefault();
+                        this.toggleTimer();
+                    }
+                });
+
+                // 页面可见性变化
+                document.addEventListener('visibilitychange', () => {
+                    if (!document.hidden && this.isRunning) {
+                        this.updateTitle();
+                    }
+                });
+            }
+
+            switchMode(btn) {
+                if (this.isRunning) {
+                    if (!confirm('切换模式会重置当前计时，是否继续？')) return;
+                    this.pause();
+                }
+
+                document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                this.currentMode = btn.dataset.mode;
+                const minutes = parseInt(btn.dataset.time);
+                this.totalTime = minutes * 60;
+                this.timeLeft = this.totalTime;
+                
+                this.updateStatusLabel();
+                this.updateDisplay();
+                this.saveData();
+            }
+
+            toggleTimer() {
+                if (this.isRunning) {
+                    this.pause();
+                } else {
+                    this.start();
+                }
+            }
+
+            start() {
+                this.isRunning = true;
+                this.startBtn.innerHTML = '⏸';
+                this.startBtn.title = '暂停';
+                this.timerContainer.classList.add('running');
+                
+                this.interval = setInterval(() => this.tick(), 1000);
+                this.updateStatusLabel();
+                this.playSound('start');
+            }
+
+            pause() {
+                this.isRunning = false;
+                this.startBtn.innerHTML = '▶';
+                this.startBtn.title = '继续';
+                this.timerContainer.classList.remove('running');
+                
+                clearInterval(this.interval);
+                this.updateStatusLabel();
+                this.updateTitle('番茄闹钟');
+            }
+
+            reset() {
+                this.pause();
+                this.timeLeft = this.totalTime;
+                this.updateDisplay();
+                this.updateStatusLabel();
+            }
+
+            skip() {
+                if (this.isRunning && !confirm('确定要跳过当前计时？')) return;
+                this.pause();
+                this.complete();
+            }
+
+            tick() {
+                this.timeLeft--;
+                this.updateDisplay();
+                
+                if (this.timeLeft <= 0) {
+                    this.complete();
+                }
+            }
+
+            complete() {
+                this.pause();
+                this.playSound('complete');
+                this.showConfetti();
+                
+                if (this.currentMode === 'work') {
+                    this.stats.completedSessions++;
+                    this.stats.totalFocusTime += Math.floor(this.totalTime / 60);
+                    this.stats.currentStreak++;
+                    this.updateStats();
+                    
+                    // 自动切换到短休息
+                    if (this.stats.currentStreak % 4 === 0) {
+                        alert('🎉 完成4个番茄！建议休息15分钟');
+                        document.querySelector('[data-mode="long"]').click();
+                    } else {
+                        alert('🎉 专注完成！休息5分钟吧');
+                        document.querySelector('[data-mode="short"]').click();
+                    }
+                } else {
+                    // 休息结束，自动切回专注模式
+                    alert('休息结束！继续专注吧');
+                    document.querySelector('[data-mode="work"]').click();
+                }
+                
+                this.saveData();
+            }
+
+            updateDisplay() {
+                const minutes = Math.floor(this.timeLeft / 60);
+                const seconds = this.timeLeft % 60;
+                const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                
+                this.timeDisplay.textContent = timeString;
+                
+                // 更新进度环
+                const circumference = 2 * Math.PI * 110;
+                const progress = (this.totalTime - this.timeLeft) / this.totalTime;
+                const offset = circumference * progress;
+                this.progressRing.style.strokeDashoffset = offset;
+                
+                // 更新页面标题
+                if (this.isRunning) {
+                    this.updateTitle(`${timeString} - ${this.getModeLabel()}`);
+                }
+            }
+
+            updateStatusLabel() {
+                const labels = {
+                    work: this.isRunning ? '专注中...' : '准备开始专注',
+                    short: this.isRunning ? '短休息中...' : '准备短休息',
+                    long: this.isRunning ? '长休息中...' : '准备长休息'
+                };
+                this.statusLabel.textContent = labels[this.currentMode];
+            }
+
+            getModeLabel() {
+                const labels = { work: '专注', short: '短休息', long: '长休息' };
+                return labels[this.currentMode];
+            }
+
+            updateTitle(title) {
+                document.title = title || '番茄闹钟';
+            }
+
+            updateStats() {
+                this.completedSessionsEl.textContent = this.stats.completedSessions;
+                this.totalFocusTimeEl.textContent = this.stats.totalFocusTime;
+                this.currentStreakEl.textContent = this.stats.currentStreak;
+            }
+
+            toggleSound() {
+                this.soundEnabled = !this.soundEnabled;
+                this.soundToggle.textContent = this.soundEnabled ? '🔔' : '🔇';
+                this.soundToggle.classList.toggle('muted', !this.soundEnabled);
+            }
+
+            playSound(type) {
+                if (!this.soundEnabled) return;
+                
+                // 使用 Web Audio API 生成简单音效
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                if (type === 'start') {
+                    oscillator.frequency.value = 600;
+                    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 0.5);
+                } else if (type === 'complete') {
+                    // 完成音效（三声）
+                    [523.25, 659.25, 783.99].forEach((freq, i) => {
+                        const osc = audioContext.createOscillator();
+                        const gain = audioContext.createGain();
+                        osc.connect(gain);
+                        gain.connect(audioContext.destination);
+                        osc.frequency.value = freq;
+                        gain.gain.setValueAtTime(0, audioContext.currentTime + i * 0.2);
+                        gain.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + i * 0.2 + 0.05);
+                        gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + i * 0.2 + 0.3);
+                        osc.start(audioContext.currentTime + i * 0.2);
+                        osc.stop(audioContext.currentTime + i * 0.2 + 0.3);
+                    });
+                }
+            }
+
+            showConfetti() {
+                const colors = ['#667eea', '#764ba2', '#f093fb', '#f5576c', '#4facfe'];
+                for (let i = 0; i < 50; i++) {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + '%';
+                    confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.animationDelay = Math.random() * 0.5 + 's';
+                    confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+                    this.completeAnimation.appendChild(confetti);
+                    
+                    setTimeout(() => confetti.remove(), 3000);
+                }
+            }
+
+            addTask() {
+                const input = document.getElementById('taskInput');
+                const text = input.value.trim();
+                if (!text) return;
+                
+                this.tasks.push({ id: Date.now(), text, completed: false });
+                input.value = '';
+                this.renderTasks();
+                this.saveData();
+            }
+
+            toggleTask(id) {
+                const task = this.tasks.find(t => t.id === id);
+                if (task) {
+                    task.completed = !task.completed;
+                    this.renderTasks();
+                    this.saveData();
+                }
+            }
+
+            deleteTask(id) {
+                this.tasks = this.tasks.filter(t => t.id !== id);
+                this.renderTasks();
+                this.saveData();
+            }
+
+            renderTasks() {
+                const container = document.getElementById('taskList');
+                container.innerHTML = this.tasks.map(task => `
+                    <div class="task-item">
+                        <div class="task-checkbox ${task.completed ? 'checked' : ''}" onclick="timer.toggleTask(${task.id})">
+                            ${task.completed ? '✓' : ''}
+                        </div>
+                        <span class="task-text ${task.completed ? 'completed' : ''}">${task.text}</span>
+                        <button class="delete-btn" onclick="timer.deleteTask(${task.id})">×</button>
+                    </div>
+                `).join('');
+            }
+
+            saveData() {
+                const data = {
+                    stats: this.stats,
+                    tasks: this.tasks,
+                    soundEnabled: this.soundEnabled
+                };
+                localStorage.setItem('pomodoroData', JSON.stringify(data));
+            }
+
+            loadData() {
+                const data = localStorage.getItem('pomodoroData');
+                if (data) {
+                    const parsed = JSON.parse(data);
+                    this.stats = parsed.stats || { completedSessions: 0, totalFocusTime: 0, currentStreak: 0 };
+                    this.tasks = parsed.tasks || [];
+                    this.soundEnabled = parsed.soundEnabled !== false;
+                    
+                    this.updateStats();
+                    this.renderTasks();
+                    if (!this.soundEnabled) {
+                        this.soundToggle.textContent = '🔇';
+                        this.soundToggle.classList.add('muted');
+                    }
+                }
+            }
+        }
+
+        const timer = new PomodoroTimer();
+    </script>
+</body>
+</html>
