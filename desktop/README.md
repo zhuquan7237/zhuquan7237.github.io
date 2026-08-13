@@ -10,6 +10,25 @@ This package does **not** vendor harness source. On launch it:
 
 Harness releases therefore land without rebuilding this desktop app. The shell only needs a new version if windowing, installers, or the updater itself change.
 
+## Linux 虚拟机
+
+只需下载这一个软件，**不要**再 `git clone` DeepSeek Harness。
+
+```sh
+# 任选其一。AppImage 可能需要 libfuse2；tar.gz 不需要。
+chmod +x DeepSeek-0.1.0-linux-x86_64.AppImage
+./DeepSeek-0.1.0-linux-x86_64.AppImage
+
+# 或
+tar -xzf DeepSeek-0.1.0-linux-x64.tar.gz
+./DeepSeek-0.1.0-linux-x64/DeepSeek
+
+# Debian/Ubuntu
+sudo apt install ./DeepSeek-0.1.0-linux-amd64.deb
+```
+
+第一次启动会联网安装官方 `@deepseek-ai/dsh`。之后菜单 **Harness → 检查 Harness 更新** 会对照 npm 最新版；有更新则只下载 dsh 包，不会重新拉 GitHub 源码。
+
 ## Installers
 
 GitHub Actions builds:
@@ -18,7 +37,7 @@ GitHub Actions builds:
 | --- | --- |
 | Windows | NSIS `.exe` installer, portable `.exe`, `.zip` (x64 + arm64) |
 | macOS | `.dmg`, `.zip` (Intel + Apple Silicon) |
-| Linux | AppImage, `.deb`, `.rpm`, `.tar.gz` (x64 + arm64) |
+| Linux | AppImage, `.deb`, `.tar.gz` (x64 + arm64) |
 
 Download installers from the public [GitHub Release](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/tag/desktop-v0.1.0). Anyone can download those files without signing in. GitHub Actions artifacts are not a public store.
 

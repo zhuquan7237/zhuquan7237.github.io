@@ -2,9 +2,9 @@ import { app, BrowserWindow, Menu, dialog, shell, ipcMain } from "electron";
 import path from "node:path";
 import { homedir } from "node:os";
 import { loadSettings, saveSettings } from "./settings";
-import { ensureHarness, startHarnessWeb, stopHarness, type RunningHarness } from "./harness";
+import { ensureHarness, fetchPublishedVersion, startHarnessWeb, stopHarness, type RunningHarness } from "./harness";
 import { resolveNodeRuntime } from "./node-runtime";
-import type { DesktopSettings } from "./util";
+import { NPM_REGISTRY, type DesktopSettings } from "./util";
 
 let mainWindow: BrowserWindow | null = null;
 let splashWindow: BrowserWindow | null = null;
@@ -88,24 +88,25 @@ function buildMenu(): void {
       label: "Harness",
       submenu: [
         {
-          label: running ? `Engine ${running.version}` : "Engine not started",
+          label: running ? `当前引擎 ${running.version}` : "引擎未启动",
           enabled: false,
         },
         {
-          label: "Check for Harness updates",
+          label: "检查 Harness 更新",
+          accelerator: "CmdOrCtrl+U",
           click: () => {
-            void boot(true);
+            void checkHarnessUpdates();
           },
         },
         {
-          label: "Engine settings…",
+          label: "引擎设置…",
           click: () => {
             void openSettings();
           },
         },
         { type: "separator" },
         {
-          label: "Open DeepSeek Harness on GitHub",
+          label: "打开 DeepSeek Harness 仓库",
           click: () => {
             void shell.openExternal("https://github.com/deepseek-ai/deepseek-harness");
           },
@@ -161,6 +162,42 @@ async function chooseWorkspace(reboot: boolean): Promise<void> {
   settings.workspaceDir = picked.filePaths[0];
   await saveSettings(userData(), settings);
   if (reboot) await boot(false);
+}
+
+async function checkHarnessUpdates(): Promise<void> {
+  try {
+    const channel = settings.channel === "next" ? "next" : "latest";
+    const latest = await fetchPublishedVersion(settings.registry || NPM_REGISTRY, channel);
+    const current = running?.version || settings.lastHarnessVersion || "未安装";
+    if (current === latest) {
+      await dialog.showMessageBox({
+        type: "info",
+        title: "Harness 更新",
+        message: `DeepSeek Harness 已是最新版本`,
+        detail: `当前引擎：${current}\n来源：npm ${DSH_LABEL(channel)}\n不需要拉取 GitHub 源码。`,
+      });
+      return;
+    }
+    const choice = await dialog.showMessageBox({
+      type: "question",
+      title: "发现新的 Harness",
+      message: `npm 上有新的 DeepSeek Harness：${latest}`,
+      detail: `当前版本：${current}\n更新只会下载官方 @deepseek-ai/dsh，不会重新克隆 GitHub 源码。`,
+      buttons: ["立即更新并重启", "取消"],
+      defaultId: 0,
+      cancelId: 1,
+    });
+    if (choice.response === 0) await boot(true);
+  } catch (error) {
+    await dialog.showErrorBox(
+      "检查更新失败",
+      error instanceof Error ? error.message : String(error),
+    );
+  }
+}
+
+function DSH_LABEL(channel: string): string {
+  return `@deepseek-ai/dsh@${channel}`;
 }
 
 async function openSettings(): Promise<void> {
