@@ -1,11 +1,87 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <title>我的 GitHub 网站</title>
-</head>
-<body>
-    <h1>Hello, GitHub Pages!</h1>
-    <p>这是我的第一个免费网站。</p>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DeepSeek App</title>
+    <link rel="icon" type="image/svg+xml" href="./app/favicon.svg" />
+    <style>
+      :root {
+        --bg: #101218;
+        --card: #161922;
+        --line: rgba(255, 255, 255, 0.08);
+        --text: #e8edf7;
+        --muted: #8b93a7;
+        --accent: #4d93f8;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: ui-sans-serif, system-ui, sans-serif;
+        background:
+          radial-gradient(1000px 480px at 15% -10%, rgba(77, 147, 248, 0.16), transparent 55%),
+          var(--bg);
+        color: var(--text);
+      }
+      main { max-width: 880px; margin: 0 auto; padding: 72px 24px 96px; }
+      .kicker { color: var(--accent); letter-spacing: 0.12em; text-transform: uppercase; font-size: 12px; }
+      h1 { font-size: clamp(36px, 6vw, 64px); margin: 12px 0 16px; letter-spacing: -0.03em; }
+      .lead { font-size: 18px; line-height: 1.7; color: var(--muted); max-width: 640px; }
+      .actions { display: flex; gap: 12px; flex-wrap: wrap; margin: 32px 0 48px; }
+      a.btn {
+        text-decoration: none;
+        border-radius: 999px;
+        padding: 12px 18px;
+        font-weight: 600;
+      }
+      .primary { background: var(--accent); color: #071018; }
+      .ghost { color: var(--text); border: 1px solid var(--line); }
+      .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 18px;
+      }
+      .card h2 { margin: 0 0 8px; font-size: 16px; }
+      .card p { margin: 0; color: var(--muted); line-height: 1.55; font-size: 14px; }
+      code { font-family: ui-monospace, monospace; font-size: 13px; }
+      footer { margin-top: 56px; color: var(--muted); font-size: 13px; }
+      footer a { color: var(--accent); }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="kicker">DeepSeek × Codex-style agent</div>
+      <h1>DeepSeek App</h1>
+      <p class="lead">
+        一个类似 Codex 的 DeepSeek 编程助手：多线程任务、Agent / Plan / Ask、工具调用、文件 diff，
+        以及本地磁盘与终端。设计思路来自
+        <a href="https://github.com/deepseek-ai/deepseek-harness" style="color:#7eb0ff">DeepSeek Harness</a>
+        的会话日志、tool loop 与计划模式。
+      </p>
+      <div class="actions">
+        <a class="btn primary" href="./app/">打开 App</a>
+        <a class="btn ghost" href="./pomodoro.html">番茄钟</a>
+      </div>
+      <div class="grid">
+        <article class="card">
+          <h2>Threads</h2>
+          <p>按项目组织多个任务线程，随时切换，不丢上下文。</p>
+        </article>
+        <article class="card">
+          <h2>Agent loop</h2>
+          <p>DeepSeek V4 Flash / Pro，带 thinking、读改文件、grep、todo 与可选 bash。</p>
+        </article>
+        <article class="card">
+          <h2>Local or browser</h2>
+          <p>GitHub Pages 使用浏览器工作区；<code>npm run dev</code> 可代理 API 并操作真实仓库。</p>
+        </article>
+      </div>
+      <footer>
+        源码在 <a href="./deepseek-app/">deepseek-app/</a> · 需要
+        <a href="https://platform.deepseek.com">DeepSeek API Key</a>
+      </footer>
+    </main>
+  </body>
 </html>
