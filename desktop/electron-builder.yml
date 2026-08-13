@@ -1,0 +1,63 @@
+appId: app.deepseek.desktop
+productName: DeepSeek
+executableName: DeepSeek
+copyright: MIT
+artifactName: DeepSeek-${version}-${os}-${arch}.${ext}
+directories:
+  output: release
+  buildResources: build
+files:
+  - dist/**/*
+  - resources/**/*
+  - package.json
+asar: true
+extraMetadata:
+  main: dist/main.js
+forceCodeSigning: false
+npmRebuild: false
+
+mac:
+  category: public.app-category.developer-tools
+  icon: build/icon.png
+  hardenedRuntime: false
+  gatekeeperAssess: false
+  target:
+    - target: dmg
+      arch: [x64, arm64]
+    - target: zip
+      arch: [x64, arm64]
+
+win:
+  icon: build/icon.png
+  target:
+    - target: nsis
+      arch: [x64, arm64]
+    - target: portable
+      arch: [x64, arm64]
+    - target: zip
+      arch: [x64, arm64]
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: DeepSeek
+  installerLanguages: [en_US, zh_CN]
+  displayLanguageSelector: true
+
+linux:
+  icon: build/icon.png
+  category: Development
+  maintainer: DeepSeek Desktop
+  synopsis: Codex-style desktop shell for DeepSeek Harness
+  target:
+    - target: AppImage
+      arch: [x64, arm64]
+    - target: deb
+      arch: [x64, arm64]
+    - target: rpm
+      arch: [x64, arm64]
+    - target: tar.gz
+      arch: [x64, arm64]

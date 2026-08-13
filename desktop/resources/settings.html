@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Engine settings</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: ui-sans-serif, system-ui, sans-serif;
+        background: #161922;
+        color: #e8edf7;
+        padding: 20px;
+      }
+      h1 { font-size: 18px; margin: 0 0 8px; }
+      p { color: #8b93a7; font-size: 13px; line-height: 1.5; }
+      label { display: block; margin: 14px 0 6px; font-size: 13px; color: #8b93a7; }
+      input, select {
+        width: 100%;
+        box-sizing: border-box;
+        background: #101218;
+        border: 1px solid rgba(255,255,255,0.1);
+        color: inherit;
+        border-radius: 8px;
+        padding: 8px 10px;
+      }
+      .row { display: flex; gap: 8px; align-items: center; }
+      button {
+        margin-top: 18px;
+        background: #4d93f8;
+        color: #071018;
+        border: 0;
+        border-radius: 999px;
+        padding: 8px 14px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .ghost { background: #1c2130; color: #e8edf7; }
+    </style>
+  </head>
+  <body>
+    <h1>Harness engine</h1>
+    <p>
+      This app does not vendor DeepSeek Harness. It installs
+      <code>@deepseek-ai/dsh</code> into user data and auto-updates it, so new harness
+      releases appear without rebuilding the desktop shell.
+    </p>
+    <label>Update channel</label>
+    <select id="channel">
+      <option value="latest">latest (npm)</option>
+      <option value="next">next (npm)</option>
+    </select>
+    <label><input id="auto" type="checkbox" /> Auto-update harness on launch</label>
+    <label>npm registry</label>
+    <input id="registry" />
+    <label>Local harness checkout (optional, already built)</label>
+    <div class="row">
+      <input id="local" placeholder="/path/to/deepseek-harness" />
+      <button class="ghost" id="pick" type="button">Browse</button>
+    </div>
+    <button id="save" type="button">Save and restart engine</button>
+    <script>
+      const $ = (id) => document.getElementById(id);
+      window.desktop.getSettings().then((s) => {
+        $("channel").value = s.channel === "next" ? "next" : "latest";
+        $("auto").checked = s.autoUpdateHarness;
+        $("registry").value = s.registry;
+        $("local").value = s.localHarnessDir;
+      });
+      $("pick").onclick = async () => {
+        const dir = await window.desktop.pickDir();
+        if (dir) $("local").value = dir;
+      };
+      $("save").onclick = async () => {
+        const current = await window.desktop.getSettings();
+        await window.desktop.saveSettings({
+          ...current,
+          channel: $("channel").value,
+          autoUpdateHarness: $("auto").checked,
+          registry: $("registry").value,
+          localHarnessDir: $("local").value,
+        });
+        window.desktop.apply();
+        window.close();
+      };
+    </script>
+  </body>
+</html>

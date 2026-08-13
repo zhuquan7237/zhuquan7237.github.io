@@ -1,0 +1,26 @@
+{
+  "name": "deepseek-desktop",
+  "productName": "DeepSeek",
+  "version": "0.1.0",
+  "description": "Codex-style desktop shell for DeepSeek Harness. The engine is always @deepseek-ai/dsh from npm, so harness updates do not require a new desktop build.",
+  "author": "DeepSeek Desktop",
+  "license": "MIT",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "python3 scripts/generate-icon.py && tsc",
+    "start": "npm run build && electron .",
+    "test": "vitest run",
+    "pack": "npm run build && electron-builder --dir",
+    "dist": "npm run build && electron-builder -mwl",
+    "dist:linux": "npm run build && electron-builder --linux AppImage deb tar.gz --x64 --arm64",
+    "dist:win": "npm run build && electron-builder --win --x64 --arm64",
+    "dist:mac": "npm run build && electron-builder --mac --x64 --arm64"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.3",
+    "electron": "^37.2.6",
+    "electron-builder": "^26.0.12",
+    "typescript": "^5.8.3",
+    "vitest": "^3.1.2"
+  }
+}

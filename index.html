@@ -52,35 +52,37 @@
   </head>
   <body>
     <main>
-      <div class="kicker">DeepSeek × Codex-style agent</div>
-      <h1>DeepSeek App</h1>
+      <div class="kicker">Codex-style desktop · DeepSeek Harness engine</div>
+      <h1>DeepSeek Desktop</h1>
       <p class="lead">
-        一个类似 Codex 的 DeepSeek 编程助手：多线程任务、Agent / Plan / Ask、工具调用、文件 diff，
-        以及本地磁盘与终端。设计思路来自
+        原生窗口里的 Codex 式使用界面。引擎始终是官方
         <a href="https://github.com/deepseek-ai/deepseek-harness" style="color:#7eb0ff">DeepSeek Harness</a>
-        的会话日志、tool loop 与计划模式。
+        （<code>@deepseek-ai/dsh</code>），从 npm 独立更新，所以 harness 发新版不必重做这个桌面软件。
+        安装包覆盖 Windows / macOS / Linux，x64 与 arm64。
       </p>
       <div class="actions">
-        <a class="btn primary" href="./app/">打开 App</a>
+        <a class="btn primary" href="https://github.com/zhuquan7237/zhuquan7237.github.io/actions/workflows/desktop.yml">下载安装包</a>
+        <a class="btn ghost" href="./app/">浏览器预览</a>
         <a class="btn ghost" href="./pomodoro.html">番茄钟</a>
       </div>
       <div class="grid">
         <article class="card">
-          <h2>Threads</h2>
-          <p>按项目组织多个任务线程，随时切换，不丢上下文。</p>
+          <h2>Thin shell</h2>
+          <p>桌面程序只负责窗口、安装包、工作区选择，以及把官方 <code>dsh web</code> 嵌进去。</p>
         </article>
         <article class="card">
-          <h2>Agent loop</h2>
-          <p>DeepSeek V4 Flash / Pro，带 thinking、读改文件、grep、todo 与可选 bash。</p>
+          <h2>Full harness</h2>
+          <p>工具、插件、Plan/Agent、设置、Web UI 全部来自官方 harness，能力随 dsh 升级自动跟上。</p>
         </article>
         <article class="card">
-          <h2>Local or browser</h2>
-          <p>GitHub Pages 使用浏览器工作区；<code>npm run dev</code> 可代理 API 并操作真实仓库。</p>
+          <h2>Independent updates</h2>
+          <p>启动时检查 npm 上的 <code>@deepseek-ai/dsh@latest</code>。也可指向本地已构建的 harness 源码目录。</p>
         </article>
       </div>
       <footer>
-        源码在 <a href="./deepseek-app/">deepseek-app/</a> · 需要
-        <a href="https://platform.deepseek.com">DeepSeek API Key</a>
+        桌面端源码 <a href="./desktop/">desktop/</a>
+        · 浏览器版 <a href="./deepseek-app/">deepseek-app/</a>
+        · API Key：<a href="https://platform.deepseek.com">platform.deepseek.com</a>
       </footer>
     </main>
   </body>
