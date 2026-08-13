@@ -74,7 +74,7 @@ jobs:
 
   publish-release:
     needs: pack
-    if: always() && !cancelled()
+    if: github.event_name != 'pull_request' && !cancelled() && needs.pack.result == 'success'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -89,26 +89,34 @@ jobs:
         with:
           tag_name: desktop-v0.1.2
           name: DeepSeek Desktop 0.1.2
-          prerelease: true
+          target_commitish: ${{ github.sha }}
+          prerelease: false
           make_latest: true
-          fail_on_unmatched_files: false
+          fail_on_unmatched_files: true
           body: |
-            Codex-style desktop shell. The engine is official `@deepseek-ai/dsh` and updates from npm independently.
+            第二轮测试请用这一版。引擎是官方 `@deepseek-ai/dsh`，桌面壳 0.1.2。
 
-            First launch needs internet: the app downloads Node (if needed) and `@deepseek-ai/dsh`. After that, open **Harness → 检查 Harness 更新** to upgrade the engine without reinstalling the desktop app.
+            **直接下载（不用登录）**
+            - Windows 安装包：https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.2/DeepSeek-0.1.2-win.exe
+            - Linux x64（推荐 tar.gz）：https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.2/DeepSeek-0.1.2-linux-x64.tar.gz
+            - Linux x64 deb：https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.2/DeepSeek-0.1.2-linux-amd64.deb
+            - macOS Apple Silicon：https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.2/DeepSeek-0.1.2-mac-arm64.dmg
+            - macOS Intel：https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.2/DeepSeek-0.1.2-mac-x64.dmg
 
-            **Linux:** prefer `.tar.gz` or `.deb`. AppImage needs libfuse2 (often missing on Ubuntu 24.04). Unpack tar.gz and run `./DeepSeek`.
-            **Windows:** SmartScreen may warn because the build is unsigned — choose More info → Run anyway.
-            **macOS:** unsigned — right-click the app → Open.
+            首次启动需要联网 1–3 分钟（下载 Node 和官方 dsh）。之后用菜单 **Harness → 检查 Harness 更新**。
+
+            **Linux:** 优先 `.tar.gz` 或 `.deb`。AppImage 在 Ubuntu 24.04 常缺 libfuse2。
+            **Windows:** 未签名，SmartScreen 选「更多信息 → 仍要运行」。
+            **macOS:** 未签名，请右键 App → 打开。
 
             | File | Platform |
             | --- | --- |
-            | `DeepSeek-*-win.exe` | Windows installer (x64 + arm64) |
-            | `DeepSeek-*-win-x64.exe` / `*-win-arm64.exe` | Windows portable |
-            | `DeepSeek-*-mac-arm64.dmg` | macOS Apple Silicon |
-            | `DeepSeek-*-mac-x64.dmg` | macOS Intel |
-            | `DeepSeek-*-linux-x64.tar.gz` / `*-linux-amd64.deb` | Linux x64 |
-            | `DeepSeek-*-linux-arm64.tar.gz` / `*-linux-arm64.deb` | Linux arm64 |
+            | `DeepSeek-0.1.2-win.exe` | Windows installer |
+            | `DeepSeek-0.1.2-win-x64.exe` / `*-win-arm64.exe` | Windows portable |
+            | `DeepSeek-0.1.2-mac-arm64.dmg` | macOS Apple Silicon |
+            | `DeepSeek-0.1.2-mac-x64.dmg` | macOS Intel |
+            | `DeepSeek-0.1.2-linux-x64.tar.gz` / `*-linux-amd64.deb` | Linux x64 |
+            | `DeepSeek-0.1.2-linux-arm64.tar.gz` / `*-linux-arm64.deb` | Linux arm64 |
           files: |
             installers/*.exe
             installers/*.dmg
