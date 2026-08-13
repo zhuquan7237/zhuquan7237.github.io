@@ -123,5 +123,4 @@ jobs:
             installers/*.zip
             installers/*.AppImage
             installers/*.deb
-            installers/*.rpm
             installers/*.tar.gz
