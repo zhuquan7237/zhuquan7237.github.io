@@ -3,48 +3,138 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>DeepSeek Harness Desktop · dsh 桌面版</title>
+    <title>朱泉 · DeepSeek Harness 桌面版</title>
     <meta
       name="description"
-      content="DeepSeek Harness 桌面版：Windows / Linux / macOS 安装包。Codex 式界面，引擎是官方 dsh / @deepseek-ai/dsh，可在软件内检查更新。"
+      content="朱泉（Quan Zhu），广东海洋大学材料科学与工程。DeepSeek Harness 桌面版：Windows / Linux / macOS 下载就能用，引擎是官方 dsh，不用 git clone。"
     />
     <meta
       name="keywords"
-      content="DeepSeek Harness, DeepSeek Harness 桌面版, dsh, dsh desktop, DeepSeek desktop, DeepSeek Harness 下载, DeepSeek Harness Windows, DeepSeek Harness Linux, Codex DeepSeek, @deepseek-ai/dsh"
+      content="朱泉, Quan Zhu, DeepSeek Harness 桌面版, dsh desktop, DeepSeek Harness 下载, DeepSeek Harness Windows, DeepSeek Harness Linux, @deepseek-ai/dsh"
     />
-    <link rel="icon" type="image/svg+xml" href="./app/favicon.svg" />
+    <meta property="og:title" content="朱泉 · DeepSeek Harness 桌面版" />
+    <meta
+      property="og:description"
+      content="下载就能用的 Codex 式编程助手桌面版。引擎是官方 DeepSeek Harness。"
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://zhuquan7237.github.io/" />
+    <meta property="og:image" content="https://zhuquan7237.github.io/assets/desktop-preview.png" />
+    <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg" />
+    <link rel="apple-touch-icon" href="./assets/icon.png" />
     <style>
       :root {
-        --bg: #101218;
+        --bg: #0c0e14;
         --card: #161922;
         --line: rgba(255, 255, 255, 0.08);
         --text: #e8edf7;
         --muted: #8b93a7;
         --accent: #4d93f8;
+        --accent-dim: rgba(77, 147, 248, 0.14);
       }
       * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
       body {
         margin: 0;
-        font-family: ui-sans-serif, system-ui, sans-serif;
+        font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
         background:
-          radial-gradient(1000px 480px at 15% -10%, rgba(77, 147, 248, 0.16), transparent 55%),
+          radial-gradient(900px 520px at 12% -8%, rgba(77, 147, 248, 0.18), transparent 55%),
+          radial-gradient(700px 400px at 92% 8%, rgba(124, 92, 255, 0.08), transparent 50%),
           var(--bg);
         color: var(--text);
       }
-      main { max-width: 880px; margin: 0 auto; padding: 72px 24px 96px; }
-      .kicker { color: var(--accent); letter-spacing: 0.12em; text-transform: uppercase; font-size: 12px; }
-      h1 { font-size: clamp(36px, 6vw, 64px); margin: 12px 0 16px; letter-spacing: -0.03em; }
-      .lead { font-size: 18px; line-height: 1.7; color: var(--muted); max-width: 640px; }
-      .actions { display: flex; gap: 12px; flex-wrap: wrap; margin: 32px 0 48px; }
+      a { color: #7eb0ff; }
+      code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.92em; }
+      nav {
+        max-width: 1080px;
+        margin: 0 auto;
+        padding: 22px 24px 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--text);
+        text-decoration: none;
+        font-weight: 650;
+      }
+      .brand img { width: 28px; height: 28px; border-radius: 8px; }
+      .nav-links { display: flex; gap: 18px; font-size: 14px; }
+      .nav-links a { color: var(--muted); text-decoration: none; }
+      .nav-links a:hover { color: var(--text); }
+      main { max-width: 1080px; margin: 0 auto; padding: 28px 24px 88px; }
+      .hero {
+        display: grid;
+        grid-template-columns: 1.05fr 0.95fr;
+        gap: 48px;
+        align-items: center;
+        padding: 48px 0 36px;
+      }
+      .kicker {
+        color: var(--accent);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        font-size: 12px;
+        font-weight: 650;
+        margin: 0 0 14px;
+      }
+      h1 {
+        font-size: clamp(36px, 5vw, 58px);
+        line-height: 1.08;
+        letter-spacing: -0.04em;
+        margin: 0 0 16px;
+      }
+      .lead {
+        font-size: 18px;
+        line-height: 1.7;
+        color: var(--muted);
+        margin: 0 0 28px;
+        max-width: 560px;
+      }
+      .actions { display: flex; gap: 12px; flex-wrap: wrap; }
       a.btn {
         text-decoration: none;
         border-radius: 999px;
         padding: 12px 18px;
-        font-weight: 600;
+        font-weight: 650;
+        font-size: 14px;
       }
       .primary { background: var(--accent); color: #071018; }
-      .ghost { color: var(--text); border: 1px solid var(--line); }
-      .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+      .ghost { color: var(--text); border: 1px solid var(--line); background: transparent; }
+      .shot {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 10px;
+        box-shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
+      }
+      .shot img {
+        display: block;
+        width: 100%;
+        border-radius: 12px;
+      }
+      .caption {
+        margin: 10px 8px 4px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      section { margin-top: 72px; }
+      .section-title {
+        font-size: 13px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin: 0 0 18px;
+      }
+      .downloads {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+      }
       .card {
         background: var(--card);
         border: 1px solid var(--line);
@@ -52,47 +142,170 @@
         padding: 18px;
       }
       .card h2 { margin: 0 0 8px; font-size: 16px; }
-      .card p { margin: 0; color: var(--muted); line-height: 1.55; font-size: 14px; }
-      code { font-family: ui-monospace, monospace; font-size: 13px; }
-      footer { margin-top: 56px; color: var(--muted); font-size: 13px; }
+      .card p, .card li { color: var(--muted); line-height: 1.55; font-size: 14px; }
+      .card ul { margin: 0; padding-left: 18px; }
+      .card a.os {
+        display: inline-block;
+        margin-top: 12px;
+        color: var(--accent);
+        text-decoration: none;
+        font-weight: 650;
+        font-size: 14px;
+      }
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+      }
+      .projects {
+        display: grid;
+        grid-template-columns: 1.4fr 1fr;
+        gap: 14px;
+      }
+      .about {
+        display: grid;
+        grid-template-columns: 1.2fr 0.8fr;
+        gap: 28px;
+        align-items: start;
+      }
+      .about p { color: var(--muted); line-height: 1.7; font-size: 16px; }
+      footer {
+        margin-top: 72px;
+        color: var(--muted);
+        font-size: 13px;
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
       footer a { color: var(--accent); }
+      @media (max-width: 860px) {
+        .hero, .downloads, .grid-3, .projects, .about { grid-template-columns: 1fr; }
+        h1 { font-size: 40px; }
+        .nav-links { display: none; }
+      }
     </style>
   </head>
   <body>
+    <nav>
+      <a class="brand" href="./">
+        <img src="./assets/icon.png" alt="" />
+        朱泉
+      </a>
+      <div class="nav-links">
+        <a href="#desktop">桌面版</a>
+        <a href="#projects">其它项目</a>
+        <a href="#about">关于</a>
+        <a href="https://github.com/zhuquan7237">GitHub</a>
+      </div>
+    </nav>
     <main>
-      <div class="kicker">Codex-style desktop · DeepSeek Harness engine</div>
-      <h1>DeepSeek Desktop</h1>
-      <p class="lead">
-        原生窗口里的 Codex 式使用界面。引擎始终是官方
-        <a href="https://github.com/deepseek-ai/deepseek-harness" style="color:#7eb0ff">DeepSeek Harness</a>
-        （<code>@deepseek-ai/dsh</code>），从 npm 独立更新，所以 harness 发新版不必重做这个桌面软件。
-        安装包覆盖 Windows / macOS / Linux，x64 与 arm64。
-        首次启动需要联网安装官方引擎（约 1–3 分钟），之后即可直接打开界面。
-        Linux 请优先用 <code>.tar.gz</code> 或 <code>.deb</code>；AppImage 在较新 Ubuntu 上常缺 libfuse2。
-      </p>
-      <div class="actions">
-        <a class="btn primary" href="https://github.com/zhuquan7237/zhuquan7237.github.io/releases/tag/desktop-v0.1.3">下载安装包</a>
-        <a class="btn ghost" href="./app/">浏览器预览</a>
-        <a class="btn ghost" href="./pomodoro.html">番茄钟</a>
-      </div>
-      <div class="grid">
+      <header class="hero">
+        <div>
+          <p class="kicker">Guangdong Ocean University · Materials Science</p>
+          <h1>你好，我是朱泉。</h1>
+          <p class="lead">
+            广东海洋大学材料科学与工程专业的学生。课余把能用的工具做出来。
+            最近完成了 <strong style="color:var(--text)">DeepSeek Harness 桌面版</strong>：
+            给官方编程助手套上安装包和窗口，下载就能用，不必再 <code>git clone</code>。
+          </p>
+          <div class="actions">
+            <a class="btn primary" href="https://github.com/zhuquan7237/zhuquan7237.github.io/releases/latest">下载桌面版 0.1.3</a>
+            <a class="btn ghost" href="https://github.com/zhuquan7237/zhuquan7237.github.io">GitHub 仓库</a>
+          </div>
+        </div>
+        <figure class="shot">
+          <img src="./assets/desktop-preview.png" alt="DeepSeek Harness 桌面版：官方界面与 API Key 设置" />
+          <figcaption class="caption">真实运行截图 · 官方 DeepSeek Harness 界面，嵌在原生窗口里</figcaption>
+        </figure>
+      </header>
+
+      <section id="desktop">
+        <p class="section-title">DeepSeek Harness Desktop</p>
+        <div class="downloads">
+          <article class="card">
+            <h2>Windows</h2>
+            <p>安装包会创建桌面快捷方式和开始菜单。未签名时 SmartScreen 选「更多信息 → 仍要运行」。</p>
+            <a class="os" href="https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.3/DeepSeek-0.1.3-win.exe">DeepSeek-0.1.3-win.exe →</a>
+          </article>
+          <article class="card">
+            <h2>Linux</h2>
+            <p>推荐 <code>.tar.gz</code> 或 <code>.deb</code>。AppImage 在 Ubuntu 24.04 常缺 libfuse2。第一次打开会自动放桌面图标。</p>
+            <a class="os" href="https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.3/DeepSeek-0.1.3-linux-x64.tar.gz">x64 tar.gz →</a>
+          </article>
+          <article class="card">
+            <h2>macOS</h2>
+            <p>把 App 拖进「应用程序」。未签名请右键 → 打开。支持 Apple Silicon 与 Intel。</p>
+            <a class="os" href="https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.3/DeepSeek-0.1.3-mac-arm64.dmg">Apple Silicon dmg →</a>
+          </article>
+        </div>
+      </section>
+
+      <section>
+        <p class="section-title">为什么值得一看</p>
+        <div class="grid-3">
+          <article class="card">
+            <h2>下载就能用</h2>
+            <p>普通人不用装 Node、不用克隆官方仓库。第一次联网 1–3 分钟，之后直接打开。</p>
+          </article>
+          <article class="card">
+            <h2>引擎是官方的</h2>
+            <p>界面、工具、插件都来自 <code>@deepseek-ai/dsh</code>。不是换皮聊天框，也不是 fork 一份过期源码。</p>
+          </article>
+          <article class="card">
+            <h2>引擎可以单独更新</h2>
+            <p>菜单里「检查 Harness 更新」只拉 npm 上的新 dsh。Harness 发版不必重做安装包。</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="projects">
+        <p class="section-title">其它项目</p>
+        <div class="projects">
+          <article class="card">
+            <h2>浏览器预览</h2>
+            <p>同一套 Codex 式布局的网页版，方便先看看交互。完整能力仍以桌面版里的官方 Harness 为准。</p>
+            <a class="os" href="./app/">打开网页版 →</a>
+          </article>
+          <article class="card">
+            <h2>番茄钟</h2>
+            <p>一个可以在浏览器里用的专注计时器。是这个站点最早的页面。</p>
+            <a class="os" href="./pomodoro.html">打开番茄钟 →</a>
+          </article>
+        </div>
+      </section>
+
+      <section id="about" class="about">
+        <div>
+          <p class="section-title">关于</p>
+          <p>
+            我是朱泉（Quan Zhu），在
+            <a href="https://www.gdou.edu.cn/">广东海洋大学</a>
+            读材料科学与工程。对把想法做成别人也能打开的软件更感兴趣，所以最近在做桌面应用、安装包和 GitHub 发布。
+          </p>
+          <p>
+            如果你也在找 DeepSeek Harness 的 Windows / Linux 安装包，直接用上面的下载。源码在
+            <a href="https://github.com/zhuquan7237/zhuquan7237.github.io">zhuquan7237.github.io</a>。
+          </p>
+        </div>
         <article class="card">
-          <h2>Thin shell</h2>
-          <p>桌面程序只负责窗口、安装包、工作区选择，以及把官方 <code>dsh web</code> 嵌进去。</p>
+          <h2>联系</h2>
+          <ul>
+            <li><a href="https://github.com/zhuquan7237">github.com/zhuquan7237</a></li>
+            <li>广东海洋大学 · 中国</li>
+          </ul>
         </article>
-        <article class="card">
-          <h2>Full harness</h2>
-          <p>工具、插件、Plan/Agent、设置、Web UI 全部来自官方 harness，能力随 dsh 升级自动跟上。</p>
-        </article>
-        <article class="card">
-          <h2>Independent updates</h2>
-          <p>启动时检查 npm 上的 <code>@deepseek-ai/dsh@latest</code>。也可指向本地已构建的 harness 源码目录。</p>
-        </article>
-      </div>
+      </section>
+
       <footer>
-        桌面端源码 <a href="./desktop/">desktop/</a>
-        · 浏览器版 <a href="./deepseek-app/">deepseek-app/</a>
-        · API Key：<a href="https://platform.deepseek.com">platform.deepseek.com</a>
+        <span>© 2026 朱泉 · DeepSeek Harness Desktop 0.1.3</span>
+        <span>
+          <a href="https://github.com/zhuquan7237/zhuquan7237.github.io/releases/latest">Releases</a>
+          ·
+          <a href="./desktop/">desktop/</a>
+          ·
+          <a href="https://platform.deepseek.com">API Key</a>
+        </span>
       </footer>
     </main>
   </body>
