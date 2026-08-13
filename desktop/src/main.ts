@@ -19,7 +19,13 @@ function userData(): string {
 }
 
 function sendSplash(channel: string, payload: unknown): void {
-  splashWindow?.webContents.send(channel, payload);
+  if (!splashWindow || splashWindow.isDestroyed()) return;
+  try {
+    if (splashWindow.webContents.isDestroyed()) return;
+    splashWindow.webContents.send(channel, payload);
+  } catch {
+    // Splash may close while the engine is still logging.
+  }
 }
 
 function closeSplash(): void {
@@ -70,7 +76,7 @@ async function createMain(url: string, version: string): Promise<void> {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: true,
+      sandbox: false,
       backgroundThrottling: false,
     },
   });
@@ -78,8 +84,9 @@ async function createMain(url: string, version: string): Promise<void> {
     void shell.openExternal(target);
     return { action: "deny" };
   });
-  mainWindow.webContents.once("did-fail-load", (_event, code, desc) => {
-    sendSplash("status", { phase: "error", text: `界面加载失败（${code}）：${desc}` });
+  mainWindow.webContents.on("did-fail-load", (_event, code, desc, validatedURL, isMainFrame) => {
+    if (!isMainFrame || code === -3) return; // -3 is aborted (retry / navigation)
+    sendSplash("log", `界面加载失败（${code}）：${desc} ${validatedURL}`);
   });
   mainWindow.once("ready-to-show", () => revealMain());
   mainWindow.webContents.once("did-finish-load", () => {
@@ -88,9 +95,25 @@ async function createMain(url: string, version: string): Promise<void> {
   mainWindow.on("closed", () => {
     mainWindow = null;
   });
-  await mainWindow.loadURL(url);
+  await loadHarnessUi(url);
   // ready-to-show can fire during loadURL; some Linux VMs never emit it. Always reveal.
   revealMain();
+}
+
+async function loadHarnessUi(url: string): Promise<void> {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= 8; attempt += 1) {
+    try {
+      await mainWindow.loadURL(url);
+      return;
+    } catch (error) {
+      lastError = error;
+      sendSplash("log", `界面暂时打不开，正在重试（${attempt}/8）…`);
+      await new Promise((resolve) => setTimeout(resolve, 300 * attempt));
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error(String(lastError));
 }
 
 function buildMenu(): void {
@@ -274,7 +297,7 @@ async function boot(forceUpdate: boolean): Promise<void> {
     buildMenu();
     sendSplash("status", { phase: "start", text: "正在打开 DeepSeek Harness…" });
     if (mainWindow && !mainWindow.isDestroyed()) {
-      await mainWindow.loadURL(running.url);
+      await loadHarnessUi(running.url);
       mainWindow.setTitle(`DeepSeek — dsh ${running.version}`);
       revealMain();
     } else {

@@ -13,15 +13,14 @@ function readSandboxHelper(helperPath: string): { uid: number; mode: number } | 
 }
 
 /**
- * Linux VMs and unpacked tarballs fail in two common ways:
- * Chromium aborts without a SUID sandbox helper, and GPU compositing paints a black window.
- * Call this before app.whenReady().
+ * Linux tarballs rarely ship a SUID chrome-sandbox, which makes Chromium abort.
+ * Call this before app.whenReady(). Do not force disable-dev-shm-usage: that
+ * moves shared memory into /tmp and can make the renderer fail with ERR_FAILED.
  */
 export function applyLinuxRuntimeFlags(): void {
   if (process.platform !== "linux") return;
   app.disableHardwareAcceleration();
   app.commandLine.appendSwitch("disable-gpu");
-  app.commandLine.appendSwitch("disable-dev-shm-usage");
   const helper = path.join(path.dirname(process.execPath), "chrome-sandbox");
   if (!chromeSandboxIsConfigured(readSandboxHelper(helper))) {
     app.commandLine.appendSwitch("no-sandbox");

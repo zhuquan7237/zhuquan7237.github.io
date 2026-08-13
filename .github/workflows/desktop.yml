@@ -87,8 +87,8 @@ jobs:
       - name: Publish public GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: desktop-v0.1.1
-          name: DeepSeek Desktop 0.1.1
+          tag_name: desktop-v0.1.2
+          name: DeepSeek Desktop 0.1.2
           prerelease: true
           make_latest: true
           fail_on_unmatched_files: false
