@@ -1,14 +1,18 @@
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import path from "node:path";
-import { DEFAULT_SETTINGS, type DesktopSettings } from "./util";
+import { DEFAULT_SETTINGS, hostTimeZone, preferredNpmRegistry, type DesktopSettings } from "./util";
 
 export async function loadSettings(userData: string): Promise<DesktopSettings> {
+  const defaults: DesktopSettings = {
+    ...DEFAULT_SETTINGS,
+    registry: preferredNpmRegistry(process.env, process.env.TZ || hostTimeZone()),
+  };
   const file = path.join(userData, "desktop-settings.json");
   try {
     const parsed = JSON.parse(await readFile(file, "utf8")) as Partial<DesktopSettings>;
-    return { ...DEFAULT_SETTINGS, ...parsed };
+    return { ...defaults, ...parsed };
   } catch {
-    return { ...DEFAULT_SETTINGS };
+    return { ...defaults };
   }
 }
 

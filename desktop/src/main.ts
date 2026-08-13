@@ -1,11 +1,14 @@
-import { app, BrowserWindow, Menu, dialog, shell, ipcMain } from "electron";
+import { app, BrowserWindow, Menu, dialog, shell, ipcMain, screen, nativeImage } from "electron";
+import { mkdir } from "node:fs/promises";
 import path from "node:path";
 import { homedir } from "node:os";
 import { loadSettings, saveSettings } from "./settings";
 import { ensureHarness, fetchPublishedVersion, startHarnessWeb, stopHarness, type RunningHarness } from "./harness";
 import { applyLinuxRuntimeFlags } from "./linux-flags";
 import { resolveNodeRuntime } from "./node-runtime";
-import { NPM_REGISTRY, type DesktopSettings } from "./util";
+import { appIconFile, installUserShortcuts, needsUserShortcuts } from "./desktop-integration";
+import { loadWindowState, saveWindowState } from "./window-state";
+import { APP_DISPLAY_NAME, APP_ID, NPM_REGISTRY, type DesktopSettings } from "./util";
 
 const linuxReady = applyLinuxRuntimeFlags();
 
@@ -16,6 +19,10 @@ let settings: DesktopSettings;
 
 function userData(): string {
   return app.getPath("userData");
+}
+
+function windowIcon(): string {
+  return appIconFile();
 }
 
 function sendSplash(channel: string, payload: unknown): void {
@@ -42,6 +49,14 @@ function revealMain(): void {
   closeSplash();
 }
 
+function focusExistingWindow(): void {
+  const win = mainWindow ?? splashWindow;
+  if (!win || win.isDestroyed()) return;
+  if (win.isMinimized()) win.restore();
+  win.show();
+  win.focus();
+}
+
 async function createSplash(): Promise<void> {
   splashWindow = new BrowserWindow({
     width: 580,
@@ -50,6 +65,7 @@ async function createSplash(): Promise<void> {
     resizable: false,
     show: true,
     backgroundColor: "#101218",
+    icon: windowIcon(),
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
@@ -63,14 +79,16 @@ async function createSplash(): Promise<void> {
 }
 
 async function createMain(url: string, version: string): Promise<void> {
+  const workArea = screen.getPrimaryDisplay().workArea;
+  const state = await loadWindowState(userData(), workArea);
   mainWindow = new BrowserWindow({
-    width: 1440,
-    height: 920,
+    ...state.bounds,
     minWidth: 960,
     minHeight: 640,
     show: false,
     backgroundColor: "#101218",
-    title: `DeepSeek — dsh ${version}`,
+    title: `${APP_DISPLAY_NAME} — dsh ${version}`,
+    icon: windowIcon(),
     autoHideMenuBar: false,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
@@ -80,23 +98,30 @@ async function createMain(url: string, version: string): Promise<void> {
       backgroundThrottling: false,
     },
   });
+  if (state.isMaximized) mainWindow.maximize();
   mainWindow.webContents.setWindowOpenHandler(({ url: target }) => {
     void shell.openExternal(target);
     return { action: "deny" };
   });
   mainWindow.webContents.on("did-fail-load", (_event, code, desc, validatedURL, isMainFrame) => {
-    if (!isMainFrame || code === -3) return; // -3 is aborted (retry / navigation)
+    if (!isMainFrame || code === -3) return;
     sendSplash("log", `界面加载失败（${code}）：${desc} ${validatedURL}`);
   });
   mainWindow.once("ready-to-show", () => revealMain());
   mainWindow.webContents.once("did-finish-load", () => {
     setTimeout(() => revealMain(), 250);
   });
+  mainWindow.on("close", () => {
+    if (!mainWindow || mainWindow.isDestroyed()) return;
+    void saveWindowState(userData(), {
+      bounds: mainWindow.getNormalBounds(),
+      isMaximized: mainWindow.isMaximized(),
+    });
+  });
   mainWindow.on("closed", () => {
     mainWindow = null;
   });
   await loadHarnessUi(url);
-  // ready-to-show can fire during loadURL; some Linux VMs never emit it. Always reveal.
   revealMain();
 }
 
@@ -128,8 +153,33 @@ function buildMenu(): void {
             void chooseWorkspace(true);
           },
         },
+        {
+          label: "打开工作区文件夹",
+          click: () => {
+            const dir = settings?.workspaceDir || path.join(homedir(), "DeepSeek");
+            void shell.openPath(dir);
+          },
+        },
+        {
+          label: "创建桌面快捷方式",
+          click: () => {
+            void createShortcutsManually();
+          },
+        },
         { type: "separator" },
         { role: "quit", label: "退出" },
+      ],
+    },
+    {
+      label: "编辑",
+      submenu: [
+        { role: "undo", label: "撤销" },
+        { role: "redo", label: "重做" },
+        { type: "separator" },
+        { role: "cut", label: "剪切" },
+        { role: "copy", label: "复制" },
+        { role: "paste", label: "粘贴" },
+        { role: "selectAll", label: "全选" },
       ],
     },
     {
@@ -167,6 +217,10 @@ function buildMenu(): void {
         { role: "reload", label: "重新加载" },
         { role: "toggleDevTools", label: "开发者工具" },
         { type: "separator" },
+        { role: "resetZoom", label: "实际大小" },
+        { role: "zoomIn", label: "放大" },
+        { role: "zoomOut", label: "缩小" },
+        { type: "separator" },
         {
           label: "在浏览器中打开界面",
           click: () => {
@@ -186,9 +240,21 @@ function buildMenu(): void {
           },
         },
         {
-          label: "Harness 使用说明",
+          label: "使用说明",
           click: () => {
             void shell.openExternal("https://github.com/deepseek-ai/deepseek-harness/blob/master/docs/user/guide/index.md");
+          },
+        },
+        { type: "separator" },
+        {
+          label: "关于",
+          click: () => {
+            void dialog.showMessageBox({
+              type: "info",
+              title: "关于",
+              message: APP_DISPLAY_NAME,
+              detail: `桌面版 ${app.getVersion()}\n引擎 ${running?.version || settings?.lastHarnessVersion || "未启动"}\n工作区 ${settings?.workspaceDir || path.join(homedir(), "DeepSeek")}`,
+            });
           },
         },
       ],
@@ -198,6 +264,20 @@ function buildMenu(): void {
     template.unshift({ label: app.name, submenu: [{ role: "about" }, { type: "separator" }, { role: "quit" }] });
   }
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+}
+
+async function createShortcutsManually(): Promise<void> {
+  try {
+    const detail = await installUserShortcuts();
+    await dialog.showMessageBox({
+      type: "info",
+      title: "快捷方式",
+      message: "已创建 DeepSeek Harness 快捷方式",
+      detail,
+    });
+  } catch (error) {
+    await dialog.showErrorBox("创建快捷方式失败", error instanceof Error ? error.message : String(error));
+  }
 }
 
 async function chooseWorkspace(reboot: boolean): Promise<void> {
@@ -251,10 +331,12 @@ function DSH_LABEL(channel: string): string {
 async function openSettings(): Promise<void> {
   const win = new BrowserWindow({
     width: 520,
-    height: 560,
+    height: 620,
     parent: mainWindow ?? undefined,
     modal: Boolean(mainWindow),
     backgroundColor: "#161922",
+    icon: windowIcon(),
+    title: "引擎设置",
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
@@ -264,9 +346,22 @@ async function openSettings(): Promise<void> {
   await win.loadFile(path.join(__dirname, "..", "resources", "settings.html"));
 }
 
+async function defaultWorkspace(): Promise<string> {
+  const dir = settings.workspaceDir || path.join(homedir(), "DeepSeek");
+  await mkdir(dir, { recursive: true });
+  if (!settings.workspaceDir) {
+    settings.workspaceDir = dir;
+    await saveSettings(userData(), settings);
+  }
+  return dir;
+}
+
 async function boot(forceUpdate: boolean): Promise<void> {
   try {
     if (!splashWindow) await createSplash();
+    if (needsUserShortcuts(app.isPackaged)) {
+      await installUserShortcuts().catch(() => undefined);
+    }
     sendSplash("status", {
       phase: "runtime",
       text: "正在检查运行环境。首次启动需要联网下载引擎，大约 1–3 分钟。",
@@ -287,10 +382,11 @@ async function boot(forceUpdate: boolean): Promise<void> {
 
     sendSplash("status", { phase: "start", text: `正在启动界面（dsh ${install.version}）…` });
     stopHarness(running);
+    const workspaceDir = await defaultWorkspace();
     running = await startHarnessWeb({
       runtime,
       install,
-      workspaceDir: settings.workspaceDir || path.join(homedir(), "DeepSeek"),
+      workspaceDir,
       dshHome: path.join(userData(), "dsh-home"),
       onLog: (line) => sendSplash("log", line),
     });
@@ -298,7 +394,7 @@ async function boot(forceUpdate: boolean): Promise<void> {
     sendSplash("status", { phase: "start", text: "正在打开 DeepSeek Harness…" });
     if (mainWindow && !mainWindow.isDestroyed()) {
       await loadHarnessUi(running.url);
-      mainWindow.setTitle(`DeepSeek — dsh ${running.version}`);
+      mainWindow.setTitle(`${APP_DISPLAY_NAME} — dsh ${running.version}`);
       revealMain();
     } else {
       await createMain(running.url, running.version);
@@ -306,39 +402,55 @@ async function boot(forceUpdate: boolean): Promise<void> {
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     sendSplash("status", { phase: "error", text: message });
-    await dialog.showErrorBox("DeepSeek Desktop", message);
+    await dialog.showErrorBox(APP_DISPLAY_NAME, message);
   }
 }
 
 if (linuxReady) {
-  app.whenReady().then(async () => {
-    settings = await loadSettings(userData());
-    ipcMain.handle("settings:get", () => settings);
-    ipcMain.handle("settings:save", async (_event, next: DesktopSettings) => {
-      settings = { ...settings, ...next };
-      await saveSettings(userData(), settings);
-      return settings;
+  app.setName(APP_DISPLAY_NAME);
+  app.setAppUserModelId(APP_ID);
+  const gotLock = app.requestSingleInstanceLock();
+  if (!gotLock) {
+    app.quit();
+  } else {
+    app.on("second-instance", () => focusExistingWindow());
+    app.whenReady().then(async () => {
+      if (process.platform === "darwin") {
+        const img = nativeImage.createFromPath(windowIcon());
+        if (!img.isEmpty()) app.dock?.setIcon(img);
+        app.setAboutPanelOptions({
+          applicationName: APP_DISPLAY_NAME,
+          applicationVersion: app.getVersion(),
+        });
+      }
+      settings = await loadSettings(userData());
+      ipcMain.handle("settings:get", () => settings);
+      ipcMain.handle("settings:save", async (_event, next: DesktopSettings) => {
+        settings = { ...settings, ...next };
+        await saveSettings(userData(), settings);
+        return settings;
+      });
+      ipcMain.handle("settings:pick-dir", async () => {
+        const picked = await dialog.showOpenDialog({ properties: ["openDirectory"] });
+        return picked.filePaths[0] ?? "";
+      });
+      ipcMain.on("settings:apply", () => {
+        void boot(true);
+      });
+      ipcMain.on("splash:quit", () => {
+        app.quit();
+      });
+      buildMenu();
+      await boot(false);
     });
-    ipcMain.handle("settings:pick-dir", async () => {
-      const picked = await dialog.showOpenDialog({ properties: ["openDirectory"] });
-      return picked.filePaths[0] ?? "";
-    });
-    ipcMain.on("settings:apply", () => {
-      void boot(true);
-    });
-    ipcMain.on("splash:quit", () => {
-      app.quit();
-    });
-    buildMenu();
-    await boot(false);
-  });
 
-  app.on("window-all-closed", () => {
-    if (process.platform !== "darwin") app.quit();
-  });
+    app.on("window-all-closed", () => {
+      if (process.platform !== "darwin") app.quit();
+    });
 
-  app.on("before-quit", () => {
-    stopHarness(running);
-    running = null;
-  });
+    app.on("before-quit", () => {
+      stopHarness(running);
+      running = null;
+    });
+  }
 }

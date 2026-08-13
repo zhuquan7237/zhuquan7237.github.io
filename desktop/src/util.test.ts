@@ -1,12 +1,22 @@
 import { describe, expect, it } from "vitest";
 import {
   chromeSandboxIsConfigured,
+  clampWindowBounds,
   compareVersions,
   formatByteProgress,
+  isSystemInstalledApp,
+  linuxDesktopEntry,
+  linuxRuntimeArgvExtras,
+  linuxShmNeedsWorkaround,
+  localePrefersChina,
   nodeDistFile,
+  nodeDownloadUrls,
   nodeMeetsEngine,
   npmSpec,
   parseDshWebUrl,
+  parseXdgUserDir,
+  preferredNpmRegistry,
+  resolveLinuxDesktopDir,
 } from "./util";
 
 describe("parseDshWebUrl", () => {
@@ -56,5 +66,75 @@ describe("first-run helpers", () => {
     expect(chromeSandboxIsConfigured({ uid: 0, mode: 0o104755 })).toBe(true);
     expect(chromeSandboxIsConfigured({ uid: 1000, mode: 0o755 })).toBe(false);
     expect(chromeSandboxIsConfigured(null)).toBe(false);
+  });
+
+  it("clamps window bounds onto the work area", () => {
+    const next = clampWindowBounds(
+      { x: -200, y: 20, width: 5000, height: 2000 },
+      { x: 0, y: 0, width: 1920, height: 1080 },
+    );
+    expect(next.width).toBe(1920);
+    expect(next.height).toBe(1080);
+    expect(next.x).toBe(0);
+    expect(next.y).toBe(0);
+  });
+
+  it("writes a desktop entry ordinary Linux shells can launch", () => {
+    const text = linuxDesktopEntry({ exec: "/home/me/DeepSeek", icon: "/home/me/icon.png" });
+    expect(text).toContain("Name=DeepSeek Harness");
+    expect(text).toContain("StartupWMClass=DeepSeek Harness");
+    expect(text).toContain("Exec=/home/me/DeepSeek %U");
+    expect(text).toContain("Categories=Development;IDE;");
+  });
+
+  it("quotes Exec paths that contain spaces", () => {
+    const text = linuxDesktopEntry({ exec: "/opt/My Apps/DeepSeek", icon: "deepseek-harness" });
+    expect(text).toContain('Exec="/opt/My Apps/DeepSeek" %U');
+  });
+});
+
+describe("typical-user defaults", () => {
+  it("picks the China npm mirror for zh_CN", () => {
+    expect(localePrefersChina({ LANG: "zh_CN.UTF-8" })).toBe(true);
+    expect(preferredNpmRegistry({ LANG: "en_US.UTF-8" })).toBe("https://registry.npmjs.org");
+    expect(preferredNpmRegistry({ LANG: "zh_CN.UTF-8" })).toBe("https://registry.npmmirror.com");
+    expect(preferredNpmRegistry({ LANG: "en_US.UTF-8" }, "Asia/Shanghai")).toBe("https://registry.npmmirror.com");
+  });
+
+  it("lists Node download mirrors with a China-first fallback", () => {
+    const chinaFirst = nodeDownloadUrls("node-v22.23.2-linux-x64.tar.xz", true);
+    expect(chinaFirst[0]).toContain("npmmirror.com");
+    expect(chinaFirst[1]).toContain("nodejs.org");
+  });
+
+  it("only disables shm when a mount is noexec", () => {
+    expect(linuxShmNeedsWorkaround("tmpfs /dev/shm tmpfs rw,nosuid,nodev 0 0\n")).toBe(false);
+    expect(linuxShmNeedsWorkaround("tmpfs /dev/shm tmpfs rw,nosuid,nodev,noexec 0 0\n")).toBe(true);
+  });
+
+  it("keeps GPU enabled and only adds Linux flags that are actually needed", () => {
+    expect(
+      linuxRuntimeArgvExtras({
+        sandboxConfigured: true,
+        shmNoexec: false,
+        hasSwitch: () => false,
+      }),
+    ).toEqual([]);
+    expect(
+      linuxRuntimeArgvExtras({
+        sandboxConfigured: false,
+        shmNoexec: true,
+        hasSwitch: () => false,
+      }),
+    ).toEqual(["--no-sandbox", "--disable-gpu-sandbox", "--disable-dev-shm-usage"]);
+  });
+
+  it("reads XDG desktop folders including 桌面", () => {
+    expect(parseXdgUserDir('XDG_DESKTOP_DIR="$HOME/桌面"\n', "XDG_DESKTOP_DIR", "/home/me")).toBe("/home/me/桌面");
+    expect(
+      resolveLinuxDesktopDir("/home/me", {}, (p) => p.endsWith("桌面"), 'XDG_DESKTOP_DIR="$HOME/桌面"\n'),
+    ).toBe("/home/me/桌面");
+    expect(isSystemInstalledApp("/usr/bin/DeepSeek")).toBe(true);
+    expect(isSystemInstalledApp("/home/me/DeepSeek-0.1.3-linux-x64/DeepSeek")).toBe(false);
   });
 });

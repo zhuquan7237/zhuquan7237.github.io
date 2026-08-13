@@ -2,7 +2,15 @@ import { spawn } from "node:child_process";
 import { chmod, mkdir, rm, stat, writeFile } from "node:fs/promises";
 import { createWriteStream } from "node:fs";
 import path from "node:path";
-import { NODE_VERSION, formatByteProgress, nodeDistFile, nodeMeetsEngine } from "./util";
+import {
+  NODE_VERSION,
+  formatByteProgress,
+  hostTimeZone,
+  localePrefersChina,
+  nodeDistFile,
+  nodeDownloadUrls,
+  nodeMeetsEngine,
+} from "./util";
 
 export interface NodeRuntime {
   node: string;
@@ -45,10 +53,9 @@ async function installNodeSidecar(cacheDir: string, onLog: (line: string) => voi
   }
 
   await mkdir(cacheDir, { recursive: true });
-  const url = `https://nodejs.org/dist/v${NODE_VERSION}/${dist.archive}`;
   const archivePath = path.join(cacheDir, dist.archive);
-  onLog(`正在下载 Node.js：${url}`);
-  await downloadFile(url, archivePath, onLog);
+  const urls = nodeDownloadUrls(dist.archive, localePrefersChina(process.env, process.env.TZ || hostTimeZone()));
+  await downloadFromMirrors(urls, archivePath, onLog);
   onLog("正在解压 Node 运行时");
   if (dist.archive.endsWith(".zip")) {
     await runCapture("powershell", ["-NoProfile", "-Command", `Expand-Archive -Force '${archivePath}' '${cacheDir}'`]);
@@ -66,6 +73,26 @@ async function installNodeSidecar(cacheDir: string, onLog: (line: string) => voi
 function companionNpm(nodePath: string): string {
   if (process.platform === "win32") return path.join(path.dirname(nodePath), "npm.cmd");
   return path.join(path.dirname(nodePath), "npm");
+}
+
+async function downloadFromMirrors(
+  urls: string[],
+  dest: string,
+  onLog: (line: string) => void,
+): Promise<void> {
+  let lastError: unknown;
+  for (const url of urls) {
+    try {
+      onLog(`正在下载 Node.js：${url}`);
+      await downloadFile(url, dest, onLog);
+      return;
+    } catch (error) {
+      lastError = error;
+      onLog("这个地址下载失败，正在换一个镜像…");
+      await rm(dest, { force: true }).catch(() => undefined);
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error("下载 Node.js 失败");
 }
 
 async function downloadFile(

@@ -2,7 +2,7 @@
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
-    <title>Engine settings</title>
+    <title>引擎设置</title>
     <style>
       body {
         margin: 0;
@@ -34,38 +34,53 @@
         font-weight: 600;
         cursor: pointer;
       }
-      .ghost { background: #1c2130; color: #e8edf7; }
+      .ghost { background: #1c2130; color: #e8edf7; margin-top: 0; }
+      details { margin-top: 18px; color: #8b93a7; font-size: 13px; }
+      details summary { cursor: pointer; }
+      code { font-size: 12px; }
     </style>
   </head>
   <body>
-    <h1>Harness 引擎</h1>
+    <h1>引擎设置</h1>
     <p>
-      这个桌面软件<strong>不会内置</strong> DeepSeek Harness 源码。首次启动和「检查更新」都会从 npm
-      安装官方 <code>@deepseek-ai/dsh</code>。GitHub 上的 harness 发版后，在菜单
-      <code>Harness → 检查 Harness 更新</code> 即可升级，不必重新克隆仓库。
+      日常使用不用改这里。桌面软件会自动从 npm 安装官方
+      <code>@deepseek-ai/dsh</code>。中文系统首次启动会默认用国内镜像。
     </p>
-    <label>Update channel</label>
-    <select id="channel">
-      <option value="latest">latest (npm)</option>
-      <option value="next">next (npm)</option>
-    </select>
+    <p>当前工作区：<code id="workspace"></code></p>
     <label><input id="auto" type="checkbox" /> 启动时自动检查并更新 Harness</label>
-    <label>npm registry（国内网络慢可改为 https://registry.npmmirror.com ）</label>
-    <input id="registry" />
-    <label>Local harness checkout (optional, already built)</label>
+    <label>npm 源</label>
     <div class="row">
-      <input id="local" placeholder="/path/to/deepseek-harness" />
-      <button class="ghost" id="pick" type="button">Browse</button>
+      <button class="ghost" id="official" type="button">官方 npm</button>
+      <button class="ghost" id="china" type="button">国内镜像</button>
     </div>
+    <input id="registry" style="margin-top:8px" />
+    <details>
+      <summary>高级选项</summary>
+      <label>更新通道</label>
+      <select id="channel">
+        <option value="latest">latest（稳定）</option>
+        <option value="next">next（预览）</option>
+      </select>
+      <label>本地已构建的 harness 目录（一般不用填）</label>
+      <div class="row">
+        <input id="local" placeholder="/path/to/deepseek-harness" />
+        <button class="ghost" id="pick" type="button">浏览</button>
+      </div>
+    </details>
     <button id="save" type="button">保存并重启引擎</button>
     <script>
       const $ = (id) => document.getElementById(id);
+      const OFFICIAL = "https://registry.npmjs.org";
+      const CHINA = "https://registry.npmmirror.com";
       window.desktop.getSettings().then((s) => {
         $("channel").value = s.channel === "next" ? "next" : "latest";
         $("auto").checked = s.autoUpdateHarness;
         $("registry").value = s.registry;
         $("local").value = s.localHarnessDir;
+        $("workspace").textContent = s.workspaceDir || "（首次启动后自动使用家目录下的 DeepSeek 文件夹）";
       });
+      $("official").onclick = () => { $("registry").value = OFFICIAL; };
+      $("china").onclick = () => { $("registry").value = CHINA; };
       $("pick").onclick = async () => {
         const dir = await window.desktop.pickDir();
         if (dir) $("local").value = dir;

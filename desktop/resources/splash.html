@@ -14,6 +14,8 @@
         padding: 24px 24px 16px;
       }
       .top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+      .brand { display: flex; gap: 12px; align-items: center; }
+      .brand img { width: 40px; height: 40px; border-radius: 10px; }
       h1 { margin: 0 0 6px; font-size: 22px; letter-spacing: -0.03em; }
       p { margin: 0; color: #8b93a7; font-size: 13px; line-height: 1.5; }
       .status { margin: 18px 0 8px; font-size: 14px; color: #7eb0ff; min-height: 20px; }
@@ -42,14 +44,16 @@
         font-size: 12px;
         cursor: pointer;
       }
-      button.hidden { display: none; }
     </style>
   </head>
   <body>
     <div class="top">
-      <div>
-        <h1>DeepSeek</h1>
-        <p>首次启动会联网安装官方 DeepSeek Harness（dsh）。请保持网络畅通，完成后会自动打开界面。</p>
+      <div class="brand">
+        <img src="./icon.png" alt="" />
+        <div>
+          <h1>DeepSeek Harness</h1>
+          <p>首次启动会联网安装官方引擎。请保持网络畅通，完成后会自动打开界面。</p>
+        </div>
       </div>
       <button id="quit" type="button">退出</button>
     </div>
@@ -60,8 +64,7 @@
       const status = document.getElementById("status");
       const log = document.getElementById("log");
       const bar = document.getElementById("bar");
-      const quit = document.getElementById("quit");
-      quit.addEventListener("click", () => window.desktop.quit());
+      document.getElementById("quit").addEventListener("click", () => window.desktop.quit());
       window.desktop.onStatus((payload) => {
         status.textContent = payload.text;
         if (payload.phase === "error") {
