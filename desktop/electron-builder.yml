@@ -1,0 +1,90 @@
+appId: app.deepseek.desktop
+productName: DeepSeek
+executableName: DeepSeek
+copyright: MIT
+artifactName: DeepSeek-${version}-${os}-${arch}.${ext}
+directories:
+  output: release
+  buildResources: build
+files:
+  - dist/**/*
+  - resources/**/*
+  - package.json
+asar: true
+asarUnpack:
+  - resources/*.png
+extraMetadata:
+  main: dist/main.js
+forceCodeSigning: false
+npmRebuild: false
+
+mac:
+  category: public.app-category.developer-tools
+  icon: build/icon.png
+  hardenedRuntime: false
+  gatekeeperAssess: false
+  target:
+    - target: dmg
+      arch: [x64, arm64]
+    - target: zip
+      arch: [x64, arm64]
+
+dmg:
+  title: DeepSeek Harness
+  icon: build/icon.png
+  contents:
+    - x: 130
+      y: 220
+    - x: 410
+      y: 220
+      type: link
+      path: /Applications
+
+win:
+  icon: build/icon.png
+  target:
+    - target: nsis
+      arch: [x64, arm64]
+    - target: portable
+      arch: [x64, arm64]
+    - target: zip
+      arch: [x64, arm64]
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: always
+  createStartMenuShortcut: true
+  runAfterFinish: true
+  shortcutName: DeepSeek Harness
+  installerLanguages: [en_US, zh_CN]
+  displayLanguageSelector: true
+  deleteAppDataOnUninstall: false
+
+linux:
+  icon: build/icons
+  category: Development
+  maintainer: DeepSeek Desktop
+  synopsis: DeepSeek Harness 桌面版
+  description: Codex-style desktop shell for official DeepSeek Harness (dsh).
+  desktop:
+    entry:
+      Name: DeepSeek Harness
+      GenericName: AI coding agent
+      Comment: Codex-style desktop for DeepSeek Harness
+      "Name[zh_CN]": DeepSeek Harness
+      "GenericName[zh_CN]": AI 编程助手
+      "Comment[zh_CN]": DeepSeek Harness 桌面版
+      Keywords: deepseek;dsh;harness;ai;codex;
+      StartupWMClass: DeepSeek Harness
+      Terminal: "false"
+      Type: Application
+      Categories: Development;IDE;
+  target:
+    - target: AppImage
+      arch: [x64, arm64]
+    - target: deb
+      arch: [x64, arm64]
+    - target: tar.gz
+      arch: [x64, arm64]

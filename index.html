@@ -1,11 +1,178 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <title>我的 GitHub 网站</title>
-</head>
-<body>
-    <h1>Hello, GitHub Pages!</h1>
-    <p>这是我的第一个免费网站。</p>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DeepSeek Harness 桌面版 · 下载</title>
+    <meta
+      name="description"
+      content="DeepSeek Harness 桌面版：Windows / Linux / macOS 下载就能用。引擎是官方 dsh / @deepseek-ai/dsh，不用 git clone。"
+    />
+    <meta
+      name="keywords"
+      content="DeepSeek Harness 桌面版, dsh desktop, DeepSeek Harness 下载, DeepSeek Harness Windows, DeepSeek Harness Linux, @deepseek-ai/dsh, Codex DeepSeek"
+    />
+    <meta property="og:title" content="DeepSeek Harness 桌面版" />
+    <meta property="og:description" content="下载就能用的 Codex 式编程助手。引擎是官方 DeepSeek Harness。" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://zhuquan7237.github.io/" />
+    <meta property="og:image" content="https://zhuquan7237.github.io/assets/desktop-preview.png" />
+    <link rel="canonical" href="https://zhuquan7237.github.io/" />
+    <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg" />
+    <link rel="apple-touch-icon" href="./assets/icon.png" />
+    <link rel="stylesheet" href="./site.css" />
+  </head>
+  <body>
+    <nav>
+      <a class="brand" href="./">
+        <img src="./assets/icon.png" alt="" />
+        DeepSeek Desktop
+      </a>
+      <div class="nav-links">
+        <a class="active" href="./">下载</a>
+        <a href="./me.html">关于朱泉</a>
+        <a href="https://github.com/zhuquan7237/zhuquan7237.github.io">GitHub</a>
+      </div>
+    </nav>
+    <main>
+      <header class="hero">
+        <div>
+          <p class="kicker">Official dsh engine · Windows / Linux / macOS</p>
+          <h1>DeepSeek Harness 桌面版</h1>
+          <p class="lead">
+            给官方编程助手套上安装包和窗口。下载、双击、填 API Key。
+            不用装 Node，也不用 <code>git clone</code>。引擎始终是
+            <a href="https://github.com/deepseek-ai/deepseek-harness">@deepseek-ai/dsh</a>。
+          </p>
+          <div class="actions">
+            <a class="btn primary" id="hero-download" href="https://github.com/zhuquan7237/zhuquan7237.github.io/releases/latest">下载 0.1.3</a>
+            <a class="btn ghost" href="https://github.com/zhuquan7237/zhuquan7237.github.io">查看仓库</a>
+          </div>
+        </div>
+        <figure class="shot">
+          <img src="./assets/desktop-preview.png" alt="DeepSeek Harness 桌面版：官方界面与 API Key 设置" />
+          <figcaption class="caption">真实运行截图 · 官方 Harness 界面嵌在原生窗口里</figcaption>
+        </figure>
+      </header>
+
+      <section id="download">
+        <p class="section-title">选一个安装包</p>
+        <div class="downloads">
+          <article class="card" data-os="win">
+            <h2>Windows</h2>
+            <p>安装包会创建桌面快捷方式和开始菜单。若 SmartScreen 提示未签名，选「更多信息 → 仍要运行」。</p>
+            <a class="os" href="https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.3/DeepSeek-0.1.3-win.exe">DeepSeek-0.1.3-win.exe →</a>
+          </article>
+          <article class="card" data-os="linux">
+            <h2>Linux</h2>
+            <p>推荐 tar.gz 或 deb。AppImage 在 Ubuntu 24.04 常缺 libfuse2。便携版第一次打开会自动放桌面图标。</p>
+            <a class="os" href="https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.3/DeepSeek-0.1.3-linux-x64.tar.gz">x64 tar.gz →</a><br />
+            <a class="os" href="https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.3/DeepSeek-0.1.3-linux-amd64.deb">amd64 deb →</a>
+          </article>
+          <article class="card" data-os="mac">
+            <h2>macOS</h2>
+            <p>把 App 拖进「应用程序」。未签名请右键 → 打开。支持 Apple Silicon 与 Intel。</p>
+            <a class="os" href="https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.3/DeepSeek-0.1.3-mac-arm64.dmg">Apple Silicon →</a><br />
+            <a class="os" href="https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.3/DeepSeek-0.1.3-mac-x64.dmg">Intel →</a>
+          </article>
+        </div>
+      </section>
+
+      <section>
+        <p class="section-title">怎么用</p>
+        <div class="steps">
+          <article class="card">
+            <div class="step-n">1</div>
+            <h2>下载并打开</h2>
+            <p>Windows 用安装包，Linux 解压 tar.gz 后运行 <code>./DeepSeek</code>，macOS 拖到应用程序。</p>
+          </article>
+          <article class="card">
+            <div class="step-n">2</div>
+            <h2>等第一次联网</h2>
+            <p>大约 1–3 分钟。软件会自己准备 Node，并从 npm 安装官方引擎。中文系统默认走国内镜像。</p>
+          </article>
+          <article class="card">
+            <div class="step-n">3</div>
+            <h2>填写 API Key</h2>
+            <p>在官方界面里粘贴 DeepSeek API Key。之后用菜单「Harness → 检查更新」升级引擎即可。</p>
+          </article>
+        </div>
+      </section>
+
+      <section>
+        <p class="section-title">为什么不是再 clone 一份官方仓库</p>
+        <div class="grid-3">
+          <article class="card">
+            <h2>给普通人用</h2>
+            <p>没有终端、没有 Node 也能打开。有桌面图标、开始菜单和工作区默认目录。</p>
+          </article>
+          <article class="card">
+            <h2>引擎保持官方</h2>
+            <p>工具、插件、Plan/Agent、Web UI 都来自 <code>@deepseek-ai/dsh</code>。这不是 fork，也不是换皮聊天框。</p>
+          </article>
+          <article class="card">
+            <h2>更新很轻</h2>
+            <p>Harness 发新版时，桌面软件不用重做。菜单里检查更新，只下载新的 dsh 包。</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="faq">
+        <p class="section-title">常见问题</p>
+        <details>
+          <summary>这是官方软件吗？</summary>
+          <p>引擎是官方 DeepSeek Harness。桌面安装包由 <a href="./me.html">朱泉</a> 做，方便下载和双击，不是 DeepSeek 公司发的商店应用。</p>
+        </details>
+        <details>
+          <summary>要不要 git clone？</summary>
+          <p>不用。请直接下载 0.1.3 安装包。不要用 0.1.0 / 0.1.1。</p>
+        </details>
+        <details>
+          <summary>API Key 在哪拿？</summary>
+          <p>打开 <a href="https://platform.deepseek.com">platform.deepseek.com</a>，在官方界面里粘贴即可。</p>
+        </details>
+      </section>
+
+      <footer>
+        <span>DeepSeek Harness Desktop 0.1.3 · 作者 <a href="./me.html">朱泉</a></span>
+        <span>
+          <a href="https://github.com/zhuquan7237/zhuquan7237.github.io/releases/latest">全部安装包</a>
+          ·
+          <a href="./app/">浏览器预览</a>
+          ·
+          <a href="https://platform.deepseek.com">API Key</a>
+        </span>
+      </footer>
+    </main>
+    <script>
+      (function () {
+        var ua = navigator.userAgent || "";
+        var platform = (navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || "";
+        var os = "win";
+        if (/Mac/i.test(platform) || /Mac OS X/i.test(ua)) os = "mac";
+        else if (/Linux/i.test(platform) || /Linux/i.test(ua)) os = "linux";
+        var links = {
+          win: "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.3/DeepSeek-0.1.3-win.exe",
+          linux: "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.3/DeepSeek-0.1.3-linux-x64.tar.gz",
+          mac: /ARM|aarch64|Apple/i.test(ua + platform)
+            ? "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.3/DeepSeek-0.1.3-mac-arm64.dmg"
+            : "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.3/DeepSeek-0.1.3-mac-x64.dmg",
+        };
+        var labels = { win: "下载 Windows 安装包", linux: "下载 Linux tar.gz", mac: "下载 macOS 安装包" };
+        var hero = document.getElementById("hero-download");
+        if (hero) {
+          hero.href = links[os];
+          hero.textContent = labels[os];
+        }
+        document.querySelectorAll(".card[data-os]").forEach(function (card) {
+          if (card.getAttribute("data-os") !== os) return;
+          card.classList.add("recommended");
+          var badge = document.createElement("span");
+          badge.className = "badge";
+          badge.textContent = "适合这台电脑";
+          card.appendChild(badge);
+        });
+      })();
+    </script>
+  </body>
 </html>
