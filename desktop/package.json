@@ -6,7 +6,21 @@
   "description": "Codex-style desktop shell for DeepSeek Harness. The engine is always @deepseek-ai/dsh from npm, so harness updates do not require a new desktop build.",
   "homepage": "https://github.com/zhuquan7237/zhuquan7237.github.io",
   "author": "DeepSeek Desktop",
-  "license": "MIT",
+  "keywords": [
+    "deepseek",
+    "deepseek-harness",
+    "dsh",
+    "deepseek-desktop",
+    "coding-agent",
+    "electron",
+    "codex",
+    "desktop-app",
+    "windows",
+    "linux",
+    "macos",
+    "installer",
+    "deepseek-v4"
+  ],
   "main": "dist/main.js",
   "scripts": {
     "build": "python3 scripts/generate-icon.py && tsc",

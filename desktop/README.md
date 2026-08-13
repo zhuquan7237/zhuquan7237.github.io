@@ -1,4 +1,8 @@
-# DeepSeek Desktop
+# DeepSeek Harness Desktop (dsh 桌面版)
+
+A Codex-style **desktop shell** around official [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (`dsh`, `@deepseek-ai/dsh`).
+
+Search: DeepSeek Harness desktop, dsh desktop, DeepSeek Harness 桌面版, DeepSeek Harness 下载.
 
 A Codex-style **desktop shell** around official [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness).
 

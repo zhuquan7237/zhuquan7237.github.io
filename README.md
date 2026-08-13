@@ -1,13 +1,28 @@
-# zhuquan7237.github.io
+# DeepSeek Harness Desktop
 
-Personal GitHub Pages site.
+**DeepSeek Harness 桌面版** / **dsh desktop** / **DeepSeek desktop app** for Windows, Linux, and macOS.
 
-## DeepSeek Desktop
+A Codex-style native GUI for the official [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (`dsh`, `@deepseek-ai/dsh`, `npx @deepseek-ai/dsh web`). Download one installer — you do **not** clone the harness source.
 
-Codex-style **native app** whose engine is official [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (`@deepseek-ai/dsh`). The desktop shell does not vendor harness source; it auto-updates `dsh` from npm, so harness releases do not require a new desktop build.
+[Download](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/tag/desktop-v0.1.0) · [Linux tar.gz](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.0/DeepSeek-0.1.0-linux-x64.tar.gz) · [Windows exe](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.0/DeepSeek-0.1.0-win.exe)
+
+## Search keywords
+
+People looking for this project usually search:
+
+| Language | Queries |
+| --- | --- |
+| English | `deepseek harness desktop`, `dsh desktop`, `deepseek harness windows`, `deepseek harness linux`, `deepseek harness mac`, `dsh exe`, `deepseek harness installer`, `deepseek harness gui`, `codex deepseek`, `@deepseek-ai/dsh` |
+| 中文 | `DeepSeek Harness 桌面版`, `DeepSeek Harness 下载`, `dsh 桌面`, `DeepSeek Harness 安装包`, `DeepSeek Harness Windows`, `DeepSeek Harness Linux 虚拟机` |
+
+On GitHub, add topic filters: `deepseek-harness`, `dsh`, `deepseek-desktop`.
+
+## What this is
+
+Codex-style **desktop shell**. The engine is always official DeepSeek Harness from npm (`@deepseek-ai/dsh`). Menu **Harness → 检查 Harness 更新** follows new `dsh` releases without rebuilding this app.
 
 - Source: [`desktop/`](./desktop/)
-- Installers (public): [Releases / desktop-v0.1.0](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/tag/desktop-v0.1.0)
+- Installers: [Releases / desktop-v0.1.0](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/tag/desktop-v0.1.0)
 - Dev: `cd desktop && npm install && npm start`
 
 ## Browser preview
