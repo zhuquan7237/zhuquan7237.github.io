@@ -11,7 +11,8 @@
 [![Downloads](https://img.shields.io/github/downloads/zhuquan7237/zhuquan7237.github.io/total)](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/latest)
 [![Platforms](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-4d93f8)](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/latest)
 
-[主页](https://zhuquan7237.github.io) ·
+[主页 / 下载](https://zhuquan7237.github.io) ·
+[关于作者](https://zhuquan7237.github.io/me.html) ·
 [下载 0.1.3](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/latest) ·
 [Windows](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.3/DeepSeek-0.1.3-win.exe) ·
 [Linux tar.gz](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.3/DeepSeek-0.1.3-linux-x64.tar.gz) ·
@@ -31,7 +32,7 @@
 
 工具、插件、Plan/Agent、设置仍然全部来自官方 Harness。菜单 **Harness → 检查 Harness 更新** 只更新引擎，不必重装桌面软件。
 
-作者：[朱泉 / Quan Zhu](https://github.com/zhuquan7237)，广东海洋大学材料科学与工程。
+作者：[朱泉 / Quan Zhu](https://zhuquan7237.github.io/me.html)，广东海洋大学材料科学与工程。
 
 ## 30 秒开始
 
@@ -64,7 +65,8 @@ tar -xzf DeepSeek-0.1.3-linux-x64.tar.gz
 
 ## 仓库里还有什么
 
-- [GitHub Pages 主页](https://zhuquan7237.github.io) — 项目介绍与下载
+- [产品主页](https://zhuquan7237.github.io) — 按系统下载
+- [关于作者](https://zhuquan7237.github.io/me.html)
 - [浏览器预览](https://zhuquan7237.github.io/app/) — 轻量网页版，不能替代完整 Harness
 - [番茄钟](https://zhuquan7237.github.io/pomodoro.html)
 
