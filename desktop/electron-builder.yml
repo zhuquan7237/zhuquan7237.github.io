@@ -52,6 +52,8 @@ linux:
   category: Development
   maintainer: DeepSeek Desktop
   synopsis: Codex-style desktop shell for DeepSeek Harness
+  desktopName: DeepSeek
+  syncDesktopName: true
   target:
     - target: AppImage
       arch: [x64, arm64]

@@ -12,6 +12,9 @@ on:
       - ".github/workflows/desktop.yml"
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -67,5 +70,44 @@ jobs:
             desktop/release/*.deb
             desktop/release/*.rpm
             desktop/release/*.tar.gz
-            desktop/release/*.yml
           if-no-files-found: warn
+
+  publish-release:
+    needs: pack
+    if: always() && !cancelled()
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: installers
+          merge-multiple: true
+      - name: Publish public GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: desktop-v0.1.0
+          name: DeepSeek Desktop 0.1.0
+          prerelease: true
+          make_latest: true
+          fail_on_unmatched_files: false
+          body: |
+            Codex-style desktop shell. The engine is official `@deepseek-ai/dsh` and updates from npm independently.
+
+            | File | Platform |
+            | --- | --- |
+            | `DeepSeek-*-win.exe` / `*-win-x64.exe` / `*-win-arm64.exe` | Windows installer |
+            | `DeepSeek-*-mac-arm64.dmg` | macOS Apple Silicon |
+            | `DeepSeek-*-mac-x64.dmg` | macOS Intel |
+            | `DeepSeek-*-linux-*.AppImage` / `.deb` / `.tar.gz` | Linux |
+
+            First launch needs network to download DeepSeek Harness.
+          files: |
+            installers/*.exe
+            installers/*.dmg
+            installers/*.zip
+            installers/*.AppImage
+            installers/*.deb
+            installers/*.rpm
+            installers/*.tar.gz

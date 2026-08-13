@@ -20,7 +20,7 @@ GitHub Actions builds:
 | macOS | `.dmg`, `.zip` (Intel + Apple Silicon) |
 | Linux | AppImage, `.deb`, `.rpm`, `.tar.gz` (x64 + arm64) |
 
-Download artifacts from the **Desktop installers** workflow on this repository.
+Download installers from the public [GitHub Release](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/tag/desktop-v0.1.0). Anyone can download those files without signing in. GitHub Actions artifacts are not a public store.
 
 ## Run from source
 
