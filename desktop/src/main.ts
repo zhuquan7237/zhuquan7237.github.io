@@ -74,7 +74,7 @@ async function createSplash(): Promise<void> {
     height: 420,
     frame: false,
     resizable: false,
-    show: true,
+    show: false,
     backgroundColor: "#101218",
     icon: windowIcon(),
     webPreferences: {
@@ -86,7 +86,9 @@ async function createSplash(): Promise<void> {
   splashWindow.on("closed", () => {
     splashWindow = null;
   });
+  // Showing only after the document is loaded avoids a white flash on launch.
   await splashWindow.loadFile(path.join(__dirname, "..", "resources", "splash.html"));
+  if (splashWindow && !splashWindow.isDestroyed()) splashWindow.show();
 }
 
 async function createMain(url: string, version: string): Promise<void> {
