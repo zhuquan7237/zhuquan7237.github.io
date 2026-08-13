@@ -15,6 +15,8 @@ import {
 export interface NodeRuntime {
   node: string;
   npm: string;
+  /** Path to npm-cli.js when npm must be run through node instead of its shell wrapper. */
+  npmCli: string | null;
   version: string;
 }
 
@@ -39,6 +41,7 @@ async function detectSystemNode(): Promise<NodeRuntime | null> {
   return {
     node: process.platform === "win32" ? "node.exe" : "node",
     npm: process.platform === "win32" ? "npm.cmd" : "npm",
+    npmCli: null,
     version: version.trim(),
   };
 }
@@ -47,9 +50,12 @@ async function installNodeSidecar(cacheDir: string, onLog: (line: string) => voi
   const dist = nodeDistFile(process.platform, process.arch);
   const unpacked = path.join(cacheDir, dist.dir);
   const nodePath = path.join(unpacked, dist.binary);
-  if (await exists(nodePath)) {
-    const version = (await runCapture(nodePath, ["-v"])).trim();
-    return { node: nodePath, npm: companionNpm(nodePath), version };
+
+  const cached = await usableSidecar(nodePath);
+  if (cached) return cached;
+  if (await exists(unpacked)) {
+    onLog("缓存的 Node 无法运行，正在重新下载");
+    await rm(unpacked, { recursive: true, force: true });
   }
 
   await mkdir(cacheDir, { recursive: true });
@@ -62,17 +68,45 @@ async function installNodeSidecar(cacheDir: string, onLog: (line: string) => voi
   } else {
     await runCapture("tar", ["-xJf", archivePath, "-C", cacheDir]);
   }
-  if (process.platform !== "win32") {
-    await chmod(nodePath, 0o755);
-  }
   await rm(archivePath, { force: true });
-  const version = (await runCapture(nodePath, ["-v"])).trim();
-  return { node: nodePath, npm: companionNpm(nodePath), version };
+  const runtime = await usableSidecar(nodePath);
+  if (!runtime) throw new Error("Node 运行时解压后仍无法执行，请检查磁盘权限后重试。");
+  return runtime;
+}
+
+/**
+ * Archives extracted with a restrictive umask, or interrupted extractions, leave
+ * a node binary that cannot be executed (EACCES). Restore the exec bit and prove
+ * the binary actually runs before trusting the cache.
+ */
+async function usableSidecar(nodePath: string): Promise<NodeRuntime | null> {
+  if (!(await exists(nodePath))) return null;
+  if (process.platform !== "win32") {
+    await chmod(nodePath, 0o755).catch(() => undefined);
+  }
+  const version = await runCapture(nodePath, ["-v"]).catch(() => "");
+  if (!version.trim().startsWith("v")) return null;
+  return {
+    node: nodePath,
+    npm: companionNpm(nodePath),
+    npmCli: await companionNpmCli(nodePath),
+    version: version.trim(),
+  };
 }
 
 function companionNpm(nodePath: string): string {
   if (process.platform === "win32") return path.join(path.dirname(nodePath), "npm.cmd");
   return path.join(path.dirname(nodePath), "npm");
+}
+
+/**
+ * The npm shell wrapper needs its own exec bit and a node on PATH. Running
+ * npm-cli.js through our node binary avoids both.
+ */
+async function companionNpmCli(nodePath: string): Promise<string | null> {
+  const prefix = process.platform === "win32" ? path.dirname(nodePath) : path.dirname(path.dirname(nodePath));
+  const cli = path.join(prefix, "lib", "node_modules", "npm", "bin", "npm-cli.js");
+  return (await exists(cli)) ? cli : null;
 }
 
 async function downloadFromMirrors(

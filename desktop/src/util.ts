@@ -12,6 +12,8 @@ export interface DesktopSettings {
   autoUpdateHarness: boolean;
   channel: HarnessChannel;
   registry: string;
+  /** "auto" keeps following the system language; "user" pins whatever was picked in settings. */
+  registrySource: "auto" | "user";
   /** If set, boot this already-built harness checkout instead of npm. */
   localHarnessDir: string;
   workspaceDir: string;
@@ -22,10 +24,26 @@ export const DEFAULT_SETTINGS: DesktopSettings = {
   autoUpdateHarness: true,
   channel: "latest",
   registry: NPM_REGISTRY,
+  registrySource: "auto",
   localHarnessDir: "",
   workspaceDir: "",
   lastHarnessVersion: "",
 };
+
+/**
+ * Settings saved before the mirror feature existed pin registry.npmjs.org, which
+ * would keep Chinese systems on the slow default forever. Re-derive whenever the
+ * user has not picked a registry themselves.
+ */
+export function applyRegistryPreference(
+  saved: Partial<DesktopSettings>,
+  preferred: string,
+): { registry: string; registrySource: "auto" | "user" } {
+  if (saved.registrySource === "user" && saved.registry) {
+    return { registry: saved.registry, registrySource: "user" };
+  }
+  return { registry: preferred, registrySource: "auto" };
+}
 
 export function parseDshWebUrl(output: string): string | null {
   const labeled = output.match(/dsh web:\s*(https?:\/\/[^\s]+)/i);
@@ -85,6 +103,14 @@ export function nodeDistFile(platform: NodeJS.Platform, arch: string): { dir: st
 export function nodeMeetsEngine(version: string, min = "22.19.0"): boolean {
   const cleaned = version.replace(/^v/, "");
   return compareVersions(cleaned, min) >= 0;
+}
+
+export function npmInvocation(
+  runtime: { node: string; npm: string; npmCli?: string | null },
+  args: string[],
+): { command: string; args: string[] } {
+  if (runtime.npmCli) return { command: runtime.node, args: [runtime.npmCli, ...args] };
+  return { command: runtime.npm, args };
 }
 
 export function npmSpec(channel: HarnessChannel): string {
@@ -153,8 +179,12 @@ export function linuxDesktopEntry(options: { exec: string; icon: string }): stri
 }
 
 /** zh-CN / Asia/Shanghai users get the China npm mirror on first launch. */
-export function localePrefersChina(env: NodeJS.ProcessEnv = process.env, timeZone = ""): boolean {
-  const blob = [env.LANG, env.LANGUAGE, env.LC_ALL, env.LC_MESSAGES, env.LC_CTYPE]
+export function localePrefersChina(
+  env: NodeJS.ProcessEnv = process.env,
+  timeZone = "",
+  systemLocale = "",
+): boolean {
+  const blob = [systemLocale, env.LANG, env.LANGUAGE, env.LC_ALL, env.LC_MESSAGES, env.LC_CTYPE]
     .filter(Boolean)
     .join(" ")
     .toLowerCase();
@@ -163,8 +193,40 @@ export function localePrefersChina(env: NodeJS.ProcessEnv = process.env, timeZon
   return tz === "Asia/Shanghai" || tz === "Asia/Chongqing" || tz === "Asia/Urumqi";
 }
 
-export function preferredNpmRegistry(env: NodeJS.ProcessEnv = process.env, timeZone = ""): string {
-  return localePrefersChina(env, timeZone) ? NPMMIRROR_REGISTRY : NPM_REGISTRY;
+export function preferredNpmRegistry(
+  env: NodeJS.ProcessEnv = process.env,
+  timeZone = "",
+  systemLocale = "",
+): string {
+  return localePrefersChina(env, timeZone, systemLocale) ? NPMMIRROR_REGISTRY : NPM_REGISTRY;
+}
+
+/** Turn a POSIX locale such as `zh_CN.UTF-8` into the BCP-47 tag Chromium expects. */
+export function normalizeLocaleTag(input: string): string {
+  const base = input.split(".")[0].split("@")[0].replace("_", "-").trim();
+  if (!/^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$/.test(base)) return "";
+  const [lang, ...rest] = base.split("-");
+  const subtags = rest.map((part) =>
+    part.length === 4
+      ? part[0].toUpperCase() + part.slice(1).toLowerCase()
+      : part.toUpperCase(),
+  );
+  return [lang.toLowerCase(), ...subtags].join("-");
+}
+
+/**
+ * The Harness web UI picks its language from `navigator.languages`, which
+ * Electron drives with `--lang`. Without this the UI is English even on a
+ * Chinese desktop.
+ */
+export function resolveUiLocale(env: NodeJS.ProcessEnv = process.env, systemLocale = ""): string {
+  const candidates = [systemLocale, env.LC_ALL, env.LC_MESSAGES, env.LANG, env.LANGUAGE];
+  for (const candidate of candidates) {
+    if (!candidate) continue;
+    const tag = normalizeLocaleTag(candidate.split(":")[0]);
+    if (tag && !/^(c|posix)$/i.test(tag)) return tag;
+  }
+  return "";
 }
 
 export function hostTimeZone(): string {
@@ -247,6 +309,57 @@ export function resolveLinuxDesktopDir(
   if (exists(desktop)) return desktop;
   if (exists(chinese)) return chinese;
   return desktop;
+}
+
+export interface WorkspaceRegistry {
+  unit: { name: string; version: number };
+  global: { initialized: boolean; workspaceIds: string[]; archivedSessionIds: string[] };
+  tables: { workspaces: Record<string, unknown> };
+}
+
+/**
+ * dsh keeps its workspace list in DSH_HOME rather than deriving it from the
+ * process cwd, so a fresh profile always opens the picker. Register the default
+ * folder once, and only into a registry we fully recognise as empty — anything
+ * else belongs to the user and dsh itself.
+ */
+export function seedWorkspaceRegistry(
+  existing: unknown,
+  entry: { id: string; path: string; title: string; now: string },
+): WorkspaceRegistry | null {
+  const empty: WorkspaceRegistry = {
+    unit: { name: "workspace", version: 2 },
+    global: { initialized: true, workspaceIds: [], archivedSessionIds: [] },
+    tables: { workspaces: {} },
+  };
+  const base = existing === null || existing === undefined ? empty : existing;
+  if (typeof base !== "object") return null;
+  const registry = base as Partial<WorkspaceRegistry>;
+  if (registry.unit && (registry.unit.name !== "workspace" || registry.unit.version !== 2)) return null;
+  const ids = registry.global?.workspaceIds;
+  if (ids !== undefined && (!Array.isArray(ids) || ids.length > 0)) return null;
+  const table = registry.tables?.workspaces;
+  if (table !== undefined && (typeof table !== "object" || Object.keys(table).length > 0)) return null;
+
+  return {
+    unit: registry.unit ?? empty.unit,
+    global: {
+      initialized: true,
+      workspaceIds: [entry.id],
+      archivedSessionIds: registry.global?.archivedSessionIds ?? [],
+    },
+    tables: {
+      workspaces: {
+        [entry.id]: {
+          path: entry.path,
+          title: entry.title,
+          sessionIds: [],
+          createdAt: entry.now,
+          updatedAt: entry.now,
+        },
+      },
+    },
+  };
 }
 
 export function isSystemInstalledApp(execPath: string): boolean {

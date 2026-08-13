@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  applyRegistryPreference,
   chromeSandboxIsConfigured,
   clampWindowBounds,
   compareVersions,
@@ -12,11 +13,15 @@ import {
   nodeDistFile,
   nodeDownloadUrls,
   nodeMeetsEngine,
+  normalizeLocaleTag,
+  npmInvocation,
   npmSpec,
   parseDshWebUrl,
   parseXdgUserDir,
   preferredNpmRegistry,
   resolveLinuxDesktopDir,
+  resolveUiLocale,
+  seedWorkspaceRegistry,
 } from "./util";
 
 describe("parseDshWebUrl", () => {
@@ -127,6 +132,52 @@ describe("typical-user defaults", () => {
         hasSwitch: () => false,
       }),
     ).toEqual(["--no-sandbox", "--disable-gpu-sandbox", "--disable-dev-shm-usage"]);
+  });
+
+  it("keeps following the system language until the user picks a registry", () => {
+    const china = "https://registry.npmmirror.com";
+    expect(applyRegistryPreference({ registry: "https://registry.npmjs.org" }, china)).toEqual({
+      registry: china,
+      registrySource: "auto",
+    });
+    expect(
+      applyRegistryPreference({ registry: "https://registry.npmjs.org", registrySource: "user" }, china),
+    ).toEqual({ registry: "https://registry.npmjs.org", registrySource: "user" });
+  });
+
+  it("turns POSIX locales into Chromium language tags", () => {
+    expect(normalizeLocaleTag("zh_CN.UTF-8")).toBe("zh-CN");
+    expect(normalizeLocaleTag("C")).toBe("");
+    expect(resolveUiLocale({ LANG: "zh_CN.UTF-8" })).toBe("zh-CN");
+    expect(resolveUiLocale({ LANG: "C", LANGUAGE: "" })).toBe("");
+    expect(resolveUiLocale({}, "zh-hans-cn")).toBe("zh-Hans-CN");
+    expect(localePrefersChina({}, "", "zh-Hans-CN")).toBe(true);
+  });
+
+  it("runs npm through node when a sidecar cli is available", () => {
+    expect(npmInvocation({ node: "/n/node", npm: "/n/npm", npmCli: "/n/npm-cli.js" }, ["install"])).toEqual({
+      command: "/n/node",
+      args: ["/n/npm-cli.js", "install"],
+    });
+    expect(npmInvocation({ node: "node", npm: "npm", npmCli: null }, ["install"])).toEqual({
+      command: "npm",
+      args: ["install"],
+    });
+  });
+
+  it("registers a default workspace only into an empty dsh registry", () => {
+    const entry = { id: "id-1", path: "/home/me/DeepSeek", title: "DeepSeek", now: "2026-01-01T00:00:00.000Z" };
+    const seeded = seedWorkspaceRegistry(null, entry);
+    expect(seeded?.global.workspaceIds).toEqual(["id-1"]);
+    expect(seeded?.tables.workspaces["id-1"]).toMatchObject({ path: "/home/me/DeepSeek", sessionIds: [] });
+
+    const used = {
+      unit: { name: "workspace", version: 2 },
+      global: { initialized: true, workspaceIds: ["mine"], archivedSessionIds: [] },
+      tables: { workspaces: { mine: { path: "/other" } } },
+    };
+    expect(seedWorkspaceRegistry(used, entry)).toBeNull();
+    expect(seedWorkspaceRegistry({ unit: { name: "workspace", version: 3 } }, entry)).toBeNull();
   });
 
   it("reads XDG desktop folders including 桌面", () => {

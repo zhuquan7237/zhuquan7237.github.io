@@ -81,17 +81,20 @@
       });
       $("official").onclick = () => { $("registry").value = OFFICIAL; };
       $("china").onclick = () => { $("registry").value = CHINA; };
+      $("registry").oninput = () => { $("registry").dataset.touched = "1"; };
       $("pick").onclick = async () => {
         const dir = await window.desktop.pickDir();
         if (dir) $("local").value = dir;
       };
       $("save").onclick = async () => {
         const current = await window.desktop.getSettings();
+        const registry = $("registry").value.trim() || current.registry;
         await window.desktop.saveSettings({
           ...current,
           channel: $("channel").value,
           autoUpdateHarness: $("auto").checked,
-          registry: $("registry").value,
+          registry,
+          registrySource: registry === current.registry ? current.registrySource : "user",
           localHarnessDir: $("local").value,
         });
         window.desktop.apply();
