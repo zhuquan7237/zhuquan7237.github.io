@@ -13,6 +13,7 @@
 
 [主页 / 下载](https://zhuquan7237.github.io) ·
 [关于作者](https://zhuquan7237.github.io/me.html) ·
+[GitHub 搜索名](https://github.com/zhuquan7237/deepseek-harness-desktop) ·
 [下载 0.1.4](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/latest) ·
 [Windows](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.4/DeepSeek-0.1.4-win.exe) ·
 [Linux tar.gz](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.4/DeepSeek-0.1.4-linux-x64.tar.gz) ·
@@ -79,5 +80,7 @@ npm start
 ```
 
 ## 搜索
+
+在 GitHub 搜 **DeepSeek Harness Desktop** / **dsh desktop** 请用可搜索仓库：[zhuquan7237/deepseek-harness-desktop](https://github.com/zhuquan7237/deepseek-harness-desktop)（这个 Pages 仓库名叫 `zhuquan7237.github.io`，按产品名排不到前面）。
 
 DeepSeek Harness 桌面版、dsh desktop、DeepSeek Harness 下载、DeepSeek Harness Windows、DeepSeek Harness Linux、`@deepseek-ai/dsh`、Codex DeepSeek。
