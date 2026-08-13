@@ -409,6 +409,8 @@ async function boot(forceUpdate: boolean): Promise<void> {
 if (linuxReady) {
   app.setName(APP_DISPLAY_NAME);
   app.setAppUserModelId(APP_ID);
+  // Keep the 0.1.2 folder name so upgrades do not re-download the engine or lose settings.
+  app.setPath("userData", path.join(app.getPath("appData"), "DeepSeek"));
   const gotLock = app.requestSingleInstanceLock();
   if (!gotLock) {
     app.quit();
