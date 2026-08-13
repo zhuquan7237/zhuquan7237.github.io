@@ -11,11 +11,12 @@
         color: #e8edf7;
         display: flex;
         flex-direction: column;
-        padding: 28px 28px 20px;
+        padding: 24px 24px 16px;
       }
+      .top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
       h1 { margin: 0 0 6px; font-size: 22px; letter-spacing: -0.03em; }
-      p { margin: 0; color: #8b93a7; font-size: 13px; }
-      .status { margin: 22px 0 10px; font-size: 14px; color: #7eb0ff; }
+      p { margin: 0; color: #8b93a7; font-size: 13px; line-height: 1.5; }
+      .status { margin: 18px 0 8px; font-size: 14px; color: #7eb0ff; min-height: 20px; }
       .log {
         flex: 1;
         background: #0c0e14;
@@ -29,21 +30,44 @@
       }
       .bar { height: 4px; background: #1c2130; border-radius: 99px; margin-top: 12px; overflow: hidden; }
       .bar span { display: block; height: 100%; width: 40%; background: #4d93f8; animation: slide 1.2s infinite; }
+      .bar.error span { display: none; }
       @keyframes slide { from { transform: translateX(-100%); } to { transform: translateX(280%); } }
+      button {
+        appearance: none;
+        border: 1px solid rgba(255,255,255,0.16);
+        background: #1c2130;
+        color: #e8edf7;
+        border-radius: 999px;
+        padding: 6px 12px;
+        font-size: 12px;
+        cursor: pointer;
+      }
+      button.hidden { display: none; }
     </style>
   </head>
   <body>
-    <h1>DeepSeek</h1>
-    <p>Desktop shell · engine is DeepSeek Harness (`dsh`), updated independently from npm.</p>
-    <div class="status" id="status">Starting…</div>
+    <div class="top">
+      <div>
+        <h1>DeepSeek</h1>
+        <p>首次启动会联网安装官方 DeepSeek Harness（dsh）。请保持网络畅通，完成后会自动打开界面。</p>
+      </div>
+      <button id="quit" type="button">退出</button>
+    </div>
+    <div class="status" id="status">正在启动…</div>
     <div class="log" id="log"></div>
-    <div class="bar"><span></span></div>
+    <div class="bar" id="bar"><span></span></div>
     <script>
       const status = document.getElementById("status");
       const log = document.getElementById("log");
+      const bar = document.getElementById("bar");
+      const quit = document.getElementById("quit");
+      quit.addEventListener("click", () => window.desktop.quit());
       window.desktop.onStatus((payload) => {
         status.textContent = payload.text;
-        if (payload.phase === "error") status.style.color = "#f07178";
+        if (payload.phase === "error") {
+          status.style.color = "#f07178";
+          bar.classList.add("error");
+        }
       });
       window.desktop.onLog((line) => {
         log.textContent += line + "\n";

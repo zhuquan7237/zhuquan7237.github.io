@@ -59,7 +59,7 @@ export async function ensureHarness(
     const localBin = path.join(settings.localHarnessDir, "apps", "cli", "lib", "bin.js");
     const pkgPath = path.join(settings.localHarnessDir, "apps", "cli", "package.json");
     const pkg = JSON.parse(await readFile(pkgPath, "utf8")) as { version?: string };
-    onLog(`Using local harness checkout ${settings.localHarnessDir} (${pkg.version ?? "unknown"})`);
+    onLog(`使用本地 Harness：${settings.localHarnessDir}（${pkg.version ?? "unknown"}）`);
     return { version: pkg.version ?? "local", bin: localBin, prefix: settings.localHarnessDir };
   }
 
@@ -69,15 +69,16 @@ export async function ensureHarness(
   const prefix = path.join(harnessRoot, wanted);
   const installed = await readInstalledVersion(prefix);
   if (installed === wanted) {
-    onLog(`Harness ${wanted} already installed`);
+    onLog(`引擎 ${wanted} 已安装，跳过下载`);
     return { version: wanted, bin: dshBin(prefix), prefix };
   }
   if (installed && !settings.autoUpdateHarness && compareVersions(installed, wanted) >= 0) {
-    onLog(`Keeping installed harness ${installed} (auto-update off)`);
+    onLog(`保留已安装的引擎 ${installed}（已关闭自动更新）`);
     return { version: installed, bin: dshBin(prefix), prefix };
   }
 
-  onLog(`Installing ${DSH_PACKAGE}@${wanted}`);
+  const registry = settings.registry || NPM_REGISTRY;
+  onLog(`正在从 npm 安装 ${DSH_PACKAGE}@${wanted}`);
   await rm(prefix, { recursive: true, force: true });
   await mkdir(prefix, { recursive: true });
   await writeFile(
@@ -86,15 +87,17 @@ export async function ensureHarness(
   );
   await runCapture(
     runtime.npm,
-    ["install", npmSpec(wanted), "--omit=dev", "--no-fund", "--no-audit"],
+    ["install", npmSpec(wanted), "--omit=dev", "--no-fund", "--no-audit", "--registry", registry],
     prefix,
     {
       PATH: `${path.dirname(runtime.node)}${path.delimiter}${process.env.PATH ?? ""}`,
       npm_config_update_notifier: "false",
+      npm_config_registry: registry,
     },
+    onLog,
   );
   const version = (await readInstalledVersion(prefix)) ?? wanted;
-  onLog(`Harness ${version} ready`);
+  onLog(`引擎 ${version} 已就绪`);
   return { version, bin: dshBin(prefix), prefix };
 }
 
@@ -107,7 +110,7 @@ export async function startHarnessWeb(options: {
 }): Promise<RunningHarness> {
   await mkdir(options.dshHome, { recursive: true });
   await mkdir(options.workspaceDir, { recursive: true });
-  options.onLog(`Starting dsh web (${options.install.version})`);
+  options.onLog(`正在启动 dsh web（${options.install.version}）`);
   const { ELECTRON_RUN_AS_NODE: _electronNode, ...baseEnv } = process.env;
   const child = spawn(options.runtime.node, [options.install.bin, "web", "--host", "127.0.0.1", "--port", "0"], {
     cwd: options.workspaceDir,
@@ -122,7 +125,7 @@ export async function startHarnessWeb(options: {
   let buffer = "";
   const url = await new Promise<string>((resolve, reject) => {
     const timer = setTimeout(() => {
-      reject(new Error("Timed out waiting for dsh web URL. See the log for boot errors."));
+      reject(new Error("等待 Harness 界面超时。请检查网络后重试，或查看下方日志。"));
     }, 120_000);
     const onData = (chunk: Buffer) => {
       const text = chunk.toString("utf8");

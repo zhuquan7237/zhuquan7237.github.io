@@ -1,9 +1,8 @@
 import { spawn } from "node:child_process";
 import { chmod, mkdir, rm, stat, writeFile } from "node:fs/promises";
 import { createWriteStream } from "node:fs";
-import { pipeline } from "node:stream/promises";
 import path from "node:path";
-import { NODE_VERSION, nodeDistFile, nodeMeetsEngine } from "./util";
+import { NODE_VERSION, formatByteProgress, nodeDistFile, nodeMeetsEngine } from "./util";
 
 export interface NodeRuntime {
   node: string;
@@ -17,10 +16,10 @@ export async function resolveNodeRuntime(
 ): Promise<NodeRuntime> {
   const system = await detectSystemNode();
   if (system && nodeMeetsEngine(system.version)) {
-    onLog(`Using system Node ${system.version}`);
+    onLog(`使用本机 Node ${system.version}`);
     return system;
   }
-  onLog(`Need Node >= 22.19; downloading official Node ${NODE_VERSION} sidecar`);
+  onLog(`系统 Node 低于 22.19，改为下载官方 Node ${NODE_VERSION}（仅首次）`);
   return await installNodeSidecar(cacheDir, onLog);
 }
 
@@ -48,9 +47,9 @@ async function installNodeSidecar(cacheDir: string, onLog: (line: string) => voi
   await mkdir(cacheDir, { recursive: true });
   const url = `https://nodejs.org/dist/v${NODE_VERSION}/${dist.archive}`;
   const archivePath = path.join(cacheDir, dist.archive);
-  onLog(`Downloading ${url}`);
-  await downloadFile(url, archivePath);
-  onLog("Unpacking Node runtime");
+  onLog(`正在下载 Node.js：${url}`);
+  await downloadFile(url, archivePath, onLog);
+  onLog("正在解压 Node 运行时");
   if (dist.archive.endsWith(".zip")) {
     await runCapture("powershell", ["-NoProfile", "-Command", `Expand-Archive -Force '${archivePath}' '${cacheDir}'`]);
   } else {
@@ -69,10 +68,41 @@ function companionNpm(nodePath: string): string {
   return path.join(path.dirname(nodePath), "npm");
 }
 
-async function downloadFile(url: string, dest: string): Promise<void> {
+async function downloadFile(
+  url: string,
+  dest: string,
+  onLog: (line: string) => void,
+): Promise<void> {
   const response = await fetch(url);
-  if (!response.ok || !response.body) throw new Error(`Download failed ${response.status}: ${url}`);
-  await pipeline(response.body as unknown as NodeJS.ReadableStream, createWriteStream(dest));
+  if (!response.ok || !response.body) {
+    throw new Error(`下载失败 ${response.status}: ${url}`);
+  }
+  const total = Number(response.headers.get("content-length") || 0);
+  const file = createWriteStream(dest);
+  const reader = (response.body as ReadableStream<Uint8Array>).getReader();
+  let downloaded = 0;
+  let lastBucket = -1;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (!value) continue;
+      const buf = Buffer.from(value);
+      await new Promise<void>((resolve, reject) => {
+        file.write(buf, (error) => (error ? reject(error) : resolve()));
+      });
+      downloaded += buf.length;
+      const bucket = total > 0 ? Math.floor((downloaded / total) * 10) : Math.floor(downloaded / (5 * 1048576));
+      if (bucket !== lastBucket) {
+        lastBucket = bucket;
+        onLog(`下载进度 ${formatByteProgress(downloaded, total)}`);
+      }
+    }
+  } finally {
+    await new Promise<void>((resolve, reject) => {
+      file.end((error: NodeJS.ErrnoException | null) => (error ? reject(error) : resolve()));
+    });
+  }
 }
 
 async function exists(file: string): Promise<boolean> {
@@ -89,6 +119,7 @@ export async function runCapture(
   args: string[],
   cwd?: string,
   extraEnv?: NodeJS.ProcessEnv,
+  onLog?: (line: string) => void,
 ): Promise<string> {
   return await new Promise((resolve, reject) => {
     const child = spawn(command, args, {
@@ -98,12 +129,18 @@ export async function runCapture(
     });
     let out = "";
     let err = "";
-    child.stdout.on("data", (chunk) => {
-      out += String(chunk);
-    });
-    child.stderr.on("data", (chunk) => {
-      err += String(chunk);
-    });
+    const take = (chunk: unknown, toErr: boolean) => {
+      const text = String(chunk);
+      if (toErr) err += text;
+      else out += text;
+      if (!onLog) return;
+      for (const line of text.split(/\r?\n/)) {
+        const trimmed = line.trim();
+        if (trimmed) onLog(trimmed);
+      }
+    };
+    child.stdout.on("data", (chunk) => take(chunk, false));
+    child.stderr.on("data", (chunk) => take(chunk, true));
     child.on("error", reject);
     child.on("close", (code) => {
       if (code === 0) resolve(out || err);

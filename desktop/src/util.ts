@@ -89,3 +89,18 @@ export function npmSpec(channel: HarnessChannel): string {
   if (channel.startsWith(DSH_PACKAGE)) return channel;
   return `${DSH_PACKAGE}@${channel}`;
 }
+
+export function formatByteProgress(downloaded: number, total: number): string {
+  const mb = (n: number) => `${(n / 1048576).toFixed(1)} MB`;
+  if (total > 0) {
+    const pct = Math.min(100, Math.floor((downloaded / total) * 100));
+    return `${pct}%（${mb(downloaded)} / ${mb(total)}）`;
+  }
+  return mb(downloaded);
+}
+
+/** Chromium's helper must be root-owned and setuid (mode 4755). */
+export function chromeSandboxIsConfigured(info: { uid: number; mode: number } | null): boolean {
+  if (!info) return false;
+  return info.uid === 0 && (info.mode & 0o4000) !== 0;
+}

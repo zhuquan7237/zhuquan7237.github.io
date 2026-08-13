@@ -4,7 +4,7 @@
 
 A Codex-style native GUI for the official [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (`dsh`, `@deepseek-ai/dsh`, `npx @deepseek-ai/dsh web`). Download one installer — you do **not** clone the harness source.
 
-[Download](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/tag/desktop-v0.1.0) · [Linux tar.gz](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.0/DeepSeek-0.1.0-linux-x64.tar.gz) · [Windows exe](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.0/DeepSeek-0.1.0-win.exe)
+[Download](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/tag/desktop-v0.1.1) · [Linux tar.gz](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.1/DeepSeek-0.1.1-linux-x64.tar.gz) · [Windows exe](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.1/DeepSeek-0.1.1-win.exe)
 
 ## Search keywords
 
@@ -22,7 +22,7 @@ On GitHub, add topic filters: `deepseek-harness`, `dsh`, `deepseek-desktop`.
 Codex-style **desktop shell**. The engine is always official DeepSeek Harness from npm (`@deepseek-ai/dsh`). Menu **Harness → 检查 Harness 更新** follows new `dsh` releases without rebuilding this app.
 
 - Source: [`desktop/`](./desktop/)
-- Installers: [Releases / desktop-v0.1.0](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/tag/desktop-v0.1.0)
+- Installers: [Releases / desktop-v0.1.1](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/tag/desktop-v0.1.1)
 - Dev: `cd desktop && npm install && npm start`
 
 ## Browser preview

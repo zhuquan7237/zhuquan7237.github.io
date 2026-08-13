@@ -87,22 +87,28 @@ jobs:
       - name: Publish public GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: desktop-v0.1.0
-          name: DeepSeek Desktop 0.1.0
+          tag_name: desktop-v0.1.1
+          name: DeepSeek Desktop 0.1.1
           prerelease: true
           make_latest: true
           fail_on_unmatched_files: false
           body: |
             Codex-style desktop shell. The engine is official `@deepseek-ai/dsh` and updates from npm independently.
 
+            First launch needs internet: the app downloads Node (if needed) and `@deepseek-ai/dsh`. After that, open **Harness → 检查 Harness 更新** to upgrade the engine without reinstalling the desktop app.
+
+            **Linux:** prefer `.tar.gz` or `.deb`. AppImage needs libfuse2 (often missing on Ubuntu 24.04). Unpack tar.gz and run `./DeepSeek`.
+            **Windows:** SmartScreen may warn because the build is unsigned — choose More info → Run anyway.
+            **macOS:** unsigned — right-click the app → Open.
+
             | File | Platform |
             | --- | --- |
-            | `DeepSeek-*-win.exe` / `*-win-x64.exe` / `*-win-arm64.exe` | Windows installer |
+            | `DeepSeek-*-win.exe` | Windows installer (x64 + arm64) |
+            | `DeepSeek-*-win-x64.exe` / `*-win-arm64.exe` | Windows portable |
             | `DeepSeek-*-mac-arm64.dmg` | macOS Apple Silicon |
             | `DeepSeek-*-mac-x64.dmg` | macOS Intel |
-            | `DeepSeek-*-linux-*.AppImage` / `.deb` / `.tar.gz` | Linux |
-
-            First launch needs network to download DeepSeek Harness.
+            | `DeepSeek-*-linux-x64.tar.gz` / `*-linux-amd64.deb` | Linux x64 |
+            | `DeepSeek-*-linux-arm64.tar.gz` / `*-linux-arm64.deb` | Linux arm64 |
           files: |
             installers/*.exe
             installers/*.dmg

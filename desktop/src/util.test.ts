@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  chromeSandboxIsConfigured,
   compareVersions,
+  formatByteProgress,
   nodeDistFile,
   nodeMeetsEngine,
   npmSpec,
@@ -41,5 +43,18 @@ describe("npm and node dist names", () => {
     expect(nodeDistFile("linux", "x64").archive).toBe("node-v22.23.2-linux-x64.tar.xz");
     expect(nodeDistFile("win32", "arm64").binary).toBe("node.exe");
     expect(nodeDistFile("darwin", "arm64").dir).toBe("node-v22.23.2-darwin-arm64");
+  });
+});
+
+describe("first-run helpers", () => {
+  it("formats download progress", () => {
+    expect(formatByteProgress(10 * 1048576, 40 * 1048576)).toBe("25%（10.0 MB / 40.0 MB）");
+    expect(formatByteProgress(1536, 0)).toBe("0.0 MB");
+  });
+
+  it("only treats root setuid chrome-sandbox as usable", () => {
+    expect(chromeSandboxIsConfigured({ uid: 0, mode: 0o104755 })).toBe(true);
+    expect(chromeSandboxIsConfigured({ uid: 1000, mode: 0o755 })).toBe(false);
+    expect(chromeSandboxIsConfigured(null)).toBe(false);
   });
 });

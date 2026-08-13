@@ -12,4 +12,5 @@ contextBridge.exposeInMainWorld("desktop", {
   saveSettings: (settings: DesktopSettings): Promise<DesktopSettings> => ipcRenderer.invoke("settings:save", settings),
   pickDir: (): Promise<string> => ipcRenderer.invoke("settings:pick-dir"),
   apply: () => ipcRenderer.send("settings:apply"),
+  quit: () => ipcRenderer.send("splash:quit"),
 });

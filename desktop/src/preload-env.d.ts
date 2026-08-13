@@ -9,6 +9,7 @@ declare global {
       saveSettings: (settings: import("./util").DesktopSettings) => Promise<import("./util").DesktopSettings>;
       pickDir: () => Promise<string>;
       apply: () => void;
+      quit: () => void;
     };
   }
 }

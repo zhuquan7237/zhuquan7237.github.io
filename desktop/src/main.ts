@@ -3,8 +3,11 @@ import path from "node:path";
 import { homedir } from "node:os";
 import { loadSettings, saveSettings } from "./settings";
 import { ensureHarness, fetchPublishedVersion, startHarnessWeb, stopHarness, type RunningHarness } from "./harness";
+import { applyLinuxRuntimeFlags } from "./linux-flags";
 import { resolveNodeRuntime } from "./node-runtime";
 import { NPM_REGISTRY, type DesktopSettings } from "./util";
+
+applyLinuxRuntimeFlags();
 
 let mainWindow: BrowserWindow | null = null;
 let splashWindow: BrowserWindow | null = null;
@@ -19,10 +22,24 @@ function sendSplash(channel: string, payload: unknown): void {
   splashWindow?.webContents.send(channel, payload);
 }
 
+function closeSplash(): void {
+  if (splashWindow && !splashWindow.isDestroyed()) {
+    splashWindow.close();
+  }
+  splashWindow = null;
+}
+
+function revealMain(): void {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  if (!mainWindow.isVisible()) mainWindow.show();
+  mainWindow.focus();
+  closeSplash();
+}
+
 async function createSplash(): Promise<void> {
   splashWindow = new BrowserWindow({
-    width: 560,
-    height: 360,
+    width: 580,
+    height: 420,
     frame: false,
     resizable: false,
     show: true,
@@ -32,6 +49,9 @@ async function createSplash(): Promise<void> {
       contextIsolation: true,
       nodeIntegration: false,
     },
+  });
+  splashWindow.on("closed", () => {
+    splashWindow = null;
   });
   await splashWindow.loadFile(path.join(__dirname, "..", "resources", "splash.html"));
 }
@@ -51,37 +71,42 @@ async function createMain(url: string, version: string): Promise<void> {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
+      backgroundThrottling: false,
     },
   });
   mainWindow.webContents.setWindowOpenHandler(({ url: target }) => {
     void shell.openExternal(target);
     return { action: "deny" };
   });
-  await mainWindow.loadURL(url);
-  mainWindow.once("ready-to-show", () => {
-    mainWindow?.show();
-    splashWindow?.close();
-    splashWindow = null;
+  mainWindow.webContents.once("did-fail-load", (_event, code, desc) => {
+    sendSplash("status", { phase: "error", text: `界面加载失败（${code}）：${desc}` });
+  });
+  mainWindow.once("ready-to-show", () => revealMain());
+  mainWindow.webContents.once("did-finish-load", () => {
+    setTimeout(() => revealMain(), 250);
   });
   mainWindow.on("closed", () => {
     mainWindow = null;
   });
+  await mainWindow.loadURL(url);
+  // ready-to-show can fire during loadURL; some Linux VMs never emit it. Always reveal.
+  revealMain();
 }
 
 function buildMenu(): void {
   const template: Electron.MenuItemConstructorOptions[] = [
     {
-      label: "File",
+      label: "文件",
       submenu: [
         {
-          label: "Open Workspace…",
+          label: "打开工作区…",
           accelerator: "CmdOrCtrl+O",
           click: () => {
             void chooseWorkspace(true);
           },
         },
         { type: "separator" },
-        { role: "quit" },
+        { role: "quit", label: "退出" },
       ],
     },
     {
@@ -114,31 +139,31 @@ function buildMenu(): void {
       ],
     },
     {
-      label: "View",
+      label: "查看",
       submenu: [
-        { role: "reload" },
-        { role: "toggleDevTools" },
+        { role: "reload", label: "重新加载" },
+        { role: "toggleDevTools", label: "开发者工具" },
         { type: "separator" },
         {
-          label: "Open UI in browser",
+          label: "在浏览器中打开界面",
           click: () => {
             if (running?.url) void shell.openExternal(running.url);
           },
         },
-        { role: "togglefullscreen" },
+        { role: "togglefullscreen", label: "全屏" },
       ],
     },
     {
-      label: "Help",
+      label: "帮助",
       submenu: [
         {
-          label: "API keys",
+          label: "获取 API Key",
           click: () => {
             void shell.openExternal("https://platform.deepseek.com");
           },
         },
         {
-          label: "Harness docs",
+          label: "Harness 使用说明",
           click: () => {
             void shell.openExternal("https://github.com/deepseek-ai/deepseek-harness/blob/master/docs/user/guide/index.md");
           },
@@ -154,9 +179,9 @@ function buildMenu(): void {
 
 async function chooseWorkspace(reboot: boolean): Promise<void> {
   const picked = await dialog.showOpenDialog({
-    title: "Choose workspace",
+    title: "选择工作区",
     properties: ["openDirectory", "createDirectory"],
-    defaultPath: settings.workspaceDir || homedir(),
+    defaultPath: settings.workspaceDir || path.join(homedir(), "DeepSeek"),
   });
   if (picked.canceled || !picked.filePaths[0]) return;
   settings.workspaceDir = picked.filePaths[0];
@@ -173,7 +198,7 @@ async function checkHarnessUpdates(): Promise<void> {
       await dialog.showMessageBox({
         type: "info",
         title: "Harness 更新",
-        message: `DeepSeek Harness 已是最新版本`,
+        message: "DeepSeek Harness 已是最新版本",
         detail: `当前引擎：${current}\n来源：npm ${DSH_LABEL(channel)}\n不需要拉取 GitHub 源码。`,
       });
       return;
@@ -219,12 +244,15 @@ async function openSettings(): Promise<void> {
 async function boot(forceUpdate: boolean): Promise<void> {
   try {
     if (!splashWindow) await createSplash();
-    sendSplash("status", { phase: "runtime", text: "Checking Node.js runtime…" });
+    sendSplash("status", {
+      phase: "runtime",
+      text: "正在检查运行环境。首次启动需要联网下载引擎，大约 1–3 分钟。",
+    });
     const runtime = await resolveNodeRuntime(path.join(userData(), "runtime"), (line) => {
       sendSplash("log", line);
     });
     if (forceUpdate) settings.autoUpdateHarness = true;
-    sendSplash("status", { phase: "engine", text: "Syncing DeepSeek Harness from npm…" });
+    sendSplash("status", { phase: "engine", text: "正在从 npm 同步官方 DeepSeek Harness…" });
     const install = await ensureHarness(
       settings,
       runtime,
@@ -234,21 +262,21 @@ async function boot(forceUpdate: boolean): Promise<void> {
     settings.lastHarnessVersion = install.version;
     await saveSettings(userData(), settings);
 
-    sendSplash("status", { phase: "start", text: `Starting dsh web ${install.version}…` });
+    sendSplash("status", { phase: "start", text: `正在启动界面（dsh ${install.version}）…` });
     stopHarness(running);
     running = await startHarnessWeb({
       runtime,
       install,
-      workspaceDir: settings.workspaceDir || homedir(),
+      workspaceDir: settings.workspaceDir || path.join(homedir(), "DeepSeek"),
       dshHome: path.join(userData(), "dsh-home"),
       onLog: (line) => sendSplash("log", line),
     });
     buildMenu();
-    if (mainWindow) {
+    sendSplash("status", { phase: "start", text: "正在打开 DeepSeek Harness…" });
+    if (mainWindow && !mainWindow.isDestroyed()) {
       await mainWindow.loadURL(running.url);
       mainWindow.setTitle(`DeepSeek — dsh ${running.version}`);
-      splashWindow?.close();
-      splashWindow = null;
+      revealMain();
     } else {
       await createMain(running.url, running.version);
     }
@@ -273,6 +301,9 @@ app.whenReady().then(async () => {
   });
   ipcMain.on("settings:apply", () => {
     void boot(true);
+  });
+  ipcMain.on("splash:quit", () => {
+    app.quit();
   });
   buildMenu();
   await boot(false);
