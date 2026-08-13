@@ -79,7 +79,7 @@ export async function ensureHarness(
   }
 
   const registry = settings.registry || NPM_REGISTRY;
-  onLog(`正在从 npm 安装 ${DSH_PACKAGE}@${wanted}`);
+  onLog(`正在从 ${registry} 安装 ${DSH_PACKAGE}@${wanted}`);
   await rm(prefix, { recursive: true, force: true });
   await mkdir(prefix, { recursive: true });
   await writeFile(
@@ -117,6 +117,7 @@ export async function startHarnessWeb(options: {
   workspaceDir: string;
   dshHome: string;
   onLog: (line: string) => void;
+  extraEnv?: NodeJS.ProcessEnv;
 }): Promise<RunningHarness> {
   await mkdir(options.dshHome, { recursive: true });
   await mkdir(options.workspaceDir, { recursive: true });
@@ -126,6 +127,7 @@ export async function startHarnessWeb(options: {
     cwd: options.workspaceDir,
     env: {
       ...baseEnv,
+      ...options.extraEnv,
       DSH_HOME: options.dshHome,
       PATH: `${path.dirname(options.runtime.node)}${path.delimiter}${process.env.PATH ?? ""}`,
     },

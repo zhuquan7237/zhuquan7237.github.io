@@ -5,11 +5,20 @@ import {
   applyRegistryPreference,
   hostTimeZone,
   preferredNpmRegistry,
+  resolveTimeZone,
   type DesktopSettings,
 } from "./util";
 
-export async function loadSettings(userData: string, systemLocale = ""): Promise<DesktopSettings> {
-  const preferred = preferredNpmRegistry(process.env, process.env.TZ || hostTimeZone(), systemLocale);
+export async function loadSettings(
+  userData: string,
+  systemLocale = "",
+  timeZone = "",
+): Promise<DesktopSettings> {
+  const preferred = preferredNpmRegistry(
+    process.env,
+    timeZone || resolveTimeZone(process.env, "", hostTimeZone()),
+    systemLocale,
+  );
   const file = path.join(userData, "desktop-settings.json");
   let saved: Partial<DesktopSettings> = {};
   try {

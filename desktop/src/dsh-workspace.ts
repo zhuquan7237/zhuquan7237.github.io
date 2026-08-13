@@ -1,14 +1,18 @@
 import { mkdir, readFile, realpath, writeFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 import path from "node:path";
-import { seedWorkspaceRegistry } from "./util";
+import { retargetHomeWorkspace, seedWorkspaceRegistry } from "./util";
 
 /**
- * Give first-time users a ready workspace instead of an empty picker. Only
- * touches a registry that is still empty, so a returning user's list is never
- * rewritten.
+ * Give first-time users a ready workspace instead of an empty picker. Also
+ * rewrite a leftover $HOME workspace (title = username, e.g. "box") that 0.1.3
+ * created when a .desktop launch used the home folder as cwd.
  */
-export async function ensureDefaultWorkspace(dshHome: string, workspaceDir: string): Promise<boolean> {
+export async function ensureDefaultWorkspace(
+  dshHome: string,
+  workspaceDir: string,
+  homeDir: string,
+): Promise<boolean> {
   const file = path.join(dshHome, "storages", "workspace.json");
   let existing: unknown = null;
   try {
@@ -18,12 +22,13 @@ export async function ensureDefaultWorkspace(dshHome: string, workspaceDir: stri
   }
 
   const canonical = await realpath(workspaceDir).catch(() => workspaceDir);
-  const next = seedWorkspaceRegistry(existing, {
+  const entry = {
     id: randomUUID(),
     path: canonical,
     title: path.basename(canonical) || "DeepSeek",
     now: new Date().toISOString(),
-  });
+  };
+  const next = seedWorkspaceRegistry(existing, entry) ?? retargetHomeWorkspace(existing, homeDir, entry);
   if (!next) return false;
 
   await mkdir(path.dirname(file), { recursive: true });

@@ -1,10 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
   applyRegistryPreference,
+  chromiumAcceptLang,
   chromeSandboxIsConfigured,
   clampWindowBounds,
   compareVersions,
   formatByteProgress,
+  harnessLocaleEnv,
+  isHomeDirectoryWorkspace,
   isSystemInstalledApp,
   linuxDesktopEntry,
   linuxRuntimeArgvExtras,
@@ -17,10 +20,15 @@ import {
   npmInvocation,
   npmSpec,
   parseDshWebUrl,
+  parseOsLocaleAssignments,
+  parseOsTimeZone,
   parseXdgUserDir,
   preferredNpmRegistry,
   resolveLinuxDesktopDir,
+  resolveTimeZone,
   resolveUiLocale,
+  resolveWorkspaceDir,
+  retargetHomeWorkspace,
   seedWorkspaceRegistry,
 } from "./util";
 
@@ -92,6 +100,15 @@ describe("first-run helpers", () => {
     expect(text).toContain("Categories=Development;IDE;");
   });
 
+  it("writes Path so a .desktop launch is not cwd=$HOME", () => {
+    const text = linuxDesktopEntry({
+      exec: "/opt/DeepSeek/DeepSeek",
+      icon: "/opt/DeepSeek/resources/icon.png",
+      workingDirectory: "/home/alice/DeepSeek",
+    });
+    expect(text).toMatch(/^Path=\/home\/alice\/DeepSeek$/m);
+  });
+
   it("quotes Exec paths that contain spaces", () => {
     const text = linuxDesktopEntry({ exec: "/opt/My Apps/DeepSeek", icon: "deepseek-harness" });
     expect(text).toContain('Exec="/opt/My Apps/DeepSeek" %U');
@@ -152,6 +169,56 @@ describe("typical-user defaults", () => {
     expect(resolveUiLocale({ LANG: "C", LANGUAGE: "" })).toBe("");
     expect(resolveUiLocale({}, "zh-hans-cn")).toBe("zh-Hans-CN");
     expect(localePrefersChina({}, "", "zh-Hans-CN")).toBe(true);
+  });
+
+  it("uses Chinese Harness UI when LANG is English but the machine is in China", () => {
+    expect(resolveUiLocale({ LANG: "en_US.UTF-8" }, "", "Asia/Shanghai")).toBe("zh-CN");
+    expect(resolveUiLocale({ LANG: "en_US.UTF-8" }, "zh_CN.UTF-8", "UTC")).toBe("zh-CN");
+    expect(chromiumAcceptLang("zh-CN")).toContain("zh-CN");
+    expect(harnessLocaleEnv("zh-CN").LANG).toBe("zh_CN.UTF-8");
+  });
+
+  it("prefers /etc/timezone Asia/Shanghai over TZ=UTC", () => {
+    expect(resolveTimeZone({ TZ: "UTC" }, "Asia/Shanghai", "UTC")).toBe("Asia/Shanghai");
+    expect(parseOsTimeZone("Asia/Shanghai\n")).toBe("Asia/Shanghai");
+    expect(parseOsLocaleAssignments("LANG=zh_CN.UTF-8\nLC_MESSAGES=en_US.UTF-8\n")).toEqual([
+      "zh_CN.UTF-8",
+      "en_US.UTF-8",
+    ]);
+  });
+
+  it("rewrites a leftover $HOME/box workspace to ~/DeepSeek", () => {
+    expect(isHomeDirectoryWorkspace("/home/box", "/home/box")).toBe(true);
+    expect(isHomeDirectoryWorkspace("/home/box/", "/home/box")).toBe(true);
+    expect(isHomeDirectoryWorkspace("/home/box/DeepSeek", "/home/box")).toBe(false);
+    expect(resolveWorkspaceDir("/home/box", "/home/box")).toBe("/home/box/DeepSeek");
+    expect(resolveWorkspaceDir("/home/box/code", "/home/box")).toBe("/home/box/code");
+
+    const next = retargetHomeWorkspace(
+      {
+        unit: { name: "workspace", version: 2 },
+        global: { initialized: true, workspaceIds: ["ws_old"], archivedSessionIds: [] },
+        tables: {
+          workspaces: {
+            ws_old: {
+              path: "/home/box",
+              title: "box",
+              sessionIds: ["s1"],
+              createdAt: "2026-01-01T00:00:00.000Z",
+              updatedAt: "2026-01-01T00:00:00.000Z",
+            },
+          },
+        },
+      },
+      "/home/box",
+      { path: "/home/box/DeepSeek", title: "DeepSeek", now: "2026-08-13T00:00:00.000Z" },
+    );
+    expect(next?.global.workspaceIds).toEqual(["ws_old"]);
+    expect(next?.tables.workspaces.ws_old).toMatchObject({
+      path: "/home/box/DeepSeek",
+      title: "DeepSeek",
+      sessionIds: ["s1"],
+    });
   });
 
   it("runs npm through node when a sidecar cli is available", () => {

@@ -45,6 +45,7 @@ async function installLinuxShortcuts(): Promise<string> {
   const body = linuxDesktopEntry({
     exec: launchPath(),
     icon: existsSync(iconDest) ? iconDest : iconSrc,
+    workingDirectory: path.join(home, "DeepSeek"),
   });
   const appFile = path.join(appDir, `${DESKTOP_ID}.desktop`);
   await writeFile(appFile, body, "utf8");

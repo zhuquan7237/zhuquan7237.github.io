@@ -28,8 +28,10 @@ function shmIsNoexec(): boolean {
  * Chromium only honors --no-sandbox for zygote children when it is a real
  * process argv flag. app.commandLine.appendSwitch() is not enough.
  * Call this before app.whenReady(); it may exit and relaunch.
+ * `langTag` is only added when we are already relaunching for sandbox/shm,
+ * so ordinary launches are not doubled.
  */
-export function applyLinuxRuntimeFlags(): boolean {
+export function applyLinuxRuntimeFlags(langTag = ""): boolean {
   if (process.platform !== "linux") return true;
 
   const helper = path.join(path.dirname(process.execPath), "chrome-sandbox");
@@ -43,6 +45,9 @@ export function applyLinuxRuntimeFlags(): boolean {
   }
 
   if (extra.length > 0) {
+    if (langTag && !hasSwitch("lang") && !process.argv.some((arg) => arg === `--lang=${langTag}` || arg.startsWith("--lang="))) {
+      extra.push(`--lang=${langTag}`);
+    }
     app.relaunch({ args: [...process.argv.slice(1), ...extra] });
     app.exit(0);
     return false;

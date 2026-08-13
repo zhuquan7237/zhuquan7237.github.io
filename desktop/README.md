@@ -20,18 +20,18 @@ Harness releases therefore land without rebuilding this desktop app. The shell o
 - Linux `.deb` 会出现在应用菜单；`.tar.gz` / AppImage 第一次启动会自动创建桌面和应用菜单快捷方式
 - macOS 请把 App 拖进「应用程序」
 - 第二次打开同一个软件只会唤起已有窗口，工作区默认 `~/DeepSeek`，窗口大小会记住
-- 中文系统会默认走国内 npm 镜像；也可在 **引擎设置** 一键切换官方源 / 国内镜像
+- 中文系统、或时区在中国时，会默认走国内 npm 镜像；也可在 **引擎设置** 一键切换官方源 / 国内镜像
 
 ```sh
 # Linux 推荐 tar.gz（不需要 FUSE）。AppImage 在 Ubuntu 24.04 上常因缺少 libfuse2 无法打开。
-tar -xzf DeepSeek-0.1.4-linux-x64.tar.gz
-./DeepSeek-0.1.4-linux-x64/DeepSeek
+tar -xzf DeepSeek-0.1.5-linux-x64.tar.gz
+./DeepSeek-0.1.5-linux-x64/DeepSeek
 
 # Debian/Ubuntu
-sudo apt install ./DeepSeek-0.1.4-linux-amd64.deb
+sudo apt install ./DeepSeek-0.1.5-linux-amd64.deb
 ```
 
-Windows：下载 `DeepSeek-0.1.4-win.exe`。若 SmartScreen 提示未签名，选「更多信息 → 仍要运行」。
+Windows：下载 `DeepSeek-0.1.5-win.exe`。若 SmartScreen 提示未签名，选「更多信息 → 仍要运行」。
 
 macOS：打开 dmg。若提示未签名，请右键 App → 打开。
 
@@ -47,7 +47,7 @@ GitHub Actions builds:
 | macOS | `.dmg`, `.zip` (Intel + Apple Silicon) |
 | Linux | AppImage, `.deb`, `.tar.gz` (x64 + arm64) |
 
-Download installers from the public [GitHub Release](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/tag/desktop-v0.1.4). Anyone can download those files without signing in. GitHub Actions artifacts are not a public store.
+Download installers from the public [GitHub Release](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/tag/desktop-v0.1.5). Anyone can download those files without signing in. GitHub Actions artifacts are not a public store.
 
 ## Run from source
 

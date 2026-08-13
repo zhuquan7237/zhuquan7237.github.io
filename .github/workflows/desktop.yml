@@ -68,7 +68,6 @@ jobs:
             desktop/release/*.zip
             desktop/release/*.AppImage
             desktop/release/*.deb
-            desktop/release/*.rpm
             desktop/release/*.tar.gz
           if-no-files-found: warn
 
@@ -87,28 +86,28 @@ jobs:
       - name: Publish public GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: desktop-v0.1.4
-          name: DeepSeek Desktop 0.1.4
+          tag_name: desktop-v0.1.5
+          name: DeepSeek Desktop 0.1.5
           target_commitish: ${{ github.sha }}
           prerelease: false
           make_latest: true
           fail_on_unmatched_files: true
           body: |
-            请用 0.1.4。这一版修了 0.1.3 上报的启动问题。
+            请用 0.1.5。这一版修了 0.1.4 在中文 Linux 上仍不对的三件事。
 
-            **0.1.3 → 0.1.4 修复**
-            - 启动时不再弹「spawn gio ENOENT」等致命错误。创建快捷方式的辅助命令缺失时会静默跳过
-            - 缓存的 Node 没有执行权限（EACCES）时自动修复，必要时重新下载；npm 也改为直接用 node 运行
-            - 中文系统的界面语言跟随系统，不再固定英文
-            - 中文系统的 npm 源会自动切到国内镜像，旧版本存下的 registry 不再一直沿用
-            - 默认工作区 `~/DeepSeek` 会真正出现在 Harness 里，首次启动不用手动选
+            **0.1.4 → 0.1.5 修复**
+            - 工作区不再停在家目录（标题变成用户名，例如「box」）。已有的 `$HOME` 工作区会改到 `~/DeepSeek`
+            - Linux 用户快捷方式带 `Path=`，不会再把启动目录当成工作区
+            - 系统语言是英文、但时区在中国时，Harness 主界面跟中文菜单走
+            - 同样条件下 npm 自动用国内镜像；启动日志会写出当前源
+            - 引擎仍是 npm 上的 `@deepseek-ai/dsh`（当前 latest 是 `0.1.0-rc.6`，检查更新正常不等于有新引擎）
 
             **直接下载（不用登录）**
-            - Windows 安装包：https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.4/DeepSeek-0.1.4-win.exe
-            - Linux x64（推荐 tar.gz）：https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.4/DeepSeek-0.1.4-linux-x64.tar.gz
-            - Linux x64 deb：https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.4/DeepSeek-0.1.4-linux-amd64.deb
-            - macOS Apple Silicon：https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.4/DeepSeek-0.1.4-mac-arm64.dmg
-            - macOS Intel：https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.4/DeepSeek-0.1.4-mac-x64.dmg
+            - Windows 安装包：https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.5/DeepSeek-0.1.5-win.exe
+            - Linux x64（推荐 tar.gz）：https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.5/DeepSeek-0.1.5-linux-x64.tar.gz
+            - Linux x64 deb：https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.5/DeepSeek-0.1.5-linux-amd64.deb
+            - macOS Apple Silicon：https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.5/DeepSeek-0.1.5-mac-arm64.dmg
+            - macOS Intel：https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.5/DeepSeek-0.1.5-mac-x64.dmg
 
             首次启动需要联网 1–3 分钟（下载 Node 和官方 dsh）。之后用菜单 **Harness → 检查 Harness 更新**。
 
@@ -118,12 +117,12 @@ jobs:
 
             | File | Platform |
             | --- | --- |
-            | `DeepSeek-0.1.4-win.exe` | Windows installer |
-            | `DeepSeek-0.1.4-win-x64.exe` / `*-win-arm64.exe` | Windows portable |
-            | `DeepSeek-0.1.4-mac-arm64.dmg` | macOS Apple Silicon |
-            | `DeepSeek-0.1.4-mac-x64.dmg` | macOS Intel |
-            | `DeepSeek-0.1.4-linux-x64.tar.gz` / `*-linux-amd64.deb` | Linux x64 |
-            | `DeepSeek-0.1.4-linux-arm64.tar.gz` / `*-linux-arm64.deb` | Linux arm64 |
+            | `DeepSeek-0.1.5-win.exe` | Windows installer |
+            | `DeepSeek-0.1.5-win-x64.exe` / `*-win-arm64.exe` | Windows portable |
+            | `DeepSeek-0.1.5-mac-arm64.dmg` | macOS Apple Silicon |
+            | `DeepSeek-0.1.5-mac-x64.dmg` | macOS Intel |
+            | `DeepSeek-0.1.5-linux-x64.tar.gz` / `*-linux-amd64.deb` | Linux x64 |
+            | `DeepSeek-0.1.5-linux-arm64.tar.gz` / `*-linux-arm64.deb` | Linux arm64 |
           files: |
             installers/*.exe
             installers/*.dmg

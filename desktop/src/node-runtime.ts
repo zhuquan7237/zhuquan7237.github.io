@@ -60,7 +60,10 @@ async function installNodeSidecar(cacheDir: string, onLog: (line: string) => voi
 
   await mkdir(cacheDir, { recursive: true });
   const archivePath = path.join(cacheDir, dist.archive);
-  const urls = nodeDownloadUrls(dist.archive, localePrefersChina(process.env, process.env.TZ || hostTimeZone()));
+  const urls = nodeDownloadUrls(
+    dist.archive,
+    localePrefersChina(process.env, process.env.TZ || hostTimeZone()),
+  );
   await downloadFromMirrors(urls, archivePath, onLog);
   onLog("正在解压 Node 运行时");
   if (dist.archive.endsWith(".zip")) {

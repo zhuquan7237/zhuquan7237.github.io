@@ -1,5 +1,6 @@
 import { app, BrowserWindow, Menu, dialog, shell, ipcMain, screen, nativeImage } from "electron";
 import { mkdir } from "node:fs/promises";
+import { readFileSync } from "node:fs";
 import path from "node:path";
 import { homedir } from "node:os";
 import { loadSettings, saveSettings } from "./settings";
@@ -9,10 +10,57 @@ import { resolveNodeRuntime } from "./node-runtime";
 import { appIconFile, installUserShortcuts, needsUserShortcuts } from "./desktop-integration";
 import { ensureDefaultWorkspace } from "./dsh-workspace";
 import { loadWindowState, saveWindowState } from "./window-state";
-import { APP_DISPLAY_NAME, APP_ID, NPM_REGISTRY, resolveUiLocale, type DesktopSettings } from "./util";
+import {
+  APP_DISPLAY_NAME,
+  APP_ID,
+  NPM_REGISTRY,
+  chromiumAcceptLang,
+  harnessLocaleEnv,
+  hostIntlLocale,
+  hostTimeZone,
+  parseOsLocaleAssignments,
+  parseOsTimeZone,
+  resolveTimeZone,
+  resolveUiLocale,
+  resolveWorkspaceDir,
+  type DesktopSettings,
+} from "./util";
 
 installCrashGuards();
-const linuxReady = applyLinuxRuntimeFlags();
+
+function readOptionalFile(file: string): string {
+  try {
+    return readFileSync(file, "utf8");
+  } catch {
+    return "";
+  }
+}
+
+function osLocaleHint(): string {
+  return [
+    ...parseOsLocaleAssignments(readOptionalFile("/etc/locale.conf")),
+    ...parseOsLocaleAssignments(readOptionalFile("/etc/default/locale")),
+  ].join(" ");
+}
+
+function preferredLanguages(): string {
+  try {
+    return app.getPreferredSystemLanguages().join(" ");
+  } catch {
+    return "";
+  }
+}
+
+const osLocale = osLocaleHint();
+const timeZone = resolveTimeZone(
+  process.env,
+  parseOsTimeZone(readOptionalFile("/etc/timezone")),
+  hostTimeZone(),
+);
+if (timeZone) process.env.TZ = timeZone;
+const localeHint = [osLocale, preferredLanguages(), hostIntlLocale()].filter(Boolean).join(" ");
+const uiLocale = resolveUiLocale(process.env, localeHint, timeZone);
+const linuxReady = applyLinuxRuntimeFlags(uiLocale);
 
 let mainWindow: BrowserWindow | null = null;
 let splashWindow: BrowserWindow | null = null;
@@ -360,9 +408,9 @@ async function openSettings(): Promise<void> {
 }
 
 async function defaultWorkspace(): Promise<string> {
-  const dir = settings.workspaceDir || path.join(homedir(), "DeepSeek");
+  const dir = resolveWorkspaceDir(settings.workspaceDir, homedir());
   await mkdir(dir, { recursive: true });
-  if (!settings.workspaceDir) {
+  if (settings.workspaceDir !== dir) {
     settings.workspaceDir = dir;
     await saveSettings(userData(), settings);
   }
@@ -399,6 +447,7 @@ async function boot(forceUpdate: boolean): Promise<void> {
       sendSplash("log", line);
     });
     if (forceUpdate) settings.autoUpdateHarness = true;
+    sendSplash("log", `npm 源：${settings.registry}`);
     sendSplash("status", { phase: "engine", text: "正在从 npm 同步官方 DeepSeek Harness…" });
     const install = await ensureHarness(
       settings,
@@ -413,12 +462,13 @@ async function boot(forceUpdate: boolean): Promise<void> {
     stopHarness(running);
     const workspaceDir = await defaultWorkspace();
     const dshHome = path.join(userData(), "dsh-home");
-    await ensureDefaultWorkspace(dshHome, workspaceDir).catch(() => false);
+    await ensureDefaultWorkspace(dshHome, workspaceDir, homedir()).catch(() => false);
     running = await startHarnessWeb({
       runtime,
       install,
       workspaceDir,
       dshHome,
+      extraEnv: harnessLocaleEnv(uiLocale),
       onLog: (line) => sendSplash("log", line),
     });
     buildMenu();
@@ -443,9 +493,11 @@ if (linuxReady) {
   // Keep the 0.1.2 folder name so upgrades do not re-download the engine or lose settings.
   app.setPath("userData", path.join(app.getPath("appData"), "DeepSeek"));
   // The Harness UI reads navigator.languages, which Electron drives with --lang.
-  // This must be set before app ready, so only the environment is available here.
-  const uiLocale = resolveUiLocale(process.env);
-  if (uiLocale) app.commandLine.appendSwitch("lang", uiLocale);
+  // This must be set before app ready. getSystemLocale() is not available yet.
+  if (uiLocale) {
+    app.commandLine.appendSwitch("lang", uiLocale);
+    app.commandLine.appendSwitch("accept-lang", chromiumAcceptLang(uiLocale));
+  }
   const gotLock = app.requestSingleInstanceLock();
   if (!gotLock) {
     app.quit();
@@ -460,7 +512,13 @@ if (linuxReady) {
           applicationVersion: app.getVersion(),
         });
       }
-      settings = await loadSettings(userData(), systemLocale());
+      settings = await loadSettings(
+        userData(),
+        [systemLocale(), osLocale, preferredLanguages(), hostIntlLocale()].filter(Boolean).join(" "),
+        timeZone,
+      );
+      settings.workspaceDir = resolveWorkspaceDir(settings.workspaceDir, homedir());
+      await saveSettings(userData(), settings);
       ipcMain.handle("settings:get", () => settings);
       ipcMain.handle("settings:save", async (_event, next: DesktopSettings) => {
         settings = { ...settings, ...next };
