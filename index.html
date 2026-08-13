@@ -45,7 +45,7 @@
             <a href="https://github.com/deepseek-ai/deepseek-harness">@deepseek-ai/dsh</a>。
           </p>
           <div class="actions">
-            <a class="btn primary" id="hero-download" href="https://github.com/zhuquan7237/zhuquan7237.github.io/releases/latest">下载 0.1.3</a>
+            <a class="btn primary" id="hero-download" href="https://github.com/zhuquan7237/zhuquan7237.github.io/releases/latest">下载 0.1.4</a>
             <a class="btn ghost" href="https://github.com/zhuquan7237/zhuquan7237.github.io">查看仓库</a>
           </div>
         </div>
@@ -61,19 +61,19 @@
           <article class="card" data-os="win">
             <h2>Windows</h2>
             <p>安装包会创建桌面快捷方式和开始菜单。若 SmartScreen 提示未签名，选「更多信息 → 仍要运行」。</p>
-            <a class="os" href="https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.3/DeepSeek-0.1.3-win.exe">DeepSeek-0.1.3-win.exe →</a>
+            <a class="os" href="https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.4/DeepSeek-0.1.4-win.exe">DeepSeek-0.1.4-win.exe →</a>
           </article>
           <article class="card" data-os="linux">
             <h2>Linux</h2>
             <p>推荐 tar.gz 或 deb。AppImage 在 Ubuntu 24.04 常缺 libfuse2。便携版第一次打开会自动放桌面图标。</p>
-            <a class="os" href="https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.3/DeepSeek-0.1.3-linux-x64.tar.gz">x64 tar.gz →</a><br />
-            <a class="os" href="https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.3/DeepSeek-0.1.3-linux-amd64.deb">amd64 deb →</a>
+            <a class="os" href="https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.4/DeepSeek-0.1.4-linux-x64.tar.gz">x64 tar.gz →</a><br />
+            <a class="os" href="https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.4/DeepSeek-0.1.4-linux-amd64.deb">amd64 deb →</a>
           </article>
           <article class="card" data-os="mac">
             <h2>macOS</h2>
             <p>把 App 拖进「应用程序」。未签名请右键 → 打开。支持 Apple Silicon 与 Intel。</p>
-            <a class="os" href="https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.3/DeepSeek-0.1.3-mac-arm64.dmg">Apple Silicon →</a><br />
-            <a class="os" href="https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.3/DeepSeek-0.1.3-mac-x64.dmg">Intel →</a>
+            <a class="os" href="https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.4/DeepSeek-0.1.4-mac-arm64.dmg">Apple Silicon →</a><br />
+            <a class="os" href="https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.4/DeepSeek-0.1.4-mac-x64.dmg">Intel →</a>
           </article>
         </div>
       </section>
@@ -125,7 +125,7 @@
         </details>
         <details>
           <summary>要不要 git clone？</summary>
-          <p>不用。请直接下载 0.1.3 安装包。不要用 0.1.0 / 0.1.1。</p>
+          <p>不用。请直接下载 0.1.4 安装包。不要用 0.1.0 / 0.1.1。</p>
         </details>
         <details>
           <summary>API Key 在哪拿？</summary>
@@ -134,7 +134,7 @@
       </section>
 
       <footer>
-        <span>DeepSeek Harness Desktop 0.1.3 · 作者 <a href="./me.html">朱泉</a></span>
+        <span>DeepSeek Harness Desktop 0.1.4 · 作者 <a href="./me.html">朱泉</a></span>
         <span>
           <a href="https://github.com/zhuquan7237/zhuquan7237.github.io/releases/latest">全部安装包</a>
           ·
@@ -152,11 +152,11 @@
         if (/Mac/i.test(platform) || /Mac OS X/i.test(ua)) os = "mac";
         else if (/Linux/i.test(platform) || /Linux/i.test(ua)) os = "linux";
         var links = {
-          win: "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.3/DeepSeek-0.1.3-win.exe",
-          linux: "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.3/DeepSeek-0.1.3-linux-x64.tar.gz",
+          win: "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.4/DeepSeek-0.1.4-win.exe",
+          linux: "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.4/DeepSeek-0.1.4-linux-x64.tar.gz",
           mac: /ARM|aarch64|Apple/i.test(ua + platform)
-            ? "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.3/DeepSeek-0.1.3-mac-arm64.dmg"
-            : "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.3/DeepSeek-0.1.3-mac-x64.dmg",
+            ? "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.4/DeepSeek-0.1.4-mac-arm64.dmg"
+            : "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.4/DeepSeek-0.1.4-mac-x64.dmg",
         };
         var labels = { win: "下载 Windows 安装包", linux: "下载 Linux tar.gz", mac: "下载 macOS 安装包" };
         var hero = document.getElementById("hero-download");

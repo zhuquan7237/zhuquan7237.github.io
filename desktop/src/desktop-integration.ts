@@ -79,12 +79,18 @@ function markDesktopTrusted(filePath: string): void {
   bestEffort("gio", ["set", filePath, "metadata::trusted", "true"]);
 }
 
+/**
+ * Desktop environments ship different helper commands, so a missing one is
+ * normal. spawn reports ENOENT through an async "error" event: without this
+ * listener Electron turns it into a fatal error dialog on every launch.
+ */
 function bestEffort(command: string, args: string[]): void {
   try {
     const child = spawn(command, args, { stdio: "ignore", detached: true });
+    child.on("error", () => undefined);
     child.unref();
   } catch {
-    // Desktop environments differ; shortcuts still work with chmod +x.
+    // Shortcuts still work without the helper; they are already chmod +x.
   }
 }
 
@@ -113,7 +119,10 @@ async function writeWindowsShortcut(lnkPath: string): Promise<void> {
     `$s.Save()`,
   ].join("; ");
   await new Promise<void>((resolve, reject) => {
-    const child = spawn("powershell.exe", ["-NoProfile", "-Command", script], { windowsHide: true });
+    const child = spawn("powershell.exe", ["-NoProfile", "-Command", script], {
+      windowsHide: true,
+      stdio: "ignore",
+    });
     child.on("error", reject);
     child.on("close", (code) => {
       if (code === 0) resolve();

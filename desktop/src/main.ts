@@ -7,9 +7,11 @@ import { ensureHarness, fetchPublishedVersion, startHarnessWeb, stopHarness, typ
 import { applyLinuxRuntimeFlags } from "./linux-flags";
 import { resolveNodeRuntime } from "./node-runtime";
 import { appIconFile, installUserShortcuts, needsUserShortcuts } from "./desktop-integration";
+import { ensureDefaultWorkspace } from "./dsh-workspace";
 import { loadWindowState, saveWindowState } from "./window-state";
-import { APP_DISPLAY_NAME, APP_ID, NPM_REGISTRY, type DesktopSettings } from "./util";
+import { APP_DISPLAY_NAME, APP_ID, NPM_REGISTRY, resolveUiLocale, type DesktopSettings } from "./util";
 
+installCrashGuards();
 const linuxReady = applyLinuxRuntimeFlags();
 
 let mainWindow: BrowserWindow | null = null;
@@ -23,6 +25,15 @@ function userData(): string {
 
 function windowIcon(): string {
   return appIconFile();
+}
+
+/** Electron only knows the OS locale once it is ready. */
+function systemLocale(): string {
+  try {
+    return app.getSystemLocale() || app.getLocale();
+  } catch {
+    return "";
+  }
 }
 
 function sendSplash(channel: string, payload: unknown): void {
@@ -356,6 +367,22 @@ async function defaultWorkspace(): Promise<string> {
   return dir;
 }
 
+/**
+ * Background helpers (desktop integration, engine logging) must never take the
+ * app down. Electron's default handler shows a fatal error dialog the user has
+ * to dismiss before the window appears.
+ */
+function installCrashGuards(): void {
+  process.on("uncaughtException", (error) => {
+    console.error("uncaught", error);
+    sendSplash("log", `后台任务出错（已忽略）：${error.message}`);
+  });
+  process.on("unhandledRejection", (reason) => {
+    console.error("unhandled", reason);
+    sendSplash("log", `后台任务出错（已忽略）：${String(reason)}`);
+  });
+}
+
 async function boot(forceUpdate: boolean): Promise<void> {
   try {
     if (!splashWindow) await createSplash();
@@ -383,11 +410,13 @@ async function boot(forceUpdate: boolean): Promise<void> {
     sendSplash("status", { phase: "start", text: `正在启动界面（dsh ${install.version}）…` });
     stopHarness(running);
     const workspaceDir = await defaultWorkspace();
+    const dshHome = path.join(userData(), "dsh-home");
+    await ensureDefaultWorkspace(dshHome, workspaceDir).catch(() => false);
     running = await startHarnessWeb({
       runtime,
       install,
       workspaceDir,
-      dshHome: path.join(userData(), "dsh-home"),
+      dshHome,
       onLog: (line) => sendSplash("log", line),
     });
     buildMenu();
@@ -411,6 +440,10 @@ if (linuxReady) {
   app.setAppUserModelId(APP_ID);
   // Keep the 0.1.2 folder name so upgrades do not re-download the engine or lose settings.
   app.setPath("userData", path.join(app.getPath("appData"), "DeepSeek"));
+  // The Harness UI reads navigator.languages, which Electron drives with --lang.
+  // This must be set before app ready, so only the environment is available here.
+  const uiLocale = resolveUiLocale(process.env);
+  if (uiLocale) app.commandLine.appendSwitch("lang", uiLocale);
   const gotLock = app.requestSingleInstanceLock();
   if (!gotLock) {
     app.quit();
@@ -425,7 +458,7 @@ if (linuxReady) {
           applicationVersion: app.getVersion(),
         });
       }
-      settings = await loadSettings(userData());
+      settings = await loadSettings(userData(), systemLocale());
       ipcMain.handle("settings:get", () => settings);
       ipcMain.handle("settings:save", async (_event, next: DesktopSettings) => {
         settings = { ...settings, ...next };

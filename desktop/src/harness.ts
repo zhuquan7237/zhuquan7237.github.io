@@ -7,6 +7,7 @@ import {
   DSH_PACKAGE,
   NPM_REGISTRY,
   compareVersions,
+  npmInvocation,
   npmSpec,
   parseDshWebUrl,
   type DesktopSettings,
@@ -85,9 +86,18 @@ export async function ensureHarness(
     path.join(prefix, "package.json"),
     JSON.stringify({ name: "dsh-engine", private: true, version: "0.0.0" }, null, 2),
   );
+  const npm = npmInvocation(runtime, [
+    "install",
+    npmSpec(wanted),
+    "--omit=dev",
+    "--no-fund",
+    "--no-audit",
+    "--registry",
+    registry,
+  ]);
   await runCapture(
-    runtime.npm,
-    ["install", npmSpec(wanted), "--omit=dev", "--no-fund", "--no-audit", "--registry", registry],
+    npm.command,
+    npm.args,
     prefix,
     {
       PATH: `${path.dirname(runtime.node)}${path.delimiter}${process.env.PATH ?? ""}`,
