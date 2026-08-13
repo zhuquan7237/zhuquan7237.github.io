@@ -7,7 +7,7 @@ import { applyLinuxRuntimeFlags } from "./linux-flags";
 import { resolveNodeRuntime } from "./node-runtime";
 import { NPM_REGISTRY, type DesktopSettings } from "./util";
 
-applyLinuxRuntimeFlags();
+const linuxReady = applyLinuxRuntimeFlags();
 
 let mainWindow: BrowserWindow | null = null;
 let splashWindow: BrowserWindow | null = null;
@@ -310,33 +310,35 @@ async function boot(forceUpdate: boolean): Promise<void> {
   }
 }
 
-app.whenReady().then(async () => {
-  settings = await loadSettings(userData());
-  ipcMain.handle("settings:get", () => settings);
-  ipcMain.handle("settings:save", async (_event, next: DesktopSettings) => {
-    settings = { ...settings, ...next };
-    await saveSettings(userData(), settings);
-    return settings;
+if (linuxReady) {
+  app.whenReady().then(async () => {
+    settings = await loadSettings(userData());
+    ipcMain.handle("settings:get", () => settings);
+    ipcMain.handle("settings:save", async (_event, next: DesktopSettings) => {
+      settings = { ...settings, ...next };
+      await saveSettings(userData(), settings);
+      return settings;
+    });
+    ipcMain.handle("settings:pick-dir", async () => {
+      const picked = await dialog.showOpenDialog({ properties: ["openDirectory"] });
+      return picked.filePaths[0] ?? "";
+    });
+    ipcMain.on("settings:apply", () => {
+      void boot(true);
+    });
+    ipcMain.on("splash:quit", () => {
+      app.quit();
+    });
+    buildMenu();
+    await boot(false);
   });
-  ipcMain.handle("settings:pick-dir", async () => {
-    const picked = await dialog.showOpenDialog({ properties: ["openDirectory"] });
-    return picked.filePaths[0] ?? "";
-  });
-  ipcMain.on("settings:apply", () => {
-    void boot(true);
-  });
-  ipcMain.on("splash:quit", () => {
-    app.quit();
-  });
-  buildMenu();
-  await boot(false);
-});
 
-app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") app.quit();
-});
+  app.on("window-all-closed", () => {
+    if (process.platform !== "darwin") app.quit();
+  });
 
-app.on("before-quit", () => {
-  stopHarness(running);
-  running = null;
-});
+  app.on("before-quit", () => {
+    stopHarness(running);
+    running = null;
+  });
+}
