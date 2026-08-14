@@ -332,9 +332,13 @@ section { margin-top: 84px; }
   position: absolute;
   inset: 0;
   opacity: 0;
+  pointer-events: none;
   transition: opacity 0.45s ease;
 }
-.skin-frame.is-light img[data-skin="light"] { opacity: 1; }
+.skin-frame.is-light img[data-skin="light"] {
+  opacity: 1;
+  pointer-events: auto;
+}
 
 .thanks {
   display: grid;
@@ -478,7 +482,7 @@ section { margin-top: 84px; }
 footer {
   width: min(1180px, calc(100% - 40px));
   margin: 88px auto 0;
-  padding: 28px 0 48px;
+  padding: 28px 0 96px;
   color: var(--muted);
   font-size: 13px;
   display: flex;

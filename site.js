@@ -75,6 +75,10 @@
   document.querySelectorAll("[data-lightbox]").forEach(function (el) {
     el.addEventListener("click", function () {
       var img = el.tagName === "IMG" ? el : el.querySelector("img");
+      if (el.hasAttribute("data-skin-frame") || (img && img.getAttribute("data-skin"))) {
+        var light = frame && frame.classList.contains("is-light");
+        img = document.querySelector(light ? 'img[data-skin="light"]' : 'img[data-skin="dark"]') || img;
+      }
       if (!img) return;
       openLight(img.currentSrc || img.src, img.alt);
     });
