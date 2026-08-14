@@ -1,112 +1,132 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>朱泉 / Quan Zhu</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>朱泉｜DeepSeek Harness Desktop 作者</title>
     <meta
       name="description"
-      content="朱泉，广东海洋大学材料科学与工程。做能双击打开的小工具。代表作：DeepSeek Harness 桌面版。"
+      content="朱泉，广东海洋大学学生，DeepSeek Harness Desktop 社区桌面端作者。"
     />
-    <meta property="og:title" content="朱泉 / Quan Zhu" />
-    <meta property="og:description" content="广东海洋大学 · 材料科学与工程。DeepSeek Harness 桌面版作者。" />
+    <meta property="og:title" content="朱泉｜DeepSeek Harness Desktop 作者" />
+    <meta property="og:description" content="广东海洋大学 · 把开发工具做成普通人可以双击打开的软件。" />
     <meta property="og:type" content="profile" />
     <meta property="og:url" content="https://dsh.zhuquan.xyz/me.html" />
     <link rel="canonical" href="https://dsh.zhuquan.xyz/me.html" />
-    <link rel="icon" type="image/png" href="./assets/deepseek-whale.png" />
-    <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg" />
-    <link rel="apple-touch-icon" href="./assets/deepseek-whale.png" />
+    <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="./site.css" />
   </head>
   <body>
     <header class="topbar">
-      <a class="brand" href="./me.html">
-        <img src="./assets/deepseek-whale.png" alt="DeepSeek" />
-        朱泉
-      </a>
-      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">菜单</button>
-      <nav id="site-nav" class="nav-links">
-        <a href="./">下载桌面版</a>
-        <a href="./#skin">皮肤</a>
-        <a href="./compare.html">对照</a>
-        <a href="./mac.html">macOS</a>
-        <a class="active" href="./me.html">关于</a>
-        <a href="https://github.com/zhuquan7237">GitHub</a>
-      </nav>
-      <a class="btn primary compact" href="./">看代表作</a>
+      <div class="nav-shell">
+        <a class="brand" href="./" aria-label="DeepSeek Harness Desktop 首页">
+          <span class="brand-mark"><img src="./assets/favicon.svg" alt="" /></span>
+          <span>Harness Desktop</span>
+        </a>
+        <button
+          class="nav-toggle"
+          type="button"
+          aria-expanded="false"
+          aria-controls="site-nav"
+          aria-label="打开导航"
+        >
+          <span></span><span></span><span></span>
+        </button>
+        <nav id="site-nav" class="nav-links" aria-label="主导航">
+          <a href="./">产品</a>
+          <a href="./#skin">皮肤</a>
+          <a href="./#downloads">全部下载</a>
+          <a href="./compare.html">项目对照</a>
+          <a href="./mac.html">macOS 帮助</a>
+          <a class="active" href="./me.html">朱泉</a>
+        </nav>
+        <a
+          class="button button-small button-primary nav-download"
+          data-hero-download
+          href="https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.12/DeepSeek-0.1.12-win.exe"
+        >下载 Windows 安装包</a>
+      </div>
     </header>
-    <main class="wrap">
+
+    <main class="page-main">
       <header class="page-hero">
-        <div class="portrait"><img src="./assets/deepseek-whale.png" alt="DeepSeek" /></div>
-        <p class="kicker">Guangdong Ocean University · Materials Science</p>
-        <h1>你好，我是朱泉。</h1>
-        <p class="lead">
-          广东海洋大学材料科学与工程专业的学生。对「把一个想法做成别人双击就能打开的软件」更感兴趣，
-          所以课余在做桌面应用、安装包和 GitHub 发布。
+        <p class="overline">QUAN ZHU · 朱泉</p>
+        <h1>让“能运行”再向前一步。</h1>
+        <p class="page-lead">
+          我是朱泉，广东海洋大学材料科学与工程专业学生。
+          课余会做桌面应用、安装包和公开发布：目标不是只在自己的开发环境里跑起来，
+          而是让没有配过 Node 或终端的人也能下载、双击并知道出了什么问题。
         </p>
-        <div class="actions">
-          <a class="btn primary" href="./">看代表作</a>
-          <a class="btn ghost" href="https://github.com/zhuquan7237">GitHub 主页</a>
-        </div>
-        <div class="chips">
-          <span class="chip">Electron</span>
-          <span class="chip">TypeScript</span>
-          <span class="chip">Linux / Windows / macOS 安装包</span>
-          <span class="chip">GitHub Actions</span>
-          <span class="chip">材料科学与工程</span>
+        <div class="page-actions">
+          <a class="button button-primary" href="./">查看 DeepSeek Harness Desktop</a>
+          <a class="button button-quiet" href="https://github.com/zhuquan7237">GitHub 主页</a>
         </div>
       </header>
 
-      <section>
-        <p class="section-title">代表作</p>
-        <div class="projects">
-          <article class="card">
-            <h2>DeepSeek Harness 桌面版</h2>
-            <p>
-              官方 Harness 很好用，但普通人还是得自己 clone、装 Node、在终端里启动。
-              我做了一层薄桌面壳：安装包、快捷方式、图标、中文菜单，引擎始终从 npm 拉官方
-              <code>@deepseek-ai/dsh</code>。
-              默认皮肤「深海女仆工坊」来自
-              <a href="https://github.com/Small-tailqwq/dsh-deep-whale">Small-tailqwq/dsh-deep-whale</a>，
-              CC BY-NC-SA 4.0，禁止商用。署名链：上善 → ZipZipPipe → Small-tailqwq。
-              画面不是我画的，产品页写了完整致谢。
-            </p>
-            <a class="os" href="./">打开产品页 →</a>
-            <a class="os" href="https://github.com/zhuquan7237/zhuquan7237.github.io">　仓库 →</a>
-          </article>
-          <article class="card">
-            <h2>站点里的其它页面</h2>
-            <p>同一个 GitHub Pages 上还有浏览器预览和一枚番茄钟，是我最早放上来的小工具。</p>
-            <a class="os" href="./app/">浏览器预览 →</a>
-            <a class="os" href="./pomodoro.html">　番茄钟 →</a>
-          </article>
-        </div>
-      </section>
-
-      <section class="about">
-        <div>
-          <p class="section-title">我想做什么</p>
+      <section class="profile-grid" aria-label="作者与项目">
+        <article class="panel profile-card">
+          <div class="profile-mark"><img src="./assets/favicon.svg" alt="" /></div>
+          <p class="overline">CURRENT PROJECT</p>
+          <h2>DeepSeek Harness Desktop</h2>
           <p>
-            不是把演示稿停在「能在我电脑上跑」。我想把软件交到没配过开发环境的人手里：
-            有图标、有快捷方式、第一次打开知道在等什么、坏了能看懂原因。
+            一个社区 Electron 桌面端：自动准备 Node，从 npm 安装官方
+            <code>@deepseek-ai/dsh</code>，再把本地 Harness 界面放进独立窗口。
+            项目不整仓拷贝官方源码，也不代表 DeepSeek Inc.
           </p>
           <p>
-            DeepSeek Desktop 0.1.12 是目前最完整的一次练习：跨平台打包、公开下载、皮肤打进安装包、升级时继承旧版 API 密钥，以及给普通人看的说明。默认皮肤版权见产品页。
+            0.1.12 提供 Windows、Linux、Apple Silicon 与 Intel Mac 安装包；
+            默认内置「深海女仆工坊」，并尝试迁移旧版 API Key。
           </p>
-        </div>
-        <article class="card">
-          <h2>链接</h2>
+          <div class="tag-list" aria-label="项目关键词">
+            <span class="tag">Electron</span>
+            <span class="tag">Windows</span>
+            <span class="tag">Linux</span>
+            <span class="tag">macOS</span>
+            <span class="tag">GitHub Actions</span>
+          </div>
+        </article>
+        <aside class="panel profile-card">
+          <p class="overline">LINKS</p>
+          <h2>找到我</h2>
           <ul>
             <li><a href="https://github.com/zhuquan7237">github.com/zhuquan7237</a></li>
             <li><a href="https://www.gdou.edu.cn/">广东海洋大学</a></li>
-            <li><a href="./">DeepSeek 桌面版下载</a></li>
+            <li><a href="https://dsh.zhuquan.xyz">dsh.zhuquan.xyz</a></li>
+            <li><a href="https://github.com/zhuquan7237/deepseek-harness-desktop">搜索落地仓库</a></li>
           </ul>
-        </article>
+        </aside>
+      </section>
+
+      <section class="page-section">
+        <div class="section-heading">
+          <div><p class="overline">CREDITS</p><h2>作品与素材分开署名</h2></div>
+        </div>
+        <div class="compact-grid">
+          <article class="panel">
+            <h3>Harness 引擎</h3>
+            <p>来自 DeepSeek 官方 npm 包。这个项目只做桌面壳、启动流程与安装包。</p>
+          </article>
+          <article class="panel">
+            <h3>默认皮肤</h3>
+            <p>署名链为上善 → ZipZipPipe → Small-tailqwq，采用 CC BY-NC-SA 4.0，禁止商用。<a href="./#skin">查看完整致谢</a>。</p>
+          </article>
+        </div>
       </section>
     </main>
-    <footer>
-      <span>© 2026 朱泉 / Quan Zhu</span>
-      <a href="./">返回下载页</a>
+
+    <footer class="footer">
+      <div>
+        <a class="brand footer-brand" href="./me.html">
+          <span class="brand-mark"><img src="./assets/favicon.svg" alt="" /></span>
+          <span>朱泉 / Quan Zhu</span>
+        </a>
+        <p>广东海洋大学 · 材料科学与工程</p>
+      </div>
+      <nav aria-label="页脚导航">
+        <a href="./">产品与下载</a>
+        <a href="./compare.html">项目对照</a>
+        <a href="https://github.com/zhuquan7237">GitHub</a>
+      </nav>
     </footer>
     <script src="./site.js"></script>
   </body>
