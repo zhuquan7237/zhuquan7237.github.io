@@ -345,7 +345,14 @@ function buildMenu(): void {
 
 async function createShortcutsManually(): Promise<void> {
   try {
-    const detail = await installUserShortcuts();
+    const workspaceDir = settings?.workspaceDir || path.join(homedir(), "DeepSeek");
+    await mkdir(workspaceDir, { recursive: true });
+    const detail = await installUserShortcuts({
+      force: true,
+      workspaceDir,
+      version: app.getVersion(),
+      userDataDir: userData(),
+    });
     await nativeBox({
       type: "info",
       title: "快捷方式",
@@ -488,8 +495,13 @@ async function boot(forceUpdate: boolean): Promise<void> {
   try {
     if (forceUpdate && mainWindow && !mainWindow.isDestroyed()) mainWindow.hide();
     if (!splashWindow) await createSplash();
+    const workspaceDir = await defaultWorkspace();
     if (needsUserShortcuts(app.isPackaged)) {
-      await installUserShortcuts().catch(() => undefined);
+      await installUserShortcuts({
+        workspaceDir,
+        version: app.getVersion(),
+        userDataDir: userData(),
+      }).catch(() => undefined);
     }
     sendSplash("status", {
       phase: "runtime",
@@ -515,7 +527,6 @@ async function boot(forceUpdate: boolean): Promise<void> {
 
     sendSplash("status", { phase: "start", text: `正在启动界面（dsh ${install.version}）…` });
     stopHarness(running);
-    const workspaceDir = await defaultWorkspace();
     const dshHome = path.join(userData(), "dsh-home");
     await ensureDefaultWorkspace(dshHome, workspaceDir, homedir()).catch(() => false);
     running = await startHarnessWeb({

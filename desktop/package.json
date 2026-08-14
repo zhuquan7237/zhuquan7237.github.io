@@ -2,7 +2,7 @@
   "name": "deepseek-desktop",
   "productName": "DeepSeek",
   "desktopName": "DeepSeek",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "Codex-style desktop shell for DeepSeek Harness. The engine is always @deepseek-ai/dsh from npm, so harness updates do not require a new desktop build.",
   "homepage": "https://github.com/zhuquan7237/zhuquan7237.github.io",
   "author": "DeepSeek Desktop",

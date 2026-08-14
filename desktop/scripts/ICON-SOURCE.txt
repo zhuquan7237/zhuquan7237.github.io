@@ -1,0 +1,5 @@
+Official DeepSeek whale mark (not a homemade drawing).
+
+Raster: desktop/scripts/deepseek-whale.png from https://github.com/deepseek-ai.png
+Same #4D6BFE whale as https://www.deepseek.com/favicon.ico
+and the mark in https://github.com/deepseek-ai/DeepSeek-OCR/blob/main/assets/logo.svg
