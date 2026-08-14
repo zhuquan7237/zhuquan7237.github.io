@@ -20,6 +20,8 @@ export interface DesktopSettings {
   localHarnessDir: string;
   workspaceDir: string;
   lastHarnessVersion: string;
+  /** Startup prompt will not ask again until npm publishes a newer version. */
+  skippedHarnessVersion: string;
 }
 
 export const DEFAULT_SETTINGS: DesktopSettings = {
@@ -30,6 +32,7 @@ export const DEFAULT_SETTINGS: DesktopSettings = {
   localHarnessDir: "",
   workspaceDir: "",
   lastHarnessVersion: "",
+  skippedHarnessVersion: "",
 };
 
 /**
@@ -80,6 +83,43 @@ export function compareVersions(a: string, b: string): number {
     if (sa !== sb) return sa < sb ? -1 : 1;
   }
   return 0;
+}
+
+/** Keep the engine the user already has unless they asked to upgrade. */
+export function pickExistingHarness(installedVersions: string[], lastHarnessVersion: string): string {
+  if (lastHarnessVersion && installedVersions.includes(lastHarnessVersion)) return lastHarnessVersion;
+  if (installedVersions.length === 0) return "";
+  return [...installedVersions].sort(compareVersions)[installedVersions.length - 1] ?? "";
+}
+
+export function shouldPromptHarnessUpdate(current: string, latest: string, skipped: string): boolean {
+  if (!current || !latest) return false;
+  if (current === latest || skipped === latest) return false;
+  if (!/^\d/.test(current.replace(/^v/, "")) || !/^\d/.test(latest.replace(/^v/, ""))) return false;
+  return compareVersions(current, latest) < 0;
+}
+
+export type AppDialogKind = "update" | "info" | "error" | "about" | "success";
+
+export interface AppDialogButton {
+  id: string;
+  label: string;
+  variant: "primary" | "ghost" | "danger";
+}
+
+export interface AppDialogView {
+  requestId: string;
+  kind: AppDialogKind;
+  title: string;
+  message: string;
+  detail?: string;
+  currentVersion?: string;
+  latestVersion?: string;
+  source?: string;
+  extra?: string;
+  buttons: AppDialogButton[];
+  defaultId?: string;
+  cancelId?: string;
 }
 
 function splitVersion(input: string): { core: number[]; pre: string[] } {

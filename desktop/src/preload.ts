@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from "electron";
-import type { DesktopSettings } from "./util";
+import type { AppDialogView, DesktopSettings } from "./util";
 
 contextBridge.exposeInMainWorld("desktop", {
   onStatus: (handler: (payload: { phase: string; text: string }) => void) => {
@@ -7,6 +7,12 @@ contextBridge.exposeInMainWorld("desktop", {
   },
   onLog: (handler: (line: string) => void) => {
     ipcRenderer.on("log", (_event, line) => handler(String(line)));
+  },
+  onDialogOpen: (handler: (payload: AppDialogView) => void) => {
+    ipcRenderer.on("dialog:open", (_event, payload) => handler(payload));
+  },
+  respondDialog: (requestId: string, buttonId: string) => {
+    ipcRenderer.send("dialog:result", { requestId, buttonId });
   },
   getSettings: (): Promise<DesktopSettings> => ipcRenderer.invoke("settings:get"),
   saveSettings: (settings: DesktopSettings): Promise<DesktopSettings> => ipcRenderer.invoke("settings:save", settings),

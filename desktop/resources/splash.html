@@ -3,12 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <title>DeepSeek</title>
+    <link rel="stylesheet" href="./theme.css" />
     <style>
       html, body { height: 100%; margin: 0; }
       body {
-        font-family: ui-sans-serif, system-ui, sans-serif;
-        background: #101218;
-        color: #e8edf7;
+        background:
+          radial-gradient(640px 280px at 0% 0%, rgba(77, 147, 248, 0.14), transparent 55%),
+          var(--bg);
+        color: var(--text);
         display: flex;
         flex-direction: column;
         padding: 24px 24px 16px;
@@ -17,13 +19,13 @@
       .brand { display: flex; gap: 12px; align-items: center; }
       .brand img { width: 40px; height: 40px; border-radius: 10px; }
       h1 { margin: 0 0 6px; font-size: 22px; letter-spacing: -0.03em; }
-      p { margin: 0; color: #8b93a7; font-size: 13px; line-height: 1.5; }
+      p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.5; }
       .status { margin: 18px 0 8px; font-size: 14px; color: #7eb0ff; min-height: 20px; }
       .log {
         flex: 1;
         background: #0c0e14;
         border: 1px solid rgba(255,255,255,0.08);
-        border-radius: 12px;
+        border-radius: var(--radius-sm);
         padding: 10px 12px;
         overflow: auto;
         font: 12px/1.45 ui-monospace, monospace;

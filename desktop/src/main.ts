@@ -10,9 +10,11 @@ import { resolveNodeRuntime } from "./node-runtime";
 import { appIconFile, installUserShortcuts, needsUserShortcuts } from "./desktop-integration";
 import { ensureDefaultWorkspace } from "./dsh-workspace";
 import { loadWindowState, saveWindowState } from "./window-state";
+import { showAppDialog, type AppDialogRequest } from "./app-dialog";
 import {
   APP_DISPLAY_NAME,
   APP_ID,
+  DSH_PACKAGE,
   NPM_REGISTRY,
   chromiumAcceptLang,
   harnessLocaleEnv,
@@ -23,6 +25,7 @@ import {
   resolveTimeZone,
   resolveUiLocale,
   resolveWorkspaceDir,
+  shouldPromptHarnessUpdate,
   type DesktopSettings,
 } from "./util";
 
@@ -73,6 +76,33 @@ function userData(): string {
 
 function windowIcon(): string {
   return appIconFile();
+}
+
+function dialogParent(): BrowserWindow | null {
+  if (mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible()) return mainWindow;
+  if (splashWindow && !splashWindow.isDestroyed()) return splashWindow;
+  return null;
+}
+
+async function appDialog(request: AppDialogRequest): Promise<string> {
+  return await showAppDialog(request, { parent: dialogParent(), icon: windowIcon() });
+}
+
+async function appAlert(
+  kind: "info" | "error" | "success" | "about",
+  title: string,
+  message: string,
+  extra?: Partial<AppDialogRequest>,
+): Promise<void> {
+  await appDialog({
+    kind,
+    title,
+    message,
+    buttons: [{ id: "ok", label: kind === "error" ? "知道了" : "好的", variant: "primary" }],
+    defaultId: "ok",
+    cancelId: "ok",
+    ...extra,
+  });
 }
 
 /** Electron only knows the OS locale once it is ready. */
@@ -254,7 +284,7 @@ function buildMenu(): void {
           label: "检查 Harness 更新",
           accelerator: "CmdOrCtrl+U",
           click: () => {
-            void checkHarnessUpdates();
+            void checkHarnessUpdates(true);
           },
         },
         {
@@ -310,11 +340,10 @@ function buildMenu(): void {
         {
           label: "关于",
           click: () => {
-            void dialog.showMessageBox({
-              type: "info",
-              title: "关于",
-              message: APP_DISPLAY_NAME,
-              detail: `桌面版 ${app.getVersion()}\n引擎 ${running?.version || settings?.lastHarnessVersion || "未启动"}\n工作区 ${settings?.workspaceDir || path.join(homedir(), "DeepSeek")}`,
+            void appAlert("about", APP_DISPLAY_NAME, "薄薄一层桌面壳，引擎始终是官方 @deepseek-ai/dsh。", {
+              extra: `桌面版 ${app.getVersion()}`,
+              currentVersion: running?.version || settings?.lastHarnessVersion || "未启动",
+              source: `工作区 ${settings?.workspaceDir || path.join(homedir(), "DeepSeek")}`,
             });
           },
         },
@@ -330,14 +359,9 @@ function buildMenu(): void {
 async function createShortcutsManually(): Promise<void> {
   try {
     const detail = await installUserShortcuts();
-    await dialog.showMessageBox({
-      type: "info",
-      title: "快捷方式",
-      message: "已创建 DeepSeek Harness 快捷方式",
-      detail,
-    });
+    await appAlert("success", "快捷方式已创建", "已放好 DeepSeek Harness 的桌面和应用菜单图标。", { detail });
   } catch (error) {
-    await dialog.showErrorBox("创建快捷方式失败", error instanceof Error ? error.message : String(error));
+    await appAlert("error", "创建快捷方式失败", error instanceof Error ? error.message : String(error));
   }
 }
 
@@ -353,49 +377,75 @@ async function chooseWorkspace(reboot: boolean): Promise<void> {
   if (reboot) await boot(false);
 }
 
-async function checkHarnessUpdates(): Promise<void> {
+function harnessChannel(): "latest" | "next" {
+  return settings.channel === "next" ? "next" : "latest";
+}
+
+function harnessSourceLabel(): string {
+  return `npm ${DSH_PACKAGE}@${harnessChannel()}`;
+}
+
+async function promptHarnessUpdate(current: string, latest: string): Promise<boolean> {
+  const choice = await appDialog({
+    kind: "update",
+    title: "发现新的 DeepSeek Harness",
+    message: "官方引擎已发布新版本。更新后会自动重启，即可接着用。不会重新克隆 GitHub 源码。",
+    currentVersion: current,
+    latestVersion: latest,
+    source: harnessSourceLabel(),
+    buttons: [
+      { id: "later", label: "以后再说", variant: "ghost" },
+      { id: "update", label: "更新并重启", variant: "primary" },
+    ],
+    defaultId: "update",
+    cancelId: "later",
+  });
+  return choice === "update";
+}
+
+async function checkHarnessUpdates(interactive: boolean): Promise<void> {
   try {
-    const channel = settings.channel === "next" ? "next" : "latest";
-    const latest = await fetchPublishedVersion(settings.registry || NPM_REGISTRY, channel);
+    const latest = await fetchPublishedVersion(settings.registry || NPM_REGISTRY, harnessChannel());
     const current = running?.version || settings.lastHarnessVersion || "未安装";
     if (current === latest) {
-      await dialog.showMessageBox({
-        type: "info",
-        title: "Harness 更新",
-        message: "DeepSeek Harness 已是最新版本",
-        detail: `当前引擎：${current}\n来源：npm ${DSH_LABEL(channel)}\n不需要拉取 GitHub 源码。`,
-      });
+      if (interactive) {
+        await appAlert("success", "已是最新版本", "DeepSeek Harness 已经是 npm 上的最新引擎。", {
+          extra: `当前引擎 ${current}`,
+          source: harnessSourceLabel(),
+        });
+      }
       return;
     }
-    const choice = await dialog.showMessageBox({
-      type: "question",
-      title: "发现新的 Harness",
-      message: `npm 上有新的 DeepSeek Harness：${latest}`,
-      detail: `当前版本：${current}\n更新只会下载官方 @deepseek-ai/dsh，不会重新克隆 GitHub 源码。`,
-      buttons: ["立即更新并重启", "取消"],
-      defaultId: 0,
-      cancelId: 1,
-    });
-    if (choice.response === 0) await boot(true);
+    if (!interactive && !shouldPromptHarnessUpdate(current, latest, settings.skippedHarnessVersion)) {
+      return;
+    }
+    if (await promptHarnessUpdate(current, latest)) {
+      settings.skippedHarnessVersion = "";
+      await saveSettings(userData(), settings);
+      await boot(true);
+      return;
+    }
+    settings.skippedHarnessVersion = latest;
+    await saveSettings(userData(), settings);
   } catch (error) {
-    await dialog.showErrorBox(
-      "检查更新失败",
-      error instanceof Error ? error.message : String(error),
-    );
+    if (!interactive) return;
+    await appAlert("error", "检查更新失败", error instanceof Error ? error.message : String(error));
   }
 }
 
-function DSH_LABEL(channel: string): string {
-  return `@deepseek-ai/dsh@${channel}`;
+async function maybeNotifyHarnessUpdate(): Promise<void> {
+  if (!settings.autoUpdateHarness) return;
+  if (settings.localHarnessDir) return;
+  await checkHarnessUpdates(false);
 }
 
 async function openSettings(): Promise<void> {
   const win = new BrowserWindow({
     width: 520,
-    height: 620,
+    height: 640,
     parent: mainWindow ?? undefined,
     modal: Boolean(mainWindow),
-    backgroundColor: "#161922",
+    backgroundColor: "#0c0e14",
     icon: windowIcon(),
     title: "引擎设置",
     webPreferences: {
@@ -435,6 +485,7 @@ function installCrashGuards(): void {
 
 async function boot(forceUpdate: boolean): Promise<void> {
   try {
+    if (forceUpdate && mainWindow && !mainWindow.isDestroyed()) mainWindow.hide();
     if (!splashWindow) await createSplash();
     if (needsUserShortcuts(app.isPackaged)) {
       await installUserShortcuts().catch(() => undefined);
@@ -446,14 +497,17 @@ async function boot(forceUpdate: boolean): Promise<void> {
     const runtime = await resolveNodeRuntime(path.join(userData(), "runtime"), (line) => {
       sendSplash("log", line);
     });
-    if (forceUpdate) settings.autoUpdateHarness = true;
     sendSplash("log", `npm 源：${settings.registry}`);
-    sendSplash("status", { phase: "engine", text: "正在从 npm 同步官方 DeepSeek Harness…" });
+    sendSplash("status", {
+      phase: "engine",
+      text: forceUpdate ? "正在更新官方 DeepSeek Harness…" : "正在准备官方 DeepSeek Harness…",
+    });
     const install = await ensureHarness(
       settings,
       runtime,
       path.join(userData(), "harness"),
       (line) => sendSplash("log", line),
+      forceUpdate,
     );
     settings.lastHarnessVersion = install.version;
     await saveSettings(userData(), settings);
@@ -480,10 +534,11 @@ async function boot(forceUpdate: boolean): Promise<void> {
     } else {
       await createMain(running.url, running.version);
     }
+    void maybeNotifyHarnessUpdate();
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     sendSplash("status", { phase: "error", text: message });
-    await dialog.showErrorBox(APP_DISPLAY_NAME, message);
+    await appAlert("error", APP_DISPLAY_NAME, message);
   }
 }
 

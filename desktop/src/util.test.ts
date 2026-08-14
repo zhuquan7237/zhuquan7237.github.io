@@ -23,7 +23,9 @@ import {
   parseOsLocaleAssignments,
   parseOsTimeZone,
   parseXdgUserDir,
+  pickExistingHarness,
   preferredNpmRegistry,
+  shouldPromptHarnessUpdate,
   resolveLinuxDesktopDir,
   resolveTimeZone,
   resolveUiLocale,
@@ -43,6 +45,22 @@ describe("parseDshWebUrl", () => {
 
   it("returns null when missing", () => {
     expect(parseDshWebUrl("still starting")).toBeNull();
+  });
+});
+
+describe("harness update prompts", () => {
+  it("keeps the last installed engine until the user upgrades", () => {
+    expect(pickExistingHarness(["0.1.0-rc.5", "0.1.0-rc.6"], "0.1.0-rc.6")).toBe("0.1.0-rc.6");
+    expect(pickExistingHarness(["0.1.0-rc.5", "0.1.0-rc.6"], "")).toBe("0.1.0-rc.6");
+    expect(pickExistingHarness([], "0.1.0-rc.6")).toBe("");
+  });
+
+  it("asks once per published version and not when already current", () => {
+    expect(shouldPromptHarnessUpdate("0.1.0-rc.6", "0.1.0-rc.7", "")).toBe(true);
+    expect(shouldPromptHarnessUpdate("0.1.0-rc.6", "0.1.0-rc.6", "")).toBe(false);
+    expect(shouldPromptHarnessUpdate("0.1.0-rc.6", "0.1.0-rc.7", "0.1.0-rc.7")).toBe(false);
+    expect(shouldPromptHarnessUpdate("0.1.0-rc.6", "0.1.0-rc.8", "0.1.0-rc.7")).toBe(true);
+    expect(shouldPromptHarnessUpdate("未安装", "0.1.0-rc.6", "")).toBe(false);
   });
 });
 
