@@ -10,6 +10,10 @@ declare global {
       pickDir: () => Promise<string>;
       apply: () => void;
       quit: () => void;
+      listSkins: () => Promise<import("./skins").SkinCard[]>;
+      selectSkin: (id: string) => Promise<void>;
+      importSkinDir: () => Promise<void>;
+      importSkinUrl: (url: string) => Promise<void>;
     };
   }
 }

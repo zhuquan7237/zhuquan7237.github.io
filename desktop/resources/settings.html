@@ -70,6 +70,9 @@
     <p>
       日常不用改这里。软件从 npm 安装官方 <code>@deepseek-ai/dsh</code>，
       和 GitHub 仓库同步发布，不用再 clone 源码。
+      默认皮肤来自
+      <a href="https://github.com/Small-tailqwq/dsh-deep-whale" style="color:#7eb0ff">Small-tailqwq/dsh-deep-whale</a>
+      （CC BY-NC-SA 4.0，禁止商用；署名：上善 → ZipZipPipe → Small-tailqwq）。
     </p>
     <div class="workspace">当前工作区：<code id="workspace"></code></div>
     <label class="check">
@@ -79,6 +82,10 @@
     <label class="check">
       <input id="auto" type="checkbox" />
       <span>启动后检查引擎（Harness）更新。有新版本时先问你，不会偷偷升级。</span>
+    </label>
+    <label class="check">
+      <input id="skins" type="checkbox" />
+      <span>启用皮肤中心（对话窗口右上角圆形按钮）。默认使用「深海女仆工坊」。可在设置里关掉。</span>
     </label>
     <label>npm 源</label>
     <div class="row">
@@ -108,6 +115,8 @@
         channel: "latest",
         autoUpdateHarness: true,
         autoUpdateDesktop: true,
+        skinsEnabled: true,
+        activeSkinId: "maid-atelier",
         registry: "https://registry.npmmirror.com",
         localHarnessDir: "",
         workspaceDir: "~/DeepSeek",
@@ -119,6 +128,7 @@
         $("channel").value = s.channel === "next" ? "next" : "latest";
         $("auto").checked = s.autoUpdateHarness;
         $("autoDesktop").checked = s.autoUpdateDesktop !== false;
+        $("skins").checked = s.skinsEnabled !== false;
         $("registry").value = s.registry;
         $("local").value = s.localHarnessDir;
         $("workspace").textContent = s.workspaceDir || "（首次启动后自动使用家目录下的 DeepSeek 文件夹）";
@@ -137,6 +147,10 @@
           channel: $("channel").value,
           autoUpdateHarness: $("auto").checked,
           autoUpdateDesktop: $("autoDesktop").checked,
+          skinsEnabled: $("skins").checked,
+          activeSkinId: $("skins").checked
+            ? (current.activeSkinId && current.activeSkinId !== "official" ? current.activeSkinId : "maid-atelier")
+            : "official",
           registry,
           registrySource: registry === current.registry ? current.registrySource : "user",
           localHarnessDir: $("local").value,

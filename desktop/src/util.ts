@@ -26,6 +26,10 @@ export interface DesktopSettings {
   skippedHarnessVersion: string;
   /** Startup prompt will not ask again until GitHub publishes a newer desktop tag. */
   skippedDesktopVersion: string;
+  /** Show the in-window skin picker and apply third-party dsh skins. */
+  skinsEnabled: boolean;
+  /** "official" keeps the stock Harness look; default is maid-atelier. */
+  activeSkinId: string;
 }
 
 export const DEFAULT_SETTINGS: DesktopSettings = {
@@ -39,6 +43,8 @@ export const DEFAULT_SETTINGS: DesktopSettings = {
   lastHarnessVersion: "",
   skippedHarnessVersion: "",
   skippedDesktopVersion: "",
+  skinsEnabled: true,
+  activeSkinId: "maid-atelier",
 };
 
 /**
