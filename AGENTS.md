@@ -1,0 +1,38 @@
+# Agent notes
+
+## Desktop version, downloads, and public copy must stay in sync
+
+Whenever the desktop version changes — or download links, product copy, or skin credits change — update **all** of the places below in the **same turn**. Do not tell people a new version is out while any of these still advertise an older one.
+
+After a newer desktop version ships, do not recommend older installers (0.1.0 through the previous version). Prefer Linux **tar.gz** or **deb** in user-facing copy.
+
+### This repo (`zhuquan7237/zhuquan7237.github.io`)
+
+GitHub Pages https://zhuquan7237.github.io/ deploys from **`main`**. A feature-branch PR does **not** update the public site until it is merged.
+
+Bump or rewrite all of these together:
+
+- `desktop/package.json` and `desktop/package-lock.json` (`version`)
+- `.github/workflows/desktop.yml` — `tag_name` `desktop-vX.Y.Z`, release name, notes, and every download URL
+- `README.md`
+- `desktop/README.md`
+- `index.html` — hero button, OS cards, FAQ, footer, and the JS `links` map
+- `me.html` — if it names the version or the new feature
+
+CI publishes the public GitHub Release from `desktop.yml` (`make_latest: true`). Confirm `/releases/latest` points at the new tag and that the installer URLs return HTTP 200.
+
+### Other public GitHub repos (update their `main` in the same turn)
+
+These are not this git checkout. Use the GitHub API / MCP to edit their `main` files:
+
+| Repo | What to update |
+| --- | --- |
+| [zhuquan7237/deepseek-harness-desktop](https://github.com/zhuquan7237/deepseek-harness-desktop) | Search landing `README.md` (and `index.html` if it has versioned links) |
+| [zhuquan7237/zhuquan7237](https://github.com/zhuquan7237/zhuquan7237) | Profile `README.md` download table and version mention |
+
+### Done only when all of these match the new version
+
+1. GitHub Release `desktop-vX.Y.Z` exists and is latest, with Windows / Linux tar.gz+deb / macOS dmg
+2. This repo’s `main` README + `index.html` + `me.html` (Pages)
+3. `deepseek-harness-desktop` README
+4. Profile `zhuquan7237` README

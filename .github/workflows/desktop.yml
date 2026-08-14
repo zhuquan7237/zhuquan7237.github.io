@@ -96,32 +96,32 @@ jobs:
       - name: Publish public GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: desktop-v0.1.9
-          name: DeepSeek Desktop 0.1.9
+          tag_name: desktop-v0.1.10
+          name: DeepSeek Desktop 0.1.10
           target_commitish: ${{ github.sha }}
           prerelease: false
           make_latest: true
           fail_on_unmatched_files: true
           body: |
-            请用 0.1.9。不要用 0.1.0–0.1.8。
+            请用 0.1.10。不要用 0.1.0–0.1.9。
+
+            **0.1.9 → 0.1.10**
+            - 对话窗口右上角皮肤中心：圆形按钮弹出皮肤列表，可快速切换，也可导入新皮肤
+            - 默认皮肤是 [Small-tailqwq/dsh-deep-whale](https://github.com/Small-tailqwq/dsh-deep-whale) 的「深海女仆工坊」，CC BY-NC-SA 4.0，禁止商用。署名链：上善 → ZipZipPipe → Small-tailqwq
+            - 可在引擎设置里关闭皮肤中心，恢复官方界面
 
             **0.1.8 → 0.1.9**
-            - macOS：安装包改为 ad-hoc 签名。以前没签名时，Sequoia 会把隔离的 App 显示成「文件已损坏」（不是下坏了）
-            - DMG 里带 `Open-DeepSeek.command`，提示已损坏时双击它即可清除隔离
-            - 桌面版会查 GitHub Release：启动后询问，或用菜单 **Harness → 检查桌面版更新**。不用 git pull
-
-            **0.1.7 → 0.1.8**
-            - 便携版快捷方式不再每次启动都重写
-            - 图标换成官网鲸鱼
+            - macOS ad-hoc 签名 + `Open-DeepSeek.command`
+            - 桌面版会查 GitHub Release 更新
 
             **直接下载（不用登录）**
-            - Windows 安装包：https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.9/DeepSeek-0.1.9-win.exe
-            - Linux x64（推荐 tar.gz）：https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.9/DeepSeek-0.1.9-linux-x64.tar.gz
-            - Linux x64 deb：https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.9/DeepSeek-0.1.9-linux-amd64.deb
-            - macOS Apple Silicon：https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.9/DeepSeek-0.1.9-mac-arm64.dmg
-            - macOS Intel：https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.9/DeepSeek-0.1.9-mac-x64.dmg
+            - Windows 安装包：https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.10/DeepSeek-0.1.10-win.exe
+            - Linux x64（推荐 tar.gz）：https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.10/DeepSeek-0.1.10-linux-x64.tar.gz
+            - Linux x64 deb：https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.10/DeepSeek-0.1.10-linux-amd64.deb
+            - macOS Apple Silicon：https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.10/DeepSeek-0.1.10-mac-arm64.dmg
+            - macOS Intel：https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.10/DeepSeek-0.1.10-mac-x64.dmg
 
-            首次启动需要联网 1–3 分钟（下载 Node 和官方 dsh）。之后菜单可检查桌面版和 Harness 更新。
+            首次启动需要联网 1–3 分钟（下载 Node、官方 dsh，以及默认皮肤）。之后菜单可检查桌面版和 Harness 更新。
 
             **Linux:** 优先 `.tar.gz` 或 `.deb`。AppImage 在 Ubuntu 24.04 常缺 libfuse2。
             **Windows:** 安装包会创建桌面和开始菜单快捷方式。未签名时 SmartScreen 选「更多信息 → 仍要运行」。
@@ -129,12 +129,12 @@ jobs:
 
             | File | Platform |
             | --- | --- |
-            | `DeepSeek-0.1.9-win.exe` | Windows installer |
-            | `DeepSeek-0.1.9-win-x64.exe` / `*-win-arm64.exe` | Windows portable |
-            | `DeepSeek-0.1.9-mac-arm64.dmg` | macOS Apple Silicon |
-            | `DeepSeek-0.1.9-mac-x64.dmg` | macOS Intel |
-            | `DeepSeek-0.1.9-linux-x64.tar.gz` / `*-linux-amd64.deb` | Linux x64 |
-            | `DeepSeek-0.1.9-linux-arm64.tar.gz` / `*-linux-arm64.deb` | Linux arm64 |
+            | `DeepSeek-0.1.10-win.exe` | Windows installer |
+            | `DeepSeek-0.1.10-win-x64.exe` / `*-win-arm64.exe` | Windows portable |
+            | `DeepSeek-0.1.10-mac-arm64.dmg` | macOS Apple Silicon |
+            | `DeepSeek-0.1.10-mac-x64.dmg` | macOS Intel |
+            | `DeepSeek-0.1.10-linux-x64.tar.gz` / `*-linux-amd64.deb` | Linux x64 |
+            | `DeepSeek-0.1.10-linux-arm64.tar.gz` / `*-linux-arm64.deb` | Linux arm64 |
           files: |
             installers/*.exe
             installers/*.dmg
