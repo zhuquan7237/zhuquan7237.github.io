@@ -38,6 +38,17 @@ These are not this git checkout. Use the GitHub API / MCP to edit their `main` f
 | [zhuquan7237/deepseek-harness-desktop](https://github.com/zhuquan7237/deepseek-harness-desktop) | Search landing `README.md` (and `index.html` if it has versioned links) |
 | [zhuquan7237/zhuquan7237](https://github.com/zhuquan7237/zhuquan7237) | Profile `README.md` download table and version mention |
 
+### GitHub About / topics (cannot be set from git files)
+
+The search landing repo is what people find when they type `DeepSeek Harness Desktop`. After creating or editing it, open **About** on both repos and keep:
+
+- **Description (Chinese first):** `基于官方 DeepSeek Harness 打造的 Electron 桌面端，Windows / Linux / macOS 开箱即用。引擎从 npm 更新 @deepseek-ai/dsh，不整仓拷贝官方源码。`
+- **Website:** `https://zhuquan7237.github.io`
+- **Topics:** `deepseek`, `deepseek-harness`, `dsh`, `dsh-plugin`, `electron`, `desktop`, `windows`, `linux`, `macos`
+- **License:** MIT (root `LICENSE`; the bundled maid-atelier skin stays CC BY-NC-SA 4.0)
+
+Do not vendor `deepseek-ai/deepseek-harness` into this repo to chase GitHub search rank. The product is a thin npm shell. Public comparison copy lives in `compare.html`.
+
 ### Done only when all of these match the new version
 
 1. GitHub Release `desktop-vX.Y.Z` exists and is latest, with Windows / Linux tar.gz+deb / macOS dmg

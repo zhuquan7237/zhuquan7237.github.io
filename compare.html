@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DeepSeek Harness Desktop 和其他桌面版的区别</title>
+    <meta
+      name="description"
+      content="DeepSeek Harness Desktop（dsh 桌面版）和其他社区 Electron 桌面端怎么选：官方 npm 引擎、Windows / Linux / macOS、内置皮肤、继承旧版 API Key。"
+    />
+    <meta
+      name="keywords"
+      content="DeepSeek Harness Desktop, DeepSeek Harness 桌面版, DeepSeek Harness 桌面端, dsh desktop, Electron DeepSeek, deepseekdesktop, @deepseek-ai/dsh"
+    />
+    <meta property="og:title" content="DeepSeek Harness Desktop 和其他桌面版的区别" />
+    <meta property="og:description" content="薄壳 + 官方 npm 引擎，不是把官方仓库整仓拷进来的桌面版。" />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://zhuquan7237.github.io/compare.html" />
+    <meta property="og:image" content="https://zhuquan7237.github.io/assets/desktop-preview.png" />
+    <link rel="canonical" href="https://zhuquan7237.github.io/compare.html" />
+    <link rel="icon" type="image/png" href="./assets/deepseek-whale.png" />
+    <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg" />
+    <link rel="stylesheet" href="./site.css" />
+  </head>
+  <body>
+    <nav>
+      <a class="brand" href="./">
+        <img src="./assets/deepseek-whale.png" alt="DeepSeek" />
+        DeepSeek Desktop
+      </a>
+      <div class="nav-links">
+        <a href="./">下载</a>
+        <a class="active" href="./compare.html">和其他桌面版</a>
+        <a href="./mac.html">macOS 打不开</a>
+        <a href="./me.html">关于朱泉</a>
+        <a href="https://github.com/zhuquan7237/deepseek-harness-desktop">GitHub</a>
+      </div>
+    </nav>
+    <main>
+      <header class="hero" style="grid-template-columns: 1fr">
+        <div>
+          <p class="kicker">DeepSeek Harness Desktop · 怎么选</p>
+          <h1>和其他社区桌面版的区别</h1>
+          <p class="lead">
+            官方 DeepSeek Harness 只有命令行和本地网页。社区里一下子出现了很多同名
+            Electron 桌面端。这个项目是基于官方引擎的薄壳，不整仓拷贝官方源码。
+            搜「DeepSeek Harness Desktop」时，星标高的仓库会排在前面。
+            这个项目不跟他们比星标，只把差别写清楚，方便你选对安装包。
+          </p>
+          <div class="actions">
+            <a class="btn primary" href="./">去下载 0.1.12</a>
+            <a class="btn ghost" href="https://github.com/zhuquan7237/deepseek-harness-desktop">打开搜索名仓库</a>
+          </div>
+        </div>
+      </header>
+
+      <section>
+        <p class="section-title">一句话</p>
+        <div class="grid-2">
+          <article class="card">
+            <h2>这个项目</h2>
+            <p>
+              薄薄一层 Electron 壳，不整仓拷贝官方源码。启动时从 npm 安装官方
+              <code>@deepseek-ai/dsh</code>。Windows / Linux / macOS（含 Intel）都有包。
+              默认皮肤打进安装包。旧版 API Key 会尽量接过来。
+            </p>
+          </article>
+          <article class="card">
+            <h2>整仓拷贝官方源码的桌面版</h2>
+            <p>
+              把 <code>deepseek-ai/deepseek-harness</code> 整份放进自己的仓库，再加 Electron。
+              GitHub 上会显示成很大的 TypeScript 项目，搜索和星标都更显眼。
+              引擎更新要等作者再同步那份拷贝。
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section>
+        <p class="section-title">对照</p>
+        <table class="compare-table">
+          <thead>
+            <tr>
+              <th></th>
+              <th>zhuquan7237 / DeepSeek Harness Desktop</th>
+              <th>整仓拷贝官方源码的桌面版</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>仓库里有什么</td>
+              <td>桌面壳、安装包脚本、皮肤运行时</td>
+              <td>官方 monorepo + 一层桌面封装</td>
+            </tr>
+            <tr>
+              <td>引擎从哪来</td>
+              <td>每次从 npm 装官方 <code>@deepseek-ai/dsh</code></td>
+              <td>仓库里冻结的那份源码</td>
+            </tr>
+            <tr>
+              <td>官方发新版时</td>
+              <td>菜单「检查 Harness 更新」，不用重装桌面软件</td>
+              <td>等作者再合并、再打安装包</td>
+            </tr>
+            <tr>
+              <td>Windows</td>
+              <td>有安装包</td>
+              <td>多数有</td>
+            </tr>
+            <tr>
+              <td>Linux</td>
+              <td>tar.gz / deb / AppImage，x64 与 arm64</td>
+              <td>多数没有</td>
+            </tr>
+            <tr>
+              <td>macOS</td>
+              <td>Apple Silicon + Intel</td>
+              <td>常见只有 Apple Silicon</td>
+            </tr>
+            <tr>
+              <td>默认皮肤</td>
+              <td>打进安装包，不访问 GitHub</td>
+              <td>看各项目</td>
+            </tr>
+            <tr>
+              <td>旧版 API Key</td>
+              <td>0.1.12 从旧 userData / <code>~/.dsh</code> 接过来</td>
+              <td>看各项目</td>
+            </tr>
+            <tr>
+              <td>国内网络</td>
+              <td>中文系统默认国内 npm 镜像</td>
+              <td>看各项目</td>
+            </tr>
+            <tr>
+              <td>GitHub 搜索名</td>
+              <td><a href="https://github.com/zhuquan7237/deepseek-harness-desktop">zhuquan7237/deepseek-harness-desktop</a></td>
+              <td>不少仓库也叫这个名字，星标高的会排前面</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section>
+        <p class="section-title">怎么搜到这个项目</p>
+        <div class="grid-3">
+          <article class="card">
+            <h2>搜索名</h2>
+            <p>
+              GitHub 上搜 DeepSeek Harness Desktop 时，请认准作者
+              <strong>zhuquan7237</strong>，或直接打开
+              <a href="https://github.com/zhuquan7237/deepseek-harness-desktop">搜索落地仓库</a>。
+            </p>
+          </article>
+          <article class="card">
+            <h2>下载页</h2>
+            <p>
+              安装包在
+              <a href="https://zhuquan7237.github.io">zhuquan7237.github.io</a>
+              和
+              <a href="https://github.com/zhuquan7237/zhuquan7237.github.io/releases/latest">Releases</a>。
+              请用 0.1.12，不要用 0.1.0–0.1.11。
+            </p>
+          </article>
+          <article class="card">
+            <h2>不是官方</h2>
+            <p>
+              引擎来自
+              <a href="https://github.com/deepseek-ai/deepseek-harness">deepseek-ai/deepseek-harness</a>。
+              桌面安装包由
+              <a href="./me.html">朱泉</a>
+              做，不是 DeepSeek 公司产品。
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <footer>
+        <span>DeepSeek Harness Desktop 0.1.12 · 作者 <a href="./me.html">朱泉</a></span>
+        <span>
+          <a href="./">下载</a>
+          ·
+          <a href="./mac.html">macOS 打不开</a>
+          ·
+          <a href="https://github.com/zhuquan7237/deepseek-harness-desktop">GitHub</a>
+        </span>
+      </footer>
+    </main>
+  </body>
+</html>

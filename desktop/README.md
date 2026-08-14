@@ -4,11 +4,11 @@
 
 # DeepSeek Harness Desktop (dsh 桌面版)
 
-A Codex-style **desktop shell** around official [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (`dsh`, `@deepseek-ai/dsh`).
+基于官方 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 打造的 Electron 桌面端（`dsh` / `@deepseek-ai/dsh`）。Windows / Linux / macOS 开箱即用。
 
-Search: DeepSeek Harness desktop, dsh desktop, DeepSeek Harness 桌面版, DeepSeek Harness 下载.
+Search: DeepSeek Harness Desktop, dsh desktop, DeepSeek Harness 桌面版, DeepSeek Harness 桌面端, DeepSeek Harness 下载.
 
-This package does **not** vendor harness source. On launch it:
+This package does **not** vendor the official monorepo. Other community desktops copy the whole harness into their GitHub repo (that ranks well in search). This shell installs `@deepseek-ai/dsh` from npm instead. See [compare.html](https://zhuquan7237.github.io/compare.html). On launch it:
 
 1. Uses system Node `>= 22.19` or downloads an official Node sidecar
 2. Installs / updates `@deepseek-ai/dsh` from npm into user data

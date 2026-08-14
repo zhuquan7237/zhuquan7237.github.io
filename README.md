@@ -2,10 +2,10 @@
 
 <img src="assets/deepseek-whale.png" width="96" alt="DeepSeek" />
 
-# DeepSeek Harness 桌面版
+# DeepSeek Harness Desktop
 
-**下载就能用的 Codex 式编程助手。**  
-引擎是官方 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（`@deepseek-ai/dsh`），不用 `git clone`。
+**基于官方 DeepSeek Harness 打造的 Electron 桌面端**  
+Windows · Linux · macOS 开箱即用。引擎从 npm 安装官方 [`@deepseek-ai/dsh`](https://github.com/deepseek-ai/deepseek-harness)，不整仓拷贝官方源码。
 
 [![Release](https://img.shields.io/github/v/release/zhuquan7237/zhuquan7237.github.io?include_prereleases&label=release)](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/zhuquan7237/zhuquan7237.github.io/total)](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/latest)
@@ -24,15 +24,36 @@
 
 ## 这是什么
 
-官方 `dsh web` 已经很好用，但普通人还是得自己装 Node、克隆仓库、在终端里启动。这个项目做的是薄薄一层**桌面壳**：
+官方 `dsh web` 已经很好用，但普通人还是得自己装 Node、克隆仓库、在终端里启动。这个项目做的是薄薄一层 **Electron 桌面壳**：
 
-1. 给你一个能双击的安装包（Windows / Linux / macOS，x64 与 arm64）
+1. 给你一个能双击的安装包（Windows / Linux / macOS，x64 与 arm64，含 Intel Mac）
 2. 启动时自动准备 Node，并从 npm 安装官方 `@deepseek-ai/dsh`
 3. 把官方界面嵌进原生窗口：桌面快捷方式、图标、工作区、中文菜单
 
 工具、插件、Plan/Agent、设置仍然全部来自官方 Harness。菜单 **Harness → 检查 Harness 更新** 只更新引擎，不必重装桌面软件。
 
 作者：[朱泉 / Quan Zhu](https://zhuquan7237.github.io/me.html)，广东海洋大学材料科学与工程。
+
+## 主要功能
+
+| Desktop | 官方引擎，不整仓拷贝 |
+| --- | --- |
+| 把官方本地 Web UI 带到原生窗口。自动准备 Node、启动 dsh、记住工作区。Windows / Linux / macOS 都有安装包。 | 不把 `deepseek-ai/deepseek-harness` 整仓拷进仓库。官方发新版时，菜单里检查更新即可。 |
+| **皮肤中心** | **国内网络与旧配置** |
+| 默认「深海女仆工坊」打进安装包，离线也能用。右上角鲸鱼按钮可换皮或导入。 | 中文系统默认国内 npm 镜像。0.1.12 会尽量把旧版 API 密钥接过来。 |
+
+## 和其他社区桌面版怎么选
+
+搜「DeepSeek Harness Desktop」会看到好几个同名仓库。有的把官方源码整仓拷进自己的 GitHub，星标涨得快，但引擎更新要等他们再同步。这个项目只做薄壳。对照：[compare.html](https://zhuquan7237.github.io/compare.html)。
+
+| | 这个桌面版 | 整仓拷贝官方源码的桌面版 |
+| --- | --- | --- |
+| 引擎 | 每次从 npm 装官方 `@deepseek-ai/dsh` | 仓库里那份拷贝 |
+| 系统 | Windows、Linux、macOS（Apple Silicon + Intel） | 常见只有 macOS Apple Silicon 和 Windows |
+| 默认皮肤 | 打进安装包 | 看各项目 |
+| 旧版 API Key | 0.1.12 尽量从旧目录接过来 | 看各项目 |
+
+GitHub 搜索名：[zhuquan7237/deepseek-harness-desktop](https://github.com/zhuquan7237/deepseek-harness-desktop)。请认准作者 **zhuquan7237**。
 
 ## 30 秒开始
 
@@ -94,4 +115,4 @@ npm start
 
 ## 搜索
 
-DeepSeek Harness 桌面版、dsh desktop、DeepSeek Harness 下载、DeepSeek Harness Windows、DeepSeek Harness Linux、`@deepseek-ai/dsh`、Codex DeepSeek。
+DeepSeek Harness Desktop、DeepSeek Harness 桌面版、DeepSeek Harness 桌面端、dsh desktop、dsh 桌面版、DeepSeek Harness 下载、DeepSeek Harness Windows、DeepSeek Harness Linux、DeepSeek Harness macOS、`@deepseek-ai/dsh`、Electron DeepSeek。
