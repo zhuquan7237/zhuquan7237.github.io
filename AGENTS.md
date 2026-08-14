@@ -8,7 +8,7 @@ After a newer desktop version ships, do not recommend older installers (0.1.0 th
 
 ### This repo (`zhuquan7237/zhuquan7237.github.io`)
 
-GitHub Pages https://zhuquan7237.github.io/ deploys from **`main`**. A feature-branch PR does **not** update the public site until it is merged.
+GitHub Pages https://dsh.zhuquan.xyz/ (custom domain, `CNAME` file) deploys from **`main`**. `https://zhuquan7237.github.io/` should redirect there after Pages picks up the domain. A feature-branch PR does **not** update the public site until it is merged.
 
 Bump or rewrite all of these together:
 
@@ -43,7 +43,7 @@ These are not this git checkout. Use the GitHub API / MCP to edit their `main` f
 The search landing repo is what people find when they type `DeepSeek Harness Desktop`. After creating or editing it, open **About** on both repos and keep:
 
 - **Description (Chinese first):** `基于官方 DeepSeek Harness 打造的 Electron 桌面端，Windows / Linux / macOS 开箱即用。引擎从 npm 更新 @deepseek-ai/dsh，不整仓拷贝官方源码。`
-- **Website:** `https://zhuquan7237.github.io`
+- **Website:** `https://dsh.zhuquan.xyz`
 - **Topics:** `deepseek`, `deepseek-harness`, `dsh`, `dsh-plugin`, `electron`, `desktop`, `windows`, `linux`, `macos`
 - **License:** MIT (root `LICENSE`; the bundled maid-atelier skin stays CC BY-NC-SA 4.0)
 

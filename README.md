@@ -11,8 +11,8 @@ Windows · Linux · macOS 开箱即用。引擎从 npm 安装官方 [`@deepseek-
 [![Downloads](https://img.shields.io/github/downloads/zhuquan7237/zhuquan7237.github.io/total)](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/latest)
 [![Platforms](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-4d93f8)](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/latest)
 
-[主页 / 下载](https://zhuquan7237.github.io) ·
-[关于作者](https://zhuquan7237.github.io/me.html) ·
+[主页 / 下载](https://dsh.zhuquan.xyz) ·
+[关于作者](https://dsh.zhuquan.xyz/me.html) ·
 [下载 0.1.12](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/latest) ·
 [Windows](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.12/DeepSeek-0.1.12-win.exe) ·
 [Linux tar.gz](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.12/DeepSeek-0.1.12-linux-x64.tar.gz) ·
@@ -32,7 +32,7 @@ Windows · Linux · macOS 开箱即用。引擎从 npm 安装官方 [`@deepseek-
 
 工具、插件、Plan/Agent、设置仍然全部来自官方 Harness。菜单 **Harness → 检查 Harness 更新** 只更新引擎，不必重装桌面软件。
 
-作者：[朱泉 / Quan Zhu](https://zhuquan7237.github.io/me.html)，广东海洋大学材料科学与工程。
+作者：[朱泉 / Quan Zhu](https://dsh.zhuquan.xyz/me.html)，广东海洋大学材料科学与工程。
 
 ## 主要功能
 
@@ -44,7 +44,7 @@ Windows · Linux · macOS 开箱即用。引擎从 npm 安装官方 [`@deepseek-
 
 ## 和其他社区桌面版怎么选
 
-搜「DeepSeek Harness Desktop」会看到好几个同名仓库。有的把官方源码整仓拷进自己的 GitHub，星标涨得快，但引擎更新要等他们再同步。这个项目只做薄壳。对照：[compare.html](https://zhuquan7237.github.io/compare.html)。
+搜「DeepSeek Harness Desktop」会看到好几个同名仓库。有的把官方源码整仓拷进自己的 GitHub，星标涨得快，但引擎更新要等他们再同步。这个项目只做薄壳。对照：[compare.html](https://dsh.zhuquan.xyz/compare.html)。
 
 | | 这个桌面版 | 整仓拷贝官方源码的桌面版 |
 | --- | --- | --- |
@@ -61,7 +61,7 @@ GitHub 搜索名：[zhuquan7237/deepseek-harness-desktop](https://github.com/zhu
 | --- | --- | --- |
 | Windows | [DeepSeek-0.1.12-win.exe](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.12/DeepSeek-0.1.12-win.exe) | 会创建桌面和开始菜单快捷方式。SmartScreen 选「更多信息 → 仍要运行」 |
 | Linux | [x64 tar.gz](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.12/DeepSeek-0.1.12-linux-x64.tar.gz) · [deb](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.12/DeepSeek-0.1.12-linux-amd64.deb) | 优先 tar.gz 或 deb。AppImage 在 Ubuntu 24.04 常缺 libfuse2 |
-| macOS | [arm64 dmg](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.12/DeepSeek-0.1.12-mac-arm64.dmg) · [Intel dmg](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.12/DeepSeek-0.1.12-mac-x64.dmg) | 拖到「应用程序」。若提示已损坏，终端运行 `xattr -cr /Applications/DeepSeek.app`。说明：[mac.html](https://zhuquan7237.github.io/mac.html) |
+| macOS | [arm64 dmg](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.12/DeepSeek-0.1.12-mac-arm64.dmg) · [Intel dmg](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.12/DeepSeek-0.1.12-mac-x64.dmg) | 拖到「应用程序」。若提示已损坏，终端运行 `xattr -cr /Applications/DeepSeek.app`。说明：[mac.html](https://dsh.zhuquan.xyz/mac.html) |
 
 ```sh
 # Linux
@@ -100,10 +100,10 @@ tar -xzf DeepSeek-0.1.12-linux-x64.tar.gz
 
 ## 仓库里还有什么
 
-- [产品主页](https://zhuquan7237.github.io) — 按系统下载
-- [关于作者](https://zhuquan7237.github.io/me.html)
-- [浏览器预览](https://zhuquan7237.github.io/app/) — 轻量网页版，不能替代完整 Harness
-- [番茄钟](https://zhuquan7237.github.io/pomodoro.html)
+- [产品主页](https://dsh.zhuquan.xyz) — 按系统下载（`dsh.zhuquan.xyz`）
+- [关于作者](https://dsh.zhuquan.xyz/me.html)
+- [浏览器预览](https://dsh.zhuquan.xyz/app/) — 轻量网页版，不能替代完整 Harness
+- [番茄钟](https://dsh.zhuquan.xyz/pomodoro.html)
 
 本地运行桌面壳：
 

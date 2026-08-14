@@ -132,7 +132,7 @@ jobs:
 
             **Linux:** 优先 `.tar.gz` 或 `.deb`。AppImage 在 Ubuntu 24.04 常缺 libfuse2。
             **Windows:** 安装包会创建桌面和开始菜单快捷方式。未签名时 SmartScreen 选「更多信息 → 仍要运行」。
-            **macOS:** 把 App 拖到「应用程序」。若提示已损坏，终端运行 `xattr -cr /Applications/DeepSeek.app`。DMG 里有 `Read-Me-First.txt` 和 `Open-DeepSeek.command`。说明：https://zhuquan7237.github.io/mac.html
+            **macOS:** 把 App 拖到「应用程序」。若提示已损坏，终端运行 `xattr -cr /Applications/DeepSeek.app`。DMG 里有 `Read-Me-First.txt` 和 `Open-DeepSeek.command`。说明：https://dsh.zhuquan.xyz/mac.html
 
             | File | Platform |
             | --- | --- |

@@ -8,7 +8,7 @@
 
 Search: DeepSeek Harness Desktop, dsh desktop, DeepSeek Harness 桌面版, DeepSeek Harness 桌面端, DeepSeek Harness 下载.
 
-This package does **not** vendor the official monorepo. Other community desktops copy the whole harness into their GitHub repo (that ranks well in search). This shell installs `@deepseek-ai/dsh` from npm instead. See [compare.html](https://zhuquan7237.github.io/compare.html). On launch it:
+This package does **not** vendor the official monorepo. Other community desktops copy the whole harness into their GitHub repo (that ranks well in search). This shell installs `@deepseek-ai/dsh` from npm instead. See [compare.html](https://dsh.zhuquan.xyz/compare.html). On launch it:
 
 1. Uses system Node `>= 22.19` or downloads an official Node sidecar
 2. Installs / updates `@deepseek-ai/dsh` from npm into user data

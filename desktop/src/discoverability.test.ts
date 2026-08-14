@@ -21,5 +21,9 @@ describe("public discoverability copy", () => {
     expect(index).toContain("compare.html");
     expect(compare).toContain("zhuquan7237/deepseek-harness-desktop");
     expect(readme).toContain("zhuquan7237/deepseek-harness-desktop");
+    expect(readme).toContain("dsh.zhuquan.xyz");
+    expect(index).toContain("dsh.zhuquan.xyz");
+    const cname = await readFile(path.join(root, "CNAME"), "utf8");
+    expect(cname.trim()).toBe("dsh.zhuquan.xyz");
   });
 });
