@@ -63,6 +63,18 @@
         padding: 10px 12px;
         margin: 12px 0 4px;
       }
+      .skin-box {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: var(--radius-sm);
+        padding: 14px 14px 6px;
+        margin: 16px 0 8px;
+      }
+      .skin-box h2 {
+        margin: 0 0 6px;
+        font-size: 15px;
+      }
+      .skin-box p { margin: 0 0 8px; }
     </style>
   </head>
   <body>
@@ -75,6 +87,14 @@
       （CC BY-NC-SA 4.0，禁止商用；署名：上善 → ZipZipPipe → Small-tailqwq）。
     </p>
     <div class="workspace">当前工作区：<code id="workspace"></code></div>
+    <section class="skin-box">
+      <h2>皮肤中心</h2>
+      <p>对话窗口右上角的鲸鱼按钮。关掉后按钮消失；菜单「皮肤 → 打开皮肤中心」或这里可以再打开。</p>
+      <label class="check">
+        <input id="skins" type="checkbox" />
+        <span>启用皮肤中心（默认「深海女仆工坊」）</span>
+      </label>
+    </section>
     <label class="check">
       <input id="autoDesktop" type="checkbox" />
       <span>启动后检查桌面软件更新（GitHub Release 安装包，不用 git pull）。</span>
@@ -82,10 +102,6 @@
     <label class="check">
       <input id="auto" type="checkbox" />
       <span>启动后检查引擎（Harness）更新。有新版本时先问你，不会偷偷升级。</span>
-    </label>
-    <label class="check">
-      <input id="skins" type="checkbox" />
-      <span>启用皮肤中心（对话窗口右上角圆形按钮）。默认使用「深海女仆工坊」。可在设置里关掉。</span>
     </label>
     <label>npm 源</label>
     <div class="row">
@@ -148,9 +164,7 @@
           autoUpdateHarness: $("auto").checked,
           autoUpdateDesktop: $("autoDesktop").checked,
           skinsEnabled: $("skins").checked,
-          activeSkinId: $("skins").checked
-            ? (current.activeSkinId && current.activeSkinId !== "official" ? current.activeSkinId : "maid-atelier")
-            : "official",
+          activeSkinId: current.activeSkinId && current.activeSkinId !== "official" ? current.activeSkinId : "maid-atelier",
           registry,
           registrySource: registry === current.registry ? current.registrySource : "user",
           localHarnessDir: $("local").value,

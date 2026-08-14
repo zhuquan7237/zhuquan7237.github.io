@@ -62,7 +62,7 @@ Download installers from the public [GitHub Release](https://github.com/zhuquan7
 
 ## 皮肤中心
 
-对话窗口右上角圆形按钮会弹出皮肤列表（带过渡动画）。默认皮肤是 [Small-tailqwq/dsh-deep-whale](https://github.com/Small-tailqwq/dsh-deep-whale) 的「深海女仆工坊」，CC BY-NC-SA 4.0，**禁止商用**。署名链：一创 [上善](https://www.pixiv.net/users/62155430) → 二创 [ZipZipPipe](https://www.pixiv.net/users/18604994) → 三创 Small-tailqwq。可在 **引擎设置** 关闭皮肤中心。以后有新皮肤可从文件夹或 GitHub 地址导入。
+对话窗口右上角 DeepSeek 鲸鱼按钮会弹出皮肤列表（带过渡动画）。默认皮肤是 [Small-tailqwq/dsh-deep-whale](https://github.com/Small-tailqwq/dsh-deep-whale) 的「深海女仆工坊」，CC BY-NC-SA 4.0，**禁止商用**。署名链：一创 [上善](https://www.pixiv.net/users/62155430) → 二创 [ZipZipPipe](https://www.pixiv.net/users/18604994) → 三创 Small-tailqwq。关闭皮肤中心：列表里的按钮、菜单 **皮肤**，或引擎设置。以后有新皮肤可从文件夹或 GitHub 地址导入。切回官方皮肤后再选默认皮肤会重启界面，避免插件卸掉后切不回来。
 
 ## Run from source
 
@@ -77,7 +77,7 @@ Menus:
 - **文件 → 打开工作区** — `dsh` 的工作目录（默认 `~/DeepSeek`）
 - **Harness → 检查 Harness 更新** — 拉取最新 `@deepseek-ai/dsh`
 - **Harness → 引擎设置** — npm 渠道、registry、皮肤中心开关，或本地已构建的 checkout
-- **查看 → 皮肤中心** — 打开对话窗口右上角的皮肤列表
+- **皮肤 → 打开皮肤列表 / 关闭皮肤中心** — 右上角鲸鱼按钮，或在这里开关皮肤中心
 
 ## Why this is not a fork
 

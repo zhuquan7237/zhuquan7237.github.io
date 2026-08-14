@@ -125,11 +125,16 @@ describe("managed patch", () => {
     expect(text).not.toContain("- id: ui-skin-maid-atelier\n  disabled: true");
   });
 
-  it("does not insert a skin already registered in the profile bundle list", () => {
+  it("still inserts after the official look so the default skin can come back", () => {
     const skins = [{ ...BUILTIN_MAID_ATELIER, dir: "/tmp/a", builtin: true }];
-    const text = renderManagedPatch(skins, "maid-atelier", [BUILTIN_MAID_ATELIER.packageName]);
-    expect(text).not.toContain("- insert:");
-    expect(text).toContain(MANAGED_START);
+    const official = renderManagedPatch(skins, OFFICIAL_SKIN_ID);
+    expect(official).toContain("- id: ui-skin-maid-atelier");
+    expect(official).toContain("disabled: true");
+    expect(official).not.toContain("- insert:");
+    const back = mergeSkinPatch(official, skins, "maid-atelier");
+    expect(back).toContain("- insert:");
+    expect(back).toContain("name: '@dsh-external/dsh-client-ui-skin-maid-atelier'");
+    expect(back).not.toContain("- id: ui-skin-maid-atelier\n  disabled: true");
   });
 
   it("restores the official look without an insert row", () => {

@@ -5,9 +5,9 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { homedir } from "node:os";
 import { loadSettings, saveSettings } from "./settings";
-import { ensureHarness, fetchPublishedVersion, startHarnessWeb, stopHarness, type RunningHarness } from "./harness";
+import { ensureHarness, fetchPublishedVersion, startHarnessWeb, stopHarness, type HarnessInstall, type RunningHarness } from "./harness";
 import { applyLinuxRuntimeFlags } from "./linux-flags";
-import { resolveNodeRuntime } from "./node-runtime";
+import { resolveNodeRuntime, type NodeRuntime } from "./node-runtime";
 import { appIconFile, installUserShortcuts, needsUserShortcuts } from "./desktop-integration";
 import {
   downloadDesktopAsset,
@@ -88,6 +88,9 @@ const linuxReady = applyLinuxRuntimeFlags(uiLocale);
 let mainWindow: BrowserWindow | null = null;
 let splashWindow: BrowserWindow | null = null;
 let running: RunningHarness | null = null;
+let lastRuntime: NodeRuntime | null = null;
+let lastInstall: HarnessInstall | null = null;
+let skinBusy = false;
 let settings: DesktopSettings;
 
 function userData(): string {
@@ -244,6 +247,69 @@ async function syncSkins(onLog: (line: string) => void = sendSplash.bind(null, "
   return catalog;
 }
 
+function preferredSkinId(): string {
+  return settings.activeSkinId && settings.activeSkinId !== OFFICIAL_SKIN_ID
+    ? settings.activeSkinId
+    : DEFAULT_SKIN_ID;
+}
+
+/** Reload is not enough after "official": the plugin is unloaded and never comes back. */
+async function restartHarnessUi(): Promise<void> {
+  if (!lastRuntime || !lastInstall) {
+    await boot(false);
+    return;
+  }
+  const workspaceDir = settings.workspaceDir || path.join(homedir(), "DeepSeek");
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.setTitle("正在切换皮肤…");
+  }
+  await syncSkins((line) => sendSplash("log", line));
+  stopHarness(running);
+  running = await startHarnessWeb({
+    runtime: lastRuntime,
+    install: lastInstall,
+    workspaceDir,
+    dshHome: dshHomeDir(),
+    extraEnv: harnessLocaleEnv(uiLocale),
+    onLog: (line) => sendSplash("log", line),
+  });
+  buildMenu();
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    await loadHarnessUi(running.url);
+    mainWindow.setTitle(`${APP_DISPLAY_NAME} — dsh ${running.version}`);
+    revealMain();
+  }
+}
+
+async function applySkinSelection(id: string, enabled = settings.skinsEnabled): Promise<void> {
+  if (skinBusy) return;
+  skinBusy = true;
+  try {
+    settings.skinsEnabled = enabled;
+    if (enabled) {
+      settings.activeSkinId = id === OFFICIAL_SKIN_ID ? OFFICIAL_SKIN_ID : id || DEFAULT_SKIN_ID;
+    } else if (!settings.activeSkinId || settings.activeSkinId === OFFICIAL_SKIN_ID) {
+      settings.activeSkinId = DEFAULT_SKIN_ID;
+    }
+    await saveSettings(userData(), settings);
+    await restartHarnessUi();
+  } finally {
+    skinBusy = false;
+  }
+}
+
+async function openSkinCenter(): Promise<void> {
+  if (!settings.skinsEnabled) {
+    await applySkinSelection(preferredSkinId(), true);
+    return;
+  }
+  await injectSkinOverlay();
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  await mainWindow.webContents.executeJavaScript(
+    `document.getElementById("dsh-desktop-skin-root")?.classList.add("open")`,
+  );
+}
+
 async function injectSkinOverlay(): Promise<void> {
   if (!settings?.skinsEnabled) return;
   if (!mainWindow || mainWindow.isDestroyed()) return;
@@ -359,33 +425,29 @@ function buildMenu(): void {
         { role: "zoomOut", label: "缩小" },
         { type: "separator" },
         {
-          label: "皮肤中心",
-          click: () => {
-            if (!settings.skinsEnabled) {
-              void nativeBox({
-                type: "info",
-                title: "皮肤中心",
-                message: "皮肤中心已关闭",
-                detail: "可在「引擎设置」里重新打开。默认皮肤来自 Small-tailqwq/dsh-deep-whale，CC BY-NC-SA 4.0。",
-                buttons: ["确定"],
-              });
-              return;
-            }
-            void injectSkinOverlay().then(async () => {
-              if (!mainWindow || mainWindow.isDestroyed()) return;
-              await mainWindow.webContents.executeJavaScript(
-                `document.getElementById("dsh-desktop-skin-root")?.classList.add("open")`,
-              );
-            });
-          },
-        },
-        {
           label: "在浏览器中打开界面",
           click: () => {
             if (running?.url) void shell.openExternal(running.url);
           },
         },
         { role: "togglefullscreen", label: "全屏" },
+      ],
+    },
+    {
+      label: "皮肤",
+      submenu: [
+        {
+          label: "打开皮肤列表",
+          click: () => {
+            void openSkinCenter();
+          },
+        },
+        {
+          label: settings.skinsEnabled ? "关闭皮肤中心" : "打开皮肤中心",
+          click: () => {
+            void applySkinSelection(preferredSkinId(), !settings.skinsEnabled);
+          },
+        },
       ],
     },
     {
@@ -694,6 +756,7 @@ async function boot(forceUpdate: boolean): Promise<void> {
     const runtime = await resolveNodeRuntime(path.join(userData(), "runtime"), (line) => {
       sendSplash("log", line);
     });
+    lastRuntime = runtime;
     sendSplash("log", `npm 源：${settings.registry}`);
     sendSplash("status", {
       phase: "engine",
@@ -706,6 +769,7 @@ async function boot(forceUpdate: boolean): Promise<void> {
       (line) => sendSplash("log", line),
       forceUpdate,
     );
+    lastInstall = install;
     settings.lastHarnessVersion = install.version;
     await saveSettings(userData(), settings);
 
@@ -797,11 +861,10 @@ if (linuxReady) {
       ipcMain.handle("skins:select", async (_event, id: string) => {
         const next = String(id || OFFICIAL_SKIN_ID);
         if (!isSafeSkinId(next)) throw new Error(`皮肤 id 不合法：${next}`);
-        settings.activeSkinId = next;
-        await saveSettings(userData(), settings);
-        const catalog = await loadCatalog(userData());
-        await applySkin(dshHomeDir(), catalog, settings.activeSkinId);
-        if (mainWindow && !mainWindow.isDestroyed()) await mainWindow.reload();
+        await applySkinSelection(next, true);
+      });
+      ipcMain.handle("skins:set-enabled", async (_event, enabled: boolean) => {
+        await applySkinSelection(preferredSkinId(), Boolean(enabled));
       });
       ipcMain.handle("skins:import-dir", async () => {
         const picked = await dialog.showOpenDialog({
@@ -810,19 +873,11 @@ if (linuxReady) {
         });
         if (picked.canceled || !picked.filePaths[0]) return;
         const imported = await importSkinFromDir(userData(), picked.filePaths[0]);
-        settings.activeSkinId = imported.id;
-        await saveSettings(userData(), settings);
-        const catalog = await loadCatalog(userData());
-        await applySkin(dshHomeDir(), catalog, imported.id);
-        if (mainWindow && !mainWindow.isDestroyed()) await mainWindow.reload();
+        await applySkinSelection(imported.id, true);
       });
       ipcMain.handle("skins:import-url", async (_event, url: string) => {
         const imported = await importSkinFromUrl(userData(), String(url || ""), (line) => sendSplash("log", line));
-        settings.activeSkinId = imported.id;
-        await saveSettings(userData(), settings);
-        const catalog = await loadCatalog(userData());
-        await applySkin(dshHomeDir(), catalog, imported.id);
-        if (mainWindow && !mainWindow.isDestroyed()) await mainWindow.reload();
+        await applySkinSelection(imported.id, true);
       });
       ipcMain.on("splash:quit", () => {
         app.quit();

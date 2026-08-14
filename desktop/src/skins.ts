@@ -150,19 +150,19 @@ export function stripManagedPatch(patch: string): string {
 export function renderManagedPatch(
   skins: InstalledSkin[],
   activeId: string,
-  bundledPackages: Iterable<string> = [],
+  _bundledPackages: Iterable<string> = [],
 ): string {
   const active = activeId === OFFICIAL_SKIN_ID ? "" : activeId;
-  const bundled = new Set(bundledPackages);
   const lines = [MANAGED_START];
   for (const skin of skins) {
     if (skin.id === active) continue;
     lines.push(`- id: ${skin.wiringId}`, "  disabled: true");
   }
   const selected = skins.find((skin) => skin.id === active);
-  // Skins already in the profile bundle list get their insert row from
-  // `dsh plugin add`. A second insert with the same id fails boot.
-  if (selected && !bundled.has(selected.packageName)) {
+  // Always re-insert the active skin. After "official" the plugin is disabled
+  // and unloaded; skipping insert (because it once landed in profile bundles)
+  // leaves no way to turn the default skin back on.
+  if (selected) {
     lines.push("- insert:", `    - id: ${selected.wiringId}`, `      name: '${selected.packageName}'`);
   }
   lines.push(MANAGED_END);

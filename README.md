@@ -54,7 +54,7 @@ tar -xzf DeepSeek-0.1.10-linux-x64.tar.gz
 
 ## 皮肤中心与版权
 
-对话窗口右上角有一枚圆形按钮，点开后带过渡动画弹出皮肤列表，可快速切换，也可以从文件夹或 GitHub 地址导入新皮肤（类似皮肤合集）。不需要皮肤时，到 **引擎设置** 关闭「启用皮肤中心」，界面会回到官方默认。
+对话窗口右上角有一枚 DeepSeek 鲸鱼按钮，点开后带过渡动画弹出皮肤列表，可快速切换，也可以从文件夹或 GitHub 地址导入新皮肤（类似皮肤合集）。不需要皮肤时，点列表里的「关闭皮肤中心」，或用菜单 **皮肤**；引擎设置里也有同样的开关。
 
 **默认皮肤**是 [Small-tailqwq/dsh-deep-whale](https://github.com/Small-tailqwq/dsh-deep-whale) 里的「深海女仆工坊」（`maid-atelier` / `@dsh-external/dsh-client-ui-skin-maid-atelier`）。软件首次启用时从该仓库下载成品，**不把 2.7MB 的皮肤包打进安装包**，也不再分发 [dsh-web-ui](https://github.com/zhu1090093659/dsh-web-ui) 脚手架。
 

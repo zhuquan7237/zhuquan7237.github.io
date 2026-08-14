@@ -16,6 +16,7 @@ contextBridge.exposeInMainWorld("desktop", {
   quit: () => ipcRenderer.send("splash:quit"),
   listSkins: (): Promise<SkinCard[]> => ipcRenderer.invoke("skins:list"),
   selectSkin: (id: string): Promise<void> => ipcRenderer.invoke("skins:select", id),
+  setSkinsEnabled: (enabled: boolean): Promise<void> => ipcRenderer.invoke("skins:set-enabled", enabled),
   importSkinDir: (): Promise<void> => ipcRenderer.invoke("skins:import-dir"),
   importSkinUrl: (url: string): Promise<void> => ipcRenderer.invoke("skins:import-url", url),
 });
