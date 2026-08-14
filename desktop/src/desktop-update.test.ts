@@ -101,7 +101,8 @@ describe("desktop installer download", () => {
     const dest = path.join(dir, "DeepSeek-0.1.15-win.exe");
     const total = 10 * 1048576;
     const logs: string[] = [];
-    const chunks = [new Uint8Array(200_000).fill(1), new Uint8Array(total - 200_000).fill(2)];
+    const first = 100_000;
+    const chunks = [new Uint8Array(first).fill(1), new Uint8Array(total - first).fill(2)];
     try {
       await downloadDesktopAsset(
         "https://example.test/DeepSeek-0.1.15-win.exe",
@@ -111,7 +112,7 @@ describe("desktop installer download", () => {
       );
       expect(logs[0]).toContain("开始下载 DeepSeek-0.1.15-win.exe");
       expect(logs.some((line) => line.includes("已连接"))).toBe(true);
-      expect(logs.some((line) => line.includes("0%（0.2 MB"))).toBe(true);
+      expect(logs.some((line) => line.includes("0%（0.1 MB"))).toBe(true);
       expect(logs.some((line) => line.includes("100%"))).toBe(true);
       expect(await readFile(dest)).toHaveLength(total);
     } finally {

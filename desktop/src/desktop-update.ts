@@ -16,7 +16,7 @@ export const DOWNLOAD_IDLE_MS = 45_000;
 
 export type HttpFetcher = (
   url: string,
-  init?: { headers?: HeadersInit; redirect?: RequestRedirect; signal?: AbortSignal },
+  init?: { headers?: Record<string, string>; redirect?: "follow" | "error" | "manual"; signal?: AbortSignal },
 ) => Promise<Response>;
 
 export interface ReleaseAsset {

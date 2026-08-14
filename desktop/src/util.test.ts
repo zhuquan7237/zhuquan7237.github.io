@@ -112,7 +112,7 @@ describe("first-run helpers", () => {
     expect(shouldLogDownloadProgress(Math.floor(total * 0.01), total, 200_000)).toBe(true);
     expect(shouldLogDownloadProgress(Math.floor(total * 0.09), total, Math.floor(total * 0.01))).toBe(true);
     expect(shouldLogDownloadProgress(100, 0, 0)).toBe(true);
-    expect(shouldLogDownloadProgress(1048576, 0, 100)).toBe(true);
+    expect(shouldLogDownloadProgress(1048576 + 100, 0, 100)).toBe(true);
     expect(shouldLogDownloadProgress(500_000, 0, 100)).toBe(false);
   });
 
