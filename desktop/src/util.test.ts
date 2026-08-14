@@ -17,8 +17,11 @@ import {
   nodeDownloadUrls,
   nodeMeetsEngine,
   normalizeLocaleTag,
+  npmCliCandidates,
   npmInvocation,
   npmSpec,
+  sanitizeEnv,
+  spawnArgv,
   parseDshWebUrl,
   parseOsLocaleAssignments,
   parseOsTimeZone,
@@ -244,9 +247,39 @@ describe("typical-user defaults", () => {
       command: "/n/node",
       args: ["/n/npm-cli.js", "install"],
     });
-    expect(npmInvocation({ node: "node", npm: "npm", npmCli: null }, ["install"])).toEqual({
+    expect(npmInvocation({ node: "node", npm: "npm", npmCli: null }, ["install"], "linux")).toEqual({
       command: "npm",
       args: ["install"],
+    });
+  });
+
+  it("uses the Windows Node zip npm-cli path, not the Unix lib/ layout", () => {
+    expect(npmCliCandidates("C:\\Users\\me\\runtime\\node-v22.23.2-win-x64\\node.exe", "win32")[0]).toBe(
+      "C:\\Users\\me\\runtime\\node-v22.23.2-win-x64\\node_modules\\npm\\bin\\npm-cli.js",
+    );
+    expect(npmCliCandidates("/home/me/runtime/node-v22.23.2-linux-x64/bin/node", "linux")[0]).toBe(
+      "/home/me/runtime/node-v22.23.2-linux-x64/lib/node_modules/npm/bin/npm-cli.js",
+    );
+    expect(npmCliCandidates("/Users/me/runtime/node-v22.23.2-darwin-arm64/bin/node", "darwin")[0]).toBe(
+      "/Users/me/runtime/node-v22.23.2-darwin-arm64/lib/node_modules/npm/bin/npm-cli.js",
+    );
+  });
+
+  it("wraps Windows .cmd so spawn does not throw EINVAL", () => {
+    expect(spawnArgv("C:\\runtime\\npm.cmd", ["install"], "win32")).toEqual({
+      command: "cmd.exe",
+      args: ["/d", "/s", "/c", "C:\\runtime\\npm.cmd", "install"],
+    });
+    expect(spawnArgv("powershell", ["-Command", "dir"], "win32")).toEqual({
+      command: "powershell.exe",
+      args: ["-Command", "dir"],
+    });
+    expect(npmInvocation({ node: "node.exe", npm: "C:\\runtime\\npm.cmd", npmCli: null }, ["-v"], "win32").command).toBe(
+      "cmd.exe",
+    );
+    expect(sanitizeEnv({ PATH: "C:\\Windows", EMPTY: undefined, NODE_ENV: "production" })).toEqual({
+      PATH: "C:\\Windows",
+      NODE_ENV: "production",
     });
   });
 

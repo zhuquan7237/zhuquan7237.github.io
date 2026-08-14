@@ -120,10 +120,16 @@ async function writeWindowsShortcut(lnkPath: string): Promise<void> {
     `$s.Save()`,
   ].join("; ");
   await new Promise<void>((resolve, reject) => {
-    const child = spawn("powershell.exe", ["-NoProfile", "-Command", script], {
-      windowsHide: true,
-      stdio: "ignore",
-    });
+    let child;
+    try {
+      child = spawn("powershell.exe", ["-NoProfile", "-Command", script], {
+        windowsHide: true,
+        stdio: "ignore",
+      });
+    } catch (error) {
+      reject(error);
+      return;
+    }
     child.on("error", reject);
     child.on("close", (code) => {
       if (code === 0) resolve();

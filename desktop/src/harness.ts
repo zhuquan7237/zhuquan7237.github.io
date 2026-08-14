@@ -10,6 +10,7 @@ import {
   npmSpec,
   parseDshWebUrl,
   pickExistingHarness,
+  sanitizeEnv,
   type DesktopSettings,
 } from "./util";
 
@@ -125,9 +126,12 @@ export async function ensureHarness(
     "--omit=dev",
     "--no-fund",
     "--no-audit",
+    "--loglevel",
+    "http",
     "--registry",
     registry,
   ]);
+  onLog(`运行 ${npm.command} ${npm.args.join(" ")}`);
   await runCapture(
     npm.command,
     npm.args,
@@ -136,6 +140,7 @@ export async function ensureHarness(
       PATH: `${path.dirname(runtime.node)}${path.delimiter}${process.env.PATH ?? ""}`,
       npm_config_update_notifier: "false",
       npm_config_registry: registry,
+      npm_config_progress: "true",
     },
     onLog,
   );
@@ -156,16 +161,22 @@ export async function startHarnessWeb(options: {
   await mkdir(options.workspaceDir, { recursive: true });
   options.onLog(`正在启动 dsh web（${options.install.version}）`);
   const { ELECTRON_RUN_AS_NODE: _electronNode, ...baseEnv } = process.env;
-  const child = spawn(options.runtime.node, [options.install.bin, "web", "--host", "127.0.0.1", "--port", "0"], {
-    cwd: options.workspaceDir,
-    env: {
-      ...baseEnv,
-      ...options.extraEnv,
-      DSH_HOME: options.dshHome,
-      PATH: `${path.dirname(options.runtime.node)}${path.delimiter}${process.env.PATH ?? ""}`,
-    },
-    windowsHide: true,
-  });
+  let child: ChildProcess;
+  try {
+    child = spawn(options.runtime.node, [options.install.bin, "web", "--host", "127.0.0.1", "--port", "0"], {
+      cwd: options.workspaceDir,
+      env: sanitizeEnv({
+        ...baseEnv,
+        ...options.extraEnv,
+        DSH_HOME: options.dshHome,
+        PATH: `${path.dirname(options.runtime.node)}${path.delimiter}${process.env.PATH ?? ""}`,
+      }),
+      windowsHide: process.platform === "win32",
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+  } catch (error) {
+    throw error instanceof Error ? error : new Error(String(error));
+  }
 
   let buffer = "";
   const url = await new Promise<string>((resolve, reject) => {

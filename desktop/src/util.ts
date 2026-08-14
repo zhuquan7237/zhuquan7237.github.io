@@ -99,29 +99,6 @@ export function shouldPromptHarnessUpdate(current: string, latest: string, skipp
   return compareVersions(current, latest) < 0;
 }
 
-export type AppDialogKind = "update" | "info" | "error" | "about" | "success";
-
-export interface AppDialogButton {
-  id: string;
-  label: string;
-  variant: "primary" | "ghost" | "danger";
-}
-
-export interface AppDialogView {
-  requestId: string;
-  kind: AppDialogKind;
-  title: string;
-  message: string;
-  detail?: string;
-  currentVersion?: string;
-  latestVersion?: string;
-  source?: string;
-  extra?: string;
-  buttons: AppDialogButton[];
-  defaultId?: string;
-  cancelId?: string;
-}
-
 function splitVersion(input: string): { core: number[]; pre: string[] } {
   const cleaned = input.replace(/^v/, "");
   const [core, pre] = cleaned.split("-", 2);
@@ -150,9 +127,54 @@ export function nodeMeetsEngine(version: string, min = "22.19.0"): boolean {
 export function npmInvocation(
   runtime: { node: string; npm: string; npmCli?: string | null },
   args: string[],
+  platform: NodeJS.Platform = process.platform,
 ): { command: string; args: string[] } {
   if (runtime.npmCli) return { command: runtime.node, args: [runtime.npmCli, ...args] };
-  return { command: runtime.npm, args };
+  return spawnArgv(runtime.npm, args, platform);
+}
+
+/**
+ * Official Windows Node zips put npm next to node.exe. Unix tarballs put it
+ * under lib/. Looking only at the Unix path made Windows fall back to npm.cmd,
+ * and spawn(npm.cmd) throws EINVAL.
+ */
+export function npmCliCandidates(nodePath: string, platform: NodeJS.Platform): string[] {
+  const io = platform === "win32" ? path.win32 : path.posix;
+  const dir = io.dirname(nodePath);
+  if (platform === "win32") {
+    return [
+      io.join(dir, "node_modules", "npm", "bin", "npm-cli.js"),
+      io.join(dir, "lib", "node_modules", "npm", "bin", "npm-cli.js"),
+    ];
+  }
+  const prefix = io.dirname(dir);
+  return [
+    io.join(prefix, "lib", "node_modules", "npm", "bin", "npm-cli.js"),
+    io.join(dir, "node_modules", "npm", "bin", "npm-cli.js"),
+  ];
+}
+
+export function sanitizeEnv(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
+  const clean: NodeJS.ProcessEnv = {};
+  for (const [key, value] of Object.entries(env)) {
+    if (typeof value === "string") clean[key] = value;
+  }
+  return clean;
+}
+
+/** .cmd/.bat cannot be spawn()'d on modern Windows; cmd.exe must launch them. */
+export function spawnArgv(
+  command: string,
+  args: string[],
+  platform: NodeJS.Platform,
+): { command: string; args: string[] } {
+  if (platform === "win32") {
+    if (command === "powershell") return { command: "powershell.exe", args };
+    if (/\.(cmd|bat)$/i.test(command)) {
+      return { command: "cmd.exe", args: ["/d", "/s", "/c", command, ...args] };
+    }
+  }
+  return { command, args };
 }
 
 export function npmSpec(channel: HarnessChannel): string {

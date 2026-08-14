@@ -86,27 +86,27 @@ jobs:
       - name: Publish public GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: desktop-v0.1.6
-          name: DeepSeek Desktop 0.1.6
+          tag_name: desktop-v0.1.7
+          name: DeepSeek Desktop 0.1.7
           target_commitish: ${{ github.sha }}
           prerelease: false
           make_latest: true
           fail_on_unmatched_files: true
           body: |
-            请用 0.1.6。这一版把更新提醒做成可选，并把弹窗改成 DeepSeek 深色圆角风格。
+            请用 0.1.7。这一版修了 Windows 上 `spawn EINVAL` 之后安装引擎卡住的问题。
 
-            **0.1.5 → 0.1.6**
-            - 启动后若 npm 上有新的官方引擎，会弹出更新卡片，由你选择「更新并重启」或「以后再说」
-            - 选更新后只下载官方 `@deepseek-ai/dsh`（与 GitHub 仓库同步发布），重启即可用，不重新 clone 源码
-            - 检查更新、关于、错误等弹窗不再用系统默认框，改为统一的圆角深色卡片
-            - 已安装的引擎不会在启动时偷偷升级
+            **0.1.6 → 0.1.7**
+            - Windows 不再直接 spawn `npm.cmd`（会抛 EINVAL 并卡死）。改为用官方 zip 里的 `node_modules/npm/bin/npm-cli.js`，由 node.exe 运行
+            - 过滤掉环境变量里的空值，子进程 stdin 不再挂起
+            - 安装引擎时会持续打日志，不再看起来像死机
+            - 弹窗改回系统原生对话框（Windows 11 / macOS / 各 Linux 桌面自己的边框）
 
             **直接下载（不用登录）**
-            - Windows 安装包：https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.6/DeepSeek-0.1.6-win.exe
-            - Linux x64（推荐 tar.gz）：https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.6/DeepSeek-0.1.6-linux-x64.tar.gz
-            - Linux x64 deb：https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.6/DeepSeek-0.1.6-linux-amd64.deb
-            - macOS Apple Silicon：https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.6/DeepSeek-0.1.6-mac-arm64.dmg
-            - macOS Intel：https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.6/DeepSeek-0.1.6-mac-x64.dmg
+            - Windows 安装包：https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.7/DeepSeek-0.1.7-win.exe
+            - Linux x64（推荐 tar.gz）：https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.7/DeepSeek-0.1.7-linux-x64.tar.gz
+            - Linux x64 deb：https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.7/DeepSeek-0.1.7-linux-amd64.deb
+            - macOS Apple Silicon：https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.7/DeepSeek-0.1.7-mac-arm64.dmg
+            - macOS Intel：https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.7/DeepSeek-0.1.7-mac-x64.dmg
 
             首次启动需要联网 1–3 分钟（下载 Node 和官方 dsh）。之后用菜单 **Harness → 检查 Harness 更新**。
 
@@ -116,12 +116,12 @@ jobs:
 
             | File | Platform |
             | --- | --- |
-            | `DeepSeek-0.1.6-win.exe` | Windows installer |
-            | `DeepSeek-0.1.6-win-x64.exe` / `*-win-arm64.exe` | Windows portable |
-            | `DeepSeek-0.1.6-mac-arm64.dmg` | macOS Apple Silicon |
-            | `DeepSeek-0.1.6-mac-x64.dmg` | macOS Intel |
-            | `DeepSeek-0.1.6-linux-x64.tar.gz` / `*-linux-amd64.deb` | Linux x64 |
-            | `DeepSeek-0.1.6-linux-arm64.tar.gz` / `*-linux-arm64.deb` | Linux arm64 |
+            | `DeepSeek-0.1.7-win.exe` | Windows installer |
+            | `DeepSeek-0.1.7-win-x64.exe` / `*-win-arm64.exe` | Windows portable |
+            | `DeepSeek-0.1.7-mac-arm64.dmg` | macOS Apple Silicon |
+            | `DeepSeek-0.1.7-mac-x64.dmg` | macOS Intel |
+            | `DeepSeek-0.1.7-linux-x64.tar.gz` / `*-linux-amd64.deb` | Linux x64 |
+            | `DeepSeek-0.1.7-linux-arm64.tar.gz` / `*-linux-arm64.deb` | Linux arm64 |
           files: |
             installers/*.exe
             installers/*.dmg
