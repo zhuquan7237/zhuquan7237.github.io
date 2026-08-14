@@ -9,7 +9,7 @@
 Search: DeepSeek Harness Desktop, dsh desktop, DeepSeek Harness 桌面版, DeepSeek Harness 桌面端, DeepSeek Harness 下载.
 
 <p align="center">
-  <img src="../assets/desktop-preview.png" alt="DeepSeek Harness 桌面版 0.1.13：默认皮肤「深海女仆工坊」" width="920" />
+  <img src="../assets/desktop-preview.png" alt="DeepSeek Harness 桌面版 0.1.14：默认皮肤「深海女仆工坊」" width="920" />
 </p>
 
 This package does **not** vendor the official monorepo. Other community desktops copy the whole harness into their GitHub repo (that ranks well in search). This shell installs `@deepseek-ai/dsh` from npm instead. See [compare.html](https://dsh.zhuquan.xyz/compare.html). On launch it:
@@ -32,14 +32,14 @@ Harness releases therefore land without rebuilding this desktop app. The shell o
 
 ```sh
 # Linux 推荐 tar.gz（不需要 FUSE）。AppImage 在 Ubuntu 24.04 上常因缺少 libfuse2 无法打开。
-tar -xzf DeepSeek-0.1.13-linux-x64.tar.gz
-./DeepSeek-0.1.13-linux-x64/DeepSeek
+tar -xzf DeepSeek-0.1.14-linux-x64.tar.gz
+./DeepSeek-0.1.14-linux-x64/DeepSeek
 
 # Debian/Ubuntu
-sudo apt install ./DeepSeek-0.1.13-linux-amd64.deb
+sudo apt install ./DeepSeek-0.1.14-linux-amd64.deb
 ```
 
-Windows：下载 `DeepSeek-0.1.13-win.exe`。若 SmartScreen 提示未签名，选「更多信息 → 仍要运行」。
+Windows：下载 `DeepSeek-0.1.14-win.exe`。若 SmartScreen 提示未签名，选「更多信息 → 仍要运行」。
 
 macOS：打开 dmg，把 App 拖进「应用程序」。若提示「文件已损坏」，终端运行 `xattr -cr /Applications/DeepSeek.app`，或双击盘里的 `Open-DeepSeek.command` / 打开 `Read-Me-First.txt`。
 
@@ -60,9 +60,9 @@ GitHub Actions builds:
 | macOS | `.dmg`, `.zip` (Intel + Apple Silicon) |
 | Linux | AppImage, `.deb`, `.tar.gz` (x64 + arm64) |
 
-Download installers from the public [GitHub Release](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/tag/desktop-v0.1.13). Anyone can download those files without signing in. GitHub Actions artifacts are not a public store.
+Download installers from the public [GitHub Release](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/tag/desktop-v0.1.14). Anyone can download those files without signing in. GitHub Actions artifacts are not a public store.
 
-请用 **0.1.13**。不要用 0.1.0–0.1.12。
+请用 **0.1.14**。不要用 0.1.0–0.1.13。
 
 ## 皮肤中心
 

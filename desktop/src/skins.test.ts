@@ -10,10 +10,14 @@ import {
   MANAGED_START,
   OFFICIAL_SKIN_ID,
   applySkin,
+  asarUnpackedTwin,
   bundledSkinCandidates,
   bundledSkinDir,
+  bundledSkinSearchPaths,
   builtinSkinDir,
   ensureBuiltinSkin,
+  isCopyableSkinDir,
+  looksLikeAsarVirtualPath,
   findSkinRoots,
   githubZipUrl,
   importSkinFromDir,
@@ -348,6 +352,74 @@ describe("shipped maid-atelier package", () => {
     const candidates = bundledSkinCandidates(asarRoot);
     expect(candidates[0]).toBe(path.join("/opt", "DeepSeek", "resources", "app.asar.unpacked", "resources", "skins", "maid-atelier"));
     expect(bundledSkinDir(path.join(__dirname, ".."))).toBe(shipped);
+  });
+
+  it("does not treat app.asar virtual paths as copyable", async () => {
+    const asarDir = path.join("/opt", "DeepSeek", "resources", "app.asar", "resources", "skins", "maid-atelier");
+    expect(looksLikeAsarVirtualPath(asarDir)).toBe(true);
+    expect(looksLikeAsarVirtualPath(asarUnpackedTwin(asarDir))).toBe(false);
+    expect(asarUnpackedTwin(asarDir)).toBe(
+      path.join("/opt", "DeepSeek", "resources", "app.asar.unpacked", "resources", "skins", "maid-atelier"),
+    );
+    expect(await isCopyableSkinDir(asarDir)).toBe(false);
+    expect(
+      bundledSkinSearchPaths({
+        bundledDir: asarDir,
+        resourcesPath: path.join("/opt", "DeepSeek", "resources"),
+      })[0],
+    ).toBe(path.join("/opt", "DeepSeek", "resources", "skins", "maid-atelier"));
+  });
+
+  it("installs from the unpacked twin instead of downloading GitHub when only asar is passed", async () => {
+    const root = await tempDir("ds-skin-asar-");
+    const userData = path.join(root, "user");
+    const asarDir = path.join(root, "resources", "app.asar", "resources", "skins", "maid-atelier");
+    const unpackedDir = path.join(root, "resources", "app.asar.unpacked", "resources", "skins", "maid-atelier");
+    await writeSkin(asarDir);
+    await writeFile(path.join(asarDir, "lib", "client.js"), "export function apply() { return 'asar'; }", "utf8");
+    await writeSkin(unpackedDir);
+    await writeFile(path.join(unpackedDir, "lib", "client.js"), "export function apply() { return 'unpacked'; }", "utf8");
+    let downloaded = 0;
+    const skin = await ensureBuiltinSkin(userData, () => {}, {
+      bundledDir: asarDir,
+      appRoot: path.join(root, "resources", "app.asar"),
+      download: async () => {
+        downloaded += 1;
+        throw new Error("should not download");
+      },
+    });
+    expect(downloaded).toBe(0);
+    await expect(readFile(path.join(skin.dir, "lib", "client.js"), "utf8")).resolves.toContain("unpacked");
+    await rm(root, { recursive: true, force: true });
+  });
+
+  it("keeps an existing userData skin when the only bundled path is inside app.asar", async () => {
+    const root = await tempDir("ds-skin-keep-");
+    const userData = path.join(root, "user");
+    const dest = builtinSkinDir(userData);
+    await writeSkin(dest);
+    await writeFile(
+      path.join(dest, "package.json"),
+      JSON.stringify({ name: "@dsh-external/dsh-client-ui-skin-maid-atelier", version: "0.0.1" }),
+      "utf8",
+    );
+    await writeFile(path.join(dest, "lib", "client.js"), "export function apply() { return 'keep-me'; }", "utf8");
+    const asarDir = path.join(root, "resources", "app.asar", "resources", "skins", "maid-atelier");
+    await writeSkin(asarDir);
+    await writeFile(
+      path.join(asarDir, "package.json"),
+      JSON.stringify({ name: "@dsh-external/dsh-client-ui-skin-maid-atelier", version: "0.0.2" }),
+      "utf8",
+    );
+    const skin = await ensureBuiltinSkin(userData, () => {}, {
+      bundledDir: asarDir,
+      download: async () => {
+        throw new Error("should not download");
+      },
+    });
+    expect(await readPackageVersion(skin.dir)).toBe("0.0.1");
+    await expect(readFile(path.join(skin.dir, "lib", "client.js"), "utf8")).resolves.toContain("keep-me");
+    await rm(root, { recursive: true, force: true });
   });
 });
 

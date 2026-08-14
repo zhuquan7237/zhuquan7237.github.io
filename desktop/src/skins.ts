@@ -63,12 +63,48 @@ export function bundledSkinDir(appRoot: string, id = DEFAULT_SKIN_ID): string {
   return path.join(appRoot, "resources", "skins", id);
 }
 
+/** Electron can stat files inside app.asar, but fs.cp cannot copy that virtual tree. */
+export function looksLikeAsarVirtualPath(filePath: string): boolean {
+  const normalized = filePath.replace(/\\/g, "/");
+  return /\/app\.asar\//.test(normalized) && !/\/app\.asar\.unpacked\//.test(normalized);
+}
+
+export function asarUnpackedTwin(filePath: string): string {
+  if (!looksLikeAsarVirtualPath(filePath)) return filePath;
+  return filePath.replace(/[/\\]app\.asar[/\\]/, `${path.sep}app.asar.unpacked${path.sep}`);
+}
+
 /** Prefer the asar-unpacked copy so a spawned Node process can read the files. */
 export function bundledSkinCandidates(appRoot: string, id = DEFAULT_SKIN_ID): string[] {
   const primary = bundledSkinDir(appRoot, id);
-  const marker = `${path.sep}app.asar${path.sep}`;
-  const unpacked = primary.replace(marker, `${path.sep}app.asar.unpacked${path.sep}`);
+  const unpacked = asarUnpackedTwin(primary);
   return unpacked === primary ? [primary] : [unpacked, primary];
+}
+
+export function bundledSkinSearchPaths(options: {
+  bundledDir?: string;
+  appRoot?: string;
+  resourcesPath?: string;
+  id?: string;
+}): string[] {
+  const id = options.id ?? DEFAULT_SKIN_ID;
+  const found: string[] = [];
+  const add = (dir?: string) => {
+    if (!dir) return;
+    const unpacked = asarUnpackedTwin(dir);
+    if (!found.includes(unpacked)) found.push(unpacked);
+    if (!found.includes(dir)) found.push(dir);
+  };
+  if (options.resourcesPath) {
+    add(path.join(options.resourcesPath, "skins", id));
+    add(path.join(options.resourcesPath, "app.asar.unpacked", "resources", "skins", id));
+    add(path.join(options.resourcesPath, "app.asar.unpacked", "skins", id));
+  }
+  add(options.bundledDir);
+  if (options.appRoot) {
+    for (const dir of bundledSkinCandidates(options.appRoot, id)) add(dir);
+  }
+  return found;
 }
 
 export async function skinPackageReady(dir: string): Promise<boolean> {
@@ -359,6 +395,7 @@ export interface EnsureBuiltinSkinOptions {
   download?: (url: string) => Promise<Buffer>;
   bundledDir?: string;
   appRoot?: string;
+  resourcesPath?: string;
 }
 
 function normalizeEnsureOptions(
@@ -368,13 +405,19 @@ function normalizeEnsureOptions(
   return downloadOrOptions ?? {};
 }
 
+export async function isCopyableSkinDir(dir: string): Promise<boolean> {
+  if (looksLikeAsarVirtualPath(dir)) return false;
+  if (!(await skinPackageReady(dir))) return false;
+  try {
+    return (await stat(dir)).isDirectory();
+  } catch {
+    return false;
+  }
+}
+
 async function resolveBundledSkin(options: EnsureBuiltinSkinOptions): Promise<string> {
-  const dirs = [
-    ...(options.bundledDir ? [options.bundledDir] : []),
-    ...(options.appRoot ? bundledSkinCandidates(options.appRoot) : []),
-  ];
-  for (const dir of dirs) {
-    if (await skinPackageReady(dir)) return dir;
+  for (const dir of bundledSkinSearchPaths(options)) {
+    if (await isCopyableSkinDir(dir)) return dir;
   }
   return "";
 }
@@ -385,10 +428,23 @@ async function installBuiltinFromDir(
   onLog: (line: string) => void,
   message: string,
 ): Promise<InstalledSkin> {
+  if (looksLikeAsarVirtualPath(source)) {
+    throw new Error("内置皮肤在 app.asar 里，无法直接复制；请使用 asar.unpacked 目录");
+  }
   onLog(message);
-  await rm(dest, { recursive: true, force: true });
+  const staging = `${dest}.staging`;
+  await rm(staging, { recursive: true, force: true });
   await mkdir(path.dirname(dest), { recursive: true });
-  await cp(source, dest, { recursive: true });
+  try {
+    await cp(source, staging, { recursive: true });
+    if (!(await skinPackageReady(staging))) {
+      throw new Error("内置皮肤复制不完整");
+    }
+    await rm(dest, { recursive: true, force: true });
+    await cp(staging, dest, { recursive: true });
+  } finally {
+    await rm(staging, { recursive: true, force: true });
+  }
   const manifest = await readSkinFromDir(dest);
   onLog("默认皮肤已就绪（CC BY-NC-SA 4.0，来自 Small-tailqwq/dsh-deep-whale，已内置安装包）");
   return { ...manifest, sourceUrl: DEEP_WHALE_REPO, dir: dest, builtin: true };

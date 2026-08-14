@@ -247,6 +247,7 @@ async function syncSkins(onLog: (line: string) => void = sendSplash.bind(null, "
     await ensureBuiltinSkin(userData(), (line) => onLog(String(line)), {
       bundledDir: path.join(__dirname, "..", "resources", "skins", "maid-atelier"),
       appRoot: path.join(__dirname, ".."),
+      resourcesPath: process.resourcesPath,
     });
   } catch (error) {
     onLog(`默认皮肤未能安装：${error instanceof Error ? error.message : String(error)}`);
@@ -798,6 +799,8 @@ async function boot(forceUpdate: boolean): Promise<void> {
       extraEnv: harnessLocaleEnv(uiLocale),
       onLog: (line) => sendSplash("log", line),
     });
+    // New engine versions rewrite profiles/web/node_modules and drop the skin link.
+    await syncSkins((line) => sendSplash("log", line));
     buildMenu();
     sendSplash("status", { phase: "start", text: "正在打开 DeepSeek Harness…" });
     if (mainWindow && !mainWindow.isDestroyed()) {
