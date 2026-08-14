@@ -96,14 +96,17 @@ jobs:
       - name: Publish public GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: desktop-v0.1.12
-          name: DeepSeek Desktop 0.1.12
+          tag_name: desktop-v0.1.13
+          name: DeepSeek Desktop 0.1.13
           target_commitish: ${{ github.sha }}
           prerelease: false
           make_latest: true
           fail_on_unmatched_files: true
           body: |
-            请用 0.1.12。不要用 0.1.0–0.1.11。
+            请用 0.1.13。不要用 0.1.0–0.1.12。
+
+            **0.1.12 → 0.1.13**
+            - 修好便携版 / AppImage 首次打开后桌面快捷方式指向临时解压目录，关掉软件后失效。快捷方式改为指向便携版 exe / AppImage 本身；旧的失效快捷方式下次从安装包打开会自动修好
 
             **0.1.11 → 0.1.12**
             - 默认皮肤「深海女仆工坊」打进安装包，不再从 GitHub 下载（国内网络拉不下皮肤时也能用）
@@ -122,26 +125,26 @@ jobs:
             - 桌面版会查 GitHub Release 更新
 
             **直接下载（不用登录）**
-            - Windows 安装包：https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.12/DeepSeek-0.1.12-win.exe
-            - Linux x64（推荐 tar.gz）：https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.12/DeepSeek-0.1.12-linux-x64.tar.gz
-            - Linux x64 deb：https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.12/DeepSeek-0.1.12-linux-amd64.deb
-            - macOS Apple Silicon：https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.12/DeepSeek-0.1.12-mac-arm64.dmg
-            - macOS Intel：https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.12/DeepSeek-0.1.12-mac-x64.dmg
+            - Windows 安装包：https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.13/DeepSeek-0.1.13-win.exe
+            - Linux x64（推荐 tar.gz）：https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.13/DeepSeek-0.1.13-linux-x64.tar.gz
+            - Linux x64 deb：https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.13/DeepSeek-0.1.13-linux-amd64.deb
+            - macOS Apple Silicon：https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.13/DeepSeek-0.1.13-mac-arm64.dmg
+            - macOS Intel：https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.13/DeepSeek-0.1.13-mac-x64.dmg
 
             首次启动需要联网 1–3 分钟（下载 Node 和官方 dsh）。默认皮肤已内置。之后菜单可检查桌面版和 Harness 更新。
 
             **Linux:** 优先 `.tar.gz` 或 `.deb`。AppImage 在 Ubuntu 24.04 常缺 libfuse2。
-            **Windows:** 安装包会创建桌面和开始菜单快捷方式。未签名时 SmartScreen 选「更多信息 → 仍要运行」。
+            **Windows:** 安装包会创建桌面和开始菜单快捷方式。便携版快捷方式指向该 exe 本身，关掉后仍然有效。未签名时 SmartScreen 选「更多信息 → 仍要运行」。
             **macOS:** 把 App 拖到「应用程序」。若提示已损坏，终端运行 `xattr -cr /Applications/DeepSeek.app`。DMG 里有 `Read-Me-First.txt` 和 `Open-DeepSeek.command`。说明：https://dsh.zhuquan.xyz/mac.html
 
             | File | Platform |
             | --- | --- |
-            | `DeepSeek-0.1.12-win.exe` | Windows installer |
-            | `DeepSeek-0.1.12-win-x64.exe` / `*-win-arm64.exe` | Windows portable |
-            | `DeepSeek-0.1.12-mac-arm64.dmg` | macOS Apple Silicon |
-            | `DeepSeek-0.1.12-mac-x64.dmg` | macOS Intel |
-            | `DeepSeek-0.1.12-linux-x64.tar.gz` / `*-linux-amd64.deb` | Linux x64 |
-            | `DeepSeek-0.1.12-linux-arm64.tar.gz` / `*-linux-arm64.deb` | Linux arm64 |
+            | `DeepSeek-0.1.13-win.exe` | Windows installer |
+            | `DeepSeek-0.1.13-win-x64.exe` / `*-win-arm64.exe` | Windows portable |
+            | `DeepSeek-0.1.13-mac-arm64.dmg` | macOS Apple Silicon |
+            | `DeepSeek-0.1.13-mac-x64.dmg` | macOS Intel |
+            | `DeepSeek-0.1.13-linux-x64.tar.gz` / `*-linux-amd64.deb` | Linux x64 |
+            | `DeepSeek-0.1.13-linux-arm64.tar.gz` / `*-linux-arm64.deb` | Linux arm64 |
           files: |
             installers/*.exe
             installers/*.dmg

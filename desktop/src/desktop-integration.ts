@@ -27,8 +27,85 @@ export function appIconFile(): string {
   return asarPath;
 }
 
+const LAUNCH_PATH_FILE = "desktop-launch-path.json";
+
+/**
+ * electron-builder unpacks Windows portable and Linux AppImage into a temp
+ * directory for the current process. That path disappears after quit, so a
+ * shortcut that records process.execPath goes dead on the second click.
+ */
+export function looksTransientLaunchPath(filePath: string): boolean {
+  const normalized = filePath.replace(/\\/g, "/").toLowerCase();
+  if (normalized.includes("/tmp/.mount_")) return true;
+  if (normalized.includes("/var/tmp/.mount_")) return true;
+  if (/\/tmp\/\.[^/]*appimage/.test(normalized)) return true;
+  if (normalized.includes("/appdata/local/temp/")) return true;
+  if (normalized.includes("/local settings/temp/")) return true;
+  if (/\/windows\/temp\//.test(normalized)) return true;
+  if (/\/temp\/[^/]*\.nsis/.test(normalized)) return true;
+  return false;
+}
+
 export function launchPath(execPath = process.execPath, env: NodeJS.ProcessEnv = process.env): string {
-  return env.APPIMAGE || execPath;
+  const appImage = env.APPIMAGE?.trim();
+  if (appImage) return appImage;
+  const portable = env.PORTABLE_EXECUTABLE_FILE?.trim();
+  if (portable) return portable;
+  const argv0 = env.ARGV0?.trim();
+  if (argv0 && /\.appimage$/i.test(argv0)) return argv0;
+  return execPath;
+}
+
+export function launchWorkingDirectory(execPath = process.execPath, env: NodeJS.ProcessEnv = process.env): string {
+  const portableDir = env.PORTABLE_EXECUTABLE_DIR?.trim();
+  if (portableDir) return portableDir;
+  return dirnameFor(launchPath(execPath, env));
+}
+
+function dirnameFor(filePath: string): string {
+  if (/^[a-zA-Z]:[\\/]/.test(filePath) || filePath.includes("\\")) {
+    return path.win32.dirname(filePath);
+  }
+  return path.dirname(filePath);
+}
+
+export function parsePersistedLaunchPath(raw: string | null): string | null {
+  if (!raw) return null;
+  try {
+    const data = JSON.parse(raw) as { path?: unknown };
+    return typeof data.path === "string" && data.path.trim() ? data.path.trim() : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function resolveStableLaunchPath(options: {
+  execPath?: string;
+  env?: NodeJS.ProcessEnv;
+  userDataDir?: string;
+  exists?: (filePath: string) => boolean;
+} = {}): Promise<string> {
+  const env = options.env ?? process.env;
+  const execPath = options.execPath ?? process.execPath;
+  const current = launchPath(execPath, env);
+  const exists = options.exists ?? existsSync;
+  if (!looksTransientLaunchPath(current)) {
+    await persistLaunchPath(options.userDataDir, current);
+    return current;
+  }
+  const persisted = parsePersistedLaunchPath(
+    options.userDataDir ? await readTextIfPresent(path.join(options.userDataDir, LAUNCH_PATH_FILE)) : null,
+  );
+  if (persisted && !looksTransientLaunchPath(persisted) && exists(persisted)) {
+    return persisted;
+  }
+  return current;
+}
+
+async function persistLaunchPath(userDataDir: string | undefined, filePath: string): Promise<void> {
+  if (!userDataDir || looksTransientLaunchPath(filePath)) return;
+  await mkdir(userDataDir, { recursive: true });
+  await writeFile(path.join(userDataDir, LAUNCH_PATH_FILE), `${JSON.stringify({ path: filePath })}\n`, "utf8");
 }
 
 /** NSIS / deb / dmg already install shortcuts; portable tar.gz and AppImage do not. */
@@ -52,9 +129,43 @@ export function shouldRewriteWindowsShortcut(
   nextStamp: string,
   fileExists: boolean,
   force = false,
+  targetMissing = false,
 ): boolean {
-  if (force || !fileExists) return true;
+  if (force || !fileExists || targetMissing) return true;
   return existingStamp !== nextStamp;
+}
+
+export function windowsStampTargetMissing(
+  existingStamp: string | null,
+  exists: (filePath: string) => boolean = existsSync,
+): boolean {
+  const target = existingStamp?.split("\n")[0]?.trim();
+  if (!target) return false;
+  return !exists(target);
+}
+
+export function desktopEntryExecPath(contents: string): string | undefined {
+  const line = contents.split(/\r?\n/).find((row) => row.startsWith("Exec="));
+  if (!line) return undefined;
+  const value = line.slice("Exec=".length).trim();
+  if (!value) return undefined;
+  if (value.startsWith('"')) {
+    const end = value.indexOf('"', 1);
+    return end > 0 ? value.slice(1, end).replace(/\\"/g, '"') : undefined;
+  }
+  return value.split(/\s+/)[0];
+}
+
+export function linuxShortcutNeedsRewrite(
+  existing: string | null,
+  next: string,
+  force = false,
+  execExists: (filePath: string) => boolean = existsSync,
+): boolean {
+  if (shouldRewriteTextFile(existing, next, force)) return true;
+  const exec = existing ? desktopEntryExecPath(existing) : undefined;
+  const nextExec = desktopEntryExecPath(next);
+  return Boolean(exec && nextExec && exec !== nextExec && !execExists(exec));
 }
 
 export async function readTextIfPresent(file: string): Promise<string | null> {
@@ -110,18 +221,35 @@ async function installLinuxShortcuts(options: InstallShortcutsOptions): Promise<
   const appDir = path.join(home, ".local", "share", "applications");
   const desktopDir = await resolveDesktopDir(home, env);
   const iconChanged = await copyFileIfChanged(iconSrc, iconDest);
+  const target = await resolveStableLaunchPath({
+    execPath: options.execPath,
+    env,
+    userDataDir: options.userDataDir,
+  });
   const body = linuxDesktopEntry({
-    exec: launchPath(options.execPath ?? process.execPath, env),
+    exec: target,
     icon: existsSync(iconDest) ? iconDest : iconSrc,
     workingDirectory: workspaceDir,
   });
   const appFile = path.join(appDir, `${DESKTOP_ID}.desktop`);
-  const appState = await syncShortcutFile(appFile, body, 0o755, options.force);
+  const prevApp = await readTextIfPresent(appFile);
+  const appState = await syncShortcutFile(
+    appFile,
+    body,
+    0o755,
+    options.force || linuxShortcutNeedsRewrite(prevApp, body),
+  );
   let deskFile = "";
   let deskState: "created" | "updated" | "unchanged" = "unchanged";
   if (desktopDir) {
     deskFile = path.join(desktopDir, `${SHORTCUT_NAME}.desktop`);
-    deskState = await syncShortcutFile(deskFile, body, 0o755, options.force);
+    const prevDesk = await readTextIfPresent(deskFile);
+    deskState = await syncShortcutFile(
+      deskFile,
+      body,
+      0o755,
+      options.force || linuxShortcutNeedsRewrite(prevDesk, body),
+    );
     await markDesktopTrusted(deskFile);
   }
   await markDesktopTrusted(appFile);
@@ -187,12 +315,17 @@ function shortcutStampPath(userDataDir: string): string {
 async function installWindowsShortcuts(options: InstallShortcutsOptions): Promise<string> {
   const home = options.homeDir ?? os.homedir();
   const env = options.env ?? process.env;
-  const target = launchPath(options.execPath ?? process.execPath, env);
-  const workdir = path.dirname(options.execPath ?? process.execPath);
+  const target = await resolveStableLaunchPath({
+    execPath: options.execPath,
+    env,
+    userDataDir: options.userDataDir ?? path.join(home, "AppData", "Roaming", "DeepSeek"),
+  });
+  const workdir = launchWorkingDirectory(options.execPath ?? process.execPath, env);
   const version = options.version ?? "";
   const userDataDir = options.userDataDir ?? path.join(home, "AppData", "Roaming", "DeepSeek");
   const stamp = windowsShortcutIdentity(target, workdir, version);
   const previous = await readTextIfPresent(shortcutStampPath(userDataDir));
+  const targetMissing = windowsStampTargetMissing(previous);
   const desktop = path.join(home, "Desktop");
   const startMenu = path.join(home, "AppData", "Roaming", "Microsoft", "Windows", "Start Menu", "Programs");
   await mkdir(startMenu, { recursive: true });
@@ -200,7 +333,7 @@ async function installWindowsShortcuts(options: InstallShortcutsOptions): Promis
   const startLnk = path.join(startMenu, `${SHORTCUT_NAME}.lnk`);
   let wrote = 0;
   for (const lnk of [desktopLnk, startLnk]) {
-    if (!shouldRewriteWindowsShortcut(previous, stamp, existsSync(lnk), options.force)) continue;
+    if (!shouldRewriteWindowsShortcut(previous, stamp, existsSync(lnk), options.force, targetMissing)) continue;
     await writeWindowsShortcut(lnk, target, workdir);
     wrote += 1;
   }
