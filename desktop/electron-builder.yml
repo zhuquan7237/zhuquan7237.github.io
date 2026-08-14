@@ -21,8 +21,14 @@ npmRebuild: false
 mac:
   category: public.app-category.developer-tools
   icon: build/icon.png
+  # Ad-hoc sign (identity "-"). Leaving this unset skips signing; macOS
+  # Sequoia then calls the quarantined app "damaged" with no Open Anyway.
+  identity: "-"
   hardenedRuntime: false
   gatekeeperAssess: false
+  notarize: false
+  entitlements: resources/entitlements.mac.plist
+  entitlementsInherit: resources/entitlements.mac.plist
   target:
     - target: dmg
       arch: [x64, arm64]
@@ -39,6 +45,10 @@ dmg:
       y: 220
       type: link
       path: /Applications
+    - x: 270
+      y: 400
+      type: file
+      path: resources/Open-DeepSeek.command
 
 win:
   icon: build/icon.png

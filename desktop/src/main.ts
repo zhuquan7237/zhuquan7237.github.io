@@ -1,4 +1,5 @@
 import { app, BrowserWindow, Menu, dialog, shell, ipcMain, screen, nativeImage } from "electron";
+import { spawn } from "node:child_process";
 import { mkdir } from "node:fs/promises";
 import { readFileSync } from "node:fs";
 import path from "node:path";
@@ -8,6 +9,13 @@ import { ensureHarness, fetchPublishedVersion, startHarnessWeb, stopHarness, typ
 import { applyLinuxRuntimeFlags } from "./linux-flags";
 import { resolveNodeRuntime } from "./node-runtime";
 import { appIconFile, installUserShortcuts, needsUserShortcuts } from "./desktop-integration";
+import {
+  downloadDesktopAsset,
+  fetchLatestDesktopRelease,
+  pickDesktopAsset,
+  shouldPromptDesktopUpdate,
+  type DesktopRelease,
+} from "./desktop-update";
 import { ensureDefaultWorkspace } from "./dsh-workspace";
 import { loadWindowState, saveWindowState } from "./window-state";
 import {
@@ -266,6 +274,13 @@ function buildMenu(): void {
           enabled: false,
         },
         {
+          label: "检查桌面版更新",
+          accelerator: "CmdOrCtrl+Shift+U",
+          click: () => {
+            void checkDesktopUpdates(true);
+          },
+        },
+        {
           label: "检查 Harness 更新",
           accelerator: "CmdOrCtrl+U",
           click: () => {
@@ -447,6 +462,108 @@ async function maybeNotifyHarnessUpdate(): Promise<void> {
   await checkHarnessUpdates(false);
 }
 
+async function checkDesktopUpdates(interactive: boolean): Promise<void> {
+  try {
+    const latest = await fetchLatestDesktopRelease();
+    const current = app.getVersion();
+    if (!shouldPromptDesktopUpdate(current, latest.version, interactive ? "" : settings.skippedDesktopVersion)) {
+      if (interactive && current === latest.version) {
+        await nativeBox({
+          type: "info",
+          title: "桌面版更新",
+          message: "DeepSeek Desktop 已是最新版本",
+          detail: `当前桌面版：${current}\n来源：GitHub Releases（不用 git pull）`,
+          buttons: ["确定"],
+        });
+      } else if (interactive && current !== latest.version) {
+        await nativeBox({
+          type: "info",
+          title: "桌面版更新",
+          message: "没有需要安装的新版本",
+          detail: `当前：${current}\n仓库最新：${latest.version}`,
+          buttons: ["确定"],
+        });
+      }
+      return;
+    }
+    const asset = pickDesktopAsset(latest.assets, process.platform, process.arch);
+    const choice = await nativeBox({
+      type: "info",
+      title: "发现新的桌面版",
+      message: `仓库已发布 ${latest.version}`,
+      detail: [
+        `当前版本：${current}`,
+        asset ? `将下载：${asset.name}` : "打不开对应系统的安装包，将打开发布页。",
+        "这是桌面壳更新，不用 git pull，也不会重新克隆 Harness。",
+      ].join("\n"),
+      buttons: ["下载并安装", "以后再说"],
+      defaultId: 0,
+      cancelId: 1,
+    });
+    if (choice.response !== 0) {
+      settings.skippedDesktopVersion = latest.version;
+      await saveSettings(userData(), settings);
+      return;
+    }
+    settings.skippedDesktopVersion = "";
+    await saveSettings(userData(), settings);
+    await installDesktopRelease(latest, asset);
+  } catch (error) {
+    if (!interactive) return;
+    await nativeBox({
+      type: "error",
+      title: "检查桌面版更新失败",
+      message: error instanceof Error ? error.message : String(error),
+      buttons: ["确定"],
+    });
+  }
+}
+
+async function installDesktopRelease(
+  release: DesktopRelease,
+  asset: ReturnType<typeof pickDesktopAsset>,
+): Promise<void> {
+  if (!asset) {
+    await shell.openExternal(release.htmlUrl);
+    return;
+  }
+  const dest = path.join(userData(), "updates", asset.name);
+  sendSplash("status", { phase: "engine", text: `正在下载桌面版 ${release.version}…` });
+  const previousTitle = mainWindow && !mainWindow.isDestroyed() ? mainWindow.getTitle() : "";
+  const onLog = (line: string) => {
+    sendSplash("log", line);
+    if (mainWindow && !mainWindow.isDestroyed()) mainWindow.setTitle(line);
+  };
+  try {
+    await downloadDesktopAsset(asset.url, dest, onLog);
+  } finally {
+    if (previousTitle && mainWindow && !mainWindow.isDestroyed()) mainWindow.setTitle(previousTitle);
+  }
+  if (process.platform === "win32") {
+    const child = spawn(dest, [], { detached: true, stdio: "ignore" });
+    child.unref();
+    app.quit();
+    return;
+  }
+  await shell.openPath(dest);
+  await nativeBox({
+    type: "info",
+    title: "已下载新版本",
+    message: `已打开 ${asset.name}`,
+    detail:
+      process.platform === "darwin"
+        ? "把 DeepSeek 拖到「应用程序」替换旧版。若仍提示文件已损坏，请双击安装盘里的 Open-DeepSeek.command。"
+        : "解压或安装新包后即可使用。旧窗口可以关掉。",
+    buttons: ["确定"],
+  });
+}
+
+async function maybeNotifyDesktopUpdate(): Promise<void> {
+  if (!settings.autoUpdateDesktop) return;
+  if (!app.isPackaged) return;
+  await checkDesktopUpdates(false);
+}
+
 async function openSettings(): Promise<void> {
   const win = new BrowserWindow({
     width: 520,
@@ -546,7 +663,7 @@ async function boot(forceUpdate: boolean): Promise<void> {
     } else {
       await createMain(running.url, running.version);
     }
-    void maybeNotifyHarnessUpdate();
+    void maybeNotifyDesktopUpdate().then(() => maybeNotifyHarnessUpdate());
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     sendSplash("status", { phase: "error", text: message });

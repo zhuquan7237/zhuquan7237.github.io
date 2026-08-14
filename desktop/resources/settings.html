@@ -73,8 +73,12 @@
     </p>
     <div class="workspace">当前工作区：<code id="workspace"></code></div>
     <label class="check">
+      <input id="autoDesktop" type="checkbox" />
+      <span>启动后检查桌面软件更新（GitHub Release 安装包，不用 git pull）。</span>
+    </label>
+    <label class="check">
       <input id="auto" type="checkbox" />
-      <span>启动后检查更新。有新版本时先问你，不会偷偷升级。</span>
+      <span>启动后检查引擎（Harness）更新。有新版本时先问你，不会偷偷升级。</span>
     </label>
     <label>npm 源</label>
     <div class="row">
@@ -103,6 +107,7 @@
       const previewSettings = {
         channel: "latest",
         autoUpdateHarness: true,
+        autoUpdateDesktop: true,
         registry: "https://registry.npmmirror.com",
         localHarnessDir: "",
         workspaceDir: "~/DeepSeek",
@@ -113,6 +118,7 @@
       settingsApi.then((s) => {
         $("channel").value = s.channel === "next" ? "next" : "latest";
         $("auto").checked = s.autoUpdateHarness;
+        $("autoDesktop").checked = s.autoUpdateDesktop !== false;
         $("registry").value = s.registry;
         $("local").value = s.localHarnessDir;
         $("workspace").textContent = s.workspaceDir || "（首次启动后自动使用家目录下的 DeepSeek 文件夹）";
@@ -130,6 +136,7 @@
           ...current,
           channel: $("channel").value,
           autoUpdateHarness: $("auto").checked,
+          autoUpdateDesktop: $("autoDesktop").checked,
           registry,
           registrySource: registry === current.registry ? current.registrySource : "user",
           localHarnessDir: $("local").value,

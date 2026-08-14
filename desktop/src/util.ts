@@ -12,6 +12,8 @@ export type HarnessChannel = "latest" | "next" | string;
 
 export interface DesktopSettings {
   autoUpdateHarness: boolean;
+  /** Check GitHub Releases for a newer desktop installer after launch. */
+  autoUpdateDesktop: boolean;
   channel: HarnessChannel;
   registry: string;
   /** "auto" keeps following the system language; "user" pins whatever was picked in settings. */
@@ -22,10 +24,13 @@ export interface DesktopSettings {
   lastHarnessVersion: string;
   /** Startup prompt will not ask again until npm publishes a newer version. */
   skippedHarnessVersion: string;
+  /** Startup prompt will not ask again until GitHub publishes a newer desktop tag. */
+  skippedDesktopVersion: string;
 }
 
 export const DEFAULT_SETTINGS: DesktopSettings = {
   autoUpdateHarness: true,
+  autoUpdateDesktop: true,
   channel: "latest",
   registry: NPM_REGISTRY,
   registrySource: "auto",
@@ -33,6 +38,7 @@ export const DEFAULT_SETTINGS: DesktopSettings = {
   workspaceDir: "",
   lastHarnessVersion: "",
   skippedHarnessVersion: "",
+  skippedDesktopVersion: "",
 };
 
 /**
