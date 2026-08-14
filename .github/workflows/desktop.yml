@@ -79,6 +79,7 @@ jobs:
             desktop/release/*.AppImage
             desktop/release/*.deb
             desktop/release/*.tar.gz
+            desktop/release/*.sh
           if-no-files-found: warn
 
   publish-release:
@@ -96,14 +97,18 @@ jobs:
       - name: Publish public GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: desktop-v0.1.17
-          name: DeepSeek Desktop 0.1.17
+          tag_name: desktop-v0.1.18
+          name: DeepSeek Desktop 0.1.18
           target_commitish: ${{ github.sha }}
           prerelease: false
           make_latest: true
           fail_on_unmatched_files: true
           body: |
-            请用 0.1.17。不要用 0.1.0–0.1.16。
+            请用 0.1.18。不要用 0.1.0–0.1.17。
+
+            **0.1.17 → 0.1.18**
+            - 修好零配置 Linux 首次安装：不再依赖系统 xz；失败会清掉半成品 Node 包；快捷方式只在主界面打开后创建；报错改成中文下一步（缺 make/g++、没网、AppImage 缺 libfuse2）。启动页增加「重试」
+            - 下载页补上 Linux arm64 和 AppImage。AppImage 另附无 FUSE 启动脚本。Windows 解压 Node 不再依赖 PowerShell Expand-Archive；macOS 同样改用 .tar.gz
 
             **0.1.16 → 0.1.17**
             - 启动加载界面改成 Windows 11 Fluent：无边框窗口、标题栏关闭按钮、圆角卡片、次要「退出」按钮。Windows 11 上用 mica 材质
@@ -137,11 +142,13 @@ jobs:
             - 桌面版会查 GitHub Release 更新
 
             **直接下载（不用登录）**
-            - Windows 安装包：https://dsh.zhuquan.xyz/dl/DeepSeek-0.1.17-win.exe
-            - Linux x64（推荐 tar.gz）：https://dsh.zhuquan.xyz/dl/DeepSeek-0.1.17-linux-x64.tar.gz
-            - Linux x64 deb：https://dsh.zhuquan.xyz/dl/DeepSeek-0.1.17-linux-amd64.deb
-            - macOS Apple Silicon：https://dsh.zhuquan.xyz/dl/DeepSeek-0.1.17-mac-arm64.dmg
-            - macOS Intel：https://dsh.zhuquan.xyz/dl/DeepSeek-0.1.17-mac-x64.dmg
+            - Windows 安装包：https://dsh.zhuquan.xyz/dl/DeepSeek-0.1.18-win.exe
+            - Linux x64（推荐 tar.gz）：https://dsh.zhuquan.xyz/dl/DeepSeek-0.1.18-linux-x64.tar.gz
+            - Linux x64 deb：https://dsh.zhuquan.xyz/dl/DeepSeek-0.1.18-linux-amd64.deb
+            - Linux arm64 tar.gz：https://dsh.zhuquan.xyz/dl/DeepSeek-0.1.18-linux-arm64.tar.gz
+            - Linux arm64 deb：https://dsh.zhuquan.xyz/dl/DeepSeek-0.1.18-linux-arm64.deb
+            - macOS Apple Silicon：https://dsh.zhuquan.xyz/dl/DeepSeek-0.1.18-mac-arm64.dmg
+            - macOS Intel：https://dsh.zhuquan.xyz/dl/DeepSeek-0.1.18-mac-x64.dmg
 
             首次启动需要联网 1–3 分钟（下载 Node 和官方 dsh）。默认皮肤已内置。之后菜单可检查桌面版和 Harness 更新。
 
@@ -151,12 +158,13 @@ jobs:
 
             | File | Platform |
             | --- | --- |
-            | `DeepSeek-0.1.17-win.exe` | Windows installer |
-            | `DeepSeek-0.1.17-win-x64.exe` / `*-win-arm64.exe` | Windows portable |
-            | `DeepSeek-0.1.17-mac-arm64.dmg` | macOS Apple Silicon |
-            | `DeepSeek-0.1.17-mac-x64.dmg` | macOS Intel |
-            | `DeepSeek-0.1.17-linux-x64.tar.gz` / `*-linux-amd64.deb` | Linux x64 |
-            | `DeepSeek-0.1.17-linux-arm64.tar.gz` / `*-linux-arm64.deb` | Linux arm64 |
+            | `DeepSeek-0.1.18-win.exe` | Windows installer |
+            | `DeepSeek-0.1.18-win-x64.exe` / `*-win-arm64.exe` | Windows portable |
+            | `DeepSeek-0.1.18-mac-arm64.dmg` | macOS Apple Silicon |
+            | `DeepSeek-0.1.18-mac-x64.dmg` | macOS Intel |
+            | `DeepSeek-0.1.18-linux-x64.tar.gz` / `*-linux-amd64.deb` | Linux x64 |
+            | `DeepSeek-0.1.18-linux-arm64.tar.gz` / `*-linux-arm64.deb` | Linux arm64 |
+            | `DeepSeek-0.1.18-linux-*.AppImage` / `*-no-fuse.sh` | AppImage（需 libfuse2，或用脚本） |
           files: |
             installers/*.exe
             installers/*.dmg
@@ -164,3 +172,4 @@ jobs:
             installers/*.AppImage
             installers/*.deb
             installers/*.tar.gz
+            installers/*.sh

@@ -1,37 +1,49 @@
 {
-  "version": "0.1.17",
-  "tag": "desktop-v0.1.17",
+  "version": "0.1.18",
+  "tag": "desktop-v0.1.18",
   "htmlUrl": "https://dsh.zhuquan.xyz/dl/",
-  "notes": "启动界面改为 Windows 11 Fluent。安装包走 dsh.zhuquan.xyz/dl/，GitHub Release 作为备用。",
+  "notes": "零配置首次安装：不再依赖系统 xz；失败可重试并清理半成品。Linux 请用 tar.gz/deb。",
   "assets": [
     {
-      "name": "DeepSeek-0.1.17-win.exe",
-      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.1.17-win.exe",
-      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.17/DeepSeek-0.1.17-win.exe",
+      "name": "DeepSeek-0.1.18-win.exe",
+      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.1.18-win.exe",
+      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.18/DeepSeek-0.1.18-win.exe",
       "size": 0
     },
     {
-      "name": "DeepSeek-0.1.17-linux-x64.tar.gz",
-      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.1.17-linux-x64.tar.gz",
-      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.17/DeepSeek-0.1.17-linux-x64.tar.gz",
+      "name": "DeepSeek-0.1.18-linux-x64.tar.gz",
+      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.1.18-linux-x64.tar.gz",
+      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.18/DeepSeek-0.1.18-linux-x64.tar.gz",
       "size": 0
     },
     {
-      "name": "DeepSeek-0.1.17-linux-amd64.deb",
-      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.1.17-linux-amd64.deb",
-      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.17/DeepSeek-0.1.17-linux-amd64.deb",
+      "name": "DeepSeek-0.1.18-linux-amd64.deb",
+      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.1.18-linux-amd64.deb",
+      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.18/DeepSeek-0.1.18-linux-amd64.deb",
       "size": 0
     },
     {
-      "name": "DeepSeek-0.1.17-mac-arm64.dmg",
-      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.1.17-mac-arm64.dmg",
-      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.17/DeepSeek-0.1.17-mac-arm64.dmg",
+      "name": "DeepSeek-0.1.18-linux-arm64.tar.gz",
+      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.1.18-linux-arm64.tar.gz",
+      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.18/DeepSeek-0.1.18-linux-arm64.tar.gz",
       "size": 0
     },
     {
-      "name": "DeepSeek-0.1.17-mac-x64.dmg",
-      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.1.17-mac-x64.dmg",
-      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.17/DeepSeek-0.1.17-mac-x64.dmg",
+      "name": "DeepSeek-0.1.18-linux-arm64.deb",
+      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.1.18-linux-arm64.deb",
+      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.18/DeepSeek-0.1.18-linux-arm64.deb",
+      "size": 0
+    },
+    {
+      "name": "DeepSeek-0.1.18-mac-arm64.dmg",
+      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.1.18-mac-arm64.dmg",
+      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.18/DeepSeek-0.1.18-mac-arm64.dmg",
+      "size": 0
+    },
+    {
+      "name": "DeepSeek-0.1.18-mac-x64.dmg",
+      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.1.18-mac-x64.dmg",
+      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.18/DeepSeek-0.1.18-mac-x64.dmg",
       "size": 0
     }
   ]

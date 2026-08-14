@@ -147,8 +147,14 @@ export function windowsStampTargetMissing(
 export function desktopEntryExecPath(contents: string): string | undefined {
   const line = contents.split(/\r?\n/).find((row) => row.startsWith("Exec="));
   if (!line) return undefined;
-  const value = line.slice("Exec=".length).trim();
+  let value = line.slice("Exec=".length).trim();
   if (!value) return undefined;
+  if (value.startsWith("env ")) {
+    const parts = value.split(/\s+/);
+    let index = 1;
+    while (index < parts.length && parts[index].includes("=")) index += 1;
+    value = parts.slice(index).join(" ");
+  }
   if (value.startsWith('"')) {
     const end = value.indexOf('"', 1);
     return end > 0 ? value.slice(1, end).replace(/\\"/g, '"') : undefined;

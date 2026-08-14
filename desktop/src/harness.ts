@@ -2,7 +2,8 @@ import { spawn, type ChildProcess } from "node:child_process";
 import { mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import type { NodeRuntime } from "./node-runtime";
-import { runCapture } from "./node-runtime";
+import { missingBuildTools, runCapture } from "./node-runtime";
+import { buildToolsHint, explainFirstRunError } from "./first-run-error";
 import {
   DSH_PACKAGE,
   NPM_REGISTRY,
@@ -114,6 +115,11 @@ export async function ensureHarness(
 
   const registry = settings.registry || NPM_REGISTRY;
   onLog(`正在从 ${registry} 安装 ${DSH_PACKAGE}@${wanted}`);
+  const missingTools = await missingBuildTools(process.platform);
+  if (missingTools.length) {
+    onLog(`未检测到 ${missingTools.join("、")}。若下一步编译 node-pty 失败，请先安装编译工具。`);
+    onLog(buildToolsHint(process.platform));
+  }
   await rm(prefix, { recursive: true, force: true });
   await mkdir(prefix, { recursive: true });
   await writeFile(
@@ -132,18 +138,25 @@ export async function ensureHarness(
     registry,
   ]);
   onLog(`运行 ${npm.command} ${npm.args.join(" ")}`);
-  await runCapture(
-    npm.command,
-    npm.args,
-    prefix,
-    {
-      PATH: `${path.dirname(runtime.node)}${path.delimiter}${process.env.PATH ?? ""}`,
-      npm_config_update_notifier: "false",
-      npm_config_registry: registry,
-      npm_config_progress: "true",
-    },
-    onLog,
-  );
+  try {
+    await runCapture(
+      npm.command,
+      npm.args,
+      prefix,
+      {
+        PATH: `${path.dirname(runtime.node)}${path.delimiter}${process.env.PATH ?? ""}`,
+        npm_config_update_notifier: "false",
+        npm_config_registry: registry,
+        npm_config_progress: "true",
+        npm_config_build_from_source: "false",
+        npm_config_foreground_scripts: "true",
+      },
+      onLog,
+    );
+  } catch (error) {
+    await rm(prefix, { recursive: true, force: true }).catch(() => undefined);
+    throw new Error(explainFirstRunError(error, "engine", process.platform));
+  }
   const version = (await readInstalledVersion(prefix)) ?? wanted;
   onLog(`引擎 ${version} 已就绪`);
   return { version, bin: dshBin(prefix), prefix };
@@ -206,7 +219,7 @@ export async function startHarnessWeb(options: {
     child.on("exit", (code) => {
       if (code !== 0 && code !== null) {
         clearTimeout(timer);
-        reject(new Error(`dsh exited ${code}\n${buffer.slice(-2000)}`));
+        reject(new Error(explainFirstRunError(`dsh exited ${code}\n${buffer.slice(-2000)}`, "start", process.platform)));
       }
     });
   });

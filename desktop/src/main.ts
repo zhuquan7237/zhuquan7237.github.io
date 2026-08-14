@@ -8,6 +8,7 @@ import { loadSettings, saveSettings } from "./settings";
 import { ensureHarness, fetchPublishedVersion, startHarnessWeb, stopHarness, type HarnessInstall, type RunningHarness } from "./harness";
 import { applyLinuxRuntimeFlags } from "./linux-flags";
 import { resolveNodeRuntime, type NodeRuntime } from "./node-runtime";
+import { explainFirstRunError } from "./first-run-error";
 import { appIconFile, installUserShortcuts, needsUserShortcuts } from "./desktop-integration";
 import {
   DESKTOP_DOWNLOAD_PAGE,
@@ -96,6 +97,7 @@ let running: RunningHarness | null = null;
 let lastRuntime: NodeRuntime | null = null;
 let lastInstall: HarnessInstall | null = null;
 let skinBusy = false;
+let booting = false;
 let settings: DesktopSettings;
 let lastMigration: LegacyMigrateResult | null = null;
 
@@ -783,24 +785,23 @@ function installCrashGuards(): void {
 }
 
 async function boot(forceUpdate: boolean): Promise<void> {
+  if (booting) return;
+  booting = true;
   try {
     if (forceUpdate && mainWindow && !mainWindow.isDestroyed()) mainWindow.hide();
     if (!splashWindow) await createSplash();
     const workspaceDir = await defaultWorkspace();
-    if (needsUserShortcuts(app.isPackaged)) {
-      await installUserShortcuts({
-        workspaceDir,
-        version: app.getVersion(),
-        userDataDir: userData(),
-      }).catch(() => undefined);
-    }
     sendSplash("status", {
       phase: "runtime",
       text: "正在检查运行环境。首次启动需要联网下载引擎，大约 1–3 分钟。",
     });
-    const runtime = await resolveNodeRuntime(path.join(userData(), "runtime"), (line) => {
-      sendSplash("log", line);
-    });
+    const runtime = await resolveNodeRuntime(
+      path.join(userData(), "runtime"),
+      (line) => {
+        sendSplash("log", line);
+      },
+      sessionAwareFetch,
+    );
     lastRuntime = runtime;
     sendSplash("log", `npm 源：${settings.registry}`);
     sendSplash("status", {
@@ -844,9 +845,16 @@ async function boot(forceUpdate: boolean): Promise<void> {
     } else {
       await createMain(running.url, running.version);
     }
+    if (needsUserShortcuts(app.isPackaged)) {
+      await installUserShortcuts({
+        workspaceDir,
+        version: app.getVersion(),
+        userDataDir: userData(),
+      }).catch(() => undefined);
+    }
     void maybeNotifyDesktopUpdate().then(() => maybeNotifyHarnessUpdate());
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = explainFirstRunError(error, "unknown", process.platform);
     sendSplash("status", { phase: "error", text: message });
     await nativeBox({
       type: "error",
@@ -854,6 +862,8 @@ async function boot(forceUpdate: boolean): Promise<void> {
       message,
       buttons: ["确定"],
     });
+  } finally {
+    booting = false;
   }
 }
 
@@ -934,6 +944,9 @@ if (linuxReady) {
       });
       ipcMain.on("splash:quit", () => {
         app.quit();
+      });
+      ipcMain.on("splash:retry", () => {
+        void boot(false);
       });
       buildMenu();
       await boot(false);

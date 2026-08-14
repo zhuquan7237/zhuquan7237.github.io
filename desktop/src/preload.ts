@@ -14,6 +14,7 @@ contextBridge.exposeInMainWorld("desktop", {
   pickDir: (): Promise<string> => ipcRenderer.invoke("settings:pick-dir"),
   apply: () => ipcRenderer.send("settings:apply"),
   quit: () => ipcRenderer.send("splash:quit"),
+  retry: () => ipcRenderer.send("splash:retry"),
   listSkins: (): Promise<SkinCard[]> => ipcRenderer.invoke("skins:list"),
   selectSkin: (id: string): Promise<void> => ipcRenderer.invoke("skins:select", id),
   setSkinsEnabled: (enabled: boolean): Promise<void> => ipcRenderer.invoke("skins:set-enabled", enabled),

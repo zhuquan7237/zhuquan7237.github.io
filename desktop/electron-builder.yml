@@ -10,6 +10,7 @@ files:
   - dist/**/*
   - resources/**/*
   - package.json
+afterAllArtifactBuild: scripts/write-appimage-launcher.cjs
 asar: true
 asarUnpack:
   - resources/*.png
@@ -87,6 +88,9 @@ linux:
   maintainer: DeepSeek Desktop
   synopsis: DeepSeek Harness 桌面版
   description: Codex-style desktop shell for official DeepSeek Harness (dsh).
+  extraResources:
+    - from: resources/Linux-请先读我.txt
+      to: Linux-请先读我.txt
   desktop:
     entry:
       Name: DeepSeek Harness

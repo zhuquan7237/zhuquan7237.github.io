@@ -12,6 +12,7 @@ import {
   isHomeDirectoryWorkspace,
   isSystemInstalledApp,
   linuxDesktopEntry,
+  linuxExecLine,
   linuxRuntimeArgvExtras,
   linuxShmNeedsWorkaround,
   localePrefersChina,
@@ -86,7 +87,9 @@ describe("npm and node dist names", () => {
   });
 
   it("names official node archives", () => {
-    expect(nodeDistFile("linux", "x64").archive).toBe("node-v22.23.2-linux-x64.tar.xz");
+    expect(nodeDistFile("linux", "x64").archive).toBe("node-v22.23.2-linux-x64.tar.gz");
+    expect(nodeDistFile("darwin", "arm64").archive).toBe("node-v22.23.2-darwin-arm64.tar.gz");
+    expect(nodeDistFile("win32", "arm64").archive).toBe("node-v22.23.2-win-arm64.zip");
     expect(nodeDistFile("win32", "arm64").binary).toBe("node.exe");
     expect(nodeDistFile("darwin", "arm64").dir).toBe("node-v22.23.2-darwin-arm64");
   });
@@ -138,6 +141,9 @@ describe("first-run helpers", () => {
     expect(text).toContain("Name=DeepSeek Harness");
     expect(text).toContain("StartupWMClass=DeepSeek Harness");
     expect(text).toContain("Exec=/home/me/DeepSeek %U");
+    expect(linuxExecLine("/home/me/DeepSeek.AppImage")).toBe(
+      "env APPIMAGE_EXTRACT_AND_RUN=1 /home/me/DeepSeek.AppImage %U",
+    );
     expect(text).toContain("Categories=Development;IDE;");
   });
 
@@ -165,7 +171,7 @@ describe("typical-user defaults", () => {
   });
 
   it("lists Node download mirrors with a China-first fallback", () => {
-    const chinaFirst = nodeDownloadUrls("node-v22.23.2-linux-x64.tar.xz", true);
+    const chinaFirst = nodeDownloadUrls("node-v22.23.2-linux-x64.tar.gz", true);
     expect(chinaFirst[0]).toContain("npmmirror.com");
     expect(chinaFirst[1]).toContain("nodejs.org");
   });

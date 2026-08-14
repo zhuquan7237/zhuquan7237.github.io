@@ -128,7 +128,9 @@ export function nodeDistFile(platform: NodeJS.Platform, arch: string): { dir: st
   }
   const plat = platform === "darwin" ? "darwin" : "linux";
   const dir = `node-v${NODE_VERSION}-${plat}-${nodeArch}`;
-  return { dir, archive: `${dir}.tar.xz`, binary: "bin/node" };
+  // .tar.gz works with the built-in extractor. .tar.xz needs system xz, which
+  // a zero-config Ubuntu/Debian often does not have.
+  return { dir, archive: `${dir}.tar.gz`, binary: "bin/node" };
 }
 
 export function nodeMeetsEngine(version: string, min = "22.19.0"): boolean {
@@ -259,8 +261,13 @@ export function clampWindowBounds(bounds: Rect, workArea: Rect): Rect {
   };
 }
 
+export function linuxExecLine(execPath: string): string {
+  const quoted = execPath.includes(" ") ? `"${execPath.replace(/"/g, '\\"')}"` : execPath;
+  if (/\.appimage$/i.test(execPath)) return `env APPIMAGE_EXTRACT_AND_RUN=1 ${quoted} %U`;
+  return `${quoted} %U`;
+}
+
 export function linuxDesktopEntry(options: { exec: string; icon: string; workingDirectory?: string }): string {
-  const exec = options.exec.includes(" ") ? `"${options.exec.replace(/"/g, '\\"')}"` : options.exec;
   const lines = [
     "[Desktop Entry]",
     "Type=Application",
@@ -270,7 +277,7 @@ export function linuxDesktopEntry(options: { exec: string; icon: string; working
     "GenericName[zh_CN]=AI 编程助手",
     "Comment=Codex-style desktop for DeepSeek Harness",
     "Comment[zh_CN]=DeepSeek Harness 桌面版",
-    `Exec=${exec} %U`,
+    `Exec=${linuxExecLine(options.exec)}`,
     `Icon=${options.icon}`,
   ];
   // Without Path=, a .desktop launch uses $HOME as cwd, and dsh may register

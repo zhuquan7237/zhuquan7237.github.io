@@ -193,6 +193,9 @@ describe("stable launch path", () => {
     expect(parsePersistedLaunchPath("not-json")).toBeNull();
     expect(desktopEntryExecPath('Exec="/opt/My Apps/DeepSeek" %U\n')).toBe("/opt/My Apps/DeepSeek");
     expect(desktopEntryExecPath("Exec=/tmp/.mount_old/DeepSeek %U\n")).toBe("/tmp/.mount_old/DeepSeek");
+    expect(
+      desktopEntryExecPath("Exec=env APPIMAGE_EXTRACT_AND_RUN=1 /home/me/DeepSeek.AppImage %U\n"),
+    ).toBe("/home/me/DeepSeek.AppImage");
   });
 
   it("writes the AppImage path on the first launch, not the fuse mount", async () => {
@@ -214,7 +217,8 @@ describe("stable launch path", () => {
     });
     const desk = path.join(home, "Desktop", "DeepSeek Harness.desktop");
     const body = await readFile(desk, "utf8");
-    expect(body).toContain(`Exec=${appImage} %U`);
+    expect(body).toContain(`APPIMAGE_EXTRACT_AND_RUN=1 ${appImage} %U`);
+    expect(desktopEntryExecPath(body)).toBe(appImage);
     expect(body).not.toContain(".mount_");
     expect(await readFile(path.join(userData, "desktop-launch-path.json"), "utf8")).toContain(appImage);
   });
@@ -247,14 +251,14 @@ describe("stable launch path", () => {
       execPath: mount,
       env: { XDG_DESKTOP_DIR: path.join(home, "Desktop"), APPIMAGE: appImage },
     });
-    expect(await readFile(desk, "utf8")).toContain(`Exec=${appImage} %U`);
+    expect(await readFile(desk, "utf8")).toContain(`APPIMAGE_EXTRACT_AND_RUN=1 ${appImage} %U`);
     const second = await installUserShortcuts({
       ...base,
       execPath: mount,
       env: { XDG_DESKTOP_DIR: path.join(home, "Desktop") },
     });
     expect(second).toContain("快捷方式已存在");
-    expect(await readFile(desk, "utf8")).toContain(`Exec=${appImage} %U`);
+    expect(await readFile(desk, "utf8")).toContain(`APPIMAGE_EXTRACT_AND_RUN=1 ${appImage} %U`);
   });
 
   it("reuses a persisted portable path when the current execPath is a temp unpack", async () => {

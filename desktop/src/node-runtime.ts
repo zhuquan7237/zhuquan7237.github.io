@@ -1,7 +1,9 @@
 import { spawn, type ChildProcess } from "node:child_process";
-import { chmod, mkdir, rm, stat, writeFile } from "node:fs/promises";
+import { chmod, mkdir, readFile, readdir, rm, stat, writeFile } from "node:fs/promises";
 import { createWriteStream } from "node:fs";
 import path from "node:path";
+import { extractNodeArchive } from "./extract-archive";
+import { commandExistsArgs, explainFirstRunError } from "./first-run-error";
 import {
   NODE_VERSION,
   formatByteProgress,
@@ -24,9 +26,12 @@ export interface NodeRuntime {
   version: string;
 }
 
+export type RuntimeFetcher = (input: string, init?: RequestInit) => Promise<Response>;
+
 export async function resolveNodeRuntime(
   cacheDir: string,
   onLog: (line: string) => void,
+  fetchImpl: RuntimeFetcher = fetch,
 ): Promise<NodeRuntime> {
   const system = await detectSystemNode();
   if (system && nodeMeetsEngine(system.version)) {
@@ -34,7 +39,7 @@ export async function resolveNodeRuntime(
     return system;
   }
   onLog(`系统 Node 低于 22.19，改为下载官方 Node ${NODE_VERSION}（仅首次）`);
-  return await installNodeSidecar(cacheDir, onLog);
+  return await installNodeSidecar(cacheDir, onLog, fetchImpl);
 }
 
 async function detectSystemNode(): Promise<NodeRuntime | null> {
@@ -57,7 +62,11 @@ async function detectSystemNode(): Promise<NodeRuntime | null> {
   };
 }
 
-async function installNodeSidecar(cacheDir: string, onLog: (line: string) => void): Promise<NodeRuntime> {
+async function installNodeSidecar(
+  cacheDir: string,
+  onLog: (line: string) => void,
+  fetchImpl: RuntimeFetcher,
+): Promise<NodeRuntime> {
   const dist = nodeDistFile(process.platform, process.arch);
   const unpacked = path.join(cacheDir, dist.dir);
   const nodePath = path.join(unpacked, dist.binary);
@@ -68,6 +77,7 @@ async function installNodeSidecar(cacheDir: string, onLog: (line: string) => voi
     onLog("缓存的 Node 无法运行，正在重新下载");
     await rm(unpacked, { recursive: true, force: true });
   }
+  await cleanStaleNodeArchives(cacheDir);
 
   await mkdir(cacheDir, { recursive: true });
   const archivePath = path.join(cacheDir, dist.archive);
@@ -75,23 +85,34 @@ async function installNodeSidecar(cacheDir: string, onLog: (line: string) => voi
     dist.archive,
     localePrefersChina(process.env, process.env.TZ || hostTimeZone()),
   );
-  await downloadFromMirrors(urls, archivePath, onLog);
-  onLog("正在解压 Node 运行时");
-  if (dist.archive.endsWith(".zip")) {
-    await runCapture(
-      "powershell.exe",
-      ["-NoProfile", "-Command", `Expand-Archive -Force '${archivePath}' '${cacheDir}'`],
-      cacheDir,
-      undefined,
-      onLog,
-    );
-  } else {
-    await runCapture("tar", ["-xJf", archivePath, "-C", cacheDir], cacheDir, undefined, onLog);
+  try {
+    await downloadFromMirrors(urls, archivePath, onLog, fetchImpl);
+    onLog("正在解压 Node 运行时（不依赖系统 xz）");
+    const archive = await readFile(archivePath);
+    await extractNodeArchive(archive, cacheDir, dist.archive);
+    await rm(archivePath, { force: true });
+  } catch (error) {
+    await rm(archivePath, { force: true }).catch(() => undefined);
+    await rm(unpacked, { recursive: true, force: true }).catch(() => undefined);
+    throw new Error(explainFirstRunError(error, "node", process.platform));
   }
-  await rm(archivePath, { force: true });
   const runtime = await usableSidecar(nodePath);
   if (!runtime) throw new Error("Node 运行时解压后仍无法执行，请检查磁盘权限后重试。");
   return runtime;
+}
+
+export async function cleanStaleNodeArchives(cacheDir: string): Promise<void> {
+  if (!(await exists(cacheDir))) return;
+  let names: string[] = [];
+  try {
+    names = await readdir(cacheDir);
+  } catch {
+    return;
+  }
+  for (const name of names) {
+    if (!/\.(zip|tar\.gz|tgz|tar\.xz)$/i.test(name)) continue;
+    await rm(path.join(cacheDir, name), { force: true }).catch(() => undefined);
+  }
 }
 
 /**
@@ -138,12 +159,13 @@ async function downloadFromMirrors(
   urls: string[],
   dest: string,
   onLog: (line: string) => void,
+  fetchImpl: RuntimeFetcher,
 ): Promise<void> {
   let lastError: unknown;
   for (const url of urls) {
     try {
       onLog(`正在下载 Node.js：${url}`);
-      await downloadFile(url, dest, onLog);
+      await downloadFile(url, dest, onLog, fetchImpl);
       return;
     } catch (error) {
       lastError = error;
@@ -158,8 +180,9 @@ async function downloadFile(
   url: string,
   dest: string,
   onLog: (line: string) => void,
+  fetchImpl: RuntimeFetcher,
 ): Promise<void> {
-  const response = await fetch(url);
+  const response = await fetchImpl(url);
   if (!response.ok || !response.body) {
     throw new Error(`下载失败 ${response.status}: ${url}`);
   }
@@ -248,6 +271,21 @@ export async function runCapture(
       else reject(new Error(`${planned.command} ${planned.args.join(" ")} failed (${code}): ${err || out}`));
     });
   });
+}
+
+export async function commandOnPath(name: string, platform: NodeJS.Platform = process.platform): Promise<boolean> {
+  const planned = commandExistsArgs(name, platform);
+  const result = await runCapture(planned.command, planned.args).catch(() => "");
+  return Boolean(result.trim());
+}
+
+export async function missingBuildTools(platform: NodeJS.Platform = process.platform): Promise<string[]> {
+  if (platform === "win32") return [];
+  const missing: string[] = [];
+  if (!(await commandOnPath("make", platform))) missing.push("make");
+  const hasCxx = (await commandOnPath("g++", platform)) || (await commandOnPath("clang++", platform));
+  if (!hasCxx) missing.push("g++");
+  return missing;
 }
 
 export async function writeMarker(dir: string, name: string, value: string): Promise<void> {

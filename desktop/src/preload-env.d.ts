@@ -10,6 +10,7 @@ declare global {
       pickDir: () => Promise<string>;
       apply: () => void;
       quit: () => void;
+      retry: () => void;
       listSkins: () => Promise<import("./skins").SkinCard[]>;
       selectSkin: (id: string) => Promise<void>;
       setSkinsEnabled: (enabled: boolean) => Promise<void>;

@@ -17,7 +17,16 @@ describe("Win11 splash chrome", () => {
     expect(html).toContain("btn-secondary");
     expect(html).toContain("详细信息");
     expect(html).toContain('id="quit"');
+    expect(html).toContain('id="retry"');
     expect(html).toContain("window.desktop.quit");
+    expect(html).toContain("window.desktop.retry");
+    expect(main).toContain("splash:retry");
+    expect(main).toContain("explainFirstRunError");
+    expect(main).toContain("needsUserShortcuts");
+    expect(main).toContain("sessionAwareFetch");
+    const boot = main.slice(main.indexOf("async function boot"));
+    expect(boot.indexOf("createMain")).toBeGreaterThan(-1);
+    expect(boot.indexOf("createMain")).toBeLessThan(boot.indexOf("installUserShortcuts"));
 
     expect(main).toContain("backgroundMaterial: \"mica\"");
     expect(main).toContain("width: 528");

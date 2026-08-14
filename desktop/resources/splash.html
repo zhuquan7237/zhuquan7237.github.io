@@ -285,6 +285,7 @@
       .footer {
         display: flex;
         justify-content: flex-end;
+        gap: 8px;
         padding-top: 14px;
         -webkit-app-region: no-drag;
       }
@@ -311,6 +312,15 @@
         background: #f0f0f0;
         box-shadow: none;
       }
+
+      .btn-primary {
+        color: #fff;
+        background: var(--accent);
+        border: 1px solid var(--accent);
+      }
+
+      .btn-primary:hover { background: var(--accent-hover); }
+      .btn-primary.is-hidden { display: none; }
 
       .btn:focus-visible {
         outline: 2px solid var(--accent);
@@ -355,6 +365,7 @@
         </section>
 
         <footer class="footer">
+          <button id="retry" class="btn btn-primary is-hidden" type="button">重试</button>
           <button id="quit" class="btn btn-secondary" type="button">退出</button>
         </footer>
       </main>
@@ -375,6 +386,10 @@
         if (window.desktop && window.desktop.quit) window.desktop.quit();
       }
 
+      function retry() {
+        if (window.desktop && window.desktop.retry) window.desktop.retry();
+      }
+
       function applyStatus(payload) {
         status.textContent = payload.text;
         const kind = payload.phase || "";
@@ -382,6 +397,7 @@
         const failed = kind === "error";
         status.classList.toggle("error", failed);
         bar.classList.toggle("error", failed);
+        document.getElementById("retry").classList.toggle("is-hidden", !failed);
       }
 
       function appendLog(line) {
@@ -390,6 +406,7 @@
       }
 
       document.getElementById("quit").addEventListener("click", quit);
+      document.getElementById("retry").addEventListener("click", retry);
       document.getElementById("quitCaption").addEventListener("click", quit);
       document.addEventListener("keydown", (event) => {
         if (event.key === "Escape") quit();
@@ -407,7 +424,7 @@
           "正在准备官方 DeepSeek Harness…",
           "已连接，准备写入 0%（0.0 MB / 28.4 MB）",
           "下载进度 36%（10.2 MB / 28.4 MB）",
-          "正在启动界面（dsh 0.1.17）…",
+          "正在启动界面（dsh 0.1.18）…",
         ];
         lines.forEach((line, index) => {
           setTimeout(() => appendLog(line), 280 * (index + 1));

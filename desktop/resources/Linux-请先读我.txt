@@ -1,0 +1,22 @@
+DeepSeek Harness 桌面版 · Linux
+
+推荐下载
+  1. tar.gz（免 FUSE，解压即用）
+  2. deb（会出现在应用菜单）
+  不要优先用 AppImage。Ubuntu 24.04 默认没有 libfuse2，双击 AppImage 不会弹出窗口。
+
+AppImage 若已经下载
+  - 安装 libfuse2：sudo apt install libfuse2
+  - 或把同版本的 *-no-fuse.sh 和 AppImage 放在同一文件夹，运行脚本
+
+首次启动
+  需要联网下载官方 Node 和 @deepseek-ai/dsh（大约 1–3 分钟）。没网过不去。
+  本机若没有 make / g++，安装引擎时可能编译 node-pty 失败：
+    Ubuntu / Debian：sudo apt install build-essential python3
+    Fedora：sudo dnf groupinstall "Development Tools"
+
+失败后
+  启动页可以点「重试」。半成品 Node 包会在重试前清掉。
+  快捷方式只在主界面成功打开后创建。
+
+下载页：https://dsh.zhuquan.xyz/dl/
