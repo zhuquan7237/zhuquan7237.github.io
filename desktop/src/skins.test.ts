@@ -10,6 +10,8 @@ import {
   MANAGED_START,
   OFFICIAL_SKIN_ID,
   applySkin,
+  bundledSkinCandidates,
+  bundledSkinDir,
   builtinSkinDir,
   ensureBuiltinSkin,
   findSkinRoots,
@@ -22,8 +24,10 @@ import {
   isYamlArrayDocument,
   mergeSkinPatch,
   parseSkinManifest,
+  readPackageVersion,
   renderManagedPatch,
   sanitizePreviewDataUrl,
+  skinPackageReady,
   stripManagedPatch,
 } from "./skins";
 import { DEFAULT_SETTINGS } from "./util";
@@ -229,6 +233,56 @@ describe("catalog and import", () => {
     await rm(userData, { recursive: true, force: true });
   });
 
+  it("installs the builtin skin from the packaged folder without GitHub", async () => {
+    const userData = await tempDir("ds-skin-bundled-");
+    const bundled = path.join(userData, "bundled");
+    await writeSkin(bundled);
+    let downloaded = 0;
+    const logs: string[] = [];
+    const skin = await ensureBuiltinSkin(userData, (line) => logs.push(line), {
+      bundledDir: bundled,
+      download: async () => {
+        downloaded += 1;
+        throw new Error("should not download");
+      },
+    });
+    expect(downloaded).toBe(0);
+    expect(skin.id).toBe("maid-atelier");
+    expect(skin.builtin).toBe(true);
+    expect(logs.some((line) => line.includes("内置"))).toBe(true);
+    await expect(readFile(path.join(skin.dir, "lib", "client.js"), "utf8")).resolves.toContain("export");
+    await rm(userData, { recursive: true, force: true });
+  });
+
+  it("replaces an older userData copy when the bundled skin version changes", async () => {
+    const userData = await tempDir("ds-skin-rev-");
+    const dest = builtinSkinDir(userData);
+    await writeSkin(dest);
+    await writeFile(
+      path.join(dest, "package.json"),
+      JSON.stringify({ name: "@dsh-external/dsh-client-ui-skin-maid-atelier", version: "0.0.1" }),
+      "utf8",
+    );
+    await writeFile(path.join(dest, "lib", "client.js"), "export function apply() { return 'v1'; }", "utf8");
+    const bundled = path.join(userData, "bundled");
+    await writeSkin(bundled);
+    await writeFile(
+      path.join(bundled, "package.json"),
+      JSON.stringify({ name: "@dsh-external/dsh-client-ui-skin-maid-atelier", version: "0.0.2" }),
+      "utf8",
+    );
+    await writeFile(path.join(bundled, "lib", "client.js"), "export function apply() { return 'v2'; }", "utf8");
+    const skin = await ensureBuiltinSkin(userData, () => {}, {
+      bundledDir: bundled,
+      download: async () => {
+        throw new Error("should not download");
+      },
+    });
+    expect(await readPackageVersion(skin.dir)).toBe("0.0.2");
+    await expect(readFile(path.join(skin.dir, "lib", "client.js"), "utf8")).resolves.toContain("v2");
+    await rm(userData, { recursive: true, force: true });
+  });
+
   it("installs the builtin skin from a downloaded zip", async () => {
     const userData = await tempDir("ds-skin-dl-");
     const prefix = "dsh-deep-whale-main/maid-atelier";
@@ -252,6 +306,48 @@ describe("catalog and import", () => {
     expect(skin.builtin).toBe(true);
     await expect(readFile(path.join(skin.dir, "lib", "client.js"), "utf8")).resolves.toContain("export");
     await rm(userData, { recursive: true, force: true });
+  });
+});
+
+describe("shipped maid-atelier package", () => {
+  const shipped = path.join(__dirname, "..", "resources", "skins", "maid-atelier");
+
+  it("is a complete skin package inside the desktop resources", async () => {
+    expect(await skinPackageReady(shipped)).toBe(true);
+    const manifest = JSON.parse(await readFile(path.join(shipped, "skin.json"), "utf8")) as { id?: string; package?: string };
+    expect(manifest.id).toBe(DEFAULT_SKIN_ID);
+    expect(manifest.package).toBe("@dsh-external/dsh-client-ui-skin-maid-atelier");
+    expect(await readPackageVersion(shipped)).toBe("0.0.1");
+    const client = await readFile(path.join(shipped, "lib", "client.js"), "utf8");
+    expect(client.length).toBeGreaterThan(100_000);
+    await expect(readFile(path.join(shipped, "NOTICE"), "utf8")).resolves.toContain("上善");
+    await expect(readFile(path.join(shipped, "LICENSE"), "utf8")).resolves.toContain("Creative Commons");
+  });
+
+  it("installs the shipped skin into a dsh home without GitHub", async () => {
+    const userData = await tempDir("ds-skin-ship-");
+    const home = await tempDir("ds-home-ship-");
+    const skin = await ensureBuiltinSkin(userData, () => {}, {
+      bundledDir: shipped,
+      download: async () => {
+        throw new Error("should not download");
+      },
+    });
+    await applySkin(home, [skin], skin.id);
+    const patch = await readFile(path.join(home, "cordis.patch.yml"), "utf8");
+    expect(patch).toContain("ui-skin-maid-atelier");
+    expect(patch).toContain("@dsh-external/dsh-client-ui-skin-maid-atelier");
+    const client = await readFile(path.join(home, "profiles", "web", "node_modules", skin.packageName, "lib", "client.js"), "utf8");
+    expect(client.length).toBeGreaterThan(100_000);
+    await rm(userData, { recursive: true, force: true });
+    await rm(home, { recursive: true, force: true });
+  });
+
+  it("lists the asar-unpacked path first", () => {
+    const asarRoot = path.join("/opt", "DeepSeek", "resources", "app.asar");
+    const candidates = bundledSkinCandidates(asarRoot);
+    expect(candidates[0]).toBe(path.join("/opt", "DeepSeek", "resources", "app.asar.unpacked", "resources", "skins", "maid-atelier"));
+    expect(bundledSkinDir(path.join(__dirname, ".."))).toBe(shipped);
   });
 });
 

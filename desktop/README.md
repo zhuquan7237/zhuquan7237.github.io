@@ -18,7 +18,7 @@ Harness releases therefore land without rebuilding this desktop app. The shell o
 
 ## 给一般使用者
 
-只需下载这一个软件，**不要**再 `git clone` DeepSeek Harness。首次启动必须联网（下载官方引擎，大约 1–3 分钟），完成后会自动打开界面。API Key 在官方界面里配置，或打开 [platform.deepseek.com](https://platform.deepseek.com)。
+只需下载这一个软件，**不要**再 `git clone` DeepSeek Harness。首次启动必须联网（下载官方引擎，大约 1–3 分钟），完成后会自动打开界面。默认皮肤已打进安装包。从旧版升级时会尽量继承 API 密钥。API Key 在官方界面里配置，或打开 [platform.deepseek.com](https://platform.deepseek.com)。
 
 - Windows 安装包会创建**桌面快捷方式**和开始菜单，并带应用图标
 - Linux `.deb` 会出现在应用菜单；`.tar.gz` / AppImage 第一次启动会自动创建桌面和应用菜单快捷方式。之后再打开不会重写快捷方式（避免图标变成「未信任」）
@@ -28,14 +28,14 @@ Harness releases therefore land without rebuilding this desktop app. The shell o
 
 ```sh
 # Linux 推荐 tar.gz（不需要 FUSE）。AppImage 在 Ubuntu 24.04 上常因缺少 libfuse2 无法打开。
-tar -xzf DeepSeek-0.1.11-linux-x64.tar.gz
-./DeepSeek-0.1.11-linux-x64/DeepSeek
+tar -xzf DeepSeek-0.1.12-linux-x64.tar.gz
+./DeepSeek-0.1.12-linux-x64/DeepSeek
 
 # Debian/Ubuntu
-sudo apt install ./DeepSeek-0.1.11-linux-amd64.deb
+sudo apt install ./DeepSeek-0.1.12-linux-amd64.deb
 ```
 
-Windows：下载 `DeepSeek-0.1.11-win.exe`。若 SmartScreen 提示未签名，选「更多信息 → 仍要运行」。
+Windows：下载 `DeepSeek-0.1.12-win.exe`。若 SmartScreen 提示未签名，选「更多信息 → 仍要运行」。
 
 macOS：打开 dmg，把 App 拖进「应用程序」。若提示「文件已损坏」，双击盘里的 `Open-DeepSeek.command`，或系统设置 → 隐私与安全性 → 仍要打开。
 
@@ -56,13 +56,13 @@ GitHub Actions builds:
 | macOS | `.dmg`, `.zip` (Intel + Apple Silicon) |
 | Linux | AppImage, `.deb`, `.tar.gz` (x64 + arm64) |
 
-Download installers from the public [GitHub Release](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/tag/desktop-v0.1.11). Anyone can download those files without signing in. GitHub Actions artifacts are not a public store.
+Download installers from the public [GitHub Release](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/tag/desktop-v0.1.12). Anyone can download those files without signing in. GitHub Actions artifacts are not a public store.
 
-请用 **0.1.11**。不要用 0.1.0–0.1.10。
+请用 **0.1.12**。不要用 0.1.0–0.1.11。
 
 ## 皮肤中心
 
-对话窗口右上角 DeepSeek 鲸鱼按钮会弹出皮肤列表（带过渡动画）。默认皮肤是 [Small-tailqwq/dsh-deep-whale](https://github.com/Small-tailqwq/dsh-deep-whale) 的「深海女仆工坊」，CC BY-NC-SA 4.0，**禁止商用**。署名链：一创 [上善](https://www.pixiv.net/users/62155430) → 二创 [ZipZipPipe](https://www.pixiv.net/users/18604994) → 三创 Small-tailqwq。关闭皮肤中心：列表里的按钮、菜单 **皮肤**，或引擎设置。以后有新皮肤可从文件夹或 GitHub 地址导入。切回官方皮肤后再选默认皮肤会重启界面，避免插件卸掉后切不回来。
+对话窗口右上角 DeepSeek 鲸鱼按钮会弹出皮肤列表（带过渡动画）。默认皮肤是 [Small-tailqwq/dsh-deep-whale](https://github.com/Small-tailqwq/dsh-deep-whale) 的「深海女仆工坊」，已打进安装包，CC BY-NC-SA 4.0，**禁止商用**。署名链：一创 [上善](https://www.pixiv.net/users/62155430) → 二创 [ZipZipPipe](https://www.pixiv.net/users/18604994) → 三创 Small-tailqwq。关闭皮肤中心：列表里的按钮、菜单 **皮肤**，或引擎设置。以后有新皮肤可从文件夹或 GitHub 地址导入。切回官方皮肤后再选默认皮肤会重启界面，避免插件卸掉后切不回来。
 
 ## Run from source
 

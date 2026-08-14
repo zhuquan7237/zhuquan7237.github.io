@@ -24,6 +24,10 @@ CI publishes the public GitHub Release from `desktop.yml` (`make_latest: true`).
 
 `$DSH_HOME/cordis.patch.yml` (and `profiles/web/cordis.patch.yml` if present) must be a **top-level YAML array**. Official dsh throws on empty or comments-only files. Write `[]` when there are no entries; never write only `#` comments. On boot, repair a non-array file to `[]` (keep a `.bak`).
 
+The default skin (`maid-atelier`) is **bundled** at `desktop/resources/skins/maid-atelier` (runtime files + LICENSE/NOTICE only; do not vendor dsh-web-ui or the skin’s TypeScript). First launch copies it into userData. Do not require a GitHub download for the default skin.
+
+Official API keys live in `$DSH_HOME/.credentials.yaml`. Desktop `DSH_HOME` is `userData/dsh-home` (`%AppData%\DeepSeek\dsh-home` / `~/.config/DeepSeek/dsh-home`). On boot, if the current home has no credentials, copy them from older Electron folders (`深度求索`, `DeepSeek Harness`, …) or official `~/.dsh`. Never overwrite a key the user already saved in the current folder.
+
 ### Other public GitHub repos (update their `main` in the same turn)
 
 These are not this git checkout. Use the GitHub API / MCP to edit their `main` files:

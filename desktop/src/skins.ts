@@ -59,6 +59,31 @@ export function skinsRoot(userData: string): string {
   return path.join(userData, "skins");
 }
 
+export function bundledSkinDir(appRoot: string, id = DEFAULT_SKIN_ID): string {
+  return path.join(appRoot, "resources", "skins", id);
+}
+
+/** Prefer the asar-unpacked copy so a spawned Node process can read the files. */
+export function bundledSkinCandidates(appRoot: string, id = DEFAULT_SKIN_ID): string[] {
+  const primary = bundledSkinDir(appRoot, id);
+  const marker = `${path.sep}app.asar${path.sep}`;
+  const unpacked = primary.replace(marker, `${path.sep}app.asar.unpacked${path.sep}`);
+  return unpacked === primary ? [primary] : [unpacked, primary];
+}
+
+export async function skinPackageReady(dir: string): Promise<boolean> {
+  return (await exists(path.join(dir, "lib", "client.js"))) && (await exists(path.join(dir, "skin.json")));
+}
+
+export async function readPackageVersion(dir: string): Promise<string> {
+  try {
+    const pkg = JSON.parse(await readFile(path.join(dir, "package.json"), "utf8")) as { version?: string };
+    return String(pkg.version || "");
+  } catch {
+    return "";
+  }
+}
+
 export function builtinSkinDir(userData: string, id = DEFAULT_SKIN_ID): string {
   return path.join(skinsRoot(userData), "builtin", id);
 }
@@ -330,15 +355,67 @@ export async function saveImportedCatalog(userData: string, skins: InstalledSkin
   );
 }
 
+export interface EnsureBuiltinSkinOptions {
+  download?: (url: string) => Promise<Buffer>;
+  bundledDir?: string;
+  appRoot?: string;
+}
+
+function normalizeEnsureOptions(
+  downloadOrOptions?: ((url: string) => Promise<Buffer>) | EnsureBuiltinSkinOptions,
+): EnsureBuiltinSkinOptions {
+  if (typeof downloadOrOptions === "function") return { download: downloadOrOptions };
+  return downloadOrOptions ?? {};
+}
+
+async function resolveBundledSkin(options: EnsureBuiltinSkinOptions): Promise<string> {
+  const dirs = [
+    ...(options.bundledDir ? [options.bundledDir] : []),
+    ...(options.appRoot ? bundledSkinCandidates(options.appRoot) : []),
+  ];
+  for (const dir of dirs) {
+    if (await skinPackageReady(dir)) return dir;
+  }
+  return "";
+}
+
+async function installBuiltinFromDir(
+  source: string,
+  dest: string,
+  onLog: (line: string) => void,
+  message: string,
+): Promise<InstalledSkin> {
+  onLog(message);
+  await rm(dest, { recursive: true, force: true });
+  await mkdir(path.dirname(dest), { recursive: true });
+  await cp(source, dest, { recursive: true });
+  const manifest = await readSkinFromDir(dest);
+  onLog("默认皮肤已就绪（CC BY-NC-SA 4.0，来自 Small-tailqwq/dsh-deep-whale，已内置安装包）");
+  return { ...manifest, sourceUrl: DEEP_WHALE_REPO, dir: dest, builtin: true };
+}
+
 export async function ensureBuiltinSkin(
   userData: string,
   onLog: (line: string) => void,
-  download: (url: string) => Promise<Buffer> = downloadBuffer,
+  downloadOrOptions: ((url: string) => Promise<Buffer>) | EnsureBuiltinSkinOptions = downloadBuffer,
 ): Promise<InstalledSkin> {
+  const options = normalizeEnsureOptions(downloadOrOptions);
+  const download = options.download ?? downloadBuffer;
   const dir = builtinSkinDir(userData);
-  if (await exists(path.join(dir, "lib", "client.js")) && (await exists(path.join(dir, "skin.json")))) {
+  const bundled = await resolveBundledSkin(options);
+  if (await skinPackageReady(dir)) {
+    if (bundled) {
+      const have = await readPackageVersion(dir);
+      const want = await readPackageVersion(bundled);
+      if (want && have !== want) {
+        return await installBuiltinFromDir(bundled, dir, onLog, "正在更新内置默认皮肤…");
+      }
+    }
     const manifest = await readSkinFromDir(dir);
     return { ...manifest, sourceUrl: DEEP_WHALE_REPO, dir, builtin: true };
+  }
+  if (bundled) {
+    return await installBuiltinFromDir(bundled, dir, onLog, "正在安装内置默认皮肤：深海女仆工坊…");
   }
   onLog("正在下载默认皮肤：深海女仆工坊（dsh-deep-whale）…");
   const archive = await download(DEEP_WHALE_ZIP);
@@ -348,13 +425,9 @@ export async function ensureBuiltinSkin(
   const roots = await findSkinRoots(staging);
   const maid = roots.find((root) => path.basename(root) === DEFAULT_SKIN_ID) ?? roots[0];
   if (!maid) throw new Error("下载的 dsh-deep-whale 里没有找到 maid-atelier 皮肤");
-  await rm(dir, { recursive: true, force: true });
-  await mkdir(path.dirname(dir), { recursive: true });
-  await cp(maid, dir, { recursive: true });
+  const installed = await installBuiltinFromDir(maid, dir, onLog, "正在展开下载的默认皮肤…");
   await rm(staging, { recursive: true, force: true });
-  const manifest = await readSkinFromDir(dir);
-  onLog("默认皮肤已就绪（CC BY-NC-SA 4.0，来自 Small-tailqwq/dsh-deep-whale）");
-  return { ...manifest, sourceUrl: DEEP_WHALE_REPO, dir, builtin: true };
+  return installed;
 }
 
 export async function importSkinFromDir(userData: string, sourceDir: string): Promise<InstalledSkin> {

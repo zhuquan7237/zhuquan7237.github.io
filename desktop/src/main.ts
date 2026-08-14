@@ -31,6 +31,7 @@ import {
   loadCatalog,
   type InstalledSkin,
 } from "./skins";
+import { migrateLegacyDesktopData, summarizeMigration, type LegacyMigrateResult } from "./legacy-home";
 import { loadWindowState, saveWindowState } from "./window-state";
 import {
   APP_DISPLAY_NAME,
@@ -93,6 +94,7 @@ let lastRuntime: NodeRuntime | null = null;
 let lastInstall: HarnessInstall | null = null;
 let skinBusy = false;
 let settings: DesktopSettings;
+let lastMigration: LegacyMigrateResult | null = null;
 
 function userData(): string {
   return app.getPath("userData");
@@ -242,9 +244,12 @@ async function syncSkins(onLog: (line: string) => void = sendSplash.bind(null, "
     return catalog;
   }
   try {
-    await ensureBuiltinSkin(userData(), (line) => onLog(String(line)));
+    await ensureBuiltinSkin(userData(), (line) => onLog(String(line)), {
+      bundledDir: path.join(__dirname, "..", "resources", "skins", "maid-atelier"),
+      appRoot: path.join(__dirname, ".."),
+    });
   } catch (error) {
-    onLog(`默认皮肤暂时下不下来：${error instanceof Error ? error.message : String(error)}`);
+    onLog(`默认皮肤未能安装：${error instanceof Error ? error.message : String(error)}`);
   }
   const catalog = await loadCatalog(userData());
   const active = settings.activeSkinId || DEFAULT_SKIN_ID;
@@ -782,6 +787,7 @@ async function boot(forceUpdate: boolean): Promise<void> {
     stopHarness(running);
     const dshHome = dshHomeDir();
     await ensureDefaultWorkspace(dshHome, workspaceDir, homedir()).catch(() => false);
+    if (lastMigration?.copied.length) sendSplash("log", summarizeMigration(lastMigration));
     sendSplash("status", { phase: "start", text: settings.skinsEnabled ? "正在准备皮肤中心…" : "正在启动界面…" });
     await syncSkins((line) => sendSplash("log", line));
     running = await startHarnessWeb({
@@ -839,6 +845,11 @@ if (linuxReady) {
           applicationVersion: app.getVersion(),
         });
       }
+      lastMigration = await migrateLegacyDesktopData({
+        currentUserData: userData(),
+        appData: app.getPath("appData"),
+        homeDir: homedir(),
+      });
       settings = await loadSettings(
         userData(),
         [systemLocale(), osLocale, preferredLanguages(), hostIntlLocale()].filter(Boolean).join(" "),

@@ -13,6 +13,7 @@ files:
 asar: true
 asarUnpack:
   - resources/*.png
+  - resources/skins/**/*
 extraMetadata:
   main: dist/main.js
 forceCodeSigning: false
