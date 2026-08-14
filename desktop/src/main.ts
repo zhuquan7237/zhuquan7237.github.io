@@ -23,6 +23,7 @@ import {
   OFFICIAL_SKIN_ID,
   applySkin,
   ensureBuiltinSkin,
+  ensureHomePatchesAreArrays,
   importSkinFromDir,
   importSkinFromUrl,
   isSafeSkinId,
@@ -231,6 +232,10 @@ function dshHomeDir(): string {
 }
 
 async function syncSkins(onLog: (line: string) => void = sendSplash.bind(null, "log")): Promise<InstalledSkin[]> {
+  const repaired = await ensureHomePatchesAreArrays(dshHomeDir());
+  if (repaired.length) {
+    onLog("已修复损坏的皮肤补丁文件（必须是 YAML 数组，空文件请用 []）");
+  }
   if (!settings.skinsEnabled) {
     const catalog = await loadCatalog(userData()).catch(() => []);
     if (catalog.length) await applySkin(dshHomeDir(), catalog, OFFICIAL_SKIN_ID);

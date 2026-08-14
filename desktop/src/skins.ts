@@ -147,13 +147,30 @@ export function stripManagedPatch(patch: string): string {
   return `${patch.slice(0, start).trimEnd()}\n${patch.slice(end + MANAGED_END.length).trimStart()}`.trim();
 }
 
-export function renderManagedPatch(
+/** dsh parsePatchList: comments-only / empty / mapping → throw. Only a top-level array is valid. */
+export function isYamlArrayDocument(text: string): boolean {
+  for (const line of text.split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    return trimmed.startsWith("-") || trimmed.startsWith("[");
+  }
+  return false;
+}
+
+export function isEmptyYamlArrayDocument(text: string): boolean {
+  const meaningful = text
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line && !line.startsWith("#"));
+  return meaningful.length === 1 && /^\[\s*\]$/.test(meaningful[0]);
+}
+
+export function renderManagedEntries(
   skins: InstalledSkin[],
   activeId: string,
-  _bundledPackages: Iterable<string> = [],
-): string {
+): string[] {
   const active = activeId === OFFICIAL_SKIN_ID ? "" : activeId;
-  const lines = [MANAGED_START];
+  const lines: string[] = [];
   for (const skin of skins) {
     if (skin.id === active) continue;
     lines.push(`- id: ${skin.wiringId}`, "  disabled: true");
@@ -165,8 +182,18 @@ export function renderManagedPatch(
   if (selected) {
     lines.push("- insert:", `    - id: ${selected.wiringId}`, `      name: '${selected.packageName}'`);
   }
-  lines.push(MANAGED_END);
-  return lines.join("\n");
+  return lines;
+}
+
+export function renderManagedPatch(
+  skins: InstalledSkin[],
+  activeId: string,
+  _bundledPackages: Iterable<string> = [],
+): string {
+  const entries = renderManagedEntries(skins, activeId);
+  // Official dsh: empty / comments-only files throw. Disable the layer with [].
+  const body = entries.length > 0 ? entries.join("\n") : "[]";
+  return [MANAGED_START, body, MANAGED_END].join("\n");
 }
 
 export function mergeSkinPatch(
@@ -177,7 +204,12 @@ export function mergeSkinPatch(
 ): string {
   const kept = stripManagedPatch(existing).trim();
   const managed = renderManagedPatch(skins, activeId, bundledPackages);
-  return kept ? `${kept}\n\n${managed}\n` : `${managed}\n`;
+  const entries = renderManagedEntries(skins, activeId);
+  if (!kept || !isYamlArrayDocument(kept) || isEmptyYamlArrayDocument(kept)) {
+    return `${managed}\n`;
+  }
+  if (entries.length === 0) return kept.endsWith("\n") ? kept : `${kept}\n`;
+  return `${kept}\n\n${managed}\n`;
 }
 
 export function homePatchFile(dshHome: string): string {
@@ -195,6 +227,31 @@ export async function readProfileBundles(dshHome: string): Promise<string[]> {
   }
 }
 
+export async function ensurePatchFileIsArray(file: string): Promise<boolean> {
+  let existing = "";
+  try {
+    existing = await readFile(file, "utf8");
+  } catch {
+    return false;
+  }
+  if (isYamlArrayDocument(existing)) return false;
+  try {
+    await writeFile(`${file}.bak`, existing, "utf8");
+  } catch {
+    // still replace the broken file
+  }
+  await writeFile(file, "[]\n", "utf8");
+  return true;
+}
+
+export async function ensureHomePatchesAreArrays(dshHome: string): Promise<string[]> {
+  const repaired: string[] = [];
+  for (const file of [homePatchFile(dshHome), path.join(dshHome, "profiles", "web", "cordis.patch.yml")]) {
+    if (await ensurePatchFileIsArray(file)) repaired.push(file);
+  }
+  return repaired;
+}
+
 export async function writeSkinPatch(dshHome: string, skins: InstalledSkin[], activeId: string): Promise<string> {
   const file = homePatchFile(dshHome);
   let existing = "";
@@ -202,6 +259,13 @@ export async function writeSkinPatch(dshHome: string, skins: InstalledSkin[], ac
     existing = await readFile(file, "utf8");
   } catch {
     existing = "";
+  }
+  if (existing && !isYamlArrayDocument(existing)) {
+    try {
+      await writeFile(`${file}.bak`, existing, "utf8");
+    } catch {
+      // still write a valid array
+    }
   }
   const next = mergeSkinPatch(existing, skins, activeId, await readProfileBundles(dshHome));
   await mkdir(dshHome, { recursive: true });
@@ -353,6 +417,7 @@ export async function applySkin(
   skins: InstalledSkin[],
   activeId: string,
 ): Promise<void> {
+  await ensureHomePatchesAreArrays(dshHome);
   const selected = skins.find((skin) => skin.id === activeId);
   if (selected) await linkSkinPackage(dshHome, selected);
   await writeSkinPatch(dshHome, skins, activeId);

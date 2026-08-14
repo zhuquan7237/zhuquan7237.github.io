@@ -18,6 +18,8 @@ import {
   isSafeSkinId,
   listSkinCards,
   loadCatalog,
+  ensurePatchFileIsArray,
+  isYamlArrayDocument,
   mergeSkinPatch,
   parseSkinManifest,
   renderManagedPatch,
@@ -143,13 +145,47 @@ describe("managed patch", () => {
     expect(text).not.toContain("- insert:");
   });
 
-  it("replaces only the managed section", () => {
-    const previous = "keep: true\n\n" + renderManagedPatch([{ ...BUILTIN_MAID_ATELIER, dir: "/tmp/a", builtin: true }], "maid-atelier");
+  it("replaces only the managed section of a valid user array", () => {
+    const previous =
+      "- id: user-plugin\n  disabled: true\n\n" +
+      renderManagedPatch([{ ...BUILTIN_MAID_ATELIER, dir: "/tmp/a", builtin: true }], "maid-atelier");
     const next = mergeSkinPatch(previous, [{ ...BUILTIN_MAID_ATELIER, dir: "/tmp/a", builtin: true }], OFFICIAL_SKIN_ID);
-    expect(next).toContain("keep: true");
+    expect(next).toContain("- id: user-plugin");
     expect(next).toContain(MANAGED_END);
-    expect(stripManagedPatch(next)).toContain("keep: true");
+    expect(isYamlArrayDocument(next)).toBe(true);
+    expect(stripManagedPatch(next)).toContain("- id: user-plugin");
     expect(stripManagedPatch(next)).not.toContain(MANAGED_START);
+  });
+
+  it("writes [] instead of comments-only when there is nothing to patch", () => {
+    const text = renderManagedPatch([], OFFICIAL_SKIN_ID);
+    expect(text).toContain("[]");
+    expect(isYamlArrayDocument(text)).toBe(true);
+    expect(mergeSkinPatch("", [], "maid-atelier")).toMatch(/^\s*#/);
+    expect(isYamlArrayDocument(mergeSkinPatch("", [], "maid-atelier"))).toBe(true);
+  });
+
+  it("does not prepend a mapping onto the official array file", () => {
+    const previous = "keep: true\n\n" + renderManagedPatch([{ ...BUILTIN_MAID_ATELIER, dir: "/tmp/a", builtin: true }], "maid-atelier");
+    const next = mergeSkinPatch(previous, [{ ...BUILTIN_MAID_ATELIER, dir: "/tmp/a", builtin: true }], "maid-atelier");
+    expect(next).not.toContain("keep: true");
+    expect(isYamlArrayDocument(next)).toBe(true);
+    expect(next).toContain("- insert:");
+  });
+
+  it("repairs a comments-only patch file that dsh refuses to boot", async () => {
+    const home = await tempDir("ds-skin-broken-");
+    const file = path.join(home, "cordis.patch.yml");
+    await writeFile(
+      file,
+      `${MANAGED_START}\n${MANAGED_END}\n`,
+      "utf8",
+    );
+    expect(isYamlArrayDocument(await readFile(file, "utf8"))).toBe(false);
+    expect(await ensurePatchFileIsArray(file)).toBe(true);
+    expect(await readFile(file, "utf8")).toBe("[]\n");
+    expect(await readFile(`${file}.bak`, "utf8")).toContain(MANAGED_START);
+    await rm(home, { recursive: true, force: true });
   });
 });
 

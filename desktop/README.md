@@ -28,14 +28,14 @@ Harness releases therefore land without rebuilding this desktop app. The shell o
 
 ```sh
 # Linux 推荐 tar.gz（不需要 FUSE）。AppImage 在 Ubuntu 24.04 上常因缺少 libfuse2 无法打开。
-tar -xzf DeepSeek-0.1.10-linux-x64.tar.gz
-./DeepSeek-0.1.10-linux-x64/DeepSeek
+tar -xzf DeepSeek-0.1.11-linux-x64.tar.gz
+./DeepSeek-0.1.11-linux-x64/DeepSeek
 
 # Debian/Ubuntu
-sudo apt install ./DeepSeek-0.1.10-linux-amd64.deb
+sudo apt install ./DeepSeek-0.1.11-linux-amd64.deb
 ```
 
-Windows：下载 `DeepSeek-0.1.10-win.exe`。若 SmartScreen 提示未签名，选「更多信息 → 仍要运行」。
+Windows：下载 `DeepSeek-0.1.11-win.exe`。若 SmartScreen 提示未签名，选「更多信息 → 仍要运行」。
 
 macOS：打开 dmg，把 App 拖进「应用程序」。若提示「文件已损坏」，双击盘里的 `Open-DeepSeek.command`，或系统设置 → 隐私与安全性 → 仍要打开。
 
@@ -56,9 +56,9 @@ GitHub Actions builds:
 | macOS | `.dmg`, `.zip` (Intel + Apple Silicon) |
 | Linux | AppImage, `.deb`, `.tar.gz` (x64 + arm64) |
 
-Download installers from the public [GitHub Release](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/tag/desktop-v0.1.10). Anyone can download those files without signing in. GitHub Actions artifacts are not a public store.
+Download installers from the public [GitHub Release](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/tag/desktop-v0.1.11). Anyone can download those files without signing in. GitHub Actions artifacts are not a public store.
 
-请用 **0.1.10**。不要用 0.1.0–0.1.9。
+请用 **0.1.11**。不要用 0.1.0–0.1.10。
 
 ## 皮肤中心
 

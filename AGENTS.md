@@ -18,8 +18,11 @@ Bump or rewrite all of these together:
 - `desktop/README.md`
 - `index.html` — hero button, OS cards, FAQ, footer, and the JS `links` map
 - `me.html` — if it names the version or the new feature
+- `assets/desktop-preview.png` — the README / Pages / og:image shot. When the window or skin UI changes, regenerate it from `desktop/resources/product-preview.html` (headless Chrome, 1424×913). Do not leave the old first-run API Key modal as the product photo.
 
 CI publishes the public GitHub Release from `desktop.yml` (`make_latest: true`). Confirm `/releases/latest` points at the new tag and that the installer URLs return HTTP 200.
+
+`$DSH_HOME/cordis.patch.yml` (and `profiles/web/cordis.patch.yml` if present) must be a **top-level YAML array**. Official dsh throws on empty or comments-only files. Write `[]` when there are no entries; never write only `#` comments. On boot, repair a non-array file to `[]` (keep a `.bak`).
 
 ### Other public GitHub repos (update their `main` in the same turn)
 
