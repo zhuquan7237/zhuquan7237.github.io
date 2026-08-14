@@ -1,5 +1,7 @@
 import { app, BrowserWindow, Menu, dialog, shell, ipcMain, screen, nativeImage } from "electron";
+import { spawn } from "node:child_process";
 import { mkdir } from "node:fs/promises";
+import { readFileSync } from "node:fs";
 import path from "node:path";
 import { homedir } from "node:os";
 import { loadSettings, saveSettings } from "./settings";
@@ -7,12 +9,68 @@ import { ensureHarness, fetchPublishedVersion, startHarnessWeb, stopHarness, typ
 import { applyLinuxRuntimeFlags } from "./linux-flags";
 import { resolveNodeRuntime } from "./node-runtime";
 import { appIconFile, installUserShortcuts, needsUserShortcuts } from "./desktop-integration";
+import {
+  downloadDesktopAsset,
+  fetchLatestDesktopRelease,
+  pickDesktopAsset,
+  shouldPromptDesktopUpdate,
+  type DesktopRelease,
+} from "./desktop-update";
 import { ensureDefaultWorkspace } from "./dsh-workspace";
 import { loadWindowState, saveWindowState } from "./window-state";
-import { APP_DISPLAY_NAME, APP_ID, NPM_REGISTRY, resolveUiLocale, type DesktopSettings } from "./util";
+import {
+  APP_DISPLAY_NAME,
+  APP_ID,
+  DSH_PACKAGE,
+  NPM_REGISTRY,
+  chromiumAcceptLang,
+  harnessLocaleEnv,
+  hostIntlLocale,
+  hostTimeZone,
+  parseOsLocaleAssignments,
+  parseOsTimeZone,
+  resolveTimeZone,
+  resolveUiLocale,
+  resolveWorkspaceDir,
+  shouldPromptHarnessUpdate,
+  type DesktopSettings,
+} from "./util";
 
 installCrashGuards();
-const linuxReady = applyLinuxRuntimeFlags();
+
+function readOptionalFile(file: string): string {
+  try {
+    return readFileSync(file, "utf8");
+  } catch {
+    return "";
+  }
+}
+
+function osLocaleHint(): string {
+  return [
+    ...parseOsLocaleAssignments(readOptionalFile("/etc/locale.conf")),
+    ...parseOsLocaleAssignments(readOptionalFile("/etc/default/locale")),
+  ].join(" ");
+}
+
+function preferredLanguages(): string {
+  try {
+    return app.getPreferredSystemLanguages().join(" ");
+  } catch {
+    return "";
+  }
+}
+
+const osLocale = osLocaleHint();
+const timeZone = resolveTimeZone(
+  process.env,
+  parseOsTimeZone(readOptionalFile("/etc/timezone")),
+  hostTimeZone(),
+);
+if (timeZone) process.env.TZ = timeZone;
+const localeHint = [osLocale, preferredLanguages(), hostIntlLocale()].filter(Boolean).join(" ");
+const uiLocale = resolveUiLocale(process.env, localeHint, timeZone);
+const linuxReady = applyLinuxRuntimeFlags(uiLocale);
 
 let mainWindow: BrowserWindow | null = null;
 let splashWindow: BrowserWindow | null = null;
@@ -25,6 +83,19 @@ function userData(): string {
 
 function windowIcon(): string {
   return appIconFile();
+}
+
+function dialogParent(): BrowserWindow | undefined {
+  if (mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible()) return mainWindow;
+  if (splashWindow && !splashWindow.isDestroyed()) return splashWindow;
+  return undefined;
+}
+
+async function nativeBox(options: Electron.MessageBoxOptions): Promise<Electron.MessageBoxReturnValue> {
+  const parent = dialogParent();
+  return parent
+    ? await dialog.showMessageBox(parent, { noLink: true, ...options })
+    : await dialog.showMessageBox({ noLink: true, ...options });
 }
 
 /** Electron only knows the OS locale once it is ready. */
@@ -203,10 +274,17 @@ function buildMenu(): void {
           enabled: false,
         },
         {
+          label: "检查桌面版更新",
+          accelerator: "CmdOrCtrl+Shift+U",
+          click: () => {
+            void checkDesktopUpdates(true);
+          },
+        },
+        {
           label: "检查 Harness 更新",
           accelerator: "CmdOrCtrl+U",
           click: () => {
-            void checkHarnessUpdates();
+            void checkHarnessUpdates(true);
           },
         },
         {
@@ -262,11 +340,12 @@ function buildMenu(): void {
         {
           label: "关于",
           click: () => {
-            void dialog.showMessageBox({
+            void nativeBox({
               type: "info",
               title: "关于",
               message: APP_DISPLAY_NAME,
               detail: `桌面版 ${app.getVersion()}\n引擎 ${running?.version || settings?.lastHarnessVersion || "未启动"}\n工作区 ${settings?.workspaceDir || path.join(homedir(), "DeepSeek")}`,
+              buttons: ["确定"],
             });
           },
         },
@@ -281,15 +360,28 @@ function buildMenu(): void {
 
 async function createShortcutsManually(): Promise<void> {
   try {
-    const detail = await installUserShortcuts();
-    await dialog.showMessageBox({
+    const workspaceDir = settings?.workspaceDir || path.join(homedir(), "DeepSeek");
+    await mkdir(workspaceDir, { recursive: true });
+    const detail = await installUserShortcuts({
+      force: true,
+      workspaceDir,
+      version: app.getVersion(),
+      userDataDir: userData(),
+    });
+    await nativeBox({
       type: "info",
       title: "快捷方式",
       message: "已创建 DeepSeek Harness 快捷方式",
       detail,
+      buttons: ["确定"],
     });
   } catch (error) {
-    await dialog.showErrorBox("创建快捷方式失败", error instanceof Error ? error.message : String(error));
+    await nativeBox({
+      type: "error",
+      title: "创建快捷方式失败",
+      message: error instanceof Error ? error.message : String(error),
+      buttons: ["确定"],
+    });
   }
 }
 
@@ -305,49 +397,180 @@ async function chooseWorkspace(reboot: boolean): Promise<void> {
   if (reboot) await boot(false);
 }
 
-async function checkHarnessUpdates(): Promise<void> {
+function harnessChannel(): "latest" | "next" {
+  return settings.channel === "next" ? "next" : "latest";
+}
+
+function harnessSourceLabel(): string {
+  return `npm ${DSH_PACKAGE}@${harnessChannel()}`;
+}
+
+async function promptHarnessUpdate(current: string, latest: string): Promise<boolean> {
+  const choice = await nativeBox({
+    type: "info",
+    title: "发现新的 Harness",
+    message: `官方引擎有新版本：${latest}`,
+    detail: `当前版本：${current}\n来源：${harnessSourceLabel()}\n更新只会下载官方 @deepseek-ai/dsh，不会重新克隆源码。`,
+    buttons: ["更新并重启", "以后再说"],
+    defaultId: 0,
+    cancelId: 1,
+  });
+  return choice.response === 0;
+}
+
+async function checkHarnessUpdates(interactive: boolean): Promise<void> {
   try {
-    const channel = settings.channel === "next" ? "next" : "latest";
-    const latest = await fetchPublishedVersion(settings.registry || NPM_REGISTRY, channel);
+    const latest = await fetchPublishedVersion(settings.registry || NPM_REGISTRY, harnessChannel());
     const current = running?.version || settings.lastHarnessVersion || "未安装";
     if (current === latest) {
-      await dialog.showMessageBox({
-        type: "info",
-        title: "Harness 更新",
-        message: "DeepSeek Harness 已是最新版本",
-        detail: `当前引擎：${current}\n来源：npm ${DSH_LABEL(channel)}\n不需要拉取 GitHub 源码。`,
-      });
+      if (interactive) {
+        await nativeBox({
+          type: "info",
+          title: "Harness 更新",
+          message: "DeepSeek Harness 已是最新版本",
+          detail: `当前引擎：${current}\n来源：${harnessSourceLabel()}`,
+          buttons: ["确定"],
+        });
+      }
       return;
     }
-    const choice = await dialog.showMessageBox({
-      type: "question",
-      title: "发现新的 Harness",
-      message: `npm 上有新的 DeepSeek Harness：${latest}`,
-      detail: `当前版本：${current}\n更新只会下载官方 @deepseek-ai/dsh，不会重新克隆 GitHub 源码。`,
-      buttons: ["立即更新并重启", "取消"],
-      defaultId: 0,
-      cancelId: 1,
-    });
-    if (choice.response === 0) await boot(true);
+    if (!interactive && !shouldPromptHarnessUpdate(current, latest, settings.skippedHarnessVersion)) {
+      return;
+    }
+    if (await promptHarnessUpdate(current, latest)) {
+      settings.skippedHarnessVersion = "";
+      await saveSettings(userData(), settings);
+      await boot(true);
+      return;
+    }
+    settings.skippedHarnessVersion = latest;
+    await saveSettings(userData(), settings);
   } catch (error) {
-    await dialog.showErrorBox(
-      "检查更新失败",
-      error instanceof Error ? error.message : String(error),
-    );
+    if (!interactive) return;
+    await nativeBox({
+      type: "error",
+      title: "检查更新失败",
+      message: error instanceof Error ? error.message : String(error),
+      buttons: ["确定"],
+    });
   }
 }
 
-function DSH_LABEL(channel: string): string {
-  return `@deepseek-ai/dsh@${channel}`;
+async function maybeNotifyHarnessUpdate(): Promise<void> {
+  if (!settings.autoUpdateHarness) return;
+  if (settings.localHarnessDir) return;
+  await checkHarnessUpdates(false);
+}
+
+async function checkDesktopUpdates(interactive: boolean): Promise<void> {
+  try {
+    const latest = await fetchLatestDesktopRelease();
+    const current = app.getVersion();
+    if (!shouldPromptDesktopUpdate(current, latest.version, interactive ? "" : settings.skippedDesktopVersion)) {
+      if (interactive && current === latest.version) {
+        await nativeBox({
+          type: "info",
+          title: "桌面版更新",
+          message: "DeepSeek Desktop 已是最新版本",
+          detail: `当前桌面版：${current}\n来源：GitHub Releases（不用 git pull）`,
+          buttons: ["确定"],
+        });
+      } else if (interactive && current !== latest.version) {
+        await nativeBox({
+          type: "info",
+          title: "桌面版更新",
+          message: "没有需要安装的新版本",
+          detail: `当前：${current}\n仓库最新：${latest.version}`,
+          buttons: ["确定"],
+        });
+      }
+      return;
+    }
+    const asset = pickDesktopAsset(latest.assets, process.platform, process.arch);
+    const choice = await nativeBox({
+      type: "info",
+      title: "发现新的桌面版",
+      message: `仓库已发布 ${latest.version}`,
+      detail: [
+        `当前版本：${current}`,
+        asset ? `将下载：${asset.name}` : "打不开对应系统的安装包，将打开发布页。",
+        "这是桌面壳更新，不用 git pull，也不会重新克隆 Harness。",
+      ].join("\n"),
+      buttons: ["下载并安装", "以后再说"],
+      defaultId: 0,
+      cancelId: 1,
+    });
+    if (choice.response !== 0) {
+      settings.skippedDesktopVersion = latest.version;
+      await saveSettings(userData(), settings);
+      return;
+    }
+    settings.skippedDesktopVersion = "";
+    await saveSettings(userData(), settings);
+    await installDesktopRelease(latest, asset);
+  } catch (error) {
+    if (!interactive) return;
+    await nativeBox({
+      type: "error",
+      title: "检查桌面版更新失败",
+      message: error instanceof Error ? error.message : String(error),
+      buttons: ["确定"],
+    });
+  }
+}
+
+async function installDesktopRelease(
+  release: DesktopRelease,
+  asset: ReturnType<typeof pickDesktopAsset>,
+): Promise<void> {
+  if (!asset) {
+    await shell.openExternal(release.htmlUrl);
+    return;
+  }
+  const dest = path.join(userData(), "updates", asset.name);
+  sendSplash("status", { phase: "engine", text: `正在下载桌面版 ${release.version}…` });
+  const previousTitle = mainWindow && !mainWindow.isDestroyed() ? mainWindow.getTitle() : "";
+  const onLog = (line: string) => {
+    sendSplash("log", line);
+    if (mainWindow && !mainWindow.isDestroyed()) mainWindow.setTitle(line);
+  };
+  try {
+    await downloadDesktopAsset(asset.url, dest, onLog);
+  } finally {
+    if (previousTitle && mainWindow && !mainWindow.isDestroyed()) mainWindow.setTitle(previousTitle);
+  }
+  if (process.platform === "win32") {
+    const child = spawn(dest, [], { detached: true, stdio: "ignore" });
+    child.unref();
+    app.quit();
+    return;
+  }
+  await shell.openPath(dest);
+  await nativeBox({
+    type: "info",
+    title: "已下载新版本",
+    message: `已打开 ${asset.name}`,
+    detail:
+      process.platform === "darwin"
+        ? "把 DeepSeek 拖到「应用程序」替换旧版。若仍提示文件已损坏，请双击安装盘里的 Open-DeepSeek.command。"
+        : "解压或安装新包后即可使用。旧窗口可以关掉。",
+    buttons: ["确定"],
+  });
+}
+
+async function maybeNotifyDesktopUpdate(): Promise<void> {
+  if (!settings.autoUpdateDesktop) return;
+  if (!app.isPackaged) return;
+  await checkDesktopUpdates(false);
 }
 
 async function openSettings(): Promise<void> {
   const win = new BrowserWindow({
     width: 520,
-    height: 620,
+    height: 640,
     parent: mainWindow ?? undefined,
     modal: Boolean(mainWindow),
-    backgroundColor: "#161922",
+    backgroundColor: "#0c0e14",
     icon: windowIcon(),
     title: "引擎设置",
     webPreferences: {
@@ -360,9 +583,9 @@ async function openSettings(): Promise<void> {
 }
 
 async function defaultWorkspace(): Promise<string> {
-  const dir = settings.workspaceDir || path.join(homedir(), "DeepSeek");
+  const dir = resolveWorkspaceDir(settings.workspaceDir, homedir());
   await mkdir(dir, { recursive: true });
-  if (!settings.workspaceDir) {
+  if (settings.workspaceDir !== dir) {
     settings.workspaceDir = dir;
     await saveSettings(userData(), settings);
   }
@@ -387,9 +610,15 @@ function installCrashGuards(): void {
 
 async function boot(forceUpdate: boolean): Promise<void> {
   try {
+    if (forceUpdate && mainWindow && !mainWindow.isDestroyed()) mainWindow.hide();
     if (!splashWindow) await createSplash();
+    const workspaceDir = await defaultWorkspace();
     if (needsUserShortcuts(app.isPackaged)) {
-      await installUserShortcuts().catch(() => undefined);
+      await installUserShortcuts({
+        workspaceDir,
+        version: app.getVersion(),
+        userDataDir: userData(),
+      }).catch(() => undefined);
     }
     sendSplash("status", {
       phase: "runtime",
@@ -398,27 +627,31 @@ async function boot(forceUpdate: boolean): Promise<void> {
     const runtime = await resolveNodeRuntime(path.join(userData(), "runtime"), (line) => {
       sendSplash("log", line);
     });
-    if (forceUpdate) settings.autoUpdateHarness = true;
-    sendSplash("status", { phase: "engine", text: "正在从 npm 同步官方 DeepSeek Harness…" });
+    sendSplash("log", `npm 源：${settings.registry}`);
+    sendSplash("status", {
+      phase: "engine",
+      text: forceUpdate ? "正在更新官方 DeepSeek Harness…" : "正在准备官方 DeepSeek Harness…",
+    });
     const install = await ensureHarness(
       settings,
       runtime,
       path.join(userData(), "harness"),
       (line) => sendSplash("log", line),
+      forceUpdate,
     );
     settings.lastHarnessVersion = install.version;
     await saveSettings(userData(), settings);
 
     sendSplash("status", { phase: "start", text: `正在启动界面（dsh ${install.version}）…` });
     stopHarness(running);
-    const workspaceDir = await defaultWorkspace();
     const dshHome = path.join(userData(), "dsh-home");
-    await ensureDefaultWorkspace(dshHome, workspaceDir).catch(() => false);
+    await ensureDefaultWorkspace(dshHome, workspaceDir, homedir()).catch(() => false);
     running = await startHarnessWeb({
       runtime,
       install,
       workspaceDir,
       dshHome,
+      extraEnv: harnessLocaleEnv(uiLocale),
       onLog: (line) => sendSplash("log", line),
     });
     buildMenu();
@@ -430,10 +663,16 @@ async function boot(forceUpdate: boolean): Promise<void> {
     } else {
       await createMain(running.url, running.version);
     }
+    void maybeNotifyDesktopUpdate().then(() => maybeNotifyHarnessUpdate());
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     sendSplash("status", { phase: "error", text: message });
-    await dialog.showErrorBox(APP_DISPLAY_NAME, message);
+    await nativeBox({
+      type: "error",
+      title: APP_DISPLAY_NAME,
+      message,
+      buttons: ["确定"],
+    });
   }
 }
 
@@ -443,9 +682,11 @@ if (linuxReady) {
   // Keep the 0.1.2 folder name so upgrades do not re-download the engine or lose settings.
   app.setPath("userData", path.join(app.getPath("appData"), "DeepSeek"));
   // The Harness UI reads navigator.languages, which Electron drives with --lang.
-  // This must be set before app ready, so only the environment is available here.
-  const uiLocale = resolveUiLocale(process.env);
-  if (uiLocale) app.commandLine.appendSwitch("lang", uiLocale);
+  // This must be set before app ready. getSystemLocale() is not available yet.
+  if (uiLocale) {
+    app.commandLine.appendSwitch("lang", uiLocale);
+    app.commandLine.appendSwitch("accept-lang", chromiumAcceptLang(uiLocale));
+  }
   const gotLock = app.requestSingleInstanceLock();
   if (!gotLock) {
     app.quit();
@@ -460,7 +701,13 @@ if (linuxReady) {
           applicationVersion: app.getVersion(),
         });
       }
-      settings = await loadSettings(userData(), systemLocale());
+      settings = await loadSettings(
+        userData(),
+        [systemLocale(), osLocale, preferredLanguages(), hostIntlLocale()].filter(Boolean).join(" "),
+        timeZone,
+      );
+      settings.workspaceDir = resolveWorkspaceDir(settings.workspaceDir, homedir());
+      await saveSettings(userData(), settings);
       ipcMain.handle("settings:get", () => settings);
       ipcMain.handle("settings:save", async (_event, next: DesktopSettings) => {
         settings = { ...settings, ...next };

@@ -3,55 +3,87 @@
   <head>
     <meta charset="UTF-8" />
     <title>引擎设置</title>
+    <link rel="stylesheet" href="./theme.css" />
     <style>
-      body {
-        margin: 0;
-        font-family: ui-sans-serif, system-ui, sans-serif;
-        background: #161922;
-        color: #e8edf7;
-        padding: 20px;
+      html, body { height: 100%; background: var(--bg); }
+      body { padding: 22px 24px 20px; }
+      h1 {
+        margin: 0 0 8px;
+        font-size: 18px;
+        letter-spacing: -0.03em;
       }
-      h1 { font-size: 18px; margin: 0 0 8px; }
-      p { color: #8b93a7; font-size: 13px; line-height: 1.5; }
-      label { display: block; margin: 14px 0 6px; font-size: 13px; color: #8b93a7; }
+      p { color: var(--muted); font-size: 13px; line-height: 1.6; margin: 0 0 12px; }
+      label { display: block; margin: 14px 0 6px; font-size: 13px; color: var(--muted); }
+      .check {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+        margin: 16px 0;
+        color: var(--text);
+        font-size: 13.5px;
+        line-height: 1.45;
+      }
+      .check input { margin-top: 3px; accent-color: var(--accent); }
       input, select {
         width: 100%;
-        box-sizing: border-box;
         background: #101218;
-        border: 1px solid rgba(255,255,255,0.1);
+        border: 1px solid var(--line);
         color: inherit;
-        border-radius: 8px;
-        padding: 8px 10px;
+        border-radius: var(--radius-sm);
+        padding: 10px 12px;
       }
       .row { display: flex; gap: 8px; align-items: center; }
-      button {
-        margin-top: 18px;
-        background: #4d93f8;
-        color: #071018;
+      .btn {
+        appearance: none;
         border: 0;
-        border-radius: 999px;
-        padding: 8px 14px;
+        min-height: 40px;
+        padding: 0 16px;
+        border-radius: var(--radius-sm);
+        font-size: 13.5px;
         font-weight: 600;
-        cursor: pointer;
       }
-      .ghost { background: #1c2130; color: #e8edf7; margin-top: 0; }
-      details { margin-top: 18px; color: #8b93a7; font-size: 13px; }
+      .btn.primary {
+        margin-top: 20px;
+        background: var(--accent);
+        color: #071018;
+        box-shadow: 0 8px 20px rgba(77, 147, 248, 0.28);
+      }
+      .btn.ghost {
+        background: var(--card-2);
+        color: var(--text);
+        border: 1px solid var(--line);
+      }
+      details { margin-top: 18px; color: var(--muted); font-size: 13px; }
       details summary { cursor: pointer; }
-      code { font-size: 12px; }
+      code { font-size: 12px; color: #c5d0e6; }
+      .workspace {
+        background: var(--card);
+        border: 1px solid var(--line-soft);
+        border-radius: var(--radius-sm);
+        padding: 10px 12px;
+        margin: 12px 0 4px;
+      }
     </style>
   </head>
   <body>
     <h1>引擎设置</h1>
     <p>
-      日常使用不用改这里。桌面软件会自动从 npm 安装官方
-      <code>@deepseek-ai/dsh</code>。中文系统首次启动会默认用国内镜像。
+      日常不用改这里。软件从 npm 安装官方 <code>@deepseek-ai/dsh</code>，
+      和 GitHub 仓库同步发布，不用再 clone 源码。
     </p>
-    <p>当前工作区：<code id="workspace"></code></p>
-    <label><input id="auto" type="checkbox" /> 启动时自动检查并更新 Harness</label>
+    <div class="workspace">当前工作区：<code id="workspace"></code></div>
+    <label class="check">
+      <input id="autoDesktop" type="checkbox" />
+      <span>启动后检查桌面软件更新（GitHub Release 安装包，不用 git pull）。</span>
+    </label>
+    <label class="check">
+      <input id="auto" type="checkbox" />
+      <span>启动后检查引擎（Harness）更新。有新版本时先问你，不会偷偷升级。</span>
+    </label>
     <label>npm 源</label>
     <div class="row">
-      <button class="ghost" id="official" type="button">官方 npm</button>
-      <button class="ghost" id="china" type="button">国内镜像</button>
+      <button class="btn ghost" id="official" type="button">官方 npm</button>
+      <button class="btn ghost" id="china" type="button">国内镜像</button>
     </div>
     <input id="registry" style="margin-top:8px" />
     <details>
@@ -64,24 +96,35 @@
       <label>本地已构建的 harness 目录（一般不用填）</label>
       <div class="row">
         <input id="local" placeholder="/path/to/deepseek-harness" />
-        <button class="ghost" id="pick" type="button">浏览</button>
+        <button class="btn ghost" id="pick" type="button">浏览</button>
       </div>
     </details>
-    <button id="save" type="button">保存并重启引擎</button>
+    <button class="btn primary" id="save" type="button">保存并重启引擎</button>
     <script>
       const $ = (id) => document.getElementById(id);
       const OFFICIAL = "https://registry.npmjs.org";
       const CHINA = "https://registry.npmmirror.com";
-      window.desktop.getSettings().then((s) => {
+      const previewSettings = {
+        channel: "latest",
+        autoUpdateHarness: true,
+        autoUpdateDesktop: true,
+        registry: "https://registry.npmmirror.com",
+        localHarnessDir: "",
+        workspaceDir: "~/DeepSeek",
+      };
+      const settingsApi = window.desktop && window.desktop.getSettings
+        ? window.desktop.getSettings()
+        : Promise.resolve(previewSettings);
+      settingsApi.then((s) => {
         $("channel").value = s.channel === "next" ? "next" : "latest";
         $("auto").checked = s.autoUpdateHarness;
+        $("autoDesktop").checked = s.autoUpdateDesktop !== false;
         $("registry").value = s.registry;
         $("local").value = s.localHarnessDir;
         $("workspace").textContent = s.workspaceDir || "（首次启动后自动使用家目录下的 DeepSeek 文件夹）";
       });
       $("official").onclick = () => { $("registry").value = OFFICIAL; };
       $("china").onclick = () => { $("registry").value = CHINA; };
-      $("registry").oninput = () => { $("registry").dataset.touched = "1"; };
       $("pick").onclick = async () => {
         const dir = await window.desktop.pickDir();
         if (dir) $("local").value = dir;
@@ -93,6 +136,7 @@
           ...current,
           channel: $("channel").value,
           autoUpdateHarness: $("auto").checked,
+          autoUpdateDesktop: $("autoDesktop").checked,
           registry,
           registrySource: registry === current.registry ? current.registrySource : "user",
           localHarnessDir: $("local").value,

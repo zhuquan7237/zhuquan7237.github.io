@@ -1,0 +1,37 @@
+:root {
+  --bg: #0c0e14;
+  --card: #141822;
+  --card-2: #1a1f2b;
+  --line: rgba(255, 255, 255, 0.1);
+  --line-soft: rgba(255, 255, 255, 0.06);
+  --text: #eef2fa;
+  --muted: #8b93a7;
+  --accent: #4d93f8;
+  --accent-hover: #6aa6ff;
+  --accent-dim: rgba(77, 147, 248, 0.16);
+  --danger: #f07178;
+  --ok: #7fd99a;
+  --shadow: 0 22px 56px rgba(0, 0, 0, 0.48);
+  --radius: 22px;
+  --radius-sm: 12px;
+  --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", "PingFang SC", "Noto Sans SC", sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  font-family: var(--font);
+  color: var(--text);
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}

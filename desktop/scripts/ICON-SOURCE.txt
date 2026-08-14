@@ -1,0 +1,15 @@
+Official DeepSeek whale mark (not a homemade drawing).
+
+Raster: desktop/scripts/deepseek-whale.png from https://github.com/deepseek-ai.png
+Vector: desktop/scripts/deepseek-whale.svg from official logo.svg (fill #4D6BFE)
+Same mark as https://www.deepseek.com/favicon.ico
+
+generate-icon.py copies these to:
+  desktop/resources/icon.png
+  desktop/build/icon.png
+  assets/icon.png
+  assets/deepseek-whale.png
+  assets/favicon.svg
+  app/favicon.svg
+  deepseek-app/public/favicon.svg
+  deepseek-app/public/favicon.png

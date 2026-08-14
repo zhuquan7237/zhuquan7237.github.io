@@ -1,3 +1,5 @@
+import path from "node:path";
+
 export const APP_ID = "app.deepseek.desktop";
 export const APP_DISPLAY_NAME = "DeepSeek Harness";
 export const NODE_VERSION = "22.23.2";
@@ -10,6 +12,8 @@ export type HarnessChannel = "latest" | "next" | string;
 
 export interface DesktopSettings {
   autoUpdateHarness: boolean;
+  /** Check GitHub Releases for a newer desktop installer after launch. */
+  autoUpdateDesktop: boolean;
   channel: HarnessChannel;
   registry: string;
   /** "auto" keeps following the system language; "user" pins whatever was picked in settings. */
@@ -18,16 +22,23 @@ export interface DesktopSettings {
   localHarnessDir: string;
   workspaceDir: string;
   lastHarnessVersion: string;
+  /** Startup prompt will not ask again until npm publishes a newer version. */
+  skippedHarnessVersion: string;
+  /** Startup prompt will not ask again until GitHub publishes a newer desktop tag. */
+  skippedDesktopVersion: string;
 }
 
 export const DEFAULT_SETTINGS: DesktopSettings = {
   autoUpdateHarness: true,
+  autoUpdateDesktop: true,
   channel: "latest",
   registry: NPM_REGISTRY,
   registrySource: "auto",
   localHarnessDir: "",
   workspaceDir: "",
   lastHarnessVersion: "",
+  skippedHarnessVersion: "",
+  skippedDesktopVersion: "",
 };
 
 /**
@@ -80,6 +91,20 @@ export function compareVersions(a: string, b: string): number {
   return 0;
 }
 
+/** Keep the engine the user already has unless they asked to upgrade. */
+export function pickExistingHarness(installedVersions: string[], lastHarnessVersion: string): string {
+  if (lastHarnessVersion && installedVersions.includes(lastHarnessVersion)) return lastHarnessVersion;
+  if (installedVersions.length === 0) return "";
+  return [...installedVersions].sort(compareVersions)[installedVersions.length - 1] ?? "";
+}
+
+export function shouldPromptHarnessUpdate(current: string, latest: string, skipped: string): boolean {
+  if (!current || !latest) return false;
+  if (current === latest || skipped === latest) return false;
+  if (!/^\d/.test(current.replace(/^v/, "")) || !/^\d/.test(latest.replace(/^v/, ""))) return false;
+  return compareVersions(current, latest) < 0;
+}
+
 function splitVersion(input: string): { core: number[]; pre: string[] } {
   const cleaned = input.replace(/^v/, "");
   const [core, pre] = cleaned.split("-", 2);
@@ -108,9 +133,54 @@ export function nodeMeetsEngine(version: string, min = "22.19.0"): boolean {
 export function npmInvocation(
   runtime: { node: string; npm: string; npmCli?: string | null },
   args: string[],
+  platform: NodeJS.Platform = process.platform,
 ): { command: string; args: string[] } {
   if (runtime.npmCli) return { command: runtime.node, args: [runtime.npmCli, ...args] };
-  return { command: runtime.npm, args };
+  return spawnArgv(runtime.npm, args, platform);
+}
+
+/**
+ * Official Windows Node zips put npm next to node.exe. Unix tarballs put it
+ * under lib/. Looking only at the Unix path made Windows fall back to npm.cmd,
+ * and spawn(npm.cmd) throws EINVAL.
+ */
+export function npmCliCandidates(nodePath: string, platform: NodeJS.Platform): string[] {
+  const io = platform === "win32" ? path.win32 : path.posix;
+  const dir = io.dirname(nodePath);
+  if (platform === "win32") {
+    return [
+      io.join(dir, "node_modules", "npm", "bin", "npm-cli.js"),
+      io.join(dir, "lib", "node_modules", "npm", "bin", "npm-cli.js"),
+    ];
+  }
+  const prefix = io.dirname(dir);
+  return [
+    io.join(prefix, "lib", "node_modules", "npm", "bin", "npm-cli.js"),
+    io.join(dir, "node_modules", "npm", "bin", "npm-cli.js"),
+  ];
+}
+
+export function sanitizeEnv(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
+  const clean: NodeJS.ProcessEnv = {};
+  for (const [key, value] of Object.entries(env)) {
+    if (typeof value === "string") clean[key] = value;
+  }
+  return clean;
+}
+
+/** .cmd/.bat cannot be spawn()'d on modern Windows; cmd.exe must launch them. */
+export function spawnArgv(
+  command: string,
+  args: string[],
+  platform: NodeJS.Platform,
+): { command: string; args: string[] } {
+  if (platform === "win32") {
+    if (command === "powershell") return { command: "powershell.exe", args };
+    if (/\.(cmd|bat)$/i.test(command)) {
+      return { command: "cmd.exe", args: ["/d", "/s", "/c", command, ...args] };
+    }
+  }
+  return { command, args };
 }
 
 export function npmSpec(channel: HarnessChannel): string {
@@ -155,9 +225,9 @@ export function clampWindowBounds(bounds: Rect, workArea: Rect): Rect {
   };
 }
 
-export function linuxDesktopEntry(options: { exec: string; icon: string }): string {
+export function linuxDesktopEntry(options: { exec: string; icon: string; workingDirectory?: string }): string {
   const exec = options.exec.includes(" ") ? `"${options.exec.replace(/"/g, '\\"')}"` : options.exec;
-  return [
+  const lines = [
     "[Desktop Entry]",
     "Type=Application",
     "Version=1.0",
@@ -168,6 +238,11 @@ export function linuxDesktopEntry(options: { exec: string; icon: string }): stri
     "Comment[zh_CN]=DeepSeek Harness 桌面版",
     `Exec=${exec} %U`,
     `Icon=${options.icon}`,
+  ];
+  // Without Path=, a .desktop launch uses $HOME as cwd, and dsh may register
+  // that folder (title = the username, e.g. "box") instead of ~/DeepSeek.
+  if (options.workingDirectory) lines.push(`Path=${options.workingDirectory}`);
+  lines.push(
     "Terminal=false",
     "StartupNotify=true",
     "StartupWMClass=DeepSeek Harness",
@@ -175,7 +250,56 @@ export function linuxDesktopEntry(options: { exec: string; icon: string }): stri
     "Keywords=deepseek;dsh;harness;ai;",
     "MimeType=",
     "",
-  ].join("\n");
+  );
+  return lines.join("\n");
+}
+
+/** LANG= / LC_MESSAGES= lines from /etc/locale.conf or /etc/default/locale. */
+export function parseOsLocaleAssignments(contents: string): string[] {
+  const found: string[] = [];
+  for (const line of contents.split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const match = trimmed.match(/^(?:LANG|LC_ALL|LC_MESSAGES|LANGUAGE)=(.*)$/);
+    if (!match) continue;
+    let value = match[1].trim();
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1);
+    }
+    if (value) found.push(value);
+  }
+  return found;
+}
+
+export function parseOsTimeZone(contents: string): string {
+  const line = contents.split(/\r?\n/).map((part) => part.trim()).find(Boolean) || "";
+  return /^[A-Za-z]+\/[A-Za-z_]+$/.test(line) ? line : "";
+}
+
+function isChinaTimeZone(tz: string): boolean {
+  const value = tz.trim();
+  return (
+    value === "Asia/Shanghai" ||
+    value === "Asia/Chongqing" ||
+    value === "Asia/Urumqi" ||
+    value === "Asia/Harbin"
+  );
+}
+
+/**
+ * Electron/ICU often reports UTC on Linux even when the machine is in China.
+ * Prefer a China zone from TZ, /etc/timezone, or Intl, in that scan order.
+ */
+export function resolveTimeZone(
+  env: NodeJS.ProcessEnv = process.env,
+  osTimeZone = "",
+  intlTimeZone = "",
+): string {
+  const candidates = [env.TZ, osTimeZone, intlTimeZone].filter((value): value is string => Boolean(value));
+  return candidates.find(isChinaTimeZone) || osTimeZone || env.TZ || intlTimeZone || "";
 }
 
 /** zh-CN / Asia/Shanghai users get the China npm mirror on first launch. */
@@ -190,7 +314,7 @@ export function localePrefersChina(
     .toLowerCase();
   if (/(zh[_-]cn|zh[_-]hans)/.test(blob)) return true;
   const tz = timeZone || env.TZ || "";
-  return tz === "Asia/Shanghai" || tz === "Asia/Chongqing" || tz === "Asia/Urumqi";
+  return isChinaTimeZone(tz);
 }
 
 export function preferredNpmRegistry(
@@ -218,9 +342,25 @@ export function normalizeLocaleTag(input: string): string {
  * The Harness web UI picks its language from `navigator.languages`, which
  * Electron drives with `--lang`. Without this the UI is English even on a
  * Chinese desktop.
+ *
+ * English Ubuntu with a China timezone is common; menus are already Chinese,
+ * so the Harness UI should follow that rather than LANG=en_US.
  */
-export function resolveUiLocale(env: NodeJS.ProcessEnv = process.env, systemLocale = ""): string {
-  const candidates = [systemLocale, env.LC_ALL, env.LC_MESSAGES, env.LANG, env.LANGUAGE];
+export function resolveUiLocale(
+  env: NodeJS.ProcessEnv = process.env,
+  systemLocale = "",
+  timeZone = "",
+): string {
+  const fromSystem = systemLocale.split(/[\s,;]+/).filter(Boolean);
+  const candidates = [...fromSystem, env.LC_ALL, env.LC_MESSAGES, env.LANG, env.LANGUAGE];
+  if (localePrefersChina(env, timeZone, systemLocale)) {
+    for (const candidate of candidates) {
+      if (!candidate) continue;
+      const tag = normalizeLocaleTag(candidate.split(":")[0]);
+      if (tag.toLowerCase().startsWith("zh")) return tag;
+    }
+    return "zh-CN";
+  }
   for (const candidate of candidates) {
     if (!candidate) continue;
     const tag = normalizeLocaleTag(candidate.split(":")[0]);
@@ -235,6 +375,41 @@ export function hostTimeZone(): string {
   } catch {
     return "";
   }
+}
+
+export function hostIntlLocale(): string {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().locale || "";
+  } catch {
+    return "";
+  }
+}
+
+/** Chromium --accept-lang value so the Harness UI follows --lang. */
+export function chromiumAcceptLang(tag: string): string {
+  if (tag.toLowerCase().startsWith("zh")) return "zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7";
+  return `${tag},en;q=0.8`;
+}
+
+/** dsh itself may read LANG; keep it aligned with the window language. */
+export function harnessLocaleEnv(uiLocale: string): NodeJS.ProcessEnv {
+  if (!uiLocale.toLowerCase().startsWith("zh")) return {};
+  return {
+    LANG: "zh_CN.UTF-8",
+    LANGUAGE: "zh_CN:zh",
+    LC_MESSAGES: "zh_CN.UTF-8",
+  };
+}
+
+export function defaultWorkspacePath(home: string): string {
+  return path.join(home, "DeepSeek");
+}
+
+/** 0.1.3 saved $HOME as the workspace; never keep that as the coding folder. */
+export function resolveWorkspaceDir(saved: string, home: string): string {
+  const desired = defaultWorkspacePath(home);
+  if (!saved.trim() || isHomeDirectoryWorkspace(saved, home)) return desired;
+  return saved;
 }
 
 export function nodeDownloadUrls(archive: string, preferChina: boolean): string[] {
@@ -315,6 +490,52 @@ export interface WorkspaceRegistry {
   unit: { name: string; version: number };
   global: { initialized: boolean; workspaceIds: string[]; archivedSessionIds: string[] };
   tables: { workspaces: Record<string, unknown> };
+}
+
+export function sameFilesystemPath(left: string, right: string): boolean {
+  const normalize = (value: string) => value.replace(/\\/g, "/").replace(/\/+$/, "") || "/";
+  return normalize(left) === normalize(right);
+}
+
+/** A .desktop launch with cwd=$HOME makes dsh title the username ("box"). */
+export function isHomeDirectoryWorkspace(workspacePath: string, home: string): boolean {
+  return sameFilesystemPath(workspacePath, home);
+}
+
+/**
+ * 0.1.3 registered $HOME because the process cwd was the home folder. Keep the
+ * same workspace id (so it stays selected) but point it at ~/DeepSeek.
+ */
+export function retargetHomeWorkspace(
+  existing: unknown,
+  home: string,
+  desired: { path: string; title: string; now: string },
+): WorkspaceRegistry | null {
+  if (!existing || typeof existing !== "object") return null;
+  const registry = existing as Partial<WorkspaceRegistry>;
+  if (registry.unit && (registry.unit.name !== "workspace" || registry.unit.version !== 2)) return null;
+  const workspaces = registry.tables?.workspaces;
+  if (!workspaces || typeof workspaces !== "object") return null;
+
+  let changed = false;
+  const nextWorkspaces: Record<string, unknown> = { ...workspaces };
+  for (const [id, raw] of Object.entries(workspaces)) {
+    if (!raw || typeof raw !== "object") continue;
+    const workspace = raw as { path?: string };
+    if (typeof workspace.path !== "string" || !isHomeDirectoryWorkspace(workspace.path, home)) continue;
+    nextWorkspaces[id] = { ...workspace, path: desired.path, title: desired.title, updatedAt: desired.now };
+    changed = true;
+  }
+  if (!changed) return null;
+  return {
+    unit: registry.unit ?? { name: "workspace", version: 2 },
+    global: {
+      initialized: true,
+      workspaceIds: registry.global?.workspaceIds ?? Object.keys(nextWorkspaces),
+      archivedSessionIds: registry.global?.archivedSessionIds ?? [],
+    },
+    tables: { workspaces: nextWorkspaces },
+  };
 }
 
 /**

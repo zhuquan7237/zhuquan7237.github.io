@@ -1,10 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
   applyRegistryPreference,
+  chromiumAcceptLang,
   chromeSandboxIsConfigured,
   clampWindowBounds,
   compareVersions,
   formatByteProgress,
+  harnessLocaleEnv,
+  isHomeDirectoryWorkspace,
   isSystemInstalledApp,
   linuxDesktopEntry,
   linuxRuntimeArgvExtras,
@@ -14,13 +17,23 @@ import {
   nodeDownloadUrls,
   nodeMeetsEngine,
   normalizeLocaleTag,
+  npmCliCandidates,
   npmInvocation,
   npmSpec,
+  sanitizeEnv,
+  spawnArgv,
   parseDshWebUrl,
+  parseOsLocaleAssignments,
+  parseOsTimeZone,
   parseXdgUserDir,
+  pickExistingHarness,
   preferredNpmRegistry,
+  shouldPromptHarnessUpdate,
   resolveLinuxDesktopDir,
+  resolveTimeZone,
   resolveUiLocale,
+  resolveWorkspaceDir,
+  retargetHomeWorkspace,
   seedWorkspaceRegistry,
 } from "./util";
 
@@ -35,6 +48,22 @@ describe("parseDshWebUrl", () => {
 
   it("returns null when missing", () => {
     expect(parseDshWebUrl("still starting")).toBeNull();
+  });
+});
+
+describe("harness update prompts", () => {
+  it("keeps the last installed engine until the user upgrades", () => {
+    expect(pickExistingHarness(["0.1.0-rc.5", "0.1.0-rc.6"], "0.1.0-rc.6")).toBe("0.1.0-rc.6");
+    expect(pickExistingHarness(["0.1.0-rc.5", "0.1.0-rc.6"], "")).toBe("0.1.0-rc.6");
+    expect(pickExistingHarness([], "0.1.0-rc.6")).toBe("");
+  });
+
+  it("asks once per published version and not when already current", () => {
+    expect(shouldPromptHarnessUpdate("0.1.0-rc.6", "0.1.0-rc.7", "")).toBe(true);
+    expect(shouldPromptHarnessUpdate("0.1.0-rc.6", "0.1.0-rc.6", "")).toBe(false);
+    expect(shouldPromptHarnessUpdate("0.1.0-rc.6", "0.1.0-rc.7", "0.1.0-rc.7")).toBe(false);
+    expect(shouldPromptHarnessUpdate("0.1.0-rc.6", "0.1.0-rc.8", "0.1.0-rc.7")).toBe(true);
+    expect(shouldPromptHarnessUpdate("未安装", "0.1.0-rc.6", "")).toBe(false);
   });
 });
 
@@ -90,6 +119,15 @@ describe("first-run helpers", () => {
     expect(text).toContain("StartupWMClass=DeepSeek Harness");
     expect(text).toContain("Exec=/home/me/DeepSeek %U");
     expect(text).toContain("Categories=Development;IDE;");
+  });
+
+  it("writes Path so a .desktop launch is not cwd=$HOME", () => {
+    const text = linuxDesktopEntry({
+      exec: "/opt/DeepSeek/DeepSeek",
+      icon: "/opt/DeepSeek/resources/icon.png",
+      workingDirectory: "/home/alice/DeepSeek",
+    });
+    expect(text).toMatch(/^Path=\/home\/alice\/DeepSeek$/m);
   });
 
   it("quotes Exec paths that contain spaces", () => {
@@ -154,14 +192,94 @@ describe("typical-user defaults", () => {
     expect(localePrefersChina({}, "", "zh-Hans-CN")).toBe(true);
   });
 
+  it("uses Chinese Harness UI when LANG is English but the machine is in China", () => {
+    expect(resolveUiLocale({ LANG: "en_US.UTF-8" }, "", "Asia/Shanghai")).toBe("zh-CN");
+    expect(resolveUiLocale({ LANG: "en_US.UTF-8" }, "zh_CN.UTF-8", "UTC")).toBe("zh-CN");
+    expect(chromiumAcceptLang("zh-CN")).toContain("zh-CN");
+    expect(harnessLocaleEnv("zh-CN").LANG).toBe("zh_CN.UTF-8");
+  });
+
+  it("prefers /etc/timezone Asia/Shanghai over TZ=UTC", () => {
+    expect(resolveTimeZone({ TZ: "UTC" }, "Asia/Shanghai", "UTC")).toBe("Asia/Shanghai");
+    expect(parseOsTimeZone("Asia/Shanghai\n")).toBe("Asia/Shanghai");
+    expect(parseOsLocaleAssignments("LANG=zh_CN.UTF-8\nLC_MESSAGES=en_US.UTF-8\n")).toEqual([
+      "zh_CN.UTF-8",
+      "en_US.UTF-8",
+    ]);
+  });
+
+  it("rewrites a leftover $HOME/box workspace to ~/DeepSeek", () => {
+    expect(isHomeDirectoryWorkspace("/home/box", "/home/box")).toBe(true);
+    expect(isHomeDirectoryWorkspace("/home/box/", "/home/box")).toBe(true);
+    expect(isHomeDirectoryWorkspace("/home/box/DeepSeek", "/home/box")).toBe(false);
+    expect(resolveWorkspaceDir("/home/box", "/home/box")).toBe("/home/box/DeepSeek");
+    expect(resolveWorkspaceDir("/home/box/code", "/home/box")).toBe("/home/box/code");
+
+    const next = retargetHomeWorkspace(
+      {
+        unit: { name: "workspace", version: 2 },
+        global: { initialized: true, workspaceIds: ["ws_old"], archivedSessionIds: [] },
+        tables: {
+          workspaces: {
+            ws_old: {
+              path: "/home/box",
+              title: "box",
+              sessionIds: ["s1"],
+              createdAt: "2026-01-01T00:00:00.000Z",
+              updatedAt: "2026-01-01T00:00:00.000Z",
+            },
+          },
+        },
+      },
+      "/home/box",
+      { path: "/home/box/DeepSeek", title: "DeepSeek", now: "2026-08-13T00:00:00.000Z" },
+    );
+    expect(next?.global.workspaceIds).toEqual(["ws_old"]);
+    expect(next?.tables.workspaces.ws_old).toMatchObject({
+      path: "/home/box/DeepSeek",
+      title: "DeepSeek",
+      sessionIds: ["s1"],
+    });
+  });
+
   it("runs npm through node when a sidecar cli is available", () => {
     expect(npmInvocation({ node: "/n/node", npm: "/n/npm", npmCli: "/n/npm-cli.js" }, ["install"])).toEqual({
       command: "/n/node",
       args: ["/n/npm-cli.js", "install"],
     });
-    expect(npmInvocation({ node: "node", npm: "npm", npmCli: null }, ["install"])).toEqual({
+    expect(npmInvocation({ node: "node", npm: "npm", npmCli: null }, ["install"], "linux")).toEqual({
       command: "npm",
       args: ["install"],
+    });
+  });
+
+  it("uses the Windows Node zip npm-cli path, not the Unix lib/ layout", () => {
+    expect(npmCliCandidates("C:\\Users\\me\\runtime\\node-v22.23.2-win-x64\\node.exe", "win32")[0]).toBe(
+      "C:\\Users\\me\\runtime\\node-v22.23.2-win-x64\\node_modules\\npm\\bin\\npm-cli.js",
+    );
+    expect(npmCliCandidates("/home/me/runtime/node-v22.23.2-linux-x64/bin/node", "linux")[0]).toBe(
+      "/home/me/runtime/node-v22.23.2-linux-x64/lib/node_modules/npm/bin/npm-cli.js",
+    );
+    expect(npmCliCandidates("/Users/me/runtime/node-v22.23.2-darwin-arm64/bin/node", "darwin")[0]).toBe(
+      "/Users/me/runtime/node-v22.23.2-darwin-arm64/lib/node_modules/npm/bin/npm-cli.js",
+    );
+  });
+
+  it("wraps Windows .cmd so spawn does not throw EINVAL", () => {
+    expect(spawnArgv("C:\\runtime\\npm.cmd", ["install"], "win32")).toEqual({
+      command: "cmd.exe",
+      args: ["/d", "/s", "/c", "C:\\runtime\\npm.cmd", "install"],
+    });
+    expect(spawnArgv("powershell", ["-Command", "dir"], "win32")).toEqual({
+      command: "powershell.exe",
+      args: ["-Command", "dir"],
+    });
+    expect(npmInvocation({ node: "node.exe", npm: "C:\\runtime\\npm.cmd", npmCli: null }, ["-v"], "win32").command).toBe(
+      "cmd.exe",
+    );
+    expect(sanitizeEnv({ PATH: "C:\\Windows", EMPTY: undefined, NODE_ENV: "production" })).toEqual({
+      PATH: "C:\\Windows",
+      NODE_ENV: "production",
     });
   });
 

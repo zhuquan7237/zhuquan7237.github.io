@@ -1,4 +1,4 @@
-import { spawn } from "node:child_process";
+import { spawn, type ChildProcess } from "node:child_process";
 import { chmod, mkdir, rm, stat, writeFile } from "node:fs/promises";
 import { createWriteStream } from "node:fs";
 import path from "node:path";
@@ -10,6 +10,9 @@ import {
   nodeDistFile,
   nodeDownloadUrls,
   nodeMeetsEngine,
+  npmCliCandidates,
+  sanitizeEnv,
+  spawnArgv,
 } from "./util";
 
 export interface NodeRuntime {
@@ -34,14 +37,21 @@ export async function resolveNodeRuntime(
 }
 
 async function detectSystemNode(): Promise<NodeRuntime | null> {
-  const version = await runCapture(process.platform === "win32" ? "node.exe" : "node", ["-v"]).catch(() => "");
+  const node = process.platform === "win32" ? "node.exe" : "node";
+  const version = await runCapture(node, ["-v"]).catch(() => "");
   if (!version) return null;
-  const npm = await runCapture(process.platform === "win32" ? "npm.cmd" : "npm", ["-v"]).catch(() => "");
-  if (!npm) return null;
+  const execPath = (
+    await runCapture(node, ["-p", "process.execPath"]).catch(() => "")
+  ).trim();
+  const npmCli = execPath ? await firstExisting(npmCliCandidates(execPath, process.platform)) : null;
+  if (!npmCli) {
+    const npm = await runCapture(process.platform === "win32" ? "npm.cmd" : "npm", ["-v"]).catch(() => "");
+    if (!npm) return null;
+  }
   return {
-    node: process.platform === "win32" ? "node.exe" : "node",
+    node,
     npm: process.platform === "win32" ? "npm.cmd" : "npm",
-    npmCli: null,
+    npmCli,
     version: version.trim(),
   };
 }
@@ -60,13 +70,22 @@ async function installNodeSidecar(cacheDir: string, onLog: (line: string) => voi
 
   await mkdir(cacheDir, { recursive: true });
   const archivePath = path.join(cacheDir, dist.archive);
-  const urls = nodeDownloadUrls(dist.archive, localePrefersChina(process.env, process.env.TZ || hostTimeZone()));
+  const urls = nodeDownloadUrls(
+    dist.archive,
+    localePrefersChina(process.env, process.env.TZ || hostTimeZone()),
+  );
   await downloadFromMirrors(urls, archivePath, onLog);
   onLog("正在解压 Node 运行时");
   if (dist.archive.endsWith(".zip")) {
-    await runCapture("powershell", ["-NoProfile", "-Command", `Expand-Archive -Force '${archivePath}' '${cacheDir}'`]);
+    await runCapture(
+      "powershell.exe",
+      ["-NoProfile", "-Command", `Expand-Archive -Force '${archivePath}' '${cacheDir}'`],
+      cacheDir,
+      undefined,
+      onLog,
+    );
   } else {
-    await runCapture("tar", ["-xJf", archivePath, "-C", cacheDir]);
+    await runCapture("tar", ["-xJf", archivePath, "-C", cacheDir], cacheDir, undefined, onLog);
   }
   await rm(archivePath, { force: true });
   const runtime = await usableSidecar(nodePath);
@@ -104,9 +123,14 @@ function companionNpm(nodePath: string): string {
  * npm-cli.js through our node binary avoids both.
  */
 async function companionNpmCli(nodePath: string): Promise<string | null> {
-  const prefix = process.platform === "win32" ? path.dirname(nodePath) : path.dirname(path.dirname(nodePath));
-  const cli = path.join(prefix, "lib", "node_modules", "npm", "bin", "npm-cli.js");
-  return (await exists(cli)) ? cli : null;
+  return await firstExisting(npmCliCandidates(nodePath, process.platform));
+}
+
+async function firstExisting(files: string[]): Promise<string | null> {
+  for (const file of files) {
+    if (await exists(file)) return file;
+  }
+  return null;
 }
 
 async function downloadFromMirrors(
@@ -182,12 +206,21 @@ export async function runCapture(
   extraEnv?: NodeJS.ProcessEnv,
   onLog?: (line: string) => void,
 ): Promise<string> {
+  const planned = spawnArgv(command, args, process.platform);
+  const env = sanitizeEnv({ ...process.env, ...extraEnv });
   return await new Promise((resolve, reject) => {
-    const child = spawn(command, args, {
-      cwd,
-      windowsHide: true,
-      env: extraEnv ? { ...process.env, ...extraEnv } : process.env,
-    });
+    let child: ChildProcess;
+    try {
+      child = spawn(planned.command, planned.args, {
+        cwd,
+        env,
+        windowsHide: process.platform === "win32",
+        stdio: ["ignore", "pipe", "pipe"],
+      });
+    } catch (error) {
+      reject(error);
+      return;
+    }
     let out = "";
     let err = "";
     const take = (chunk: unknown, toErr: boolean) => {
@@ -200,12 +233,19 @@ export async function runCapture(
         if (trimmed) onLog(trimmed);
       }
     };
-    child.stdout.on("data", (chunk) => take(chunk, false));
-    child.stderr.on("data", (chunk) => take(chunk, true));
-    child.on("error", reject);
+    const heartbeat = onLog
+      ? setInterval(() => onLog("仍在执行，请稍候…"), 15_000)
+      : null;
+    child.stdout?.on("data", (chunk) => take(chunk, false));
+    child.stderr?.on("data", (chunk) => take(chunk, true));
+    child.on("error", (error) => {
+      if (heartbeat) clearInterval(heartbeat);
+      reject(error);
+    });
     child.on("close", (code) => {
+      if (heartbeat) clearInterval(heartbeat);
       if (code === 0) resolve(out || err);
-      else reject(new Error(`${command} ${args.join(" ")} failed (${code}): ${err || out}`));
+      else reject(new Error(`${planned.command} ${planned.args.join(" ")} failed (${code}): ${err || out}`));
     });
   });
 }
