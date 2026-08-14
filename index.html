@@ -70,29 +70,27 @@
                 data-hero-download
                 href="https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.12/DeepSeek-0.1.12-win.exe"
               >下载 Windows 安装包</a>
-              <a class="button button-quiet" href="#downloads">选择其他系统</a>
+              <a class="button button-quiet" href="#downloads">查看全部安装包</a>
             </div>
-            <div class="os-picker" aria-label="选择下载系统">
-              <span>切换系统</span>
-              <button type="button" data-os-choice="win">Windows</button>
-              <button type="button" data-os-choice="linux">Linux</button>
-              <button type="button" data-os-choice="mac-arm">Mac M 系列</button>
-              <button type="button" data-os-choice="mac-intel">Intel Mac</button>
+            <p class="hero-detect" data-os-status>可按你的电脑系统切换安装包。</p>
+            <div class="os-picker" role="group" aria-label="选择下载系统">
+              <span>安装到</span>
+              <button type="button" data-os-choice="win" aria-pressed="false">Windows</button>
+              <button type="button" data-os-choice="linux" aria-pressed="false">Linux</button>
+              <button type="button" data-os-choice="mac-arm" aria-pressed="false">Mac M 系列</button>
+              <button type="button" data-os-choice="mac-intel" aria-pressed="false">Intel Mac</button>
             </div>
             <p class="hero-note">首次启动需联网准备 Node 和官方引擎，通常 1–3 分钟。</p>
           </div>
 
           <figure class="product-shot" data-lightbox tabindex="0" role="button" aria-label="放大产品窗口截图">
-            <div class="window-bar" aria-hidden="true">
-              <span></span><span></span><span></span>
-              <b>深海女仆工坊 · DeepSeek Harness</b>
-              <em>0.1.12</em>
-            </div>
             <img
               src="./assets/desktop-preview.png"
               alt="DeepSeek Harness Desktop 0.1.12 的桌面窗口，显示深海女仆工坊皮肤"
+              width="1426"
+              height="834"
             />
-            <figcaption><span>真实桌面窗口</span><span>点击放大</span></figcaption>
+            <figcaption><span>真实桌面窗口 · 0.1.12</span><span>点击放大</span></figcaption>
           </figure>
         </div>
       </section>
