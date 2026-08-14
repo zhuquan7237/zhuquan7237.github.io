@@ -1,0 +1,36 @@
+DeepSeek Harness · macOS 先读我
+================================
+
+「DeepSeek 已损坏，无法打开」不是安装包坏了。
+macOS 会给网上下载的软件打隔离标记。我们还没有 Apple 开发者公证
+（要付费加入 Apple Developer Program），系统就会把隔离后的 App 说成损坏。
+
+请按这个顺序做，不必改系统「任何来源」，也不必关安全功能。
+
+1. 看芯片，下对安装包
+   左上角苹果菜单 → 关于本机 → 芯片 / 处理器
+   - Apple M1 / M2 / M3 / M4 … → DeepSeek-*-mac-arm64.dmg
+   - Intel → DeepSeek-*-mac-x64.dmg
+
+2. 打开 dmg，把 DeepSeek.app 拖到右边的「应用程序」
+
+3. 打开「终端」（聚焦搜索 Terminal），整段粘贴回车：
+
+   xattr -cr /Applications/DeepSeek.app
+   open /Applications/DeepSeek.app
+
+   也可以先输入：  xattr -cr
+   （后面加一个空格），再把「应用程序」里的 DeepSeek 拖进终端，回车。
+
+4. 若仍提示无法验证：
+   系统设置 → 隐私与安全性 → 往下滚 → 「仍要打开」
+   macOS 15 Sequoia 上，右键「打开」常常没用，以第 3 步为准。
+
+5. 也可以双击本盘里的 Open-DeepSeek.command
+   若 command 自己也被拦，用第 3 步即可。
+
+打开之后如果问「文件与文件夹」或网络，选允许。
+那是运行权限，和「损坏」不是一回事。
+
+不要做：关闭系统完整性保护、关闭 Gatekeeper、乱开「任何来源」。
+真正双击无提示，需要以后做 Apple 公证（付费开发者账号）。

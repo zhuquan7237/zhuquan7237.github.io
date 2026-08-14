@@ -40,7 +40,7 @@
 | --- | --- | --- |
 | Windows | [DeepSeek-0.1.12-win.exe](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.12/DeepSeek-0.1.12-win.exe) | 会创建桌面和开始菜单快捷方式。SmartScreen 选「更多信息 → 仍要运行」 |
 | Linux | [x64 tar.gz](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.12/DeepSeek-0.1.12-linux-x64.tar.gz) · [deb](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.12/DeepSeek-0.1.12-linux-amd64.deb) | 优先 tar.gz 或 deb。AppImage 在 Ubuntu 24.04 常缺 libfuse2 |
-| macOS | [arm64 dmg](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.12/DeepSeek-0.1.12-mac-arm64.dmg) · [Intel dmg](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.12/DeepSeek-0.1.12-mac-x64.dmg) | 拖到「应用程序」。若提示已损坏，双击 DMG 里的 Open-DeepSeek.command |
+| macOS | [arm64 dmg](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.12/DeepSeek-0.1.12-mac-arm64.dmg) · [Intel dmg](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.12/DeepSeek-0.1.12-mac-x64.dmg) | 拖到「应用程序」。若提示已损坏，终端运行 `xattr -cr /Applications/DeepSeek.app`。说明：[mac.html](https://zhuquan7237.github.io/mac.html) |
 
 ```sh
 # Linux

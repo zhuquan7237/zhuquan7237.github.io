@@ -31,6 +31,7 @@
       </a>
       <div class="nav-links">
         <a class="active" href="./">下载</a>
+        <a href="./mac.html">macOS 打不开</a>
         <a href="./me.html">关于朱泉</a>
         <a href="https://github.com/zhuquan7237/zhuquan7237.github.io">GitHub</a>
       </div>
@@ -72,7 +73,7 @@
           </article>
           <article class="card" data-os="mac">
             <h2>macOS</h2>
-            <p>把 App 拖进「应用程序」。若提示「文件已损坏」，双击安装盘里的 Open-DeepSeek.command，或到系统设置 → 隐私与安全性 → 仍要打开。</p>
+            <p>把 App 拖进「应用程序」。若提示「已损坏」，打开终端运行 <code>xattr -cr /Applications/DeepSeek.app</code>。说明见 <a href="./mac.html">macOS 打不开</a>。</p>
             <a class="os" href="https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.12/DeepSeek-0.1.12-mac-arm64.dmg">Apple Silicon →</a><br />
             <a class="os" href="https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.12/DeepSeek-0.1.12-mac-x64.dmg">Intel →</a>
           </article>
@@ -159,7 +160,12 @@
         </details>
         <details>
           <summary>macOS 说文件已损坏？</summary>
-          <p>不是下坏了。旧版没做完整签名，系统会把隔离的 App 显示成已损坏。请用 0.1.12，并双击 DMG 里的 Open-DeepSeek.command。</p>
+          <p>
+            不是下坏了，也不是缺许可证。macOS 隔离了网上下来的未公证软件。
+            请用 0.1.12，把 App 拖到「应用程序」后，在终端运行
+            <code>xattr -cr /Applications/DeepSeek.app</code>。
+            逐步说明：<a href="./mac.html">macOS 打不开</a>。
+          </p>
         </details>
         <details>
           <summary>检查更新后弹出 dsh exited 1 / cordis.patch.yml？</summary>
@@ -200,6 +206,8 @@
         <span>DeepSeek Harness Desktop 0.1.12 · 作者 <a href="./me.html">朱泉</a></span>
         <span>
           <a href="https://github.com/zhuquan7237/zhuquan7237.github.io/releases/latest">全部安装包</a>
+          ·
+          <a href="./mac.html">macOS 打不开</a>
           ·
           <a href="./app/">浏览器预览</a>
           ·

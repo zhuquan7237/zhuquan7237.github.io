@@ -17,6 +17,7 @@ Bump or rewrite all of these together:
 - `README.md`
 - `desktop/README.md`
 - `index.html` — hero button, OS cards, FAQ, footer, and the JS `links` map
+- `mac.html` — if macOS Gatekeeper /「已损坏」说明有变
 - `me.html` — if it names the version or the new feature
 - `assets/desktop-preview.png` — the README / Pages / og:image shot. When the window or skin UI changes, regenerate it from `desktop/resources/product-preview.html` (headless Chrome, 1424×913). Do not leave the old first-run API Key modal as the product photo.
 
