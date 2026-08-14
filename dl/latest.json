@@ -1,0 +1,38 @@
+{
+  "version": "0.1.16",
+  "tag": "desktop-v0.1.16",
+  "htmlUrl": "https://dsh.zhuquan.xyz/dl/",
+  "notes": "安装包走 dsh.zhuquan.xyz/dl/，GitHub Release 作为备用。",
+  "assets": [
+    {
+      "name": "DeepSeek-0.1.16-win.exe",
+      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.1.16-win.exe",
+      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.16/DeepSeek-0.1.16-win.exe",
+      "size": 0
+    },
+    {
+      "name": "DeepSeek-0.1.16-linux-x64.tar.gz",
+      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.1.16-linux-x64.tar.gz",
+      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.16/DeepSeek-0.1.16-linux-x64.tar.gz",
+      "size": 0
+    },
+    {
+      "name": "DeepSeek-0.1.16-linux-amd64.deb",
+      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.1.16-linux-amd64.deb",
+      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.16/DeepSeek-0.1.16-linux-amd64.deb",
+      "size": 0
+    },
+    {
+      "name": "DeepSeek-0.1.16-mac-arm64.dmg",
+      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.1.16-mac-arm64.dmg",
+      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.16/DeepSeek-0.1.16-mac-arm64.dmg",
+      "size": 0
+    },
+    {
+      "name": "DeepSeek-0.1.16-mac-x64.dmg",
+      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.1.16-mac-x64.dmg",
+      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.16/DeepSeek-0.1.16-mac-x64.dmg",
+      "size": 0
+    }
+  ]
+}

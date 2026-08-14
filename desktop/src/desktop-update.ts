@@ -12,7 +12,10 @@ import {
 export const DESKTOP_GITHUB_REPO = "zhuquan7237/zhuquan7237.github.io";
 export const DESKTOP_RELEASES_LATEST = `https://api.github.com/repos/${DESKTOP_GITHUB_REPO}/releases/latest`;
 export const DESKTOP_DOWNLOAD_PAGE = "https://dsh.zhuquan.xyz/";
+export const DESKTOP_DOWNLOAD_ORIGIN = "https://dsh.zhuquan.xyz";
+export const DESKTOP_LATEST_MANIFEST = `${DESKTOP_DOWNLOAD_ORIGIN}/dl/latest.json`;
 export const DOWNLOAD_IDLE_MS = 45_000;
+export const INSTALLER_NAME_RE = /^DeepSeek-(\d+\.\d+\.\d+)-.+\.(exe|dmg|deb|zip|AppImage|tar\.gz)$/;
 
 export type HttpFetcher = (
   url: string,
@@ -103,6 +106,43 @@ export function scoreDesktopAsset(
   return score;
 }
 
+export function domainInstallerUrl(name: string): string {
+  return `${DESKTOP_DOWNLOAD_ORIGIN}/dl/${name}`;
+}
+
+export function githubInstallerUrl(version: string, name: string): string {
+  return `https://github.com/${DESKTOP_GITHUB_REPO}/releases/download/desktop-v${version}/${name}`;
+}
+
+/** Prefer the custom domain (Cloudflare edge). GitHub is the fallback. */
+export function installerDownloadUrls(name: string, version: string): string[] {
+  return [domainInstallerUrl(name), githubInstallerUrl(version, name)];
+}
+
+export function parseLatestManifest(data: {
+  version?: string;
+  tag?: string;
+  htmlUrl?: string;
+  notes?: string;
+  assets?: Array<{ name?: string; url?: string; github?: string; size?: number }>;
+}): DesktopRelease {
+  const version = data.version || parseDesktopReleaseTag(data.tag || "");
+  if (!version) throw new Error("latest.json 没有版本号");
+  return {
+    version,
+    tag: data.tag || `desktop-v${version}`,
+    htmlUrl: data.htmlUrl || DESKTOP_DOWNLOAD_PAGE,
+    notes: (data.notes || "").trim(),
+    assets: (data.assets || [])
+      .filter((asset) => asset.name && (asset.url || asset.github))
+      .map((asset) => ({
+        name: asset.name as string,
+        url: (asset.url || asset.github) as string,
+        size: Number(asset.size || 0),
+      })),
+  };
+}
+
 export function parseGithubRelease(data: {
   tag_name?: string;
   html_url?: string;
@@ -143,6 +183,16 @@ function abortError(signal: AbortSignal): Promise<never> {
 }
 
 export async function fetchLatestDesktopRelease(fetcher: HttpFetcher = fetch): Promise<DesktopRelease> {
+  try {
+    const manifest = await fetcher(DESKTOP_LATEST_MANIFEST, {
+      headers: { Accept: "application/json", "User-Agent": "DeepSeek-Desktop" },
+    });
+    if (manifest.ok) {
+      return parseLatestManifest((await manifest.json()) as Parameters<typeof parseLatestManifest>[0]);
+    }
+  } catch {
+    // Domain manifest is preferred; GitHub API is the fallback.
+  }
   const response = await fetcher(DESKTOP_RELEASES_LATEST, {
     headers: {
       Accept: "application/vnd.github+json",
@@ -226,6 +276,27 @@ export async function downloadDesktopAsset(
   } finally {
     stopStall();
   }
+}
+
+export async function downloadDesktopAssetFromMirrors(
+  urls: string[],
+  dest: string,
+  onLog: (line: string) => void,
+  fetcher: HttpFetcher = fetch,
+  options: { knownSize?: number; stallMs?: number } = {},
+): Promise<void> {
+  let lastError: unknown;
+  for (const url of urls) {
+    try {
+      onLog(`正在从 ${new URL(url).host} 下载…`);
+      await downloadDesktopAsset(url, dest, onLog, fetcher, options);
+      return;
+    } catch (error) {
+      lastError = error;
+      onLog("这个地址失败了，正在换备用地址…");
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error("下载桌面版失败");
 }
 
 export function desktopUpdateNewer(current: string, latest: string): boolean {

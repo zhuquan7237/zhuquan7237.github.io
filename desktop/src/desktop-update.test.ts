@@ -3,13 +3,20 @@ import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import {
+  DESKTOP_DOWNLOAD_ORIGIN,
   DESKTOP_DOWNLOAD_PAGE,
+  DESKTOP_LATEST_MANIFEST,
   DESKTOP_RELEASES_LATEST,
+  domainInstallerUrl,
   downloadDesktopAsset,
+  downloadDesktopAssetFromMirrors,
   downloadStallMessage,
   fetchLatestDesktopRelease,
+  githubInstallerUrl,
+  installerDownloadUrls,
   parseDesktopReleaseTag,
   parseGithubRelease,
+  parseLatestManifest,
   pickDesktopAsset,
   scoreDesktopAsset,
   shouldPromptDesktopUpdate,
@@ -28,6 +35,62 @@ const releaseAssets = [
   "DeepSeek-0.1.8-linux-x86_64.AppImage",
   "DeepSeek-0.1.8-linux-arm64.tar.gz",
 ].map((name) => ({ name, url: `https://example.test/${name}`, size: 1 }));
+
+describe("domain installer URLs", () => {
+  it("puts the file on dsh.zhuquan.xyz and keeps GitHub as fallback", () => {
+    expect(domainInstallerUrl("DeepSeek-0.1.16-win.exe")).toBe(
+      "https://dsh.zhuquan.xyz/dl/DeepSeek-0.1.16-win.exe",
+    );
+    expect(githubInstallerUrl("0.1.16", "DeepSeek-0.1.16-win.exe")).toContain(
+      "/releases/download/desktop-v0.1.16/DeepSeek-0.1.16-win.exe",
+    );
+    expect(installerDownloadUrls("DeepSeek-0.1.16-win.exe", "0.1.16")).toEqual([
+      "https://dsh.zhuquan.xyz/dl/DeepSeek-0.1.16-win.exe",
+      "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.16/DeepSeek-0.1.16-win.exe",
+    ]);
+    expect(DESKTOP_LATEST_MANIFEST).toBe("https://dsh.zhuquan.xyz/dl/latest.json");
+    expect(DESKTOP_DOWNLOAD_ORIGIN).toBe("https://dsh.zhuquan.xyz");
+  });
+
+  it("reads the domain latest.json manifest", () => {
+    const release = parseLatestManifest({
+      version: "0.1.16",
+      tag: "desktop-v0.1.16",
+      assets: [
+        {
+          name: "DeepSeek-0.1.16-win.exe",
+          url: "https://dsh.zhuquan.xyz/dl/DeepSeek-0.1.16-win.exe",
+          github: "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.16/DeepSeek-0.1.16-win.exe",
+          size: 12,
+        },
+      ],
+    });
+    expect(release.version).toBe("0.1.16");
+    expect(release.assets[0]?.url).toContain("dsh.zhuquan.xyz/dl/");
+  });
+
+  it("falls through to the next mirror when the first host fails", async () => {
+    const dir = await mkdtemp(path.join(os.tmpdir(), "dsh-mirror-"));
+    const dest = path.join(dir, "DeepSeek-0.1.16-win.exe");
+    const logs: string[] = [];
+    try {
+      await downloadDesktopAssetFromMirrors(
+        ["https://example.test/down", "https://example.test/ok"],
+        dest,
+        (line) => logs.push(line),
+        async (url) => {
+          if (url.includes("/down")) throw new Error("blocked");
+          return bytesResponse([new Uint8Array(8).fill(3)], { "content-length": "8" });
+        },
+      );
+      expect(logs.some((line) => line.includes("example.test"))).toBe(true);
+      expect(logs.some((line) => line.includes("备用地址"))).toBe(true);
+      expect(await readFile(dest)).toHaveLength(8);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+});
 
 describe("desktop GitHub release picker", () => {
   it("reads desktop-v tags", () => {
@@ -177,5 +240,12 @@ describe("GitHub latest release", () => {
     expect(pickDesktopAsset(latest.assets, "darwin", "arm64")?.name).toMatch(/mac-arm64\.dmg$/);
     expect(pickDesktopAsset(latest.assets, "win32", "x64")?.name).toMatch(/win.*\.exe$/);
     expect(pickDesktopAsset(latest.assets, "linux", "x64")?.name).toMatch(/linux-x64\.tar\.gz$/);
+  });
+
+  it("serves a published Windows installer from the custom domain", async () => {
+    const response = await fetch("https://dsh.zhuquan.xyz/dl/DeepSeek-0.1.15-win.exe", { method: "HEAD" });
+    expect(response.ok).toBe(true);
+    expect(Number(response.headers.get("content-length") || 0)).toBeGreaterThan(10_000_000);
+    expect(response.headers.get("content-disposition") || "").toContain("DeepSeek-0.1.15-win.exe");
   });
 });

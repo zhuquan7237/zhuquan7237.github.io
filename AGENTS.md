@@ -21,7 +21,9 @@ Bump or rewrite all of these together:
 - `me.html` — if it names the version or the new feature
 - `assets/desktop-preview.png` — the README / Pages / og:image shot. Use the real maid-atelier window (official `preview/light.webp` inside Electron chrome), not the first-run API Key modal and not the old Skin Center overlay mock. Site gallery images live next to it as `assets/skin-*.webp`. When the default skin changes, replace this set and keep the author thanks on `index.html`.
 
-CI publishes the public GitHub Release from `desktop.yml` (`make_latest: true`). Confirm `/releases/latest` points at the new tag and that the installer URLs return HTTP 200.
+Public installer links use `https://dsh.zhuquan.xyz/dl/DeepSeek-X.Y.Z-win.exe` (and the matching Linux/macOS names). Do **not** commit the binaries into this repo — GitHub Pages rejects files over 100 MB. A Cloudflare Worker on `dsh.zhuquan.xyz/dl/*` streams GitHub Release assets and caches them at the edge. Keep GitHub Release URLs as fallback in `dl/latest.json`.
+
+CI publishes the public GitHub Release from `desktop.yml` (`make_latest: true`). Confirm `/releases/latest` points at the new tag and that both `https://dsh.zhuquan.xyz/dl/…` and the GitHub installer URLs return HTTP 200.
 
 `$DSH_HOME/cordis.patch.yml` (and `profiles/web/cordis.patch.yml` if present) must be a **top-level YAML array**. Official dsh throws on empty or comments-only files. Write `[]` when there are no entries; never write only `#` comments. On boot, repair a non-array file to `[]` (keep a `.bak`).
 

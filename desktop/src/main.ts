@@ -11,8 +11,9 @@ import { resolveNodeRuntime, type NodeRuntime } from "./node-runtime";
 import { appIconFile, installUserShortcuts, needsUserShortcuts } from "./desktop-integration";
 import {
   DESKTOP_DOWNLOAD_PAGE,
-  downloadDesktopAsset,
+  downloadDesktopAssetFromMirrors,
   fetchLatestDesktopRelease,
+  installerDownloadUrls,
   pickDesktopAsset,
   shouldPromptDesktopUpdate,
   type DesktopRelease,
@@ -694,7 +695,13 @@ async function installDesktopRelease(
     if (mainWindow && !mainWindow.isDestroyed()) mainWindow.setTitle(line);
   };
   try {
-    await downloadDesktopAsset(asset.url, dest, onLog, desktopFetcher, { knownSize: asset.size });
+    await downloadDesktopAssetFromMirrors(
+      installerDownloadUrls(asset.name, release.version),
+      dest,
+      onLog,
+      desktopFetcher,
+      { knownSize: asset.size },
+    );
   } finally {
     if (previousTitle && mainWindow && !mainWindow.isDestroyed()) mainWindow.setTitle(previousTitle);
     if (mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible()) closeSplash();

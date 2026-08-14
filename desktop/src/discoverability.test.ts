@@ -23,6 +23,7 @@ describe("public discoverability copy", () => {
     expect(readme).toContain("zhuquan7237/deepseek-harness-desktop");
     expect(readme).toContain("dsh.zhuquan.xyz");
     expect(index).toContain("dsh.zhuquan.xyz");
+    expect(index).toContain("dsh.zhuquan.xyz/dl/");
     expect(index).toContain("深海女仆工坊");
     expect(index).toContain("Small-tailqwq/dsh-deep-whale");
     expect(index).toContain("CC BY-NC-SA");

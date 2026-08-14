@@ -1,0 +1,60 @@
+name: Update download manifest
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  latest-json:
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.event.release.tag_name, 'desktop-v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Write dl/latest.json from the latest desktop release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python3 - <<'PY'
+          import json, os, subprocess, urllib.request
+          raw = subprocess.check_output(["gh", "api", "repos/zhuquan7237/zhuquan7237.github.io/releases/latest"], text=True)
+          rel = json.loads(raw)
+          tag = rel.get("tag_name") or ""
+          version = tag.replace("desktop-v", "").lstrip("v")
+          assets = []
+          for asset in rel.get("assets") or []:
+              name = asset.get("name") or ""
+              if not name.startswith("DeepSeek-"):
+                  continue
+              assets.append({
+                  "name": name,
+                  "url": f"https://dsh.zhuquan.xyz/dl/{name}",
+                  "github": asset.get("browser_download_url"),
+                  "size": int(asset.get("size") or 0),
+              })
+          payload = {
+              "version": version,
+              "tag": tag,
+              "htmlUrl": "https://dsh.zhuquan.xyz/dl/",
+              "notes": (rel.get("body") or "").strip().split("\n", 1)[0],
+              "assets": assets,
+          }
+          os.makedirs("dl", exist_ok=True)
+          with open("dl/latest.json", "w", encoding="utf-8") as fh:
+              json.dump(payload, fh, ensure_ascii=False, indent=2)
+              fh.write("\n")
+          print(version, len(assets))
+          PY
+      - name: Commit manifest
+        run: |
+          git add dl/latest.json
+          git diff --cached --quiet && echo "no change" && exit 0
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Update dl/latest.json for the current desktop release."
+          git push origin HEAD:main

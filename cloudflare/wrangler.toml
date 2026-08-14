@@ -1,0 +1,4 @@
+name = "dsh-release-proxy"
+main = "worker.js"
+compatibility_date = "2026-08-01"
+account_id = "45299edf15fd84659757c17a6db1e017"
