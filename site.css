@@ -1268,6 +1268,11 @@ code {
     gap: 30px;
   }
 
+  .os-picker,
+  .hero-note {
+    display: none;
+  }
+
   .hero-copy {
     max-width: 680px;
   }
@@ -1358,20 +1363,8 @@ code {
     flex: 1 1 100%;
   }
 
-  .os-picker {
-    margin-top: 14px;
-  }
-
-  .os-picker > span {
-    flex: 1 0 100%;
-  }
-
-  .os-picker button {
-    flex: 1 1 calc(50% - 6px);
-  }
-
-  .hero-note {
-    margin-top: 10px;
+  .hero-actions .button-quiet {
+    display: none;
   }
 
   .hero-grid {
