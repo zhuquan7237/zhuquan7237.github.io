@@ -13,6 +13,7 @@ files:
 asar: true
 asarUnpack:
   - resources/*.png
+  - resources/skins/**/*
 extraMetadata:
   main: dist/main.js
 forceCodeSigning: false
@@ -45,7 +46,11 @@ dmg:
       y: 220
       type: link
       path: /Applications
-    - x: 270
+    - x: 130
+      y: 400
+      type: file
+      path: resources/Read-Me-First.txt
+    - x: 410
       y: 400
       type: file
       path: resources/Open-DeepSeek.command

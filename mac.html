@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>macOS 打不开？DeepSeek 桌面版</title>
+    <meta
+      name="description"
+      content="macOS 提示 DeepSeek 已损坏时的检查步骤。不是安装包坏了，用一条终端命令去掉隔离即可。"
+    />
+    <link rel="canonical" href="https://dsh.zhuquan.xyz/mac.html" />
+    <link rel="icon" type="image/png" href="./assets/deepseek-whale.png" />
+    <link rel="stylesheet" href="./site.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="./">
+        <img src="./assets/deepseek-whale.png" alt="DeepSeek" />
+        DeepSeek Desktop
+      </a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">菜单</button>
+      <nav id="site-nav" class="nav-links">
+        <a href="./">下载</a>
+        <a href="./#skin">皮肤</a>
+        <a href="./compare.html">对照</a>
+        <a class="active" href="./mac.html">macOS</a>
+        <a href="./me.html">关于</a>
+        <a href="https://github.com/zhuquan7237/deepseek-harness-desktop">GitHub</a>
+      </nav>
+      <a class="btn primary compact" href="./#download">下载 0.1.12</a>
+    </header>
+    <main class="wrap">
+      <header class="page-hero">
+        <p class="kicker">macOS Sequoia / Tahoe</p>
+        <h1>提示「已损坏」时这样开</h1>
+        <p class="lead">
+          不是许可证没加，也不是你的安全开关没开对。macOS 会给浏览器下载的软件打隔离标记；
+          我们还没有付费做 Apple 公证，系统就把隔离后的 App 显示成损坏。
+          VS Code、Obsidian 能双击打开，是因为它们买了开发者账号并提交公证。
+        </p>
+      </header>
+
+      <section>
+        <p class="section-title">现在就做（约 1 分钟）</p>
+        <div class="steps">
+          <article class="card">
+            <div class="step-n">1</div>
+            <h2>确认芯片和安装包</h2>
+            <p>
+              左上角苹果菜单 → 关于本机。芯片是 Apple M 系列就用
+              <code>mac-arm64.dmg</code>，Intel 用 <code>mac-x64.dmg</code>。
+              下完对照 GitHub Release 的文件大小，没下完不要打开。
+            </p>
+          </article>
+          <article class="card">
+            <div class="step-n">2</div>
+            <h2>拖到「应用程序」</h2>
+            <p>打开 dmg，把 DeepSeek 拖到右边的 Applications / 应用程序。不要只在安装盘里双击用。</p>
+          </article>
+          <article class="card">
+            <div class="step-n">3</div>
+            <h2>终端去掉隔离（最稳）</h2>
+            <p>打开「终端」，整段粘贴回车。不必输入密码。</p>
+            <p>
+              <code>xattr -cr /Applications/DeepSeek.app</code><br />
+              <code>open /Applications/DeepSeek.app</code>
+            </p>
+            <p>也可以输入 <code>xattr -cr</code> 加一个空格，再把 DeepSeek 图标拖进终端窗口。</p>
+          </article>
+          <article class="card">
+            <div class="step-n">4</div>
+            <h2>仍要打开</h2>
+            <p>
+              若还提示无法验证：系统设置 → 隐私与安全性 → 往下滚 →「仍要打开」。
+              Sequoia 上右键「打开」经常没用。不要关 SIP，也不要执行
+              <code>spctl --master-disable</code>。
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section>
+        <p class="section-title">这和「权限」的区别</p>
+        <div class="grid-3">
+          <article class="card">
+            <h2>损坏 / 无法验证</h2>
+            <p>Gatekeeper 隔离。用上面的 <code>xattr</code>。不是缺软件许可证。</p>
+          </article>
+          <article class="card">
+            <h2>打开之后才问的权限</h2>
+            <p>文件与文件夹、网络。能启动后再允许即可。现在打不开，先不用开「完全磁盘访问」。</p>
+          </article>
+          <article class="card">
+            <h2>以后怎样双击无提示</h2>
+            <p>加入 Apple Developer Program（年费），用 Developer ID 签名并公证。安装盘里的脚本去不掉这个要求。</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="faq">
+        <p class="section-title">把检查结果发我</p>
+        <p>若还是打不开，把下面四行的输出发过来（不含任何 API 密钥）：</p>
+        <p>
+          <code>uname -m</code><br />
+          <code>sw_vers</code><br />
+          <code>ls -l ~/Downloads/DeepSeek*.dmg /Applications/DeepSeek.app</code><br />
+          <code>xattr -l /Applications/DeepSeek.app</code>
+        </p>
+        <p>
+          <code>xattr</code> 里如果有 <code>com.apple.quarantine</code>，说明还在隔离，把第 3 步再做一次。
+        </p>
+      </section>
+    </main>
+    <footer>
+      <span>DeepSeek Harness Desktop 0.1.12 · 作者 <a href="./me.html">朱泉</a></span>
+      <a href="./">返回下载页</a>
+    </footer>
+    <script src="./site.js"></script>
+  </body>
+</html>
