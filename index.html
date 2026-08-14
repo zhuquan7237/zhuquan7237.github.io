@@ -46,7 +46,7 @@
             <a href="https://github.com/deepseek-ai/deepseek-harness">@deepseek-ai/dsh</a>。
           </p>
           <div class="actions">
-            <a class="btn primary" id="hero-download" href="https://github.com/zhuquan7237/zhuquan7237.github.io/releases/latest">下载 0.1.10</a>
+            <a class="btn primary" id="hero-download" href="https://github.com/zhuquan7237/zhuquan7237.github.io/releases/latest">下载 0.1.11</a>
             <a class="btn ghost" href="https://github.com/zhuquan7237/zhuquan7237.github.io">查看仓库</a>
           </div>
         </div>
@@ -62,19 +62,19 @@
           <article class="card" data-os="win">
             <h2>Windows</h2>
             <p>安装包会创建桌面快捷方式和开始菜单。若 SmartScreen 提示未签名，选「更多信息 → 仍要运行」。</p>
-            <a class="os" href="https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.10/DeepSeek-0.1.10-win.exe">DeepSeek-0.1.10-win.exe →</a>
+            <a class="os" href="https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.11/DeepSeek-0.1.11-win.exe">DeepSeek-0.1.11-win.exe →</a>
           </article>
           <article class="card" data-os="linux">
             <h2>Linux</h2>
             <p>推荐 tar.gz 或 deb。AppImage 在 Ubuntu 24.04 常缺 libfuse2。便携版第一次打开会自动放桌面图标。</p>
-            <a class="os" href="https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.10/DeepSeek-0.1.10-linux-x64.tar.gz">x64 tar.gz →</a><br />
-            <a class="os" href="https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.10/DeepSeek-0.1.10-linux-amd64.deb">amd64 deb →</a>
+            <a class="os" href="https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.11/DeepSeek-0.1.11-linux-x64.tar.gz">x64 tar.gz →</a><br />
+            <a class="os" href="https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.11/DeepSeek-0.1.11-linux-amd64.deb">amd64 deb →</a>
           </article>
           <article class="card" data-os="mac">
             <h2>macOS</h2>
             <p>把 App 拖进「应用程序」。若提示「文件已损坏」，双击安装盘里的 Open-DeepSeek.command，或到系统设置 → 隐私与安全性 → 仍要打开。</p>
-            <a class="os" href="https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.10/DeepSeek-0.1.10-mac-arm64.dmg">Apple Silicon →</a><br />
-            <a class="os" href="https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.10/DeepSeek-0.1.10-mac-x64.dmg">Intel →</a>
+            <a class="os" href="https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.11/DeepSeek-0.1.11-mac-arm64.dmg">Apple Silicon →</a><br />
+            <a class="os" href="https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.11/DeepSeek-0.1.11-mac-x64.dmg">Intel →</a>
           </article>
         </div>
       </section>
@@ -155,11 +155,20 @@
         </details>
         <details>
           <summary>要不要 git clone？</summary>
-          <p>不用。请直接下载 0.1.10 安装包。不要用 0.1.0–0.1.9。装好后菜单里可以检查桌面版更新。</p>
+          <p>不用。请直接下载 0.1.11 安装包。不要用 0.1.0–0.1.10。装好后菜单里可以检查桌面版更新。</p>
         </details>
         <details>
           <summary>macOS 说文件已损坏？</summary>
-          <p>不是下坏了。旧版没做完整签名，系统会把隔离的 App 显示成已损坏。请用 0.1.10，并双击 DMG 里的 Open-DeepSeek.command。</p>
+          <p>不是下坏了。旧版没做完整签名，系统会把隔离的 App 显示成已损坏。请用 0.1.11，并双击 DMG 里的 Open-DeepSeek.command。</p>
+        </details>
+        <details>
+          <summary>检查更新后弹出 dsh exited 1 / cordis.patch.yml？</summary>
+          <p>
+            这是 0.1.10 的问题：皮肤补丁写成了只有注释的文件，官方 dsh 要求顶层必须是 YAML 数组。
+            请改用 0.1.11。若暂时打不开，把
+            <code>dsh-home/cordis.patch.yml</code>
+            改成 <code>[]</code> 或删掉后重启。
+          </p>
         </details>
         <details>
           <summary>API Key 在哪拿？</summary>
@@ -178,7 +187,7 @@
       </section>
 
       <footer>
-        <span>DeepSeek Harness Desktop 0.1.10 · 作者 <a href="./me.html">朱泉</a></span>
+        <span>DeepSeek Harness Desktop 0.1.11 · 作者 <a href="./me.html">朱泉</a></span>
         <span>
           <a href="https://github.com/zhuquan7237/zhuquan7237.github.io/releases/latest">全部安装包</a>
           ·
@@ -196,11 +205,11 @@
         if (/Mac/i.test(platform) || /Mac OS X/i.test(ua)) os = "mac";
         else if (/Linux/i.test(platform) || /Linux/i.test(ua)) os = "linux";
         var links = {
-          win: "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.10/DeepSeek-0.1.10-win.exe",
-          linux: "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.10/DeepSeek-0.1.10-linux-x64.tar.gz",
+          win: "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.11/DeepSeek-0.1.11-win.exe",
+          linux: "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.11/DeepSeek-0.1.11-linux-x64.tar.gz",
           mac: /ARM|aarch64|Apple/i.test(ua + platform)
-            ? "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.10/DeepSeek-0.1.10-mac-arm64.dmg"
-            : "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.10/DeepSeek-0.1.10-mac-x64.dmg",
+            ? "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.11/DeepSeek-0.1.11-mac-arm64.dmg"
+            : "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.11/DeepSeek-0.1.11-mac-x64.dmg",
         };
         var labels = { win: "下载 Windows 安装包", linux: "下载 Linux tar.gz", mac: "下载 macOS 安装包" };
         var hero = document.getElementById("hero-download");

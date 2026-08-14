@@ -13,10 +13,10 @@
 
 [主页 / 下载](https://zhuquan7237.github.io) ·
 [关于作者](https://zhuquan7237.github.io/me.html) ·
-[下载 0.1.10](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/latest) ·
-[Windows](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.10/DeepSeek-0.1.10-win.exe) ·
-[Linux tar.gz](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.10/DeepSeek-0.1.10-linux-x64.tar.gz) ·
-[macOS Apple Silicon](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.10/DeepSeek-0.1.10-mac-arm64.dmg)
+[下载 0.1.11](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/latest) ·
+[Windows](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.11/DeepSeek-0.1.11-win.exe) ·
+[Linux tar.gz](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.11/DeepSeek-0.1.11-linux-x64.tar.gz) ·
+[macOS Apple Silicon](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.11/DeepSeek-0.1.11-mac-arm64.dmg)
 
 <img src="assets/desktop-preview.png" alt="DeepSeek Harness 桌面版运行截图" width="920" />
 
@@ -38,19 +38,19 @@
 
 | 系统 | 下载 | 说明 |
 | --- | --- | --- |
-| Windows | [DeepSeek-0.1.10-win.exe](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.10/DeepSeek-0.1.10-win.exe) | 会创建桌面和开始菜单快捷方式。SmartScreen 选「更多信息 → 仍要运行」 |
-| Linux | [x64 tar.gz](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.10/DeepSeek-0.1.10-linux-x64.tar.gz) · [deb](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.10/DeepSeek-0.1.10-linux-amd64.deb) | 优先 tar.gz 或 deb。AppImage 在 Ubuntu 24.04 常缺 libfuse2 |
-| macOS | [arm64 dmg](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.10/DeepSeek-0.1.10-mac-arm64.dmg) · [Intel dmg](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.10/DeepSeek-0.1.10-mac-x64.dmg) | 拖到「应用程序」。若提示已损坏，双击 DMG 里的 Open-DeepSeek.command |
+| Windows | [DeepSeek-0.1.11-win.exe](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.11/DeepSeek-0.1.11-win.exe) | 会创建桌面和开始菜单快捷方式。SmartScreen 选「更多信息 → 仍要运行」 |
+| Linux | [x64 tar.gz](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.11/DeepSeek-0.1.11-linux-x64.tar.gz) · [deb](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.11/DeepSeek-0.1.11-linux-amd64.deb) | 优先 tar.gz 或 deb。AppImage 在 Ubuntu 24.04 常缺 libfuse2 |
+| macOS | [arm64 dmg](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.11/DeepSeek-0.1.11-mac-arm64.dmg) · [Intel dmg](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.11/DeepSeek-0.1.11-mac-x64.dmg) | 拖到「应用程序」。若提示已损坏，双击 DMG 里的 Open-DeepSeek.command |
 
 ```sh
 # Linux
-tar -xzf DeepSeek-0.1.10-linux-x64.tar.gz
-./DeepSeek-0.1.10-linux-x64/DeepSeek
+tar -xzf DeepSeek-0.1.11-linux-x64.tar.gz
+./DeepSeek-0.1.11-linux-x64/DeepSeek
 ```
 
 首次启动需要联网大约 1–3 分钟（下载 Node、官方 dsh，以及默认皮肤）。API Key 在官方界面里填写，或打开 [platform.deepseek.com](https://platform.deepseek.com)。中文系统或中国时区会默认走国内 npm 镜像。
 
-请用 **0.1.10**。不要用 0.1.0–0.1.9。
+请用 **0.1.11**。不要用 0.1.0–0.1.10。
 
 ## 皮肤中心与版权
 
