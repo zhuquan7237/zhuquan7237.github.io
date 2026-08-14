@@ -1,4 +1,4 @@
-const INSTALLER = /^DeepSeek-(\d+\.\d+\.\d+)-.+\.(exe|dmg|deb|zip|AppImage|tar\.gz)$/;
+const INSTALLER = /^DeepSeek-(\d+\.\d+\.\d+)-.+\.(exe|dmg|deb|zip|AppImage|tar\.gz|sh)$/;
 const GITHUB_REPO = "zhuquan7237/zhuquan7237.github.io";
 
 export default {
@@ -11,7 +11,11 @@ export default {
       const raw = `https://raw.githubusercontent.com/${GITHUB_REPO}/main/dl/${file}`;
       const page = await fetch(raw, { headers: { "User-Agent": "DeepSeek-Desktop-Proxy" } });
       if (!page.ok) return new Response("Not found", { status: 404 });
-      const type = file.endsWith(".json") ? "application/json; charset=utf-8" : "text/html; charset=utf-8";
+      const type = file.endsWith(".json")
+        ? "application/json; charset=utf-8"
+        : file.endsWith(".sh")
+          ? "text/x-shellscript; charset=utf-8"
+          : "text/html; charset=utf-8";
       return new Response(page.body, {
         status: 200,
         headers: { "Content-Type": type, "Cache-Control": "public, max-age=300" },
