@@ -18,7 +18,7 @@
 [Linux tar.gz](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.11/DeepSeek-0.1.11-linux-x64.tar.gz) ·
 [macOS Apple Silicon](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.11/DeepSeek-0.1.11-mac-arm64.dmg)
 
-<img src="assets/desktop-preview.png" alt="DeepSeek Harness 桌面版运行截图" width="920" />
+<img src="assets/desktop-preview.png" alt="DeepSeek Harness 桌面版 0.1.11：对话窗口与右上角皮肤中心" width="920" />
 
 </div>
 
