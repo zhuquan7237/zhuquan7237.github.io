@@ -23,6 +23,11 @@ describe("public discoverability copy", () => {
     expect(readme).toContain("zhuquan7237/deepseek-harness-desktop");
     expect(readme).toContain("dsh.zhuquan.xyz");
     expect(index).toContain("dsh.zhuquan.xyz");
+    expect(index).toContain("深海女仆工坊");
+    expect(index).toContain("Small-tailqwq/dsh-deep-whale");
+    expect(index).toContain("CC BY-NC-SA");
+    expect(index).toContain("上善");
+    expect(index).toContain("assets/desktop-preview.png");
     const cname = await readFile(path.join(root, "CNAME"), "utf8");
     expect(cname.trim()).toBe("dsh.zhuquan.xyz");
   });

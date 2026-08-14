@@ -13,29 +13,31 @@
     <link rel="stylesheet" href="./site.css" />
   </head>
   <body>
-    <nav>
+    <header class="topbar">
       <a class="brand" href="./">
         <img src="./assets/deepseek-whale.png" alt="DeepSeek" />
         DeepSeek Desktop
       </a>
-      <div class="nav-links">
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">菜单</button>
+      <nav id="site-nav" class="nav-links">
         <a href="./">下载</a>
-        <a href="./compare.html">和其他桌面版</a>
-        <a class="active" href="./mac.html">macOS 打不开</a>
-        <a href="./me.html">关于朱泉</a>
-      </div>
-    </nav>
-    <main>
-      <header class="hero" style="grid-template-columns: 1fr">
-        <div>
-          <p class="kicker">macOS Sequoia / Tahoe</p>
-          <h1>提示「已损坏」时这样开</h1>
-          <p class="lead">
-            不是许可证没加，也不是你的安全开关没开对。macOS 会给浏览器下载的软件打隔离标记；
-            我们还没有付费做 Apple 公证，系统就把隔离后的 App 显示成损坏。
-            VS Code、Obsidian 能双击打开，是因为它们买了开发者账号并提交公证。
-          </p>
-        </div>
+        <a href="./#skin">皮肤</a>
+        <a href="./compare.html">对照</a>
+        <a class="active" href="./mac.html">macOS</a>
+        <a href="./me.html">关于</a>
+        <a href="https://github.com/zhuquan7237/deepseek-harness-desktop">GitHub</a>
+      </nav>
+      <a class="btn primary compact" href="./#download">下载 0.1.12</a>
+    </header>
+    <main class="wrap">
+      <header class="page-hero">
+        <p class="kicker">macOS Sequoia / Tahoe</p>
+        <h1>提示「已损坏」时这样开</h1>
+        <p class="lead">
+          不是许可证没加，也不是你的安全开关没开对。macOS 会给浏览器下载的软件打隔离标记；
+          我们还没有付费做 Apple 公证，系统就把隔离后的 App 显示成损坏。
+          VS Code、Obsidian 能双击打开，是因为它们买了开发者账号并提交公证。
+        </p>
       </header>
 
       <section>
@@ -109,5 +111,10 @@
         </p>
       </section>
     </main>
+    <footer>
+      <span>DeepSeek Harness Desktop 0.1.12 · 作者 <a href="./me.html">朱泉</a></span>
+      <a href="./">返回下载页</a>
+    </footer>
+    <script src="./site.js"></script>
   </body>
 </html>

@@ -6,14 +6,14 @@
     <title>DeepSeek Harness Desktop · 桌面版下载（Windows / Linux / macOS）</title>
     <meta
       name="description"
-      content="基于官方 DeepSeek Harness 打造的 Electron 桌面端。Windows / Linux / macOS 开箱即用，引擎从 npm 更新官方 @deepseek-ai/dsh，不整仓拷贝官方源码。"
+      content="基于官方 DeepSeek Harness 打造的 Electron 桌面端。Windows / Linux / macOS 开箱即用，引擎从 npm 更新官方 @deepseek-ai/dsh，不整仓拷贝官方源码。默认皮肤「深海女仆工坊」。"
     />
     <meta
       name="keywords"
-      content="DeepSeek Harness Desktop, DeepSeek Harness 桌面版, DeepSeek Harness 桌面端, dsh desktop, dsh 桌面版, DeepSeek Harness 下载, Electron DeepSeek, @deepseek-ai/dsh, DeepSeek Harness Windows, DeepSeek Harness Linux, DeepSeek Harness macOS"
+      content="DeepSeek Harness Desktop, DeepSeek Harness 桌面版, DeepSeek Harness 桌面端, dsh desktop, dsh 桌面版, DeepSeek Harness 下载, Electron DeepSeek, @deepseek-ai/dsh, DeepSeek Harness Windows, DeepSeek Harness Linux, DeepSeek Harness macOS, 深海女仆工坊"
     />
     <meta property="og:title" content="DeepSeek Harness Desktop · 桌面版" />
-    <meta property="og:description" content="基于官方 DeepSeek Harness 的 Electron 桌面端。Windows / Linux / macOS 开箱即用，引擎从 npm 更新。" />
+    <meta property="og:description" content="基于官方 DeepSeek Harness 的 Electron 桌面端。打开就是「深海女仆工坊」。Windows / Linux / macOS 开箱即用。" />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://dsh.zhuquan.xyz/" />
     <meta property="og:image" content="https://dsh.zhuquan.xyz/assets/desktop-preview.png" />
@@ -24,41 +24,123 @@
     <link rel="stylesheet" href="./site.css" />
   </head>
   <body>
-    <nav>
+    <header class="topbar">
       <a class="brand" href="./">
         <img src="./assets/deepseek-whale.png" alt="DeepSeek" />
         DeepSeek Desktop
       </a>
-      <div class="nav-links">
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">菜单</button>
+      <nav id="site-nav" class="nav-links">
         <a class="active" href="./">下载</a>
-        <a href="./compare.html">和其他桌面版</a>
-        <a href="./mac.html">macOS 打不开</a>
-        <a href="./me.html">关于朱泉</a>
+        <a href="#skin">皮肤</a>
+        <a href="./compare.html">对照</a>
+        <a href="./mac.html">macOS</a>
+        <a href="./me.html">关于</a>
         <a href="https://github.com/zhuquan7237/deepseek-harness-desktop">GitHub</a>
+      </nav>
+      <a class="btn primary compact" href="#download">下载 0.1.12</a>
+    </header>
+
+    <section class="splash">
+      <img class="splash-palace" src="./assets/skin-palace-night.webp" alt="" />
+      <img class="hero-maid left" src="./assets/skin-maid-left.webp" alt="" />
+      <img class="hero-maid right" src="./assets/skin-maid-right.webp" alt="" />
+      <div class="splash-copy reveal">
+        <p class="eyebrow">DeepSeek Harness Desktop · Electron 桌面端</p>
+        <h1>探索未至之境</h1>
+        <div class="preview-tag">预览版 · 0.1.12</div>
+        <p class="lead">
+          基于官方 DeepSeek Harness 打造的 Electron 桌面端，Windows / Linux / macOS 开箱即用。
+          不用装 Node，也不用 <code>git clone</code>。引擎始终从 npm 安装
+          <a href="https://github.com/deepseek-ai/deepseek-harness">@deepseek-ai/dsh</a>，不整仓拷贝官方源码。
+          打开窗口，默认就是「深海女仆工坊」。
+        </p>
+        <div class="actions">
+          <a class="btn primary" data-hero-download href="https://github.com/zhuquan7237/zhuquan7237.github.io/releases/latest">下载 0.1.12</a>
+          <a class="btn gold" href="#skin">看默认皮肤</a>
+          <a class="btn ghost" href="https://github.com/zhuquan7237/zhuquan7237.github.io">查看仓库</a>
+        </div>
+        <p class="credit-line">
+          皮肤来自
+          <a href="https://github.com/Small-tailqwq/dsh-deep-whale">Small-tailqwq/dsh-deep-whale</a>
+          · 感谢一创上善、二创 ZipZipPipe、三创 Small-tailqwq
+        </p>
       </div>
-    </nav>
+      <figure class="app-window reveal" data-lightbox>
+        <img
+          src="./assets/desktop-preview.png"
+          alt="DeepSeek Harness 桌面版 0.1.12：默认皮肤「深海女仆工坊」窗口"
+        />
+        <figcaption>0.1.12 窗口 · 默认皮肤「深海女仆工坊」· 点击放大</figcaption>
+      </figure>
+    </section>
+
     <main>
-      <header class="hero">
-        <div>
-          <p class="kicker">DeepSeek Harness Desktop · Electron 桌面端</p>
-          <h1>DeepSeek Harness 桌面版</h1>
-          <p class="lead">
-            基于官方 DeepSeek Harness 打造的 Electron 桌面端，Windows / Linux / macOS 开箱即用。
-            不用装 Node，也不用 <code>git clone</code>。引擎始终从 npm 安装
-            <a href="https://github.com/deepseek-ai/deepseek-harness">@deepseek-ai/dsh</a>，不整仓拷贝官方源码。
-          </p>
-          <div class="actions">
-            <a class="btn primary" id="hero-download" href="https://github.com/zhuquan7237/zhuquan7237.github.io/releases/latest">下载 0.1.12</a>
-            <a class="btn ghost" href="https://github.com/zhuquan7237/zhuquan7237.github.io">查看仓库</a>
+      <section id="skin" class="wrap skin-show">
+        <div class="section-head">
+          <div>
+            <p class="section-title">默认皮肤</p>
+            <h2>深海女仆工坊</h2>
+          </div>
+          <div class="skin-toggle" role="tablist" aria-label="日夜预览">
+            <button type="button" class="is-on" data-skin-set="dark">夜间大厅</button>
+            <button type="button" data-skin-set="light">日间大厅</button>
           </div>
         </div>
-        <figure class="shot">
-          <img src="./assets/desktop-preview.png" alt="DeepSeek Harness 桌面版 0.1.12：对话窗口与右上角皮肤中心" />
-          <figcaption class="caption">0.1.12 界面 · 官方 Harness 窗口，右上角皮肤中心默认「深海女仆工坊」</figcaption>
-        </figure>
-      </header>
+        <div class="skin-frame" data-skin-frame>
+          <img
+            src="./assets/skin-preview-dark.webp"
+            data-skin="dark"
+            data-lightbox
+            alt="深海女仆工坊夜间大厅"
+          />
+          <img
+            src="./assets/skin-preview-light.webp"
+            data-skin="light"
+            data-lightbox
+            alt="深海女仆工坊日间大厅"
+          />
+        </div>
+        <div class="thanks">
+          <article class="card">
+            <h2>这套画面不是我画的，谢谢作者</h2>
+            <p>
+              打开软件后你看见的双女仆、宫殿大厅、蕾丝侧栏，全部来自
+              <a href="https://github.com/Small-tailqwq/dsh-deep-whale">Small-tailqwq/dsh-deep-whale</a>
+              的「深海女仆工坊」。我只是把成品打进安装包，让第一次打开不用再去 GitHub 拉皮肤。
+            </p>
+            <p>
+              角色从一创的鲸鱼娘，到二创的女仆设计，再到三创做成可切换的 DeepSeek Harness 皮肤。
+              没有这三位作者，这个桌面端就只是一个普通窗口。谢谢你们把这样完整的世界交出来。
+            </p>
+            <p>
+              换皮：窗口右上角鲸鱼按钮，或菜单「皮肤」。也可以从文件夹、GitHub 地址导入新皮肤。
+              不需要皮肤时，点列表里的「关闭皮肤中心」。
+            </p>
+            <p class="license-note">
+              该皮肤以 <strong>CC BY-NC-SA 4.0</strong> 发布：必须保留完整署名链，<strong>禁止商用</strong>，衍生作品需相同方式共享。
+              脚手架来自
+              <a href="https://github.com/zhu1090093659/dsh-web-ui">zhu1090093659/dsh-web-ui</a>。
+            </p>
+          </article>
+          <div class="chain">
+            <a href="https://www.pixiv.net/users/62155430">
+              一创 · 上善
+              <small>鲸鱼娘角色形象原作 · Pixiv / Bilibili 上善无形</small>
+            </a>
+            <a href="https://www.pixiv.net/users/18604994">
+              二创 · ZipZipPipe
+              <small>加入 DeepSeek 元素的女仆鲸鱼娘二次设计</small>
+            </a>
+            <a href="https://github.com/Small-tailqwq/dsh-deep-whale">
+              三创 · Small-tailqwq
+              <small>做成 Harness 皮肤 · dsh-deep-whale</small>
+            </a>
+          </div>
+        </div>
+      </section>
 
-      <section id="download">
+      <section id="download" class="wrap">
         <p class="section-title">选一个安装包</p>
         <div class="downloads">
           <article class="card" data-os="win">
@@ -81,7 +163,7 @@
         </div>
       </section>
 
-      <section>
+      <section class="wrap">
         <p class="section-title">怎么用</p>
         <div class="steps">
           <article class="card">
@@ -102,7 +184,7 @@
         </div>
       </section>
 
-      <section>
+      <section class="wrap">
         <p class="section-title">主要功能</p>
         <div class="grid-2">
           <article class="card">
@@ -124,7 +206,7 @@
         </div>
       </section>
 
-      <section>
+      <section class="wrap">
         <p class="section-title">为什么不是再 clone 一份官方仓库</p>
         <div class="grid-3">
           <article class="card">
@@ -142,9 +224,9 @@
         </div>
       </section>
 
-      <section>
+      <section class="wrap">
         <p class="section-title">和其他社区桌面版怎么选</p>
-        <p class="lead" style="max-width:none;margin-bottom:18px;">
+        <p class="lead" style="max-width:none;margin:0 0 18px;text-align:left;">
           搜「DeepSeek Harness Desktop」会看到好几个同名仓库。有的把官方源码整仓拷进自己的 GitHub，星标涨得快；这个项目只做薄壳，安装包和源码都在这里。
           对照表：<a href="./compare.html">和其他桌面版</a>。
         </p>
@@ -181,36 +263,7 @@
         </table>
       </section>
 
-      <section>
-        <p class="section-title">皮肤中心与版权</p>
-        <div class="grid-3">
-          <article class="card">
-            <h2>右上角圆形按钮</h2>
-            <p>对话窗口右上角点一下，皮肤列表带过渡动画弹出。点一张就能换，也可以从文件夹或 GitHub 地址导入新皮肤。</p>
-          </article>
-          <article class="card">
-            <h2>默认：深海女仆工坊</h2>
-            <p>
-              来自
-              <a href="https://github.com/Small-tailqwq/dsh-deep-whale">Small-tailqwq/dsh-deep-whale</a>。
-              不喜欢可以点皮肤列表里的「关闭皮肤中心」，或用菜单「皮肤」。
-            </p>
-          </article>
-          <article class="card">
-            <h2>版权出处</h2>
-            <p>
-              CC BY-NC-SA 4.0，禁止商用。署名链：一创
-              <a href="https://www.pixiv.net/users/62155430">上善</a>
-              → 二创
-              <a href="https://www.pixiv.net/users/18604994">ZipZipPipe</a>
-              → 三创 Small-tailqwq。脚手架来自
-              <a href="https://github.com/zhu1090093659/dsh-web-ui">dsh-web-ui</a>，本软件把皮肤成品打进安装包。
-            </p>
-          </article>
-        </div>
-      </section>
-
-      <section class="faq">
+      <section class="wrap faq">
         <p class="section-title">常见问题</p>
         <details>
           <summary>搜 DeepSeek Harness Desktop 怎么找到这个项目？</summary>
@@ -272,55 +325,38 @@
             <a href="https://github.com/Small-tailqwq/dsh-deep-whale">Small-tailqwq/dsh-deep-whale</a>，
             以 CC BY-NC-SA 4.0 发布，<strong>禁止商用</strong>。
             角色形象一创是上善，二创是 ZipZipPipe，三创是 Small-tailqwq。
-            可在皮肤列表、菜单「皮肤」或引擎设置里关闭皮肤中心。
+            可在皮肤列表、菜单「皮肤」或引擎设置里关闭皮肤中心。完整致谢见本页
+            <a href="#skin">皮肤</a>一节。
           </p>
         </details>
       </section>
-
-      <footer>
-        <span>DeepSeek Harness Desktop 0.1.12 · 作者 <a href="./me.html">朱泉</a></span>
-        <span>
-          <a href="https://github.com/zhuquan7237/zhuquan7237.github.io/releases/latest">全部安装包</a>
-          ·
-          <a href="./compare.html">和其他桌面版</a>
-          ·
-          <a href="./mac.html">macOS 打不开</a>
-          ·
-          <a href="./app/">浏览器预览</a>
-          ·
-          <a href="https://platform.deepseek.com">API Key</a>
-        </span>
-      </footer>
     </main>
-    <script>
-      (function () {
-        var ua = navigator.userAgent || "";
-        var platform = (navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || "";
-        var os = "win";
-        if (/Mac/i.test(platform) || /Mac OS X/i.test(ua)) os = "mac";
-        else if (/Linux/i.test(platform) || /Linux/i.test(ua)) os = "linux";
-        var links = {
-          win: "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.12/DeepSeek-0.1.12-win.exe",
-          linux: "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.12/DeepSeek-0.1.12-linux-x64.tar.gz",
-          mac: /ARM|aarch64|Apple/i.test(ua + platform)
-            ? "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.12/DeepSeek-0.1.12-mac-arm64.dmg"
-            : "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.12/DeepSeek-0.1.12-mac-x64.dmg",
-        };
-        var labels = { win: "下载 Windows 安装包", linux: "下载 Linux tar.gz", mac: "下载 macOS 安装包" };
-        var hero = document.getElementById("hero-download");
-        if (hero) {
-          hero.href = links[os];
-          hero.textContent = labels[os];
-        }
-        document.querySelectorAll(".card[data-os]").forEach(function (card) {
-          if (card.getAttribute("data-os") !== os) return;
-          card.classList.add("recommended");
-          var badge = document.createElement("span");
-          badge.className = "badge";
-          badge.textContent = "适合这台电脑";
-          card.appendChild(badge);
-        });
-      })();
-    </script>
+
+    <footer>
+      <span>
+        DeepSeek Harness Desktop 0.1.12 · 作者 <a href="./me.html">朱泉</a>
+        · 皮肤致谢 <a href="#skin">上善 / ZipZipPipe / Small-tailqwq</a>
+      </span>
+      <span>
+        <a href="https://github.com/zhuquan7237/zhuquan7237.github.io/releases/latest">全部安装包</a>
+        ·
+        <a href="./compare.html">和其他桌面版</a>
+        ·
+        <a href="./mac.html">macOS 打不开</a>
+        ·
+        <a href="./app/">浏览器预览</a>
+        ·
+        <a href="https://platform.deepseek.com">API Key</a>
+      </span>
+    </footer>
+
+    <div class="dock">
+      <span>DeepSeek Desktop 0.1.12</span>
+      <a class="btn primary compact" data-hero-download href="https://github.com/zhuquan7237/zhuquan7237.github.io/releases/latest">下载安装包</a>
+    </div>
+    <div class="lightbox" role="dialog" aria-modal="true" aria-label="放大预览">
+      <img alt="" />
+    </div>
+    <script src="./site.js"></script>
   </body>
 </html>

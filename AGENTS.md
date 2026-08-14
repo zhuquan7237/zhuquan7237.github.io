@@ -19,7 +19,7 @@ Bump or rewrite all of these together:
 - `index.html` — hero button, OS cards, FAQ, footer, and the JS `links` map
 - `mac.html` — if macOS Gatekeeper /「已损坏」说明有变
 - `me.html` — if it names the version or the new feature
-- `assets/desktop-preview.png` — the README / Pages / og:image shot. When the window or skin UI changes, regenerate it from `desktop/resources/product-preview.html` (headless Chrome, 1424×913). Do not leave the old first-run API Key modal as the product photo.
+- `assets/desktop-preview.png` — the README / Pages / og:image shot. Use the real maid-atelier window (official `preview/light.webp` inside Electron chrome), not the first-run API Key modal and not the old Skin Center overlay mock. Site gallery images live next to it as `assets/skin-*.webp`. When the default skin changes, replace this set and keep the author thanks on `index.html`.
 
 CI publishes the public GitHub Release from `desktop.yml` (`make_latest: true`). Confirm `/releases/latest` points at the new tag and that the installer URLs return HTTP 200.
 

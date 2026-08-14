@@ -23,34 +23,35 @@
     <link rel="stylesheet" href="./site.css" />
   </head>
   <body>
-    <nav>
+    <header class="topbar">
       <a class="brand" href="./">
         <img src="./assets/deepseek-whale.png" alt="DeepSeek" />
         DeepSeek Desktop
       </a>
-      <div class="nav-links">
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">菜单</button>
+      <nav id="site-nav" class="nav-links">
         <a href="./">下载</a>
-        <a class="active" href="./compare.html">和其他桌面版</a>
-        <a href="./mac.html">macOS 打不开</a>
-        <a href="./me.html">关于朱泉</a>
+        <a href="./#skin">皮肤</a>
+        <a class="active" href="./compare.html">对照</a>
+        <a href="./mac.html">macOS</a>
+        <a href="./me.html">关于</a>
         <a href="https://github.com/zhuquan7237/deepseek-harness-desktop">GitHub</a>
-      </div>
-    </nav>
-    <main>
-      <header class="hero" style="grid-template-columns: 1fr">
-        <div>
-          <p class="kicker">DeepSeek Harness Desktop · 怎么选</p>
-          <h1>和其他社区桌面版的区别</h1>
-          <p class="lead">
-            官方 DeepSeek Harness 只有命令行和本地网页。社区里一下子出现了很多同名
-            Electron 桌面端。这个项目是基于官方引擎的薄壳，不整仓拷贝官方源码。
-            搜「DeepSeek Harness Desktop」时，星标高的仓库会排在前面。
-            这个项目不跟他们比星标，只把差别写清楚，方便你选对安装包。
-          </p>
-          <div class="actions">
-            <a class="btn primary" href="./">去下载 0.1.12</a>
-            <a class="btn ghost" href="https://github.com/zhuquan7237/deepseek-harness-desktop">打开搜索名仓库</a>
-          </div>
+      </nav>
+      <a class="btn primary compact" href="./#download">下载 0.1.12</a>
+    </header>
+    <main class="wrap">
+      <header class="page-hero">
+        <p class="kicker">DeepSeek Harness Desktop · 怎么选</p>
+        <h1>和其他社区桌面版的区别</h1>
+        <p class="lead">
+          官方 DeepSeek Harness 只有命令行和本地网页。社区里一下子出现了很多同名
+          Electron 桌面端。这个项目是基于官方引擎的薄壳，不整仓拷贝官方源码。
+          搜「DeepSeek Harness Desktop」时，星标高的仓库会排在前面。
+          这个项目不跟他们比星标，只把差别写清楚，方便你选对安装包。
+        </p>
+        <div class="actions">
+          <a class="btn primary" href="./">去下载 0.1.12</a>
+          <a class="btn ghost" href="https://github.com/zhuquan7237/deepseek-harness-desktop">打开搜索名仓库</a>
         </div>
       </header>
 
@@ -174,17 +175,19 @@
           </article>
         </div>
       </section>
-
-      <footer>
-        <span>DeepSeek Harness Desktop 0.1.12 · 作者 <a href="./me.html">朱泉</a></span>
-        <span>
-          <a href="./">下载</a>
-          ·
-          <a href="./mac.html">macOS 打不开</a>
-          ·
-          <a href="https://github.com/zhuquan7237/deepseek-harness-desktop">GitHub</a>
-        </span>
-      </footer>
     </main>
+    <footer>
+      <span>DeepSeek Harness Desktop 0.1.12 · 作者 <a href="./me.html">朱泉</a></span>
+      <span>
+        <a href="./">下载</a>
+        ·
+        <a href="./#skin">皮肤致谢</a>
+        ·
+        <a href="./mac.html">macOS 打不开</a>
+        ·
+        <a href="https://github.com/zhuquan7237/deepseek-harness-desktop">GitHub</a>
+      </span>
+    </footer>
+    <script src="./site.js"></script>
   </body>
 </html>

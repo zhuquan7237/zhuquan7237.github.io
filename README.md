@@ -18,7 +18,7 @@ Windows · Linux · macOS 开箱即用。引擎从 npm 安装官方 [`@deepseek-
 [Linux tar.gz](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.12/DeepSeek-0.1.12-linux-x64.tar.gz) ·
 [macOS Apple Silicon](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.12/DeepSeek-0.1.12-mac-arm64.dmg)
 
-<img src="assets/desktop-preview.png" alt="DeepSeek Harness 桌面版 0.1.12：对话窗口与右上角皮肤中心" width="920" />
+<img src="assets/desktop-preview.png" alt="DeepSeek Harness 桌面版 0.1.12：默认皮肤「深海女仆工坊」" width="920" />
 
 </div>
 
@@ -75,7 +75,9 @@ tar -xzf DeepSeek-0.1.12-linux-x64.tar.gz
 
 ## 皮肤中心与版权
 
-对话窗口右上角有一枚 DeepSeek 鲸鱼按钮，点开后带过渡动画弹出皮肤列表，可快速切换，也可以从文件夹或 GitHub 地址导入新皮肤（类似皮肤合集）。不需要皮肤时，点列表里的「关闭皮肤中心」，或用菜单 **皮肤**；引擎设置里也有同样的开关。
+打开软件后的宫殿大厅和双女仆，就是默认皮肤「深海女仆工坊」。**这套画面不是我画的。** 谢谢三位作者把这样完整的世界交出来。
+
+对话窗口右上角有一枚 DeepSeek 鲸鱼按钮，点开后带过渡动画弹出皮肤列表，可快速切换，也可以从文件夹或 GitHub 地址导入新皮肤。不需要皮肤时，点列表里的「关闭皮肤中心」，或用菜单 **皮肤**；引擎设置里也有同样的开关。
 
 **默认皮肤**是 [Small-tailqwq/dsh-deep-whale](https://github.com/Small-tailqwq/dsh-deep-whale) 里的「深海女仆工坊」（`maid-atelier` / `@dsh-external/dsh-client-ui-skin-maid-atelier`）。运行时文件打在安装包的 `desktop/resources/skins/maid-atelier`，离线也能用，**不再从 GitHub 下载**。不把皮肤的 TypeScript 源码或 [dsh-web-ui](https://github.com/zhu1090093659/dsh-web-ui) 脚手架打进仓库。
 
@@ -85,7 +87,7 @@ tar -xzf DeepSeek-0.1.12-linux-x64.tar.gz
 2. 二创 **ZipZipPipe / zipzip** — 加入 DeepSeek 元素的女仆鲸鱼娘二次设计（[Pixiv](https://www.pixiv.net/users/18604994)）
 3. 三创 **Small-tailqwq** — 本皮肤（[dsh-deep-whale](https://github.com/Small-tailqwq/dsh-deep-whale)）
 
-皮肤工程脚手架来自 [zhu1090093659/dsh-web-ui](https://github.com/zhu1090093659/dsh-web-ui)。本仓库只接入皮肤成品并保留上述署名。
+皮肤工程脚手架来自 [zhu1090093659/dsh-web-ui](https://github.com/zhu1090093659/dsh-web-ui)。本仓库只接入皮肤成品并保留上述署名。产品页也写了完整致谢：https://dsh.zhuquan.xyz/#skin
 
 ## 和「自己跑官方仓库」的差别
 

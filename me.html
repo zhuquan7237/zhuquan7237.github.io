@@ -19,40 +19,41 @@
     <link rel="stylesheet" href="./site.css" />
   </head>
   <body>
-    <nav>
+    <header class="topbar">
       <a class="brand" href="./me.html">
         <img src="./assets/deepseek-whale.png" alt="DeepSeek" />
         朱泉
       </a>
-      <div class="nav-links">
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">菜单</button>
+      <nav id="site-nav" class="nav-links">
         <a href="./">下载桌面版</a>
-        <a href="./compare.html">和其他桌面版</a>
-        <a href="./mac.html">macOS 打不开</a>
+        <a href="./#skin">皮肤</a>
+        <a href="./compare.html">对照</a>
+        <a href="./mac.html">macOS</a>
         <a class="active" href="./me.html">关于</a>
         <a href="https://github.com/zhuquan7237">GitHub</a>
-      </div>
-    </nav>
-    <main>
-      <header class="hero" style="grid-template-columns: 1fr;">
-        <div>
-          <div class="portrait"><img src="./assets/deepseek-whale.png" alt="DeepSeek" /></div>
-          <p class="kicker">Guangdong Ocean University · Materials Science</p>
-          <h1>你好，我是朱泉。</h1>
-          <p class="lead">
-            广东海洋大学材料科学与工程专业的学生。对「把一个想法做成别人双击就能打开的软件」更感兴趣，
-            所以课余在做桌面应用、安装包和 GitHub 发布。
-          </p>
-          <div class="actions">
-            <a class="btn primary" href="./">看代表作</a>
-            <a class="btn ghost" href="https://github.com/zhuquan7237">GitHub 主页</a>
-          </div>
-          <div class="chips">
-            <span class="chip">Electron</span>
-            <span class="chip">TypeScript</span>
-            <span class="chip">Linux / Windows / macOS 安装包</span>
-            <span class="chip">GitHub Actions</span>
-            <span class="chip">材料科学与工程</span>
-          </div>
+      </nav>
+      <a class="btn primary compact" href="./">看代表作</a>
+    </header>
+    <main class="wrap">
+      <header class="page-hero">
+        <div class="portrait"><img src="./assets/deepseek-whale.png" alt="DeepSeek" /></div>
+        <p class="kicker">Guangdong Ocean University · Materials Science</p>
+        <h1>你好，我是朱泉。</h1>
+        <p class="lead">
+          广东海洋大学材料科学与工程专业的学生。对「把一个想法做成别人双击就能打开的软件」更感兴趣，
+          所以课余在做桌面应用、安装包和 GitHub 发布。
+        </p>
+        <div class="actions">
+          <a class="btn primary" href="./">看代表作</a>
+          <a class="btn ghost" href="https://github.com/zhuquan7237">GitHub 主页</a>
+        </div>
+        <div class="chips">
+          <span class="chip">Electron</span>
+          <span class="chip">TypeScript</span>
+          <span class="chip">Linux / Windows / macOS 安装包</span>
+          <span class="chip">GitHub Actions</span>
+          <span class="chip">材料科学与工程</span>
         </div>
       </header>
 
@@ -65,9 +66,10 @@
               官方 Harness 很好用，但普通人还是得自己 clone、装 Node、在终端里启动。
               我做了一层薄桌面壳：安装包、快捷方式、图标、中文菜单，引擎始终从 npm 拉官方
               <code>@deepseek-ai/dsh</code>。
-              0.1.10 加了皮肤中心；默认皮肤「深海女仆工坊」来自
+              默认皮肤「深海女仆工坊」来自
               <a href="https://github.com/Small-tailqwq/dsh-deep-whale">Small-tailqwq/dsh-deep-whale</a>，
               CC BY-NC-SA 4.0，禁止商用。署名链：上善 → ZipZipPipe → Small-tailqwq。
+              画面不是我画的，产品页写了完整致谢。
             </p>
             <a class="os" href="./">打开产品页 →</a>
             <a class="os" href="https://github.com/zhuquan7237/zhuquan7237.github.io">　仓库 →</a>
@@ -101,11 +103,11 @@
           </ul>
         </article>
       </section>
-
-      <footer>
-        <span>© 2026 朱泉 / Quan Zhu</span>
-        <a href="./">返回下载页</a>
-      </footer>
     </main>
+    <footer>
+      <span>© 2026 朱泉 / Quan Zhu</span>
+      <a href="./">返回下载页</a>
+    </footer>
+    <script src="./site.js"></script>
   </body>
 </html>
