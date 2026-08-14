@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/icon.png" width="72" alt="DeepSeek Harness" />
+<img src="assets/deepseek-whale.png" width="96" alt="DeepSeek" />
 
 # DeepSeek Harness 桌面版
 

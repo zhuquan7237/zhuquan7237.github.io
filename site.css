@@ -37,7 +37,7 @@ nav {
   text-decoration: none;
   font-weight: 650;
 }
-.brand img { width: 28px; height: 28px; }
+.brand img { width: 36px; height: 36px; }
 .nav-links { display: flex; gap: 18px; font-size: 14px; }
 .nav-links a { color: var(--muted); text-decoration: none; }
 .nav-links a:hover, .nav-links a.active { color: var(--text); }

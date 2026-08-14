@@ -59,9 +59,14 @@ code, pre, .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; }
   width: 28px;
   height: 28px;
   border-radius: 8px;
-  background: #1a2438;
+  overflow: hidden;
   display: grid;
   place-items: center;
+}
+.logo img {
+  width: 28px;
+  height: 28px;
+  display: block;
 }
 .brand h1 {
   margin: 0;

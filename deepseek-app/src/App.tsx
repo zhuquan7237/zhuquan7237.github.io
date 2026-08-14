@@ -186,9 +186,7 @@ export function App() {
       <aside className="sidebar">
         <div className="brand">
           <div className="logo" aria-hidden="true">
-            <svg width="18" height="18" viewBox="0 0 32 32" fill="none">
-              <path d="M8 18c3-6 13-6 16 0-3 5-13 5-16 0z" fill="#4D93F8" />
-            </svg>
+            <img src="./favicon.png" width={28} height={28} alt="" />
           </div>
           <div>
             <h1>DeepSeek App</h1>

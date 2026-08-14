@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="../assets/deepseek-whale.png" width="96" alt="DeepSeek" />
+</p>
+
 # DeepSeek App
 
 A Codex-style coding agent for [DeepSeek V4](https://api-docs.deepseek.com/), inspired by [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness): session threads, tool loop, plan/agent/ask modes, diffs, and a local workspace.

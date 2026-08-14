@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="../assets/deepseek-whale.png" width="96" alt="DeepSeek" />
+</p>
+
 # DeepSeek Harness Desktop (dsh 桌面版)
 
 A Codex-style **desktop shell** around official [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (`dsh`, `@deepseek-ai/dsh`).

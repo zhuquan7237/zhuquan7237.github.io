@@ -219,7 +219,22 @@ def main() -> None:
     for size in SIZES:
         write_png(icons / f"{size}x{size}.png", size, size, compose(size, width, height, rgba))
     if SITE.is_dir():
-        write_png(SITE / "icon.png", 256, 256, compose(256, width, height, rgba))
+        raster = compose(256, width, height, rgba)
+        write_png(SITE / "icon.png", 256, 256, raster)
+        write_png(SITE / "deepseek-whale.png", 256, 256, raster)
+        public = ROOT.parent / "deepseek-app" / "public"
+        write_png(public / "favicon.png", 256, 256, raster)
+        svg = Path(__file__).resolve().parent / "deepseek-whale.svg"
+        if svg.is_file():
+            text = svg.read_text(encoding="utf-8")
+            for dest in (
+                SITE / "favicon.svg",
+                ROOT.parent / "app" / "favicon.svg",
+                public / "favicon.svg",
+            ):
+                dest.parent.mkdir(parents=True, exist_ok=True)
+                dest.write_text(text, encoding="utf-8")
+                print(f"wrote {dest}")
 
 
 if __name__ == "__main__":
