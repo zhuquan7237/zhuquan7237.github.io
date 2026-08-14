@@ -1,6 +1,12 @@
+import { mkdtemp, readFile, rm, stat } from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
 import { describe, expect, it } from "vitest";
 import {
+  DESKTOP_DOWNLOAD_PAGE,
   DESKTOP_RELEASES_LATEST,
+  downloadDesktopAsset,
+  downloadStallMessage,
   fetchLatestDesktopRelease,
   parseDesktopReleaseTag,
   parseGithubRelease,
@@ -60,6 +66,105 @@ describe("desktop GitHub release picker", () => {
     });
     expect(release.version).toBe("0.1.9");
     expect(release.assets[0]?.name).toContain("mac-arm64.dmg");
+  });
+});
+
+function bytesResponse(
+  chunks: Uint8Array[],
+  headers: Record<string, string> = {},
+  delayMs = 0,
+): Response {
+  let index = 0;
+  return {
+    ok: true,
+    status: 200,
+    headers: new Headers(headers),
+    body: {
+      getReader() {
+        return {
+          async read() {
+            if (delayMs) await new Promise((resolve) => setTimeout(resolve, delayMs));
+            if (index >= chunks.length) return { done: true as const, value: undefined };
+            const value = chunks[index];
+            index += 1;
+            return { done: false as const, value };
+          },
+        };
+      },
+    },
+  } as unknown as Response;
+}
+
+describe("desktop installer download", () => {
+  it("reports start, first bytes, and 1% steps instead of sitting on 0%", async () => {
+    const dir = await mkdtemp(path.join(os.tmpdir(), "dsh-update-"));
+    const dest = path.join(dir, "DeepSeek-0.1.15-win.exe");
+    const total = 10 * 1048576;
+    const logs: string[] = [];
+    const chunks = [new Uint8Array(200_000).fill(1), new Uint8Array(total - 200_000).fill(2)];
+    try {
+      await downloadDesktopAsset(
+        "https://example.test/DeepSeek-0.1.15-win.exe",
+        dest,
+        (line) => logs.push(line),
+        async () => bytesResponse(chunks, { "content-length": String(total) }),
+      );
+      expect(logs[0]).toContain("开始下载 DeepSeek-0.1.15-win.exe");
+      expect(logs.some((line) => line.includes("已连接"))).toBe(true);
+      expect(logs.some((line) => line.includes("0%（0.2 MB"))).toBe(true);
+      expect(logs.some((line) => line.includes("100%"))).toBe(true);
+      expect(await readFile(dest)).toHaveLength(total);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("uses the GitHub asset size when the 302 hop has no Content-Length", async () => {
+    const dir = await mkdtemp(path.join(os.tmpdir(), "dsh-update-"));
+    const dest = path.join(dir, "DeepSeek-0.1.15-win.exe");
+    const knownSize = 4 * 1048576;
+    const logs: string[] = [];
+    try {
+      await downloadDesktopAsset(
+        "https://example.test/DeepSeek-0.1.15-win.exe",
+        dest,
+        (line) => logs.push(line),
+        async () => bytesResponse([new Uint8Array(knownSize).fill(7)]),
+        { knownSize },
+      );
+      expect(logs.some((line) => line.includes("100%（4.0 MB / 4.0 MB）"))).toBe(true);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("times out a hung GitHub connect and a hung first chunk", async () => {
+    const dir = await mkdtemp(path.join(os.tmpdir(), "dsh-update-"));
+    const dest = path.join(dir, "DeepSeek-0.1.15-win.exe");
+    try {
+      await expect(
+        downloadDesktopAsset(
+          "https://example.test/DeepSeek-0.1.15-win.exe",
+          dest,
+          () => undefined,
+          async () => new Promise(() => undefined),
+          { stallMs: 40 },
+        ),
+      ).rejects.toThrow(downloadStallMessage());
+      await expect(
+        downloadDesktopAsset(
+          "https://example.test/DeepSeek-0.1.15-win.exe",
+          dest,
+          () => undefined,
+          async () => bytesResponse([new Uint8Array(16).fill(1)], {}, 200),
+          { stallMs: 40 },
+        ),
+      ).rejects.toThrow(downloadStallMessage());
+      expect(downloadStallMessage()).toContain(DESKTOP_DOWNLOAD_PAGE);
+      await expect(stat(dest)).rejects.toMatchObject({ code: "ENOENT" });
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
   });
 });
 

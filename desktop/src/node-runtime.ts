@@ -5,6 +5,7 @@ import path from "node:path";
 import {
   NODE_VERSION,
   formatByteProgress,
+  shouldLogDownloadProgress,
   hostTimeZone,
   localePrefersChina,
   nodeDistFile,
@@ -166,7 +167,7 @@ async function downloadFile(
   const file = createWriteStream(dest);
   const reader = (response.body as ReadableStream<Uint8Array>).getReader();
   let downloaded = 0;
-  let lastBucket = -1;
+  let lastLoggedBytes = 0;
   try {
     while (true) {
       const { done, value } = await reader.read();
@@ -177,9 +178,8 @@ async function downloadFile(
         file.write(buf, (error) => (error ? reject(error) : resolve()));
       });
       downloaded += buf.length;
-      const bucket = total > 0 ? Math.floor((downloaded / total) * 10) : Math.floor(downloaded / (5 * 1048576));
-      if (bucket !== lastBucket) {
-        lastBucket = bucket;
+      if (shouldLogDownloadProgress(downloaded, total, lastLoggedBytes)) {
+        lastLoggedBytes = downloaded;
         onLog(`下载进度 ${formatByteProgress(downloaded, total)}`);
       }
     }

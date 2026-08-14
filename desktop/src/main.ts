@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Menu, dialog, shell, ipcMain, screen, nativeImage } from "electron";
+import { app, BrowserWindow, Menu, dialog, shell, ipcMain, screen, nativeImage, net } from "electron";
 import { spawn } from "node:child_process";
 import { mkdir } from "node:fs/promises";
 import { readFileSync } from "node:fs";
@@ -10,11 +10,13 @@ import { applyLinuxRuntimeFlags } from "./linux-flags";
 import { resolveNodeRuntime, type NodeRuntime } from "./node-runtime";
 import { appIconFile, installUserShortcuts, needsUserShortcuts } from "./desktop-integration";
 import {
+  DESKTOP_DOWNLOAD_PAGE,
   downloadDesktopAsset,
   fetchLatestDesktopRelease,
   pickDesktopAsset,
   shouldPromptDesktopUpdate,
   type DesktopRelease,
+  type HttpFetcher,
 } from "./desktop-update";
 import { ensureDefaultWorkspace } from "./dsh-workspace";
 import { SKIN_OVERLAY_CSS, skinOverlayBootstrap } from "./skin-overlay";
@@ -125,6 +127,13 @@ function systemLocale(): string {
     return "";
   }
 }
+
+/** Chromium/net.fetch uses the Windows system proxy; Node fetch in the main process does not. */
+function sessionAwareFetch(input: string, init?: RequestInit): Promise<Response> {
+  return net.fetch(input, init) as Promise<Response>;
+}
+
+const desktopFetcher: HttpFetcher = (url, init) => sessionAwareFetch(url, init);
 
 function sendSplash(channel: string, payload: unknown): void {
   if (!splashWindow || splashWindow.isDestroyed()) return;
@@ -602,9 +611,22 @@ async function maybeNotifyHarnessUpdate(): Promise<void> {
   await checkHarnessUpdates(false);
 }
 
+async function offerDownloadPage(title: string, message: string): Promise<void> {
+  const choice = await nativeBox({
+    type: "error",
+    title,
+    message,
+    detail: `也可以直接打开 ${DESKTOP_DOWNLOAD_PAGE}，用浏览器下载安装包（浏览器会走系统代理）。`,
+    buttons: ["打开下载页", "确定"],
+    defaultId: 0,
+    cancelId: 1,
+  });
+  if (choice.response === 0) await shell.openExternal(DESKTOP_DOWNLOAD_PAGE);
+}
+
 async function checkDesktopUpdates(interactive: boolean): Promise<void> {
   try {
-    const latest = await fetchLatestDesktopRelease();
+    const latest = await fetchLatestDesktopRelease(desktopFetcher);
     const current = app.getVersion();
     if (!shouldPromptDesktopUpdate(current, latest.version, interactive ? "" : settings.skippedDesktopVersion)) {
       if (interactive && current === latest.version) {
@@ -650,12 +672,7 @@ async function checkDesktopUpdates(interactive: boolean): Promise<void> {
     await installDesktopRelease(latest, asset);
   } catch (error) {
     if (!interactive) return;
-    await nativeBox({
-      type: "error",
-      title: "检查桌面版更新失败",
-      message: error instanceof Error ? error.message : String(error),
-      buttons: ["确定"],
-    });
+    await offerDownloadPage("检查桌面版更新失败", error instanceof Error ? error.message : String(error));
   }
 }
 
@@ -668,16 +685,19 @@ async function installDesktopRelease(
     return;
   }
   const dest = path.join(userData(), "updates", asset.name);
+  if (!splashWindow || splashWindow.isDestroyed()) await createSplash();
   sendSplash("status", { phase: "engine", text: `正在下载桌面版 ${release.version}…` });
   const previousTitle = mainWindow && !mainWindow.isDestroyed() ? mainWindow.getTitle() : "";
   const onLog = (line: string) => {
     sendSplash("log", line);
+    sendSplash("status", { phase: "engine", text: line });
     if (mainWindow && !mainWindow.isDestroyed()) mainWindow.setTitle(line);
   };
   try {
-    await downloadDesktopAsset(asset.url, dest, onLog);
+    await downloadDesktopAsset(asset.url, dest, onLog, desktopFetcher, { knownSize: asset.size });
   } finally {
     if (previousTitle && mainWindow && !mainWindow.isDestroyed()) mainWindow.setTitle(previousTitle);
+    if (mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible()) closeSplash();
   }
   if (process.platform === "win32") {
     const child = spawn(dest, [], { detached: true, stdio: "ignore" });

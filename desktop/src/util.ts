@@ -204,6 +204,34 @@ export function formatByteProgress(downloaded: number, total: number): string {
   return mb(downloaded);
 }
 
+/** Prefer the HTTP Content-Length; GitHub 302 hops often report 0, so fall back to the API asset size. */
+export function resolveDownloadTotal(contentLength: number, knownSize = 0): number {
+  if (Number.isFinite(contentLength) && contentLength > 0) return Math.floor(contentLength);
+  if (Number.isFinite(knownSize) && knownSize > 0) return Math.floor(knownSize);
+  return 0;
+}
+
+/** 1 MiB. Used when the percentage has not ticked yet, so a long 0% still shows rising bytes. */
+export const DOWNLOAD_PROGRESS_CHUNK = 1024 * 1024;
+
+/**
+ * Old updater only logged every 10%, so a 188 MB GitHub exe sat on "0%" until ~18 MB.
+ * Log the first bytes, then every 1% or every 1 MiB.
+ */
+export function shouldLogDownloadProgress(
+  downloaded: number,
+  total: number,
+  lastLoggedBytes: number,
+): boolean {
+  if (downloaded <= lastLoggedBytes) return false;
+  if (lastLoggedBytes <= 0) return downloaded > 0;
+  if (downloaded - lastLoggedBytes >= DOWNLOAD_PROGRESS_CHUNK) return true;
+  if (total > 0) {
+    return Math.floor((downloaded / total) * 100) > Math.floor((lastLoggedBytes / total) * 100);
+  }
+  return false;
+}
+
 /** Chromium's helper must be root-owned and setuid (mode 4755). */
 export function chromeSandboxIsConfigured(info: { uid: number; mode: number } | null): boolean {
   if (!info) return false;

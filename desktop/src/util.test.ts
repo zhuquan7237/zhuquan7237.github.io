@@ -6,6 +6,8 @@ import {
   clampWindowBounds,
   compareVersions,
   formatByteProgress,
+  resolveDownloadTotal,
+  shouldLogDownloadProgress,
   harnessLocaleEnv,
   isHomeDirectoryWorkspace,
   isSystemInstalledApp,
@@ -94,6 +96,24 @@ describe("first-run helpers", () => {
   it("formats download progress", () => {
     expect(formatByteProgress(10 * 1048576, 40 * 1048576)).toBe("25%（10.0 MB / 40.0 MB）");
     expect(formatByteProgress(1536, 0)).toBe("0.0 MB");
+  });
+
+  it("uses GitHub asset size when Content-Length is missing", () => {
+    expect(resolveDownloadTotal(0, 187_970_838)).toBe(187_970_838);
+    expect(resolveDownloadTotal(12, 187_970_838)).toBe(12);
+    expect(resolveDownloadTotal(Number.NaN, 0)).toBe(0);
+  });
+
+  it("logs the first bytes and then every 1% or 1 MiB, not every 10%", () => {
+    const total = 188 * 1048576;
+    expect(shouldLogDownloadProgress(200_000, total, 0)).toBe(true);
+    expect(shouldLogDownloadProgress(200_000, total, 200_000)).toBe(false);
+    expect(shouldLogDownloadProgress(200_000 + 1048576, total, 200_000)).toBe(true);
+    expect(shouldLogDownloadProgress(Math.floor(total * 0.01), total, 200_000)).toBe(true);
+    expect(shouldLogDownloadProgress(Math.floor(total * 0.09), total, Math.floor(total * 0.01))).toBe(true);
+    expect(shouldLogDownloadProgress(100, 0, 0)).toBe(true);
+    expect(shouldLogDownloadProgress(1048576, 0, 100)).toBe(true);
+    expect(shouldLogDownloadProgress(500_000, 0, 100)).toBe(false);
   });
 
   it("only treats root setuid chrome-sandbox as usable", () => {

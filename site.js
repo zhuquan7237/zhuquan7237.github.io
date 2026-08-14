@@ -3,28 +3,28 @@
 
   var downloads = {
     win: {
-      href: "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.14/DeepSeek-0.1.14-win.exe",
+      href: "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.15/DeepSeek-0.1.15-win.exe",
       label: "下载 Windows 安装包",
       family: "win",
       status: "已按这台电脑选好 Windows",
       chosen: "已切换为 Windows",
     },
     linux: {
-      href: "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.14/DeepSeek-0.1.14-linux-x64.tar.gz",
+      href: "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.15/DeepSeek-0.1.15-linux-x64.tar.gz",
       label: "下载 Linux tar.gz",
       family: "linux",
       status: "已按这台电脑选好 Linux",
       chosen: "已切换为 Linux",
     },
     "mac-arm": {
-      href: "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.14/DeepSeek-0.1.14-mac-arm64.dmg",
+      href: "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.15/DeepSeek-0.1.15-mac-arm64.dmg",
       label: "下载 Mac M 系列",
       family: "mac",
       status: "已按这台 Mac 选好 Apple 芯片",
       chosen: "已切换为 Mac M 系列",
     },
     "mac-intel": {
-      href: "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.14/DeepSeek-0.1.14-mac-x64.dmg",
+      href: "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.15/DeepSeek-0.1.15-mac-x64.dmg",
       label: "下载 Intel Mac",
       family: "mac",
       status: "已按这台 Mac 选好 Intel",
