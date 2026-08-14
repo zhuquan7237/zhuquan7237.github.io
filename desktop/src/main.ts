@@ -169,13 +169,18 @@ function focusExistingWindow(): void {
 }
 
 async function createSplash(): Promise<void> {
+  const win11 = process.platform === "win32";
   splashWindow = new BrowserWindow({
-    width: 580,
+    width: 528,
     height: 420,
     frame: false,
     resizable: false,
     show: false,
-    backgroundColor: "#101218",
+    roundedCorners: true,
+    hasShadow: true,
+    thickFrame: false,
+    backgroundColor: win11 ? "#00000000" : "#f3f3f3",
+    ...(win11 ? { transparent: true, backgroundMaterial: "mica" as const } : {}),
     icon: windowIcon(),
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
@@ -187,7 +192,9 @@ async function createSplash(): Promise<void> {
     splashWindow = null;
   });
   // Showing only after the document is loaded avoids a white flash on launch.
-  await splashWindow.loadFile(path.join(__dirname, "..", "resources", "splash.html"));
+  await splashWindow.loadFile(path.join(__dirname, "..", "resources", "splash.html"), {
+    query: { os: process.platform },
+  });
   if (splashWindow && !splashWindow.isDestroyed()) splashWindow.show();
 }
 

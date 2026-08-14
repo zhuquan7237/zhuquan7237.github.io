@@ -3,81 +3,416 @@
   <head>
     <meta charset="UTF-8" />
     <title>DeepSeek</title>
-    <link rel="stylesheet" href="./theme.css" />
     <style>
-      html, body { height: 100%; margin: 0; }
-      body {
-        background:
-          radial-gradient(640px 280px at 0% 0%, rgba(77, 147, 248, 0.14), transparent 55%),
-          var(--bg);
+      :root {
+        --text: #1a1a1a;
+        --text-secondary: #5d5d5d;
+        --accent: #005fb8;
+        --accent-hover: #005197;
+        --stroke: rgba(0, 0, 0, 0.057);
+        --stroke-card: rgba(0, 0, 0, 0.14);
+        --stroke-strong: rgba(0, 0, 0, 0.216);
+        --fill-solid: #ffffff;
+        --subtle-hover: rgba(0, 0, 0, 0.057);
+        --layer: #f3f3f3;
+        --log-bg: rgba(255, 255, 255, 0.62);
+        --danger: #c42b1c;
+        --progress-track: rgba(0, 0, 0, 0.08);
+        --shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+        --font: "Segoe UI Variable", "Segoe UI", "Microsoft YaHei UI", "PingFang SC", "Noto Sans SC", sans-serif;
+        --mono: "Cascadia Mono", "Segoe UI Mono", ui-monospace, Consolas, monospace;
+        --radius: 8px;
+        --control: 4px;
+      }
+
+      * { box-sizing: border-box; }
+
+      html, body {
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+        font-family: var(--font);
         color: var(--text);
+        user-select: none;
+        background: transparent;
+      }
+
+      body {
+        display: flex;
+        align-items: stretch;
+        justify-content: stretch;
+      }
+
+      .window {
+        position: relative;
+        flex: 1;
+        min-height: 0;
         display: flex;
         flex-direction: column;
-        padding: 24px 24px 16px;
+        background: var(--layer);
+        border: 1px solid var(--stroke-card);
+        overflow: hidden;
       }
-      .top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
-      .brand { display: flex; gap: 12px; align-items: center; }
-      .brand img { width: 40px; height: 40px; }
-      h1 { margin: 0 0 6px; font-size: 22px; letter-spacing: -0.03em; }
-      p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.5; }
-      .status { margin: 18px 0 8px; font-size: 14px; color: #7eb0ff; min-height: 20px; }
+
+      .window::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background:
+          radial-gradient(120% 80% at 0% 0%, rgba(0, 95, 184, 0.07), transparent 52%),
+          radial-gradient(90% 70% at 100% 100%, rgba(0, 120, 212, 0.05), transparent 46%);
+      }
+
+      html[data-os="win32"] .window {
+        background: rgba(243, 243, 243, 0.58);
+        border-color: rgba(0, 0, 0, 0.12);
+      }
+
+      html[data-preview] body {
+        background:
+          radial-gradient(80% 60% at 20% 10%, #d7e3f4 0%, transparent 55%),
+          radial-gradient(70% 50% at 90% 90%, #c5d4e8 0%, transparent 50%),
+          #b8c7d9;
+        align-items: center;
+        justify-content: center;
+        padding: 40px;
+      }
+
+      html[data-preview] .window {
+        flex: none;
+        width: 528px;
+        height: 420px;
+        border-radius: var(--radius);
+        box-shadow:
+          0 0 0 1px rgba(255, 255, 255, 0.35) inset,
+          0 16px 40px rgba(15, 23, 42, 0.22);
+      }
+
+      .titlebar,
+      .content {
+        position: relative;
+        z-index: 1;
+      }
+
+      .titlebar {
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-left: 12px;
+        border-bottom: 1px solid var(--stroke);
+        -webkit-app-region: drag;
+        flex-shrink: 0;
+      }
+
+      .titlebar-brand {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+      }
+
+      .titlebar-brand img {
+        width: 16px;
+        height: 16px;
+        border-radius: 3px;
+      }
+
+      .titlebar-brand span {
+        font-size: 12px;
+        color: var(--text-secondary);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .caption {
+        display: flex;
+        height: 100%;
+        -webkit-app-region: no-drag;
+      }
+
+      .caption button {
+        width: 46px;
+        height: 32px;
+        border: 0;
+        padding: 0;
+        background: transparent;
+        color: var(--text);
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+      }
+
+      .caption button:hover { background: var(--subtle-hover); }
+      .caption button.close:hover {
+        background: var(--danger);
+        color: #fff;
+      }
+
+      .caption svg { width: 10px; height: 10px; display: block; }
+
+      .content {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        padding: 16px 24px 16px;
+      }
+
+      .hero {
+        display: flex;
+        gap: 16px;
+        align-items: flex-start;
+        margin-bottom: 18px;
+      }
+
+      .tile {
+        width: 56px;
+        height: 56px;
+        border-radius: var(--radius);
+        background: var(--fill-solid);
+        border: 1px solid var(--stroke-card);
+        box-shadow: var(--shadow);
+        display: grid;
+        place-items: center;
+        flex-shrink: 0;
+      }
+
+      .tile img { width: 36px; height: 36px; }
+
+      .hero h1 {
+        margin: 2px 0 6px;
+        font-size: 20px;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        line-height: 1.2;
+      }
+
+      .hero p {
+        margin: 0;
+        color: var(--text-secondary);
+        font-size: 13px;
+        line-height: 1.45;
+      }
+
+      .status-row {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 8px;
+      }
+
+      .status {
+        font-size: 13px;
+        line-height: 1.4;
+        color: var(--text);
+        min-height: 18px;
+      }
+
+      .status.error { color: var(--danger); font-weight: 600; }
+
+      .phase {
+        font-size: 11px;
+        color: var(--text-secondary);
+        flex-shrink: 0;
+      }
+
+      .bar {
+        height: 3px;
+        background: var(--progress-track);
+        border-radius: 99px;
+        overflow: hidden;
+        margin-bottom: 14px;
+      }
+
+      .bar span {
+        display: block;
+        height: 100%;
+        width: 36%;
+        border-radius: inherit;
+        background: var(--accent);
+        animation: indeterminate 1.6s ease-in-out infinite;
+      }
+
+      .bar.error span { display: none; }
+      .bar.error { background: rgba(196, 43, 28, 0.28); }
+
+      @keyframes indeterminate {
+        0% { transform: translateX(-120%); }
+        100% { transform: translateX(340%); }
+      }
+
+      .log-card {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        background: var(--log-bg);
+        border: 1px solid var(--stroke-card);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+
+      .log-label {
+        padding: 8px 12px 0;
+        font-size: 11px;
+        color: var(--text-secondary);
+      }
+
       .log {
         flex: 1;
-        background: #0c0e14;
-        border: 1px solid rgba(255,255,255,0.08);
-        border-radius: var(--radius-sm);
-        padding: 10px 12px;
+        min-height: 0;
+        margin: 0;
+        padding: 6px 12px 10px;
         overflow: auto;
-        font: 12px/1.45 ui-monospace, monospace;
-        color: #b7c0d4;
+        font: 11.5px/1.5 var(--mono);
+        color: #3b3b3b;
         white-space: pre-wrap;
+        word-break: break-word;
+        user-select: text;
+        -webkit-app-region: no-drag;
       }
-      .bar { height: 4px; background: #1c2130; border-radius: 99px; margin-top: 12px; overflow: hidden; }
-      .bar span { display: block; height: 100%; width: 40%; background: #4d93f8; animation: slide 1.2s infinite; }
-      .bar.error span { display: none; }
-      @keyframes slide { from { transform: translateX(-100%); } to { transform: translateX(280%); } }
-      button {
+
+      .log:empty::before {
+        content: "准备就绪后，这里会显示安装和启动日志。";
+        color: #8a8a8a;
+      }
+
+      .footer {
+        display: flex;
+        justify-content: flex-end;
+        padding-top: 14px;
+        -webkit-app-region: no-drag;
+      }
+
+      .btn {
         appearance: none;
-        border: 1px solid rgba(255,255,255,0.16);
-        background: #1c2130;
-        color: #e8edf7;
-        border-radius: 999px;
-        padding: 6px 12px;
-        font-size: 12px;
+        min-width: 80px;
+        height: 32px;
+        padding: 0 14px;
+        border-radius: var(--control);
+        font: 600 13px/1 var(--font);
         cursor: pointer;
+      }
+
+      .btn-secondary {
+        color: var(--text);
+        background: var(--fill-solid);
+        border: 1px solid var(--stroke-strong);
+        box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.06);
+      }
+
+      .btn-secondary:hover { background: #f9f9f9; }
+      .btn-secondary:active {
+        background: #f0f0f0;
+        box-shadow: none;
+      }
+
+      .btn:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 1px;
       }
     </style>
   </head>
   <body>
-    <div class="top">
-      <div class="brand">
-        <img src="./icon.png" alt="" />
-        <div>
-          <h1>DeepSeek Harness</h1>
-          <p>首次启动会联网安装官方引擎。请保持网络畅通，完成后会自动打开界面。</p>
+    <div class="window">
+      <header class="titlebar">
+        <div class="titlebar-brand">
+          <img src="./icon.png" alt="" />
+          <span>DeepSeek Harness</span>
         </div>
-      </div>
-      <button id="quit" type="button">退出</button>
+        <div class="caption">
+          <button id="quitCaption" class="close" type="button" aria-label="关闭">
+            <svg viewBox="0 0 10 10" aria-hidden="true">
+              <path d="M1 1l8 8M9 1L1 9" fill="none" stroke="currentColor" stroke-width="1.15" />
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <main class="content">
+        <section class="hero">
+          <div class="tile"><img src="./icon.png" alt="" /></div>
+          <div>
+            <h1>DeepSeek Harness</h1>
+            <p>首次启动会联网准备官方引擎，完成后自动打开窗口。请保持网络畅通。</p>
+          </div>
+        </section>
+
+        <div class="status-row">
+          <div class="status" id="status">正在启动…</div>
+          <div class="phase" id="phase">启动</div>
+        </div>
+        <div class="bar" id="bar" role="progressbar" aria-label="启动进度"><span></span></div>
+
+        <section class="log-card">
+          <div class="log-label">详细信息</div>
+          <pre class="log" id="log"></pre>
+        </section>
+
+        <footer class="footer">
+          <button id="quit" class="btn btn-secondary" type="button">退出</button>
+        </footer>
+      </main>
     </div>
-    <div class="status" id="status">正在启动…</div>
-    <div class="log" id="log"></div>
-    <div class="bar" id="bar"><span></span></div>
+
     <script>
+      const params = new URLSearchParams(location.search);
+      document.documentElement.dataset.os = params.get("os") || "";
+      if (params.has("preview")) document.documentElement.dataset.preview = "1";
+
       const status = document.getElementById("status");
+      const phase = document.getElementById("phase");
       const log = document.getElementById("log");
       const bar = document.getElementById("bar");
-      document.getElementById("quit").addEventListener("click", () => window.desktop.quit());
-      window.desktop.onStatus((payload) => {
+      const phaseLabel = { runtime: "环境", engine: "引擎", start: "界面", error: "出错" };
+
+      function quit() {
+        if (window.desktop && window.desktop.quit) window.desktop.quit();
+      }
+
+      function applyStatus(payload) {
         status.textContent = payload.text;
-        if (payload.phase === "error") {
-          status.style.color = "#f07178";
-          bar.classList.add("error");
-        }
-      });
-      window.desktop.onLog((line) => {
+        const kind = payload.phase || "";
+        phase.textContent = phaseLabel[kind] || "启动";
+        const failed = kind === "error";
+        status.classList.toggle("error", failed);
+        bar.classList.toggle("error", failed);
+      }
+
+      function appendLog(line) {
         log.textContent += line + "\n";
         log.scrollTop = log.scrollHeight;
+      }
+
+      document.getElementById("quit").addEventListener("click", quit);
+      document.getElementById("quitCaption").addEventListener("click", quit);
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") quit();
       });
+
+      if (window.desktop) {
+        window.desktop.onStatus(applyStatus);
+        window.desktop.onLog(appendLog);
+      }
+
+      if (params.has("preview")) {
+        applyStatus({ phase: "runtime", text: "正在检查运行环境。首次启动需要联网下载引擎。" });
+        const lines = [
+          "npm 源：https://registry.npmmirror.com",
+          "正在准备官方 DeepSeek Harness…",
+          "已连接，准备写入 0%（0.0 MB / 28.4 MB）",
+          "下载进度 36%（10.2 MB / 28.4 MB）",
+          "正在启动界面（dsh 0.1.17）…",
+        ];
+        lines.forEach((line, index) => {
+          setTimeout(() => appendLog(line), 280 * (index + 1));
+        });
+      }
     </script>
   </body>
 </html>
