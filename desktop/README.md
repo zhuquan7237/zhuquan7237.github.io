@@ -9,7 +9,7 @@
 Search: DeepSeek Harness Desktop, dsh desktop, DeepSeek Harness 桌面版, DeepSeek Harness 桌面端, DeepSeek Harness 下载.
 
 <p align="center">
-  <img src="../assets/desktop-preview.png" alt="DeepSeek Harness 桌面版 0.1.12：默认皮肤「深海女仆工坊」" width="920" />
+  <img src="../assets/desktop-preview.png" alt="DeepSeek Harness 桌面版 0.1.13：默认皮肤「深海女仆工坊」" width="920" />
 </p>
 
 This package does **not** vendor the official monorepo. Other community desktops copy the whole harness into their GitHub repo (that ranks well in search). This shell installs `@deepseek-ai/dsh` from npm instead. See [compare.html](https://dsh.zhuquan.xyz/compare.html). On launch it:
@@ -25,21 +25,21 @@ Harness releases therefore land without rebuilding this desktop app. The shell o
 只需下载这一个软件，**不要**再 `git clone` DeepSeek Harness。首次启动必须联网（下载官方引擎，大约 1–3 分钟），完成后会自动打开界面。默认皮肤已打进安装包。从旧版升级时会尽量继承 API 密钥。API Key 在官方界面里配置，或打开 [platform.deepseek.com](https://platform.deepseek.com)。
 
 - Windows 安装包会创建**桌面快捷方式**和开始菜单，并带应用图标
-- Linux `.deb` 会出现在应用菜单；`.tar.gz` / AppImage 第一次启动会自动创建桌面和应用菜单快捷方式。之后再打开不会重写快捷方式（避免图标变成「未信任」）
+- Linux `.deb` 会出现在应用菜单；`.tar.gz` / AppImage 第一次启动会自动创建桌面和应用菜单快捷方式。快捷方式必须指向 AppImage / 便携版 exe 本身，不能指向 `/tmp/.mount_*` 或 `%TEMP%` 里当次解压出来的文件（关掉软件后那些路径会消失）。目标没变就不再重写（避免 GNOME 图标变成「未信任」）；若旧快捷方式已经指向消失的临时目录，下次从安装包打开会自动修好
 - macOS 请把 App 拖进「应用程序」。若提示已损坏，在终端运行 <code>xattr -cr /Applications/DeepSeek.app</code>（Gatekeeper 隔离，不是安装包坏了）。说明见仓库里的 <code>mac.html</code>
 - 第二次打开同一个软件只会唤起已有窗口，工作区默认 `~/DeepSeek`，窗口大小会记住
 - 中文系统、或时区在中国时，会默认走国内 npm 镜像；也可在 **引擎设置** 一键切换官方源 / 国内镜像
 
 ```sh
 # Linux 推荐 tar.gz（不需要 FUSE）。AppImage 在 Ubuntu 24.04 上常因缺少 libfuse2 无法打开。
-tar -xzf DeepSeek-0.1.12-linux-x64.tar.gz
-./DeepSeek-0.1.12-linux-x64/DeepSeek
+tar -xzf DeepSeek-0.1.13-linux-x64.tar.gz
+./DeepSeek-0.1.13-linux-x64/DeepSeek
 
 # Debian/Ubuntu
-sudo apt install ./DeepSeek-0.1.12-linux-amd64.deb
+sudo apt install ./DeepSeek-0.1.13-linux-amd64.deb
 ```
 
-Windows：下载 `DeepSeek-0.1.12-win.exe`。若 SmartScreen 提示未签名，选「更多信息 → 仍要运行」。
+Windows：下载 `DeepSeek-0.1.13-win.exe`。若 SmartScreen 提示未签名，选「更多信息 → 仍要运行」。
 
 macOS：打开 dmg，把 App 拖进「应用程序」。若提示「文件已损坏」，终端运行 `xattr -cr /Applications/DeepSeek.app`，或双击盘里的 `Open-DeepSeek.command` / 打开 `Read-Me-First.txt`。
 
@@ -60,9 +60,9 @@ GitHub Actions builds:
 | macOS | `.dmg`, `.zip` (Intel + Apple Silicon) |
 | Linux | AppImage, `.deb`, `.tar.gz` (x64 + arm64) |
 
-Download installers from the public [GitHub Release](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/tag/desktop-v0.1.12). Anyone can download those files without signing in. GitHub Actions artifacts are not a public store.
+Download installers from the public [GitHub Release](https://github.com/zhuquan7237/zhuquan7237.github.io/releases/tag/desktop-v0.1.13). Anyone can download those files without signing in. GitHub Actions artifacts are not a public store.
 
-请用 **0.1.12**。不要用 0.1.0–0.1.11。
+请用 **0.1.13**。不要用 0.1.0–0.1.12。
 
 ## 皮肤中心
 
