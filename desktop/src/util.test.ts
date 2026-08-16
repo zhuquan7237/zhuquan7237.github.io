@@ -1,3 +1,4 @@
+import path from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   applyRegistryPreference,
@@ -238,7 +239,7 @@ describe("typical-user defaults", () => {
     expect(isHomeDirectoryWorkspace("/home/box", "/home/box")).toBe(true);
     expect(isHomeDirectoryWorkspace("/home/box/", "/home/box")).toBe(true);
     expect(isHomeDirectoryWorkspace("/home/box/DeepSeek", "/home/box")).toBe(false);
-    expect(resolveWorkspaceDir("/home/box", "/home/box")).toBe("/home/box/DeepSeek");
+    expect(resolveWorkspaceDir("/home/box", "/home/box")).toBe(path.join("/home/box", "DeepSeek"));
     expect(resolveWorkspaceDir("/home/box/code", "/home/box")).toBe("/home/box/code");
 
     const next = retargetHomeWorkspace(

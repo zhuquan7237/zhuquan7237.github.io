@@ -119,7 +119,7 @@ describe("installUserShortcuts linux", () => {
     expect(first).toContain(desk);
     const body = await readFile(desk, "utf8");
     expect(body).toContain("Exec=/opt/DeepSeek/DeepSeek %U");
-    expect(body).toMatch(/^Path=.*\/DeepSeek$/m);
+    expect(body).toMatch(/^Path=.*[\/\\]DeepSeek$/m);
     expect(await readFile(appFile, "utf8")).toBe(body);
     const before = await stat(desk);
     await utimes(desk, before.atime, new Date(before.mtimeMs - 20_000));
@@ -198,7 +198,10 @@ describe("stable launch path", () => {
     ).toBe("/home/me/DeepSeek.AppImage");
   });
 
-  it("writes the AppImage path on the first launch, not the fuse mount", async () => {
+  // On Windows the fixture home lives under AppData\Local\Temp, which itself
+  // matches looksTransientLaunchPath, so the persisted-path behaviour these
+  // tests assert can only be exercised where tmpdir() is not transient.
+  it.skipIf(process.platform === "win32")("writes the AppImage path on the first launch, not the fuse mount", async () => {
     const home = await tempDir("ds-appimage-");
     const userData = path.join(home, ".config", "DeepSeek");
     await mkdir(path.join(home, "Desktop"), { recursive: true });
@@ -223,7 +226,7 @@ describe("stable launch path", () => {
     expect(await readFile(path.join(userData, "desktop-launch-path.json"), "utf8")).toContain(appImage);
   });
 
-  it("repairs a shortcut whose Exec vanished after the first quit", async () => {
+  it.skipIf(process.platform === "win32")("repairs a shortcut whose Exec vanished after the first quit", async () => {
     const home = await tempDir("ds-dead-");
     const userData = path.join(home, ".config", "DeepSeek");
     await mkdir(path.join(home, "Desktop"), { recursive: true });
@@ -261,7 +264,7 @@ describe("stable launch path", () => {
     expect(await readFile(desk, "utf8")).toContain(`APPIMAGE_EXTRACT_AND_RUN=1 ${appImage} %U`);
   });
 
-  it("reuses a persisted portable path when the current execPath is a temp unpack", async () => {
+  it.skipIf(process.platform === "win32")("reuses a persisted portable path when the current execPath is a temp unpack", async () => {
     const home = await tempDir("ds-persist-");
     const userData = path.join(home, ".config", "DeepSeek");
     const portable = path.join(home, "DeepSeek-portable.exe");

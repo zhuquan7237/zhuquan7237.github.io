@@ -20,7 +20,8 @@ afterEach(async () => {
 });
 
 describe("extract Node archives without system xz", () => {
-  it("unpacks a gzip tarball that contains a file and a symlink", async () => {
+  // ln -s / tar reflect POSIX symlink semantics; skip on Windows hosts.
+  it.skipIf(process.platform === "win32")("unpacks a gzip tarball that contains a file and a symlink", async () => {
     const root = await tempDir();
     const src = path.join(root, "src", "node-v1-linux-x64");
     await mkdir(path.join(src, "bin"), { recursive: true });

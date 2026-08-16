@@ -30,7 +30,7 @@
     "test": "vitest run",
     "pack": "npm run build && electron-builder --dir",
     "dist": "npm run build && electron-builder -mwl",
-    "dist:linux": "npm run build && electron-builder --linux AppImage deb tar.gz --x64 --arm64",
+    "dist:linux": "npm run build && electron-builder --linux AppImage deb rpm tar.gz --x64 --arm64",
     "dist:win": "npm run build && electron-builder --win --x64 --arm64",
     "dist:mac": "npm run build && electron-builder --mac --x64 --arm64"
   },

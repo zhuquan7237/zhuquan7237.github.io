@@ -1,4 +1,4 @@
-const INSTALLER = /^DeepSeek-(\d+\.\d+\.\d+)-.+\.(exe|dmg|deb|zip|AppImage|tar\.gz|sh)$/;
+const INSTALLER = /^DeepSeek-(\d+\.\d+\.\d+)-.+\.(exe|dmg|deb|rpm|zip|AppImage|tar\.gz|sh)$/;
 const GITHUB_REPO = "zhuquan7237/zhuquan7237.github.io";
 
 export default {
