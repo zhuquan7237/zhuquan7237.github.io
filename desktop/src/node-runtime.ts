@@ -1,13 +1,11 @@
 import { spawn, type ChildProcess } from "node:child_process";
-import { chmod, mkdir, readFile, readdir, rm, stat, writeFile } from "node:fs/promises";
-import { createWriteStream } from "node:fs";
+import { chmod, mkdir, readdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { downloadToFile } from "./download-file";
 import { extractNodeArchive } from "./extract-archive";
 import { commandExistsArgs, explainFirstRunError } from "./first-run-error";
 import {
   NODE_VERSION,
-  formatByteProgress,
-  shouldLogDownloadProgress,
   hostTimeZone,
   localePrefersChina,
   nodeDistFile,
@@ -155,6 +153,9 @@ async function firstExisting(files: string[]): Promise<string | null> {
   return null;
 }
 
+/** Node archives are ~25 MB; give slow mirrors a minute before moving on. */
+const NODE_STALL_MS = 60_000;
+
 async function downloadFromMirrors(
   urls: string[],
   dest: string,
@@ -165,52 +166,17 @@ async function downloadFromMirrors(
   for (const url of urls) {
     try {
       onLog(`正在下载 Node.js：${url}`);
-      await downloadFile(url, dest, onLog, fetchImpl);
+      await downloadToFile(url, dest, onLog, fetchImpl, {
+        stallMs: NODE_STALL_MS,
+        stallMessage: `下载 Node.js 停住了：${url} 超过 ${NODE_STALL_MS / 1000} 秒没有新数据`,
+      });
       return;
     } catch (error) {
       lastError = error;
       onLog("这个地址下载失败，正在换一个镜像…");
-      await rm(dest, { force: true }).catch(() => undefined);
     }
   }
   throw lastError instanceof Error ? lastError : new Error("下载 Node.js 失败");
-}
-
-async function downloadFile(
-  url: string,
-  dest: string,
-  onLog: (line: string) => void,
-  fetchImpl: RuntimeFetcher,
-): Promise<void> {
-  const response = await fetchImpl(url);
-  if (!response.ok || !response.body) {
-    throw new Error(`下载失败 ${response.status}: ${url}`);
-  }
-  const total = Number(response.headers.get("content-length") || 0);
-  const file = createWriteStream(dest);
-  const reader = (response.body as ReadableStream<Uint8Array>).getReader();
-  let downloaded = 0;
-  let lastLoggedBytes = 0;
-  try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      if (!value) continue;
-      const buf = Buffer.from(value);
-      await new Promise<void>((resolve, reject) => {
-        file.write(buf, (error) => (error ? reject(error) : resolve()));
-      });
-      downloaded += buf.length;
-      if (shouldLogDownloadProgress(downloaded, total, lastLoggedBytes)) {
-        lastLoggedBytes = downloaded;
-        onLog(`下载进度 ${formatByteProgress(downloaded, total)}`);
-      }
-    }
-  } finally {
-    await new Promise<void>((resolve, reject) => {
-      file.end((error: NodeJS.ErrnoException | null) => (error ? reject(error) : resolve()));
-    });
-  }
 }
 
 async function exists(file: string): Promise<boolean> {

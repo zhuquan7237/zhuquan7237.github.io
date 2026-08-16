@@ -1,7 +1,7 @@
 export type FirstRunStage = "node" | "engine" | "start" | "unknown";
 
 export function looksLikeNetworkError(text: string): boolean {
-  return /enotfound|eai_again|enetunreach|econnrefused|econnreset|etimedout|fetch failed|network|offline|socket hang up|getaddrinfo|download failed|下载失败/i.test(
+  return /enotfound|eai_again|enetunreach|econnrefused|econnreset|etimedout|fetch failed|network|offline|socket hang up|getaddrinfo|download failed|下载失败|下载停住/i.test(
     text,
   );
 }

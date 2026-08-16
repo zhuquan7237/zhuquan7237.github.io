@@ -1,13 +1,6 @@
-import { createWriteStream } from "node:fs";
-import { mkdir, rm } from "node:fs/promises";
 import path from "node:path";
-import {
-  compareVersions,
-  formatByteProgress,
-  resolveDownloadTotal,
-  shouldLogDownloadProgress,
-  shouldPromptHarnessUpdate,
-} from "./util";
+import { compareVersions, shouldPromptHarnessUpdate } from "./util";
+import { downloadToFile } from "./download-file";
 
 export const DESKTOP_GITHUB_REPO = "zhuquan7237/zhuquan7237.github.io";
 export const DESKTOP_RELEASES_LATEST = `https://api.github.com/repos/${DESKTOP_GITHUB_REPO}/releases/latest`;
@@ -15,7 +8,7 @@ export const DESKTOP_DOWNLOAD_PAGE = "https://dsh.zhuquan.xyz/";
 export const DESKTOP_DOWNLOAD_ORIGIN = "https://dsh.zhuquan.xyz";
 export const DESKTOP_LATEST_MANIFEST = `${DESKTOP_DOWNLOAD_ORIGIN}/dl/latest.json`;
 export const DOWNLOAD_IDLE_MS = 45_000;
-export const INSTALLER_NAME_RE = /^DeepSeek-(\d+\.\d+\.\d+)-.+\.(exe|dmg|deb|zip|AppImage|tar\.gz)$/;
+export const INSTALLER_NAME_RE = /^DeepSeek-(\d+\.\d+\.\d+)-.+\.(exe|dmg|deb|rpm|zip|AppImage|tar\.gz)$/;
 
 export type HttpFetcher = (
   url: string,
@@ -171,17 +164,6 @@ export function downloadStallMessage(): string {
   return `下载停住了：GitHub 安装包连不上或中途没有新数据。请用浏览器打开 ${DESKTOP_DOWNLOAD_PAGE} 下载（浏览器会走系统代理）。`;
 }
 
-function abortError(signal: AbortSignal): Promise<never> {
-  return new Promise((_, reject) => {
-    const fail = () => reject(new Error(downloadStallMessage()));
-    if (signal.aborted) {
-      fail();
-      return;
-    }
-    signal.addEventListener("abort", fail, { once: true });
-  });
-}
-
 export async function fetchLatestDesktopRelease(fetcher: HttpFetcher = fetch): Promise<DesktopRelease> {
   try {
     const manifest = await fetcher(DESKTOP_LATEST_MANIFEST, {
@@ -210,72 +192,12 @@ export async function downloadDesktopAsset(
   fetcher: HttpFetcher = fetch,
   options: { knownSize?: number; stallMs?: number } = {},
 ): Promise<void> {
-  await mkdir(path.dirname(dest), { recursive: true });
-  const stallMs = options.stallMs ?? DOWNLOAD_IDLE_MS;
-  const ac = new AbortController();
-  let stallTimer: ReturnType<typeof setTimeout> | undefined;
-  const armStall = () => {
-    if (stallTimer) clearTimeout(stallTimer);
-    stallTimer = setTimeout(() => ac.abort(), stallMs);
-  };
-  const stopStall = () => {
-    if (stallTimer) clearTimeout(stallTimer);
-    stallTimer = undefined;
-  };
-
   onLog(`开始下载 ${path.basename(dest)}`);
-  const aborted = abortError(ac.signal);
-  void aborted.catch(() => undefined);
-  armStall();
-  try {
-    const response = await Promise.race([
-      fetcher(url, {
-        headers: { "User-Agent": "DeepSeek-Desktop", Accept: "application/octet-stream" },
-        redirect: "follow",
-        signal: ac.signal,
-      }),
-      aborted,
-    ]);
-    if (!response.ok || !response.body) {
-      throw new Error(`下载失败 ${response.status}: ${url}`);
-    }
-    const total = resolveDownloadTotal(Number(response.headers.get("content-length") || 0), options.knownSize);
-    onLog(`已连接，准备写入 ${formatByteProgress(0, total)}`);
-    const file = createWriteStream(dest);
-    const reader = (response.body as ReadableStream<Uint8Array>).getReader();
-    let downloaded = 0;
-    let lastLoggedBytes = 0;
-    try {
-      while (true) {
-        armStall();
-        const { done, value } = await Promise.race([reader.read(), aborted]);
-        if (done) break;
-        if (!value) continue;
-        const buf = Buffer.from(value);
-        await new Promise<void>((resolve, reject) => {
-          file.write(buf, (error) => (error ? reject(error) : resolve()));
-        });
-        downloaded += buf.length;
-        if (shouldLogDownloadProgress(downloaded, total, lastLoggedBytes)) {
-          lastLoggedBytes = downloaded;
-          onLog(`下载进度 ${formatByteProgress(downloaded, total)}`);
-        }
-      }
-    } finally {
-      await new Promise<void>((resolve, reject) => {
-        file.end((error: NodeJS.ErrnoException | null) => (error ? reject(error) : resolve()));
-      });
-    }
-    if (downloaded > 0 && lastLoggedBytes !== downloaded) {
-      onLog(`下载进度 ${formatByteProgress(downloaded, total)}`);
-    }
-  } catch (error) {
-    await rm(dest, { force: true }).catch(() => undefined);
-    if (ac.signal.aborted) throw new Error(downloadStallMessage());
-    throw error;
-  } finally {
-    stopStall();
-  }
+  await downloadToFile(url, dest, onLog, fetcher, {
+    knownSize: options.knownSize,
+    stallMs: options.stallMs ?? DOWNLOAD_IDLE_MS,
+    stallMessage: downloadStallMessage(),
+  });
 }
 
 export async function downloadDesktopAssetFromMirrors(
