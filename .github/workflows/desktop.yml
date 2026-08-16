@@ -114,6 +114,12 @@ jobs:
           body: |
             请用 ${{ steps.version.outputs.version }}。不要用更早的版本。
 
+            **0.1.18 → 0.1.19**
+            - dl/latest.json 改为在安装包全部上传完成后生成：0.1.18 的清单只记到 7/17 个文件且大小为 0。发布 tag 与 Release 名自动跟随 desktop/package.json
+            - 首次启动下载 Node 时连接或传输卡住会自动中止并换镜像，不再无限停在「正在下载 Node.js」；报错会按网络问题给出中文提示
+            - 新增 Linux rpm 包（Fedora / openSUSE，x86_64 与 aarch64），下载页与下载域名同步支持
+            - 测试套件在 Windows 开发机上也能通过（路径分隔符与 POSIX 专属用例）
+
             **0.1.17 → 0.1.18**
             - 修好零配置 Linux 首次安装：不再依赖系统 xz；失败会清掉半成品 Node 包；快捷方式只在主界面打开后创建；报错改成中文下一步（缺 make/g++、没网、AppImage 缺 libfuse2）。启动页增加「重试」
             - 下载页补上 Linux arm64 和 AppImage。AppImage 另附无 FUSE 启动脚本。Windows 解压 Node 不再依赖 PowerShell Expand-Archive；macOS 同样改用 .tar.gz
