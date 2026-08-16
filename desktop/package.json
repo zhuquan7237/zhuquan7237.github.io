@@ -25,7 +25,7 @@
   ],
   "main": "dist/main.js",
   "scripts": {
-    "build": "python3 scripts/generate-icon.py && tsc && npm run build:plugins",
+    "build": "(python3 scripts/generate-icon.py || python scripts/generate-icon.py) && tsc && npm run build:plugins",
     "build:plugins": "tsc -p resources/plugins/web-search-tavily && tsc -p resources/plugins/vision-aux",
     "start": "npm run build && electron .",
     "test": "vitest run",
