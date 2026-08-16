@@ -1,8 +1,12 @@
 name: Update download manifest
 
+# Manual repair tool only. The automatic manifest update now lives at the end of
+# desktop.yml's publish-release job, where it cannot race the asset uploads:
+# a "release published" workflow fired when the release object was created,
+# before softprops finished uploading, and 0.1.18 shipped a latest.json that
+# listed 7 of 17 assets with size 0. Use workflow_dispatch here to regenerate
+# the manifest by hand if it ever drifts.
 on:
-  release:
-    types: [published]
   workflow_dispatch:
 
 permissions:
@@ -10,7 +14,6 @@ permissions:
 
 jobs:
   latest-json:
-    if: github.event_name == 'workflow_dispatch' || startsWith(github.event.release.tag_name, 'desktop-v')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -21,11 +24,29 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           python3 - <<'PY'
-          import json, os, subprocess, urllib.request
-          raw = subprocess.check_output(["gh", "api", "repos/zhuquan7237/zhuquan7237.github.io/releases/latest"], text=True)
-          rel = json.loads(raw)
-          tag = rel.get("tag_name") or ""
-          version = tag.replace("desktop-v", "").lstrip("v")
+          import json, os, subprocess, time
+
+          def get_release():
+              raw = subprocess.check_output(
+                  ["gh", "api", "repos/zhuquan7237/zhuquan7237.github.io/releases/latest"], text=True)
+              return json.loads(raw)
+
+          # Assets uploaded seconds ago can still report size 0; wait until the
+          # list is complete (count stable) and every size is non-zero.
+          rel = get_release()
+          last_count = -1
+          deadline = time.time() + 900
+          while time.time() < deadline:
+              assets = rel.get("assets") or []
+              sizes_ok = bool(assets) and all(int(a.get("size") or 0) > 0 for a in assets)
+              if sizes_ok and len(assets) == last_count:
+                  break
+              last_count = len(assets)
+              print(f"waiting for assets to settle (have {len(assets)})")
+              time.sleep(15)
+              rel = get_release()
+
+          version = (rel.get("tag_name") or "").replace("desktop-v", "").lstrip("v")
           assets = []
           for asset in rel.get("assets") or []:
               name = asset.get("name") or ""
@@ -39,7 +60,7 @@ jobs:
               })
           payload = {
               "version": version,
-              "tag": tag,
+              "tag": rel.get("tag_name") or "",
               "htmlUrl": "https://dsh.zhuquan.xyz/dl/",
               "notes": (rel.get("body") or "").strip().split("\n", 1)[0],
               "assets": assets,

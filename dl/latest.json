@@ -2,49 +2,109 @@
   "version": "0.1.18",
   "tag": "desktop-v0.1.18",
   "htmlUrl": "https://dsh.zhuquan.xyz/dl/",
-  "notes": "零配置首次安装：不再依赖系统 xz；失败可重试并清理半成品。Linux 请用 tar.gz/deb。",
+  "notes": "请用 0.1.18。不要用 0.1.0–0.1.17。",
   "assets": [
-    {
-      "name": "DeepSeek-0.1.18-win.exe",
-      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.1.18-win.exe",
-      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.18/DeepSeek-0.1.18-win.exe",
-      "size": 0
-    },
-    {
-      "name": "DeepSeek-0.1.18-linux-x64.tar.gz",
-      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.1.18-linux-x64.tar.gz",
-      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.18/DeepSeek-0.1.18-linux-x64.tar.gz",
-      "size": 0
-    },
     {
       "name": "DeepSeek-0.1.18-linux-amd64.deb",
       "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.1.18-linux-amd64.deb",
       "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.18/DeepSeek-0.1.18-linux-amd64.deb",
-      "size": 0
+      "size": 93386864
     },
     {
-      "name": "DeepSeek-0.1.18-linux-arm64.tar.gz",
-      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.1.18-linux-arm64.tar.gz",
-      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.18/DeepSeek-0.1.18-linux-arm64.tar.gz",
-      "size": 0
+      "name": "DeepSeek-0.1.18-linux-arm64-no-fuse.sh",
+      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.1.18-linux-arm64-no-fuse.sh",
+      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.18/DeepSeek-0.1.18-linux-arm64-no-fuse.sh",
+      "size": 683
+    },
+    {
+      "name": "DeepSeek-0.1.18-linux-arm64.AppImage",
+      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.1.18-linux-arm64.AppImage",
+      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.18/DeepSeek-0.1.18-linux-arm64.AppImage",
+      "size": 118624734
     },
     {
       "name": "DeepSeek-0.1.18-linux-arm64.deb",
       "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.1.18-linux-arm64.deb",
       "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.18/DeepSeek-0.1.18-linux-arm64.deb",
-      "size": 0
+      "size": 88048308
+    },
+    {
+      "name": "DeepSeek-0.1.18-linux-arm64.tar.gz",
+      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.1.18-linux-arm64.tar.gz",
+      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.18/DeepSeek-0.1.18-linux-arm64.tar.gz",
+      "size": 114684313
+    },
+    {
+      "name": "DeepSeek-0.1.18-linux-x64.tar.gz",
+      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.1.18-linux-x64.tar.gz",
+      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.18/DeepSeek-0.1.18-linux-x64.tar.gz",
+      "size": 114705107
+    },
+    {
+      "name": "DeepSeek-0.1.18-linux-x86_64-no-fuse.sh",
+      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.1.18-linux-x86_64-no-fuse.sh",
+      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.18/DeepSeek-0.1.18-linux-x86_64-no-fuse.sh",
+      "size": 686
+    },
+    {
+      "name": "DeepSeek-0.1.18-linux-x86_64.AppImage",
+      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.1.18-linux-x86_64.AppImage",
+      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.18/DeepSeek-0.1.18-linux-x86_64.AppImage",
+      "size": 118372023
     },
     {
       "name": "DeepSeek-0.1.18-mac-arm64.dmg",
       "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.1.18-mac-arm64.dmg",
       "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.18/DeepSeek-0.1.18-mac-arm64.dmg",
-      "size": 0
+      "size": 112143590
+    },
+    {
+      "name": "DeepSeek-0.1.18-mac-arm64.zip",
+      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.1.18-mac-arm64.zip",
+      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.18/DeepSeek-0.1.18-mac-arm64.zip",
+      "size": 112096422
     },
     {
       "name": "DeepSeek-0.1.18-mac-x64.dmg",
       "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.1.18-mac-x64.dmg",
       "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.18/DeepSeek-0.1.18-mac-x64.dmg",
-      "size": 0
+      "size": 119602062
+    },
+    {
+      "name": "DeepSeek-0.1.18-mac-x64.zip",
+      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.1.18-mac-x64.zip",
+      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.18/DeepSeek-0.1.18-mac-x64.zip",
+      "size": 119567149
+    },
+    {
+      "name": "DeepSeek-0.1.18-win-arm64.exe",
+      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.1.18-win-arm64.exe",
+      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.18/DeepSeek-0.1.18-win-arm64.exe",
+      "size": 91405255
+    },
+    {
+      "name": "DeepSeek-0.1.18-win-arm64.zip",
+      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.1.18-win-arm64.zip",
+      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.18/DeepSeek-0.1.18-win-arm64.zip",
+      "size": 133328130
+    },
+    {
+      "name": "DeepSeek-0.1.18-win-x64.exe",
+      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.1.18-win-x64.exe",
+      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.18/DeepSeek-0.1.18-win-x64.exe",
+      "size": 96950414
+    },
+    {
+      "name": "DeepSeek-0.1.18-win-x64.zip",
+      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.1.18-win-x64.zip",
+      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.18/DeepSeek-0.1.18-win-x64.zip",
+      "size": 134482291
+    },
+    {
+      "name": "DeepSeek-0.1.18-win.exe",
+      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.1.18-win.exe",
+      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.1.18/DeepSeek-0.1.18-win.exe",
+      "size": 187988042
     }
   ]
 }
