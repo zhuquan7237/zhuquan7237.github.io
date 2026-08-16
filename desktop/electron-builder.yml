@@ -15,10 +15,15 @@ asar: true
 asarUnpack:
   - resources/*.png
   - resources/skins/**/*
-# Real folder next to app.asar so fs.cp can install the default skin without GitHub.
+  - resources/plugins/**/lib/**
+  - resources/plugins/**/package.json
+# Real folder next to app.asar so fs.cp can install the default skin and the
+# bundled engine plugins without GitHub.
 extraResources:
   - from: resources/skins
     to: skins
+  - from: resources/plugins
+    to: plugins
 extraMetadata:
   main: dist/main.js
 forceCodeSigning: false

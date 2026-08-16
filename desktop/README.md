@@ -9,7 +9,7 @@
 Search: DeepSeek Harness Desktop, dsh desktop, DeepSeek Harness 桌面版, DeepSeek Harness 桌面端, DeepSeek Harness 下载.
 
 <p align="center">
-  <img src="../assets/desktop-preview.png" alt="DeepSeek Harness 桌面版 0.1.19：默认皮肤「深海女仆工坊」" width="920" />
+  <img src="../assets/desktop-preview.png" alt="DeepSeek Harness 桌面版 0.2.0：默认皮肤「深海女仆工坊」" width="920" />
 </p>
 
 This package does **not** vendor the official monorepo. Other community desktops copy the whole harness into their GitHub repo (that ranks well in search). This shell installs `@deepseek-ai/dsh` from npm instead. See [compare.html](https://dsh.zhuquan.xyz/compare.html). On launch it:
@@ -32,14 +32,14 @@ Harness releases therefore land without rebuilding this desktop app. The shell o
 
 ```sh
 # Linux 推荐 tar.gz（不需要 FUSE）。AppImage 在 Ubuntu 24.04 上常因缺少 libfuse2 无法打开。
-tar -xzf DeepSeek-0.1.19-linux-x64.tar.gz
-./DeepSeek-0.1.19-linux-x64/DeepSeek
+tar -xzf DeepSeek-0.2.0-linux-x64.tar.gz
+./DeepSeek-0.2.0-linux-x64/DeepSeek
 
 # Debian/Ubuntu
-sudo apt install ./DeepSeek-0.1.19-linux-amd64.deb
+sudo apt install ./DeepSeek-0.2.0-linux-amd64.deb
 ```
 
-Windows：下载 `DeepSeek-0.1.19-win.exe`。若 SmartScreen 提示未签名，选「更多信息 → 仍要运行」。
+Windows：下载 `DeepSeek-0.2.0-win.exe`。若 SmartScreen 提示未签名，选「更多信息 → 仍要运行」。
 
 macOS：打开 dmg，把 App 拖进「应用程序」。若提示「文件已损坏」，终端运行 `xattr -cr /Applications/DeepSeek.app`，或双击盘里的 `Open-DeepSeek.command` / 打开 `Read-Me-First.txt`。
 
@@ -63,18 +63,32 @@ GitHub Actions builds:
 Download installers from [dsh.zhuquan.xyz/dl/](https://dsh.zhuquan.xyz/dl/). GitHub Release is the fallback. GitHub Actions artifacts are not a public store.
 
 - Linux：
-  - `https://dsh.zhuquan.xyz/dl/DeepSeek-0.1.19-linux-x64.tar.gz`
-  - `https://dsh.zhuquan.xyz/dl/DeepSeek-0.1.19-linux-amd64.deb`
-  - `https://dsh.zhuquan.xyz/dl/DeepSeek-0.1.19-linux-arm64.tar.gz`
-  - `https://dsh.zhuquan.xyz/dl/DeepSeek-0.1.19-linux-arm64.deb`
+  - `https://dsh.zhuquan.xyz/dl/DeepSeek-0.2.0-linux-x64.tar.gz`
+  - `https://dsh.zhuquan.xyz/dl/DeepSeek-0.2.0-linux-amd64.deb`
+  - `https://dsh.zhuquan.xyz/dl/DeepSeek-0.2.0-linux-arm64.tar.gz`
+  - `https://dsh.zhuquan.xyz/dl/DeepSeek-0.2.0-linux-arm64.deb`
 
-请用 **0.1.19**。不要用 0.1.0–0.1.18。安装包优先从 https://dsh.zhuquan.xyz/dl/ 下载。
+请用 **0.2.0**。不要用 0.1.0–0.1.19。安装包优先从 https://dsh.zhuquan.xyz/dl/ 下载。
 
 ## 皮肤中心
 
 打开软件后的宫殿大厅和双女仆，就是默认皮肤「深海女仆工坊」。**这套画面不是桌面壳作者画的。** 谢谢一创 [上善](https://www.pixiv.net/users/62155430)、二创 [ZipZipPipe](https://www.pixiv.net/users/18604994)、三创 [Small-tailqwq](https://github.com/Small-tailqwq/dsh-deep-whale)。
 
 对话窗口右上角 DeepSeek 鲸鱼按钮会弹出皮肤列表（带过渡动画）。默认皮肤是 [Small-tailqwq/dsh-deep-whale](https://github.com/Small-tailqwq/dsh-deep-whale) 的「深海女仆工坊」，已打进安装包，CC BY-NC-SA 4.0，**禁止商用**。关闭皮肤中心：列表里的按钮、菜单 **皮肤**，或引擎设置。以后有新皮肤可从文件夹或 GitHub 地址导入。切回官方皮肤后再选默认皮肤会重启界面，避免插件卸掉后切不回来。完整致谢见 https://dsh.zhuquan.xyz/#skin 。
+
+## 视觉辅助模型（0.2.0 起）
+
+主模型不支持识图时（如 `deepseek-chat`），先把图片交给一个 **OpenAI 兼容的视觉模型**转成文字描述，再交给主模型；主模型自己支持识图时（如各家的 VL 模型）原图直通，不做任何改动。识别能力由引擎的 `ctx.llm.resolveModelInfo().inputModalities` 自动判断，无需手动切换。
+
+在 **Harness → 引擎设置** 里填写：接口地址（如 `https://api.siliconflow.cn/v1`）、API Key、视觉模型名（如 `Qwen/Qwen2.5-VL-72B-Instruct`）。任何 OpenAI 兼容的视觉接口都可以：通义 Qwen-VL（百炼兼容模式）、智谱 GLM-4V、OpenAI gpt-4o、硅基流动聚合、本地 Ollama 等。API Key 只保存在本机，通过环境变量传给引擎进程，不写入任何明文配置文件。
+
+实现方式是随安装包内置的引擎插件 `@dsh-desktop/dsh-vision-aux`：监听 `agent/pre-step`，把进入模型的消息里的图片块替换为描述文本（保留消息身份）。描述失败的图片会替换为占位说明，对话不中断。
+
+## 自定义联网搜索（0.2.0 起）
+
+模型的 `web_search` 工具默认走 DeepSeek 官方搜索。0.2.0 起可在 **引擎设置** 里切换为 **Tavily**（[tavily.com](https://tavily.com)，专为 AI 检索设计，注册有每月 1000 次免费额度）：填入自己的 Tavily API Key 即可，Key 同样只保存在本机。
+
+实现方式是内置引擎插件 `@dsh-desktop/dsh-web-search-tavily`：向引擎的 `ctx.web` 搜索能力注册一个 provider（与官方 Exa / Perplexity provider 同一机制），并把 web 配置指向它。模型看到的 `web_search` 工具名、参数、结果卡片完全不变。
 
 ## Run from source
 

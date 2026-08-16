@@ -10,6 +10,34 @@ export const NPMMIRROR_REGISTRY = "https://registry.npmmirror.com";
 
 export type HarnessChannel = "latest" | "next" | string;
 
+/** Vision auxiliary model: describes images when the selected model cannot see them. */
+export interface VisionAuxSettings {
+  enabled: boolean;
+  /** OpenAI-compatible base URL; `/chat/completions` is appended by the plugin. */
+  baseURL: string;
+  /** Sent to the engine via DSH_VISION_AUX_API_KEY, never written into cordis.patch.yml. */
+  apiKey: string;
+  /** Vision model id, e.g. qwen-vl-max / glm-4v-flash / gpt-4o-mini. */
+  model: string;
+  /** Per-image timeout in milliseconds. */
+  timeoutMs: number;
+  /** When modality metadata is unavailable, leave images untouched instead of describing them. */
+  skipWhenUnknown: boolean;
+}
+
+/** Tavily search provider settings (the only custom provider shipped so far). */
+export interface TavilySearchSettings {
+  /** Sent to the engine via DSH_TAVILY_API_KEY, never written into cordis.patch.yml. */
+  apiKey: string;
+  baseURL: string;
+  maxResults: number;
+}
+
+export interface WebSearchSettings {
+  provider: "deepseek-official" | "tavily";
+  tavily: TavilySearchSettings;
+}
+
 export interface DesktopSettings {
   autoUpdateHarness: boolean;
   /** Check GitHub Releases for a newer desktop installer after launch. */
@@ -30,6 +58,8 @@ export interface DesktopSettings {
   skinsEnabled: boolean;
   /** "official" keeps the stock Harness look; default is maid-atelier. */
   activeSkinId: string;
+  visionAux: VisionAuxSettings;
+  webSearch: WebSearchSettings;
 }
 
 export const DEFAULT_SETTINGS: DesktopSettings = {
@@ -45,7 +75,32 @@ export const DEFAULT_SETTINGS: DesktopSettings = {
   skippedDesktopVersion: "",
   skinsEnabled: true,
   activeSkinId: "maid-atelier",
+  visionAux: {
+    enabled: false,
+    baseURL: "",
+    apiKey: "",
+    model: "",
+    timeoutMs: 60_000,
+    skipWhenUnknown: false,
+  },
+  webSearch: {
+    provider: "deepseek-official",
+    tavily: { apiKey: "", baseURL: "https://api.tavily.com", maxResults: 8 },
+  },
 };
+
+/** Old settings files predate the nested plugin groups; fill their blanks field by field. */
+export function mergeNestedSettings(saved: Partial<DesktopSettings>): Partial<DesktopSettings> {
+  return {
+    ...saved,
+    visionAux: { ...DEFAULT_SETTINGS.visionAux, ...(saved.visionAux ?? {}) },
+    webSearch: {
+      ...DEFAULT_SETTINGS.webSearch,
+      ...(saved.webSearch ?? {}),
+      tavily: { ...DEFAULT_SETTINGS.webSearch.tavily, ...(saved.webSearch?.tavily ?? {}) },
+    },
+  };
+}
 
 /**
  * Settings saved before the mirror feature existed pin registry.npmjs.org, which

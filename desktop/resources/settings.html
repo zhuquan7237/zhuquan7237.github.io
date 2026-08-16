@@ -95,6 +95,39 @@
         <span>启用皮肤中心（默认「深海女仆工坊」）</span>
       </label>
     </section>
+    <section class="skin-box">
+      <h2>视觉辅助模型</h2>
+      <p>
+        主模型不支持识图时，先把图片交给下面这个视觉模型转成文字描述，再交给主模型；
+        主模型自己支持识图时原图直通，不受影响。填 OpenAI 兼容接口（通义 Qwen-VL、
+        智谱 GLM-4V、OpenAI、硅基流动、本地 Ollama 等都可以）。
+      </p>
+      <label class="check">
+        <input id="visionEnabled" type="checkbox" />
+        <span>启用视觉辅助模型</span>
+      </label>
+      <label>接口地址（baseURL，会自动拼接 /chat/completions）</label>
+      <input id="visionBase" placeholder="https://api.siliconflow.cn/v1" />
+      <label>API Key（只保存在本机，通过环境变量传给引擎）</label>
+      <input id="visionKey" type="password" placeholder="sk-…" autocomplete="off" />
+      <label>视觉模型名</label>
+      <input id="visionModel" placeholder="Qwen/Qwen2.5-VL-72B-Instruct" />
+    </section>
+    <section class="skin-box">
+      <h2>联网搜索</h2>
+      <p>
+        模型的 web_search 工具用哪个搜索源。Tavily 专为 AI 检索设计，
+        <a href="https://tavily.com" style="color:#7eb0ff">tavily.com</a>
+        注册可得免费额度（每月 1000 次）。Key 同样只保存在本机。
+      </p>
+      <label>搜索提供方</label>
+      <select id="searchProvider">
+        <option value="deepseek-official">DeepSeek 官方搜索（默认）</option>
+        <option value="tavily">Tavily（自己的 API Key）</option>
+      </select>
+      <label>Tavily API Key</label>
+      <input id="tavilyKey" type="password" placeholder="tvly-…" autocomplete="off" />
+    </section>
     <label class="check">
       <input id="autoDesktop" type="checkbox" />
       <span>启动后检查桌面软件更新（GitHub Release 安装包，不用 git pull）。</span>
@@ -136,6 +169,8 @@
         registry: "https://registry.npmmirror.com",
         localHarnessDir: "",
         workspaceDir: "~/DeepSeek",
+        visionAux: { enabled: false, baseURL: "", apiKey: "", model: "", timeoutMs: 60000, skipWhenUnknown: false },
+        webSearch: { provider: "deepseek-official", tavily: { apiKey: "", baseURL: "https://api.tavily.com", maxResults: 8 } },
       };
       const settingsApi = window.desktop && window.desktop.getSettings
         ? window.desktop.getSettings()
@@ -148,6 +183,14 @@
         $("registry").value = s.registry;
         $("local").value = s.localHarnessDir;
         $("workspace").textContent = s.workspaceDir || "（首次启动后自动使用家目录下的 DeepSeek 文件夹）";
+        const vision = s.visionAux || previewSettings.visionAux;
+        $("visionEnabled").checked = vision.enabled === true;
+        $("visionBase").value = vision.baseURL || "";
+        $("visionKey").value = vision.apiKey || "";
+        $("visionModel").value = vision.model || "";
+        const search = s.webSearch || previewSettings.webSearch;
+        $("searchProvider").value = search.provider === "tavily" ? "tavily" : "deepseek-official";
+        $("tavilyKey").value = (search.tavily && search.tavily.apiKey) || "";
       });
       $("official").onclick = () => { $("registry").value = OFFICIAL; };
       $("china").onclick = () => { $("registry").value = CHINA; };
@@ -168,6 +211,22 @@
           registry,
           registrySource: registry === current.registry ? current.registrySource : "user",
           localHarnessDir: $("local").value,
+          visionAux: {
+            enabled: $("visionEnabled").checked,
+            baseURL: $("visionBase").value.trim(),
+            apiKey: $("visionKey").value.trim(),
+            model: $("visionModel").value.trim(),
+            timeoutMs: (current.visionAux && current.visionAux.timeoutMs) || 60000,
+            skipWhenUnknown: (current.visionAux && current.visionAux.skipWhenUnknown) || false,
+          },
+          webSearch: {
+            provider: $("searchProvider").value === "tavily" ? "tavily" : "deepseek-official",
+            tavily: {
+              apiKey: $("tavilyKey").value.trim(),
+              baseURL: (current.webSearch && current.webSearch.tavily && current.webSearch.tavily.baseURL) || "https://api.tavily.com",
+              maxResults: (current.webSearch && current.webSearch.tavily && current.webSearch.tavily.maxResults) || 8,
+            },
+          },
         });
         window.desktop.apply();
         window.close();

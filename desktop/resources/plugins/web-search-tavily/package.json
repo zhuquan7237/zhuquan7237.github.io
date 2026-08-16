@@ -1,0 +1,21 @@
+{
+  "name": "@dsh-desktop/dsh-web-search-tavily",
+  "description": "Tavily-backed search provider for the DeepSeek Harness web capability seam (ctx.web)",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./provider": "./lib/provider.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/provider.js"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@deepseek-ai/cordis": ">=4"
+  }
+}

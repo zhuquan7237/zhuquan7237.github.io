@@ -250,8 +250,9 @@ export function renderManagedPatch(
   skins: InstalledSkin[],
   activeId: string,
   _bundledPackages: Iterable<string> = [],
+  pluginRows: string[] = [],
 ): string {
-  const entries = renderManagedEntries(skins, activeId);
+  const entries = [...renderManagedEntries(skins, activeId), ...pluginRows];
   // Official dsh: empty / comments-only files throw. Disable the layer with [].
   const body = entries.length > 0 ? entries.join("\n") : "[]";
   return [MANAGED_START, body, MANAGED_END].join("\n");
@@ -262,10 +263,11 @@ export function mergeSkinPatch(
   skins: InstalledSkin[],
   activeId: string,
   bundledPackages: Iterable<string> = [],
+  pluginRows: string[] = [],
 ): string {
   const kept = stripManagedPatch(existing).trim();
-  const managed = renderManagedPatch(skins, activeId, bundledPackages);
-  const entries = renderManagedEntries(skins, activeId);
+  const managed = renderManagedPatch(skins, activeId, bundledPackages, pluginRows);
+  const entries = [...renderManagedEntries(skins, activeId), ...pluginRows];
   if (!kept || !isYamlArrayDocument(kept) || isEmptyYamlArrayDocument(kept)) {
     return `${managed}\n`;
   }
@@ -313,7 +315,12 @@ export async function ensureHomePatchesAreArrays(dshHome: string): Promise<strin
   return repaired;
 }
 
-export async function writeSkinPatch(dshHome: string, skins: InstalledSkin[], activeId: string): Promise<string> {
+export async function writeSkinPatch(
+  dshHome: string,
+  skins: InstalledSkin[],
+  activeId: string,
+  pluginRows: string[] = [],
+): Promise<string> {
   const file = homePatchFile(dshHome);
   let existing = "";
   try {
@@ -328,7 +335,7 @@ export async function writeSkinPatch(dshHome: string, skins: InstalledSkin[], ac
       // still write a valid array
     }
   }
-  const next = mergeSkinPatch(existing, skins, activeId, await readProfileBundles(dshHome));
+  const next = mergeSkinPatch(existing, skins, activeId, await readProfileBundles(dshHome), pluginRows);
   await mkdir(dshHome, { recursive: true });
   await writeFile(file, next, "utf8");
   return file;
@@ -545,11 +552,12 @@ export async function applySkin(
   dshHome: string,
   skins: InstalledSkin[],
   activeId: string,
+  pluginRows: string[] = [],
 ): Promise<void> {
   await ensureHomePatchesAreArrays(dshHome);
   const selected = skins.find((skin) => skin.id === activeId);
   if (selected) await linkSkinPackage(dshHome, selected);
-  await writeSkinPatch(dshHome, skins, activeId);
+  await writeSkinPatch(dshHome, skins, activeId, pluginRows);
 }
 
 export async function previewDataUrl(skin: InstalledSkin): Promise<string> {

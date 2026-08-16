@@ -37,6 +37,7 @@ import {
 } from "./skins";
 import { migrateLegacyDesktopData, summarizeMigration, type LegacyMigrateResult } from "./legacy-home";
 import { loadWindowState, saveWindowState } from "./window-state";
+import { ensureBundledPlugins, pluginSecretsEnv, renderPluginRows } from "./plugins";
 import {
   APP_DISPLAY_NAME,
   APP_ID,
@@ -257,9 +258,19 @@ async function syncSkins(onLog: (line: string) => void = sendSplash.bind(null, "
   if (repaired.length) {
     onLog("已修复损坏的皮肤补丁文件（必须是 YAML 数组，空文件请用 []）");
   }
+  // Bundled engine plugins (Tavily search / vision aux) are independent of the
+  // skin toggle: install, link, and include their patch rows on every boot.
+  await ensureBundledPlugins({
+    userData: userData(),
+    dshHome: dshHomeDir(),
+    appRoot: path.join(__dirname, ".."),
+    resourcesPath: process.resourcesPath,
+    onLog: (line) => onLog(String(line)),
+  }).catch((error) => onLog(`内置插件未能安装：${error instanceof Error ? error.message : String(error)}`));
+  const pluginRows = renderPluginRows(settings);
   if (!settings.skinsEnabled) {
     const catalog = await loadCatalog(userData()).catch(() => []);
-    if (catalog.length) await applySkin(dshHomeDir(), catalog, OFFICIAL_SKIN_ID);
+    if (catalog.length) await applySkin(dshHomeDir(), catalog, OFFICIAL_SKIN_ID, pluginRows);
     return catalog;
   }
   try {
@@ -273,8 +284,17 @@ async function syncSkins(onLog: (line: string) => void = sendSplash.bind(null, "
   }
   const catalog = await loadCatalog(userData());
   const active = settings.activeSkinId || DEFAULT_SKIN_ID;
-  await applySkin(dshHomeDir(), catalog, active);
+  await applySkin(dshHomeDir(), catalog, active, pluginRows);
   return catalog;
+}
+
+/** Locale plus the plugin secrets and engine anchor the engine process needs. */
+function engineExtraEnv(): NodeJS.ProcessEnv {
+  return {
+    ...harnessLocaleEnv(uiLocale),
+    ...pluginSecretsEnv(settings),
+    ...(lastInstall?.prefix ? { DSH_ENGINE_ROOT: lastInstall.prefix } : {}),
+  };
 }
 
 function preferredSkinId(): string {
@@ -300,7 +320,7 @@ async function restartHarnessUi(): Promise<void> {
     install: lastInstall,
     workspaceDir,
     dshHome: dshHomeDir(),
-    extraEnv: harnessLocaleEnv(uiLocale),
+    extraEnv: engineExtraEnv(),
     onLog: (line) => sendSplash("log", line),
   });
   buildMenu();
@@ -831,7 +851,7 @@ async function boot(forceUpdate: boolean): Promise<void> {
       install,
       workspaceDir,
       dshHome,
-      extraEnv: harnessLocaleEnv(uiLocale),
+      extraEnv: engineExtraEnv(),
       onLog: (line) => sendSplash("log", line),
     });
     // New engine versions rewrite profiles/web/node_modules and drop the skin link.

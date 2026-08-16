@@ -4,6 +4,7 @@ import {
   DEFAULT_SETTINGS,
   applyRegistryPreference,
   hostTimeZone,
+  mergeNestedSettings,
   preferredNpmRegistry,
   resolveTimeZone,
   type DesktopSettings,
@@ -26,7 +27,7 @@ export async function loadSettings(
   } catch {
     saved = {};
   }
-  return { ...DEFAULT_SETTINGS, ...saved, ...applyRegistryPreference(saved, preferred) };
+  return { ...DEFAULT_SETTINGS, ...mergeNestedSettings(saved), ...applyRegistryPreference(saved, preferred) };
 }
 
 export async function saveSettings(userData: string, settings: DesktopSettings): Promise<void> {

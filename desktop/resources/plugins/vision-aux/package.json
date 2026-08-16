@@ -1,0 +1,21 @@
+{
+  "name": "@dsh-desktop/dsh-vision-aux",
+  "description": "Vision auxiliary model for DeepSeek Harness: describes image blocks through an OpenAI-compatible vision endpoint when the selected model cannot see images",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./vision": "./lib/vision.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/vision.js"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@deepseek-ai/cordis": ">=4"
+  }
+}
