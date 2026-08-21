@@ -129,6 +129,7 @@ export async function ensureHarness(
   const npm = npmInvocation(runtime, [
     "install",
     npmSpec(wanted),
+    "@deepseek-ai/cordis-plugin-group",
     "--omit=dev",
     "--legacy-peer-deps",
     "--no-fund",
