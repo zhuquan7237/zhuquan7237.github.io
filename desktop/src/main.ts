@@ -5,6 +5,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { homedir } from "node:os";
 import { loadSettings, saveSettings } from "./settings";
+import { syncAllProviderModels, getProvidersInfo } from "./sync-models";
 import { ensureHarness, fetchPublishedVersion, startHarnessWeb, stopHarness, type HarnessInstall, type RunningHarness } from "./harness";
 import { applyLinuxRuntimeFlags } from "./linux-flags";
 import { resolveNodeRuntime, type NodeRuntime } from "./node-runtime";
@@ -872,6 +873,13 @@ async function boot(forceUpdate: boolean): Promise<void> {
         userDataDir: userData(),
       }).catch(() => undefined);
     }
+    if (settings.autoSyncModels !== false) {
+      void syncAllProviderModels(dshHomeDir()).then((res) => {
+        if (res.count > 0) {
+          sendSplash("log", `已自动同步 ${res.count} 个新模型 (${res.providers.join(", ")})`);
+        }
+      }).catch(() => undefined);
+    }
     void maybeNotifyDesktopUpdate().then(() => maybeNotifyHarnessUpdate());
   } catch (error) {
     const message = explainFirstRunError(error, "unknown", process.platform);
@@ -961,6 +969,12 @@ if (linuxReady) {
       ipcMain.handle("skins:import-url", async (_event, url: string) => {
         const imported = await importSkinFromUrl(userData(), String(url || ""), (line) => sendSplash("log", line));
         await applySkinSelection(imported.id, true);
+      });
+      ipcMain.handle("models:sync", async () => {
+        return await syncAllProviderModels(dshHomeDir());
+      });
+      ipcMain.handle("models:get-providers", async () => {
+        return await getProvidersInfo(dshHomeDir());
       });
       ipcMain.on("splash:quit", () => {
         app.quit();

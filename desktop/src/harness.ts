@@ -177,7 +177,7 @@ export async function startHarnessWeb(options: {
   const { ELECTRON_RUN_AS_NODE: _electronNode, ...baseEnv } = process.env;
   let child: ChildProcess;
   try {
-    child = spawn(options.runtime.node, [options.install.bin, "web", "--host", "127.0.0.1", "--port", "0"], {
+    child = spawn(options.runtime.node, [options.install.bin, "web", "--no-open", "--host", "127.0.0.1", "--port", "0"], {
       cwd: options.workspaceDir,
       env: sanitizeEnv({
         ...baseEnv,

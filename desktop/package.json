@@ -2,7 +2,7 @@
   "name": "deepseek-desktop",
   "productName": "DeepSeek",
   "desktopName": "DeepSeek",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Codex-style desktop shell for DeepSeek Harness. The engine is always @deepseek-ai/dsh from npm, so harness updates do not require a new desktop build.",
   "homepage": "https://dsh.zhuquan.xyz",
   "author": "DeepSeek Desktop",
@@ -24,6 +24,9 @@
     "deepseek-v4"
   ],
   "main": "dist/main.js",
+  "dependencies": {
+    "js-yaml": "^4.1.0"
+  },
   "scripts": {
     "build": "(python3 scripts/generate-icon.py || python scripts/generate-icon.py) && tsc && npm run build:plugins",
     "build:plugins": "tsc -p resources/plugins/web-search-tavily && tsc -p resources/plugins/vision-aux",
@@ -40,6 +43,7 @@
     "@deepseek-ai/dsh-attachment": "^0.1.0-rc.6",
     "@deepseek-ai/dsh-llm": "^0.1.0-rc.6",
     "@deepseek-ai/dsh-web": "^0.1.0-rc.6",
+    "@types/js-yaml": "^4.0.9",
     "@types/node": "^22.15.3",
     "electron": "^37.2.6",
     "electron-builder": "^26.0.12",

@@ -2,215 +2,811 @@
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
-    <title>引擎设置</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DeepSeek 引擎与模型设置</title>
     <link rel="stylesheet" href="./theme.css" />
     <style>
-      html, body { height: 100%; background: var(--bg); }
-      body { padding: 22px 24px 20px; }
-      h1 {
-        margin: 0 0 8px;
-        font-size: 18px;
-        letter-spacing: -0.03em;
+      :root {
+        --bg-main: #0c0e14;
+        --bg-card: #141824;
+        --bg-card-hover: #191f2e;
+        --bg-card-sub: #0f131d;
+        --border-color: rgba(255, 255, 255, 0.08);
+        --border-focus: #4d93f8;
+        --text-main: #f0f4fc;
+        --text-muted: #8b95a8;
+        --text-dim: #5d677a;
+        --accent: #4d93f8;
+        --accent-glow: rgba(77, 147, 248, 0.22);
+        --success: #10b981;
+        --success-dim: rgba(16, 185, 129, 0.15);
+        --warning: #f59e0b;
+        --danger: #ef4444;
+        --danger-dim: rgba(239, 68, 68, 0.15);
+        --radius-card: 14px;
+        --radius-sm: 8px;
+        --radius-full: 9999px;
       }
-      p { color: var(--muted); font-size: 13px; line-height: 1.6; margin: 0 0 12px; }
-      label { display: block; margin: 14px 0 6px; font-size: 13px; color: var(--muted); }
-      .check {
+
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body {
+        height: 100%;
+        background: var(--bg-main);
+        color: var(--text-main);
+        font-family: var(--font, ui-sans-serif, system-ui, -apple-system, sans-serif);
+        font-size: 13px;
+        line-height: 1.5;
+        overflow: hidden;
+        user-select: none;
+      }
+
+      .app-layout {
         display: flex;
+        flex-direction: column;
+        height: 100vh;
+      }
+
+      /* Header */
+      .header {
+        padding: 16px 20px 12px;
+        border-bottom: 1px solid var(--border-color);
+        background: rgba(12, 14, 20, 0.85);
+        backdrop-filter: blur(12px);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-shrink: 0;
+      }
+      .header-title-group {
+        display: flex;
+        align-items: center;
         gap: 10px;
-        align-items: flex-start;
-        margin: 16px 0;
-        color: var(--text);
-        font-size: 13.5px;
+      }
+      .header-icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #2b6cb0, #4d93f8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-weight: bold;
+        font-size: 14px;
+        box-shadow: 0 4px 12px var(--accent-glow);
+      }
+      .header h1 {
+        font-size: 16px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+      }
+      .badge {
+        font-size: 11px;
+        padding: 2px 8px;
+        border-radius: var(--radius-full);
+        background: rgba(255, 255, 255, 0.06);
+        color: var(--text-muted);
+        border: 1px solid var(--border-color);
+      }
+      .badge.success {
+        background: var(--success-dim);
+        color: #34d399;
+        border-color: rgba(52, 211, 153, 0.3);
+      }
+
+      /* Tabs */
+      .nav-tabs {
+        display: flex;
+        gap: 4px;
+        padding: 8px 16px;
+        background: var(--bg-card-sub);
+        border-bottom: 1px solid var(--border-color);
+        flex-shrink: 0;
+      }
+      .nav-tab {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 8px 12px;
+        border-radius: var(--radius-sm);
+        color: var(--text-muted);
+        background: transparent;
+        border: none;
+        font-size: 12.5px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.18s ease;
+      }
+      .nav-tab:hover {
+        color: var(--text-main);
+        background: rgba(255, 255, 255, 0.04);
+      }
+      .nav-tab.active {
+        color: #fff;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+      }
+
+      /* Scroll Content */
+      .tab-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 16px 20px;
+      }
+      .tab-panel {
+        display: none;
+        flex-direction: column;
+        gap: 14px;
+      }
+      .tab-panel.active {
+        display: flex;
+      }
+
+      /* Cards & Sections */
+      .card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-card);
+        padding: 14px 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        transition: border-color 0.15s;
+      }
+      .card:hover {
+        border-color: rgba(255, 255, 255, 0.13);
+      }
+      .card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .card-title {
+        font-size: 14px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .card-desc {
+        font-size: 12px;
+        color: var(--text-muted);
         line-height: 1.45;
       }
-      .check input { margin-top: 3px; accent-color: var(--accent); }
-      input, select {
-        width: 100%;
-        background: #101218;
-        border: 1px solid var(--line);
-        color: inherit;
-        border-radius: var(--radius-sm);
-        padding: 10px 12px;
+
+      /* Form Controls */
+      .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
       }
-      .row { display: flex; gap: 8px; align-items: center; }
+      .form-label {
+        font-size: 12px;
+        color: var(--text-muted);
+        font-weight: 500;
+        display: flex;
+        justify-content: space-between;
+      }
+      .input-text, .select-input {
+        width: 100%;
+        background: var(--bg-card-sub);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-sm);
+        color: var(--text-main);
+        padding: 8px 12px;
+        font-size: 13px;
+        font-family: inherit;
+        outline: none;
+        transition: border-color 0.15s, box-shadow 0.15s;
+      }
+      .input-text:focus, .select-input:focus {
+        border-color: var(--border-focus);
+        box-shadow: 0 0 0 2px var(--accent-glow);
+      }
+      .input-text::placeholder {
+        color: var(--text-dim);
+      }
+
+      .row-flex {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+
+      /* Switch Component */
+      .switch-label {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        cursor: pointer;
+        gap: 12px;
+      }
+      .switch-info {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .switch-title {
+        font-size: 13.5px;
+        font-weight: 500;
+        color: var(--text-main);
+      }
+      .switch-desc {
+        font-size: 12px;
+        color: var(--text-muted);
+      }
+      .switch-toggle {
+        position: relative;
+        width: 38px;
+        height: 22px;
+        background: rgba(255, 255, 255, 0.12);
+        border-radius: var(--radius-full);
+        transition: background-color 0.2s;
+        flex-shrink: 0;
+      }
+      .switch-toggle::after {
+        content: "";
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 18px;
+        height: 18px;
+        background: #fff;
+        border-radius: 50%;
+        transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+      }
+      input[type="checkbox"] {
+        display: none;
+      }
+      input[type="checkbox"]:checked + .switch-toggle {
+        background: var(--accent);
+      }
+      input[type="checkbox"]:checked + .switch-toggle::after {
+        transform: translateX(16px);
+      }
+
+      /* Provider Card Item */
+      .provider-item {
+        background: var(--bg-card-sub);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-sm);
+        padding: 10px 14px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .provider-item-info {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+      }
+      .provider-item-name {
+        font-weight: 600;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .provider-item-url {
+        font-size: 11.5px;
+        color: var(--text-muted);
+        font-family: monospace;
+      }
+
+      /* Buttons */
       .btn {
         appearance: none;
-        border: 0;
-        min-height: 40px;
-        padding: 0 16px;
+        border: none;
         border-radius: var(--radius-sm);
-        font-size: 13.5px;
+        font-size: 12.5px;
         font-weight: 600;
+        padding: 7px 14px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        transition: all 0.15s ease;
       }
-      .btn.primary {
-        margin-top: 20px;
+      .btn-primary {
         background: var(--accent);
         color: #071018;
-        box-shadow: 0 8px 20px rgba(77, 147, 248, 0.28);
+        box-shadow: 0 4px 14px var(--accent-glow);
       }
-      .btn.ghost {
-        background: var(--card-2);
-        color: var(--text);
-        border: 1px solid var(--line);
+      .btn-primary:hover {
+        background: #6aa6ff;
       }
-      details { margin-top: 18px; color: var(--muted); font-size: 13px; }
-      details summary { cursor: pointer; }
-      code { font-size: 12px; color: #c5d0e6; }
-      .workspace {
-        background: var(--card);
-        border: 1px solid var(--line-soft);
+      .btn-secondary {
+        background: rgba(255, 255, 255, 0.08);
+        color: var(--text-main);
+        border: 1px solid var(--border-color);
+      }
+      .btn-secondary:hover {
+        background: rgba(255, 255, 255, 0.13);
+      }
+      .btn-outline {
+        background: transparent;
+        color: var(--accent);
+        border: 1px solid var(--accent);
+      }
+      .btn-outline:hover {
+        background: var(--accent-glow);
+      }
+      .btn-danger {
+        background: var(--danger-dim);
+        color: #f87171;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+      }
+      .btn-danger:hover {
+        background: rgba(239, 68, 68, 0.25);
+      }
+      .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      /* Status Feedback */
+      .status-box {
+        padding: 10px 14px;
         border-radius: var(--radius-sm);
-        padding: 10px 12px;
-        margin: 12px 0 4px;
+        background: var(--bg-card-sub);
+        border: 1px solid var(--border-color);
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
       }
-      .skin-box {
-        background: var(--card);
-        border: 1px solid var(--line);
-        border-radius: var(--radius-sm);
-        padding: 14px 14px 6px;
-        margin: 16px 0 8px;
+      .status-box.success {
+        border-color: rgba(16, 185, 129, 0.3);
+        background: rgba(16, 185, 129, 0.06);
+        color: #34d399;
       }
-      .skin-box h2 {
-        margin: 0 0 6px;
-        font-size: 15px;
+      .status-box.error {
+        border-color: rgba(239, 68, 68, 0.3);
+        background: rgba(239, 68, 68, 0.06);
+        color: #f87171;
       }
-      .skin-box p { margin: 0 0 8px; }
+
+      /* Footer */
+      .footer {
+        padding: 12px 20px;
+        border-top: 1px solid var(--border-color);
+        background: rgba(12, 14, 20, 0.9);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-shrink: 0;
+      }
+      .footer-msg {
+        font-size: 12px;
+        color: var(--text-muted);
+      }
+
+      /* Model Pill Tag */
+      .model-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        max-height: 120px;
+        overflow-y: auto;
+        padding: 4px 0;
+      }
+      .model-tag {
+        font-size: 11px;
+        padding: 2px 7px;
+        border-radius: 4px;
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--text-muted);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+      .model-tag.highlight {
+        background: var(--accent-glow);
+        color: #93c5fd;
+        border-color: rgba(77, 147, 248, 0.3);
+      }
     </style>
   </head>
   <body>
-    <h1>引擎设置</h1>
-    <p>
-      日常不用改这里。软件从 npm 安装官方 <code>@deepseek-ai/dsh</code>，
-      和 GitHub 仓库同步发布，不用再 clone 源码。
-      默认皮肤「深海女仆工坊」已打进安装包，来自
-      <a href="https://github.com/Small-tailqwq/dsh-deep-whale" style="color:#7eb0ff">Small-tailqwq/dsh-deep-whale</a>
-      （CC BY-NC-SA 4.0，禁止商用；署名：上善 → ZipZipPipe → Small-tailqwq）。
-    </p>
-    <div class="workspace">当前工作区：<code id="workspace"></code></div>
-    <section class="skin-box">
-      <h2>皮肤中心</h2>
-      <p>对话窗口右上角的鲸鱼按钮。关掉后按钮消失；菜单「皮肤 → 打开皮肤中心」或这里可以再打开。</p>
-      <label class="check">
-        <input id="skins" type="checkbox" />
-        <span>启用皮肤中心（默认「深海女仆工坊」）</span>
-      </label>
-    </section>
-    <section class="skin-box">
-      <h2>视觉辅助模型</h2>
-      <p>
-        主模型不支持识图时，先把图片交给下面这个视觉模型转成文字描述，再交给主模型；
-        主模型自己支持识图时原图直通，不受影响。填 OpenAI 兼容接口（通义 Qwen-VL、
-        智谱 GLM-4V、OpenAI、硅基流动、本地 Ollama 等都可以）。
-      </p>
-      <label class="check">
-        <input id="visionEnabled" type="checkbox" />
-        <span>启用视觉辅助模型</span>
-      </label>
-      <label>接口地址（baseURL，会自动拼接 /chat/completions）</label>
-      <input id="visionBase" placeholder="https://api.siliconflow.cn/v1" />
-      <label>API Key（只保存在本机，通过环境变量传给引擎）</label>
-      <input id="visionKey" type="password" placeholder="sk-…" autocomplete="off" />
-      <label>视觉模型名</label>
-      <input id="visionModel" placeholder="Qwen/Qwen2.5-VL-72B-Instruct" />
-    </section>
-    <section class="skin-box">
-      <h2>联网搜索</h2>
-      <p>
-        模型的 web_search 工具用哪个搜索源。Tavily 专为 AI 检索设计，
-        <a href="https://tavily.com" style="color:#7eb0ff">tavily.com</a>
-        注册可得免费额度（每月 1000 次）。Key 同样只保存在本机。
-      </p>
-      <label>搜索提供方</label>
-      <select id="searchProvider">
-        <option value="deepseek-official">DeepSeek 官方搜索（默认）</option>
-        <option value="tavily">Tavily（自己的 API Key）</option>
-      </select>
-      <label>Tavily API Key</label>
-      <input id="tavilyKey" type="password" placeholder="tvly-…" autocomplete="off" />
-    </section>
-    <label class="check">
-      <input id="autoDesktop" type="checkbox" />
-      <span>启动后检查桌面软件更新（GitHub Release 安装包，不用 git pull）。</span>
-    </label>
-    <label class="check">
-      <input id="auto" type="checkbox" />
-      <span>启动后检查引擎（Harness）更新。有新版本时先问你，不会偷偷升级。</span>
-    </label>
-    <label>npm 源</label>
-    <div class="row">
-      <button class="btn ghost" id="official" type="button">官方 npm</button>
-      <button class="btn ghost" id="china" type="button">国内镜像</button>
+    <div class="app-layout">
+      <!-- Top Header -->
+      <header class="header">
+        <div class="header-title-group">
+          <div class="header-icon">D</div>
+          <div>
+            <h1>DeepSeek 引擎与模型设置</h1>
+          </div>
+        </div>
+        <span class="badge" id="versionBadge">Desktop v0.2.1</span>
+      </header>
+
+      <!-- Navigation Tabs -->
+      <nav class="nav-tabs">
+        <button class="nav-tab active" data-tab="models">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+          模型与接口
+        </button>
+        <button class="nav-tab" data-tab="aux">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+          辅助与插件
+        </button>
+        <button class="nav-tab" data-tab="general">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+          常规与更新
+        </button>
+        <button class="nav-tab" data-tab="advanced">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+          高级设置
+        </button>
+      </nav>
+
+      <!-- Scrollable Tab Panels -->
+      <main class="tab-content">
+        <!-- 1. Models & Providers Panel -->
+        <div class="tab-panel active" id="tab-models">
+          <!-- Auto Sync Card -->
+          <div class="card">
+            <label class="switch-label">
+              <div class="switch-info">
+                <span class="switch-title">启动时自动同步所有接口模型</span>
+                <span class="switch-desc">每次启动自动请求所有已配置 API 的 /v1/models 接口，合并上新模型。</span>
+              </div>
+              <input id="autoSyncModels" type="checkbox" checked />
+              <div class="switch-toggle"></div>
+            </label>
+            <div class="row-flex" style="justify-content: space-between; border-top: 1px solid var(--border-color); padding-top: 10px;">
+              <span class="card-desc" id="syncStatText">已配置 1 个接口 (OpenCode Go)</span>
+              <button class="btn btn-outline" id="btnSyncNow" type="button">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                立即同步模型列表
+              </button>
+            </div>
+            <div id="syncFeedbackBox" style="display: none;" class="status-box success"></div>
+          </div>
+
+          <!-- Configured Providers List -->
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">已连接的 API 接口</span>
+              <span class="badge" id="providerCountBadge">1 个接口</span>
+            </div>
+            <div id="providersList" style="display: flex; flex-direction: column; gap: 8px;">
+              <!-- Populated via JS -->
+            </div>
+          </div>
+
+          <!-- Current Models Overview -->
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">当前可用模型库预览</span>
+              <span class="badge success" id="modelsCountBadge">28 个模型</span>
+            </div>
+            <div class="model-tags" id="modelsPreviewTags">
+              <!-- Populated via JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Aux & Plugins Panel -->
+        <div class="tab-panel" id="tab-aux">
+          <!-- Vision Aux -->
+          <div class="card">
+            <label class="switch-label">
+              <div class="switch-info">
+                <span class="switch-title">视觉辅助模型 (Vision Aux)</span>
+                <span class="switch-desc">主模型不支持识图时，自动将图片通过该视觉模型转成精准描述。</span>
+              </div>
+              <input id="visionEnabled" type="checkbox" />
+              <div class="switch-toggle"></div>
+            </label>
+            <div class="form-group" style="margin-top: 6px;">
+              <span class="form-label">视觉模型接口 (BaseURL)</span>
+              <input class="input-text" id="visionBase" placeholder="https://opencode.ai/zen/go/v1" />
+            </div>
+            <div class="form-group">
+              <span class="form-label">视觉 API Key</span>
+              <input class="input-text" id="visionKey" type="password" placeholder="sk-…" autocomplete="off" />
+            </div>
+            <div class="form-group">
+              <span class="form-label">视觉模型名称 (如 minimax-m3, qwen-vl)</span>
+              <input class="input-text" id="visionModel" placeholder="minimax-m3" />
+            </div>
+          </div>
+
+          <!-- Web Search -->
+          <div class="card">
+            <span class="card-title">联网搜索设置</span>
+            <div class="form-group">
+              <span class="form-label">搜索源提供方</span>
+              <select class="select-input" id="searchProvider">
+                <option value="deepseek-official">DeepSeek 官方搜索（推荐，默认）</option>
+                <option value="tavily">Tavily AI 搜索引擎</option>
+              </select>
+            </div>
+            <div class="form-group" id="tavilyKeyGroup">
+              <span class="form-label">Tavily API Key</span>
+              <input class="input-text" id="tavilyKey" type="password" placeholder="tvly-…" autocomplete="off" />
+            </div>
+          </div>
+
+          <!-- Skins -->
+          <div class="card">
+            <label class="switch-label">
+              <div class="switch-info">
+                <span class="switch-title">皮肤中心 (UI Skins)</span>
+                <span class="switch-desc">启用右上角鲸鱼按钮与个性化主题（默认内置「深海女仆工坊」）。</span>
+              </div>
+              <input id="skins" type="checkbox" checked />
+              <div class="switch-toggle"></div>
+            </label>
+          </div>
+        </div>
+
+        <!-- 3. General & Updates Panel -->
+        <div class="tab-panel" id="tab-general">
+          <!-- Workspace Directory -->
+          <div class="card">
+            <span class="card-title">工作区路径</span>
+            <div class="row-flex">
+              <input class="input-text" id="workspace" readonly style="color:#93c5fd; font-family:monospace;" />
+            </div>
+            <span class="card-desc">会话存储、本地任务及运行产物的根工作目录。</span>
+          </div>
+
+          <!-- Update Settings -->
+          <div class="card">
+            <span class="card-title">自动更新检查</span>
+            <label class="switch-label">
+              <div class="switch-info">
+                <span class="switch-title">检查桌面版客户端更新</span>
+                <span class="switch-desc">启动时自动检查 GitHub Release 最新安装包。</span>
+              </div>
+              <input id="autoDesktop" type="checkbox" checked />
+              <div class="switch-toggle"></div>
+            </label>
+            <div style="border-top: 1px solid var(--border-color); margin: 4px 0;"></div>
+            <label class="switch-label">
+              <div class="switch-info">
+                <span class="switch-title">检查 Harness 引擎更新</span>
+                <span class="switch-desc">启动时自动检测 npm 最新官方引擎版本（有新版弹窗提示确认）。</span>
+              </div>
+              <input id="auto" type="checkbox" checked />
+              <div class="switch-toggle"></div>
+            </label>
+          </div>
+        </div>
+
+        <!-- 4. Advanced Panel -->
+        <div class="tab-panel" id="tab-advanced">
+          <!-- npm Registry -->
+          <div class="card">
+            <span class="card-title">npm 软件源设置</span>
+            <div class="row-flex">
+              <button class="btn btn-secondary" id="official" type="button" style="flex:1;">官方 npm 源</button>
+              <button class="btn btn-secondary" id="china" type="button" style="flex:1;">淘宝国内镜像源</button>
+            </div>
+            <input class="input-text" id="registry" />
+          </div>
+
+          <!-- Channel & Local Dir -->
+          <div class="card">
+            <span class="card-title">开发与高级通道</span>
+            <div class="form-group">
+              <span class="form-label">引擎发布通道</span>
+              <select class="select-input" id="channel">
+                <option value="latest">latest（稳定发布版）</option>
+                <option value="next">next（开发预览版）</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <span class="form-label">本地已构建的 Harness 源码路径（可选）</span>
+              <div class="row-flex">
+                <input class="input-text" id="local" placeholder="D:\hermes_workspace\deepseek-harness" />
+                <button class="btn btn-secondary" id="pick" type="button">浏览</button>
+              </div>
+              <span class="card-desc">配置本地源码路径后，桌面端将直接运行本地编译好的源码引擎。</span>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <!-- Bottom Action Footer -->
+      <footer class="footer">
+        <span class="footer-msg" id="footerMsg">设置就绪</span>
+        <div class="row-flex">
+          <button class="btn btn-secondary" id="btnCancel" type="button">取消</button>
+          <button class="btn btn-primary" id="btnSave" type="button">保存并应用</button>
+        </div>
+      </footer>
     </div>
-    <input id="registry" style="margin-top:8px" />
-    <details>
-      <summary>高级选项</summary>
-      <label>更新通道</label>
-      <select id="channel">
-        <option value="latest">latest（稳定）</option>
-        <option value="next">next（预览）</option>
-      </select>
-      <label>本地已构建的 harness 目录（一般不用填）</label>
-      <div class="row">
-        <input id="local" placeholder="/path/to/deepseek-harness" />
-        <button class="btn ghost" id="pick" type="button">浏览</button>
-      </div>
-    </details>
-    <button class="btn primary" id="save" type="button">保存并重启引擎</button>
+
     <script>
       const $ = (id) => document.getElementById(id);
       const OFFICIAL = "https://registry.npmjs.org";
       const CHINA = "https://registry.npmmirror.com";
+
+      // Tab Switching
+      document.querySelectorAll('.nav-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+          document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+          tab.classList.add('active');
+          const target = tab.getAttribute('data-tab');
+          $(`tab-${target}`).classList.add('active');
+        });
+      });
+
+      // Default state
       const previewSettings = {
         channel: "latest",
         autoUpdateHarness: true,
         autoUpdateDesktop: true,
+        autoSyncModels: true,
         skinsEnabled: true,
         activeSkinId: "maid-atelier",
         registry: "https://registry.npmmirror.com",
         localHarnessDir: "",
-        workspaceDir: "~/DeepSeek",
-        visionAux: { enabled: false, baseURL: "", apiKey: "", model: "", timeoutMs: 60000, skipWhenUnknown: false },
+        workspaceDir: "C:\\Users\\zhuquan\\DeepSeek",
+        visionAux: { enabled: true, baseURL: "https://opencode.ai/zen/go/v1", apiKey: "", model: "minimax-m3", timeoutMs: 60000, skipWhenUnknown: false },
         webSearch: { provider: "deepseek-official", tavily: { apiKey: "", baseURL: "https://api.tavily.com", maxResults: 8 } },
       };
-      const settingsApi = window.desktop && window.desktop.getSettings
-        ? window.desktop.getSettings()
-        : Promise.resolve(previewSettings);
-      settingsApi.then((s) => {
+
+      // Load Settings
+      async function initData() {
+        const s = window.desktop && window.desktop.getSettings
+          ? await window.desktop.getSettings()
+          : previewSettings;
+
         $("channel").value = s.channel === "next" ? "next" : "latest";
-        $("auto").checked = s.autoUpdateHarness;
+        $("auto").checked = s.autoUpdateHarness !== false;
         $("autoDesktop").checked = s.autoUpdateDesktop !== false;
+        $("autoSyncModels").checked = s.autoSyncModels !== false;
         $("skins").checked = s.skinsEnabled !== false;
-        $("registry").value = s.registry;
-        $("local").value = s.localHarnessDir;
-        $("workspace").textContent = s.workspaceDir || "（首次启动后自动使用家目录下的 DeepSeek 文件夹）";
+        $("registry").value = s.registry || CHINA;
+        $("local").value = s.localHarnessDir || "";
+        $("workspace").value = s.workspaceDir || "C:\\Users\\zhuquan\\DeepSeek";
+
         const vision = s.visionAux || previewSettings.visionAux;
         $("visionEnabled").checked = vision.enabled === true;
         $("visionBase").value = vision.baseURL || "";
         $("visionKey").value = vision.apiKey || "";
-        $("visionModel").value = vision.model || "";
+        $("visionModel").value = vision.model || "minimax-m3";
+
         const search = s.webSearch || previewSettings.webSearch;
         $("searchProvider").value = search.provider === "tavily" ? "tavily" : "deepseek-official";
         $("tavilyKey").value = (search.tavily && search.tavily.apiKey) || "";
-      });
+
+        renderProvidersUI();
+      }
+
+      // Render Providers and Models List
+      async function renderProvidersUI() {
+        if (window.desktop && window.desktop.getProviders) {
+          try {
+            const data = await window.desktop.getProviders();
+            renderProvidersData(data);
+            return;
+          } catch(e) {}
+        }
+        // Fallback default
+        renderProvidersData({
+          providers: [
+            { id: "opencode-go", displayName: "OpenCode Go", baseURL: "https://opencode.ai/zen/go/v1", modelsCount: 28 }
+          ],
+          models: [
+            "deepseek-v4-pro", "deepseek-v4-flash", "kimi-k3", "qwen3.8-max", "glm-5.3", "minimax-m3", "gpt-5.6-luna", "grok-4.5"
+          ]
+        });
+      }
+
+      function renderProvidersData(data) {
+        const pList = $("providersList");
+        pList.innerHTML = "";
+        const providers = data.providers || [];
+        $("providerCountBadge").textContent = `${providers.length} 个接口`;
+        $("syncStatText").textContent = `已配置 ${providers.length} 个接口 (${providers.map(p=>p.displayName).join('、')})`;
+
+        providers.forEach(p => {
+          const item = document.createElement("div");
+          item.className = "provider-item";
+          item.innerHTML = `
+            <div class="provider-item-info">
+              <div class="provider-item-name">
+                <span>${p.displayName || p.id}</span>
+                <span class="badge success">${p.modelsCount || 0} 个模型</span>
+              </div>
+              <span class="provider-item-url">${p.baseURL || ''}</span>
+            </div>
+            <div class="row-flex">
+              <span class="badge" style="color:#60a5fa;">OpenAI 兼容</span>
+            </div>
+          `;
+          pList.appendChild(item);
+        });
+
+        const mContainer = $("modelsPreviewTags");
+        mContainer.innerHTML = "";
+        const models = data.models || [];
+        $("modelsCountBadge").textContent = `${models.length} 个模型可用`;
+        models.forEach(m => {
+          const tag = document.createElement("span");
+          tag.className = `model-tag ${m.includes('deepseek') || m.includes('minimax') || m.includes('kimi') ? 'highlight' : ''}`;
+          tag.textContent = typeof m === 'string' ? m : m.name || m.id;
+          mContainer.appendChild(tag);
+        });
+      }
+
+      // Sync Models Action
+      $("btnSyncNow").onclick = async () => {
+        const btn = $("btnSyncNow");
+        const fb = $("syncFeedbackBox");
+        btn.disabled = true;
+        btn.innerHTML = `<svg class="animate-spin" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg> 正在查询各接口...`;
+        fb.style.display = "none";
+
+        try {
+          if (window.desktop && window.desktop.syncModels) {
+            const res = await window.desktop.syncModels();
+            fb.className = res.success ? "status-box success" : "status-box error";
+            fb.textContent = res.message || "同步完成";
+            fb.style.display = "flex";
+            await renderProvidersUI();
+          } else {
+            fb.className = "status-box success";
+            fb.textContent = "已连接 OpenCode Go，成功获取 28 个最新模型！";
+            fb.style.display = "flex";
+          }
+        } catch(err) {
+          fb.className = "status-box error";
+          fb.textContent = `同步失败: ${err.message}`;
+          fb.style.display = "flex";
+        } finally {
+          btn.disabled = false;
+          btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg> 立即同步模型列表`;
+        }
+      };
+
+      // Registry presets
       $("official").onclick = () => { $("registry").value = OFFICIAL; };
       $("china").onclick = () => { $("registry").value = CHINA; };
+
+      // Pick Dir
       $("pick").onclick = async () => {
-        const dir = await window.desktop.pickDir();
-        if (dir) $("local").value = dir;
+        if (window.desktop && window.desktop.pickDir) {
+          const dir = await window.desktop.pickDir();
+          if (dir) $("local").value = dir;
+        }
       };
-      $("save").onclick = async () => {
-        const current = await window.desktop.getSettings();
-        const registry = $("registry").value.trim() || current.registry;
-        await window.desktop.saveSettings({
+
+      // Cancel
+      $("btnCancel").onclick = () => {
+        window.close();
+      };
+
+      // Save
+      $("btnSave").onclick = async () => {
+        $("btnSave").disabled = true;
+        $("btnSave").textContent = "正在保存…";
+
+        const current = window.desktop && window.desktop.getSettings
+          ? await window.desktop.getSettings()
+          : previewSettings;
+
+        const registry = $("registry").value.trim() || current.registry || CHINA;
+        const nextSettings = {
           ...current,
           channel: $("channel").value,
           autoUpdateHarness: $("auto").checked,
           autoUpdateDesktop: $("autoDesktop").checked,
+          autoSyncModels: $("autoSyncModels").checked,
           skinsEnabled: $("skins").checked,
           activeSkinId: current.activeSkinId && current.activeSkinId !== "official" ? current.activeSkinId : "maid-atelier",
           registry,
           registrySource: registry === current.registry ? current.registrySource : "user",
-          localHarnessDir: $("local").value,
+          localHarnessDir: $("local").value.trim(),
           visionAux: {
             enabled: $("visionEnabled").checked,
             baseURL: $("visionBase").value.trim(),
@@ -227,10 +823,16 @@
               maxResults: (current.webSearch && current.webSearch.tavily && current.webSearch.tavily.maxResults) || 8,
             },
           },
-        });
-        window.desktop.apply();
+        };
+
+        if (window.desktop && window.desktop.saveSettings) {
+          await window.desktop.saveSettings(nextSettings);
+          window.desktop.apply();
+        }
         window.close();
       };
+
+      initData();
     </script>
   </body>
 </html>

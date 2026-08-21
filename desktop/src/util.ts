@@ -42,6 +42,8 @@ export interface DesktopSettings {
   autoUpdateHarness: boolean;
   /** Check GitHub Releases for a newer desktop installer after launch. */
   autoUpdateDesktop: boolean;
+  /** Automatically sync model lists from configured providers on startup. */
+  autoSyncModels: boolean;
   channel: HarnessChannel;
   registry: string;
   /** "auto" keeps following the system language; "user" pins whatever was picked in settings. */
@@ -65,6 +67,7 @@ export interface DesktopSettings {
 export const DEFAULT_SETTINGS: DesktopSettings = {
   autoUpdateHarness: true,
   autoUpdateDesktop: true,
+  autoSyncModels: true,
   channel: "latest",
   registry: NPM_REGISTRY,
   registrySource: "auto",

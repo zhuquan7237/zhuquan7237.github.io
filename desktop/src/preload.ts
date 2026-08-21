@@ -20,4 +20,6 @@ contextBridge.exposeInMainWorld("desktop", {
   setSkinsEnabled: (enabled: boolean): Promise<void> => ipcRenderer.invoke("skins:set-enabled", enabled),
   importSkinDir: (): Promise<void> => ipcRenderer.invoke("skins:import-dir"),
   importSkinUrl: (url: string): Promise<void> => ipcRenderer.invoke("skins:import-url", url),
+  syncModels: (): Promise<any> => ipcRenderer.invoke("models:sync"),
+  getProviders: (): Promise<any> => ipcRenderer.invoke("models:get-providers"),
 });
