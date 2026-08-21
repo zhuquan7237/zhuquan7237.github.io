@@ -420,7 +420,7 @@
             <h1>DeepSeek 引擎与模型设置</h1>
           </div>
         </div>
-        <span class="badge" id="versionBadge">Desktop v0.2.1</span>
+        <span class="badge" id="versionBadge">Desktop</span>
       </header>
 
       <!-- Navigation Tabs -->
@@ -656,6 +656,11 @@
 
       // Load Settings
       async function initData() {
+        if (window.desktop && window.desktop.getVersion) {
+          try {
+            $("versionBadge").textContent = `Desktop v${await window.desktop.getVersion()}`;
+          } catch (e) {}
+        }
         const s = window.desktop && window.desktop.getSettings
           ? await window.desktop.getSettings()
           : previewSettings;
@@ -692,31 +697,32 @@
           } catch(e) {}
         }
         // Fallback default
-        renderProvidersData({
-          providers: [
-            { id: "opencode-go", displayName: "OpenCode Go", baseURL: "https://opencode.ai/zen/go/v1", modelsCount: 28 }
-          ],
-          models: [
-            "deepseek-v4-pro", "deepseek-v4-flash", "kimi-k3", "qwen3.8-max", "glm-5.3", "minimax-m3", "gpt-5.6-luna", "grok-4.5"
-          ]
-        });
+        renderProvidersData([
+          { id: "opencode-go", name: "OpenCode Go", baseURL: "https://opencode.ai/zen/go/v1", modelCount: 8,
+            models: ["deepseek-v4-pro", "deepseek-v4-flash", "kimi-k3", "qwen3.8-max", "glm-5.3", "minimax-m3", "gpt-5.6-luna", "grok-4.5"] }
+        ]);
       }
 
-      function renderProvidersData(data) {
+      function renderProvidersData(raw) {
         const pList = $("providersList");
         pList.innerHTML = "";
-        const providers = data.providers || [];
+        const providers = Array.isArray(raw) ? raw : (raw.providers || []);
+        const models = Array.isArray(raw)
+          ? providers.flatMap(p => Array.isArray(p.models) ? p.models : [])
+          : (raw.models || []);
         $("providerCountBadge").textContent = `${providers.length} 个接口`;
-        $("syncStatText").textContent = `已配置 ${providers.length} 个接口 (${providers.map(p=>p.displayName).join('、')})`;
+        $("syncStatText").textContent = `已配置 ${providers.length} 个接口 (${providers.map(p => p.name || p.id).join('、')})`;
 
         providers.forEach(p => {
           const item = document.createElement("div");
           item.className = "provider-item";
+          const name = p.name || p.id || "Unknown Provider";
+          const modelCount = p.modelCount ?? (Array.isArray(p.models) ? p.models.length : 0);
           item.innerHTML = `
             <div class="provider-item-info">
               <div class="provider-item-name">
-                <span>${p.displayName || p.id}</span>
-                <span class="badge success">${p.modelsCount || 0} 个模型</span>
+                <span>${name}</span>
+                <span class="badge success">${modelCount} 个模型</span>
               </div>
               <span class="provider-item-url">${p.baseURL || ''}</span>
             </div>
@@ -729,12 +735,12 @@
 
         const mContainer = $("modelsPreviewTags");
         mContainer.innerHTML = "";
-        const models = data.models || [];
         $("modelsCountBadge").textContent = `${models.length} 个模型可用`;
         models.forEach(m => {
+          const label = typeof m === "string" ? m : (m.name || m.id || "");
           const tag = document.createElement("span");
-          tag.className = `model-tag ${m.includes('deepseek') || m.includes('minimax') || m.includes('kimi') ? 'highlight' : ''}`;
-          tag.textContent = typeof m === 'string' ? m : m.name || m.id;
+          tag.className = `model-tag ${/deepseek|minimax|kimi/i.test(label) ? 'highlight' : ''}`;
+          tag.textContent = label;
           mContainer.appendChild(tag);
         });
       }
@@ -750,8 +756,11 @@
         try {
           if (window.desktop && window.desktop.syncModels) {
             const res = await window.desktop.syncModels();
-            fb.className = res.success ? "status-box success" : "status-box error";
-            fb.textContent = res.message || "同步完成";
+            const ok = res && res.success === true;
+            fb.className = ok ? "status-box success" : "status-box error";
+            fb.textContent = ok
+              ? (res.count > 0 ? `已同步 ${res.count} 个新模型` : "同步完成，没有新模型")
+              : `同步失败：${res && res.error ? res.error : "未知错误"}`;
             fb.style.display = "flex";
             await renderProvidersUI();
           } else {

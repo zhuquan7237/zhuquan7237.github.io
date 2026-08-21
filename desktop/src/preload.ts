@@ -9,6 +9,7 @@ contextBridge.exposeInMainWorld("desktop", {
   onLog: (handler: (line: string) => void) => {
     ipcRenderer.on("log", (_event, line) => handler(String(line)));
   },
+  getVersion: (): Promise<string> => ipcRenderer.invoke("app:version"),
   getSettings: (): Promise<DesktopSettings> => ipcRenderer.invoke("settings:get"),
   saveSettings: (settings: DesktopSettings): Promise<DesktopSettings> => ipcRenderer.invoke("settings:save", settings),
   pickDir: (): Promise<string> => ipcRenderer.invoke("settings:pick-dir"),

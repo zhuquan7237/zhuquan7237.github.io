@@ -932,6 +932,7 @@ if (linuxReady) {
       );
       settings.workspaceDir = resolveWorkspaceDir(settings.workspaceDir, homedir());
       await saveSettings(userData(), settings);
+      ipcMain.handle("app:version", () => app.getVersion());
       ipcMain.handle("settings:get", () => settings);
       ipcMain.handle("settings:save", async (_event, next: DesktopSettings) => {
         settings = { ...settings, ...next };

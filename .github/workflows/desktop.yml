@@ -28,7 +28,7 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: desktop/package-lock.json
-      - run: python3 scripts/generate-icon.py
+      - run: node scripts/run-generate-icon.cjs
       - run: npm install
       - run: npm test
       - run: npm run build
@@ -56,7 +56,7 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: desktop/package-lock.json
-      - run: python3 scripts/generate-icon.py
+      - run: node scripts/run-generate-icon.cjs
       - run: npm install
       - name: Pack
         shell: bash
