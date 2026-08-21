@@ -130,6 +130,7 @@ export async function ensureHarness(
     "install",
     npmSpec(wanted),
     "--omit=dev",
+    "--legacy-peer-deps",
     "--no-fund",
     "--no-audit",
     "--loglevel",
