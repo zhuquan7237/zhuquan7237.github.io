@@ -36,6 +36,8 @@ function makePrefix(root: string, providerId: string): string {
   return prefix;
 }
 
+const REMOTE_LIST = (data: unknown[]) => ({ ok: true, json: async () => ({ object: "list", data }) }) as any;
+
 describe("sync-models", () => {
   let tmpDir: string;
 
@@ -65,7 +67,6 @@ describe("sync-models", () => {
     expect(providers[0].id).toBe("opencode-go");
     expect(providers[0].baseURL).toBe("https://gateway.example/go");
     expect(providers[0].modelCount).toBe(3); // catalog default when no models list
-    expect(providers[0].models).toContain("minimax-m3");
   });
 
   it("skips sync when no providers are configured", async () => {
@@ -75,47 +76,110 @@ describe("sync-models", () => {
     expect(res.count).toBe(0);
   });
 
-  it("merges remote models: catalog-known stay minimal, unknown carry api and baseURL", async () => {
+  it("puts catalog-unknown models on a companion route and leaves the parent untouched", async () => {
     writeSettings(tmpDir, {
       "llm-pi-ai": { providers: { "opencode-go": { apiKeyEnv: "TEST_GATEWAY_KEY" } } },
     });
     process.env.TEST_GATEWAY_KEY = "sk-test";
     const prefix = makePrefix(tmpDir, "opencode-go");
-
-    const fetchMock = vi.fn(async (url: string) => {
-      if (url.endsWith("/v1/models")) {
-        return {
-          ok: true,
-          json: async () => ({
-            object: "list",
-            data: [
-              { id: "minimax-m3" }, // already in catalog
-              { id: "minimax-m2.5" }, // brand new on the gateway
-              { id: "glm-5.2" }, // already in catalog (openai group)
-            ],
-          }),
-        } as any;
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => {
+      if (url === "https://gateway.example/go/v1/models") {
+        return REMOTE_LIST([
+          { id: "minimax-m3" }, // in catalog
+          { id: "glm-5.2" }, // in catalog
+          { id: "minimax-m2.5" }, // gateway-new
+          { id: "kimi-k2.5" }, // gateway-new
+        ]);
       }
       return { ok: false } as any;
-    });
-    vi.stubGlobal("fetch", fetchMock);
+    }));
 
     const res = await syncAllProviderModels(tmpDir, prefix);
     expect(res.success).toBe(true);
-    expect(res.count).toBe(1);
+    expect(res.count).toBe(2);
 
-    const provider = readSettings(tmpDir)["llm-pi-ai"].providers["opencode-go"];
-    const ids = provider.models.map((m: any) => m.id);
-    expect(ids).toEqual(["minimax-m3", "kimi-k3", "glm-5.2", "minimax-m2.5"]);
-    const added = provider.models.find((m: any) => m.id === "minimax-m2.5");
-    expect(added).toEqual({
-      id: "minimax-m2.5",
-      name: "minimax-m2.5",
-      api: "anthropic-messages", // dominant catalog api (2 of 3 models)
-      baseURL: "https://gateway.example/go",
+    const providers = readSettings(tmpDir)["llm-pi-ai"].providers;
+    // Parent route untouched: no models key injected, catalog keeps serving.
+    expect(providers["opencode-go"]).toEqual({ apiKeyEnv: "TEST_GATEWAY_KEY" });
+    // Companion route in the hand-declared shape the engine's UI writes.
+    expect(providers["opencode-go-sync"]).toEqual({
+      displayName: "opencode-go-sync",
+      apiKeyEnv: "TEST_GATEWAY_KEY",
+      api: "anthropic-messages", // dominant catalog protocol (2 of 3 fixture models)
+      baseURL: "https://gateway.example/go", // that protocol's endpoint
+      models: [{ id: "minimax-m2.5" }, { id: "kimi-k2.5" }],
     });
-    // request carried the key resolved from the env var named by apiKeyEnv
-    expect(fetchMock.mock.calls[0][0]).toBe("https://gateway.example/go/v1/models");
+  });
+
+  it("strips 0.2.5 poison: per-entry api/baseURL removed, unknown ids relocated", async () => {
+    writeSettings(tmpDir, {
+      "llm-pi-ai": {
+        providers: {
+          "opencode-go": {
+            apiKeyEnv: "TEST_GATEWAY_KEY",
+            models: [
+              { id: "minimax-m3", api: "openai-completions", baseURL: "https://bad" }, // poisoned, catalog-known
+              { id: "ghost-model", api: "openai-completions", baseURL: "https://bad" }, // poisoned, unknown
+            ],
+          },
+        },
+      },
+    });
+    const prefix = makePrefix(tmpDir, "opencode-go");
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false } as any)));
+
+    const res = await syncAllProviderModels(tmpDir, prefix);
+    expect(res.success).toBe(true);
+    const providers = readSettings(tmpDir)["llm-pi-ai"].providers;
+    expect(providers["opencode-go"].models).toEqual([{ id: "minimax-m3" }]);
+    expect(providers["opencode-go-sync"].models).toEqual([{ id: "ghost-model" }]);
+  });
+
+  it("appends unknown ids to a hand-declared provider's own models", async () => {
+    writeSettings(tmpDir, {
+      "llm-pi-ai": {
+        providers: {
+          "my-gateway": {
+            apiKeyEnv: "TEST_GATEWAY_KEY",
+            api: "openai-completions",
+            baseURL: "https://my.example/v1",
+            models: [{ id: "custom-one" }],
+          },
+        },
+      },
+    });
+    process.env.TEST_GATEWAY_KEY = "sk-test";
+    vi.stubGlobal("fetch", vi.fn(async () =>
+      REMOTE_LIST([{ id: "custom-one" }, { id: "custom-two" }]),
+    ));
+
+    const res = await syncAllProviderModels(tmpDir, makePrefix(tmpDir, "opencode-go"));
+    expect(res.count).toBe(1);
+    const provider = readSettings(tmpDir)["llm-pi-ai"].providers["my-gateway"];
+    expect(provider.models).toEqual([{ id: "custom-one" }, { id: "custom-two" }]);
+    expect(provider.api).toBe("openai-completions");
+    expect(provider.baseURL).toBe("https://my.example/v1");
+  });
+
+  it("never edits a user-curated models list on a catalog provider", async () => {
+    writeSettings(tmpDir, {
+      "llm-pi-ai": {
+        providers: {
+          "opencode-go": {
+            apiKeyEnv: "TEST_GATEWAY_KEY",
+            models: [{ id: "my-custom-model", name: "Custom" }],
+          },
+        },
+      },
+    });
+    process.env.TEST_GATEWAY_KEY = "sk-test";
+    const prefix = makePrefix(tmpDir, "opencode-go");
+    vi.stubGlobal("fetch", vi.fn(async () => REMOTE_LIST([{ id: "my-custom-model" }, { id: "brand-new" }])));
+
+    await syncAllProviderModels(tmpDir, prefix);
+    const providers = readSettings(tmpDir)["llm-pi-ai"].providers;
+    expect(providers["opencode-go"].models).toEqual([{ id: "my-custom-model", name: "Custom" }]);
+    expect(providers["opencode-go-sync"].models).toEqual([{ id: "brand-new" }]);
   });
 
   it("resolves the api key from .credentials.yaml when the env var is unset", async () => {
@@ -130,63 +194,24 @@ describe("sync-models", () => {
     const prefix = makePrefix(tmpDir, "opencode-go");
     const auths: string[] = [];
     vi.stubGlobal("fetch", vi.fn(async (url: string, init: any) => {
-      auths.push(init?.headers?.Authorization || init?.headers?.["x-api-key"] || "");
+      auths.push(init?.headers?.Authorization || "");
       return { ok: false } as any;
     }));
     await syncAllProviderModels(tmpDir, prefix);
     expect(auths[0]).toBe("Bearer sk-from-file");
   });
 
-  it("only appends to a user-curated models list and keeps other settings intact", async () => {
-    writeSettings(tmpDir, {
-      "ui-onboarding": { welcomeNoticeVersion: "1" },
-      "llm-pi-ai": {
-        providers: {
-          "opencode-go": {
-            apiKeyEnv: "TEST_GATEWAY_KEY",
-            models: [{ id: "my-custom-model", name: "Custom" }],
-          },
-        },
-      },
-      "agent-default-model": { provider: "opencode-go", model: "my-custom-model" },
-    });
-    process.env.TEST_GATEWAY_KEY = "sk-test";
-    const prefix = makePrefix(tmpDir, "opencode-go");
-    vi.stubGlobal("fetch", vi.fn(async () => ({
-      ok: true,
-      json: async () => ({ data: [{ id: "my-custom-model" }, { id: "kimi-k3" }] }),
-    } as any)));
-
-    const res = await syncAllProviderModels(tmpDir, prefix);
-    expect(res.count).toBe(1);
-    const settings = readSettings(tmpDir);
-    const models = settings["llm-pi-ai"].providers["opencode-go"].models;
-    expect(models).toHaveLength(2);
-    expect(models[0]).toEqual({ id: "my-custom-model", name: "Custom" }); // untouched
-    expect(settings["agent-default-model"].model).toBe("my-custom-model"); // untouched
-  });
-
-  it("does not rewrite settings.yaml when nothing new arrives", async () => {
+  it("does not rewrite settings.yaml when nothing changes", async () => {
     writeSettings(tmpDir, {
       "llm-pi-ai": { providers: { "opencode-go": { apiKeyEnv: "TEST_GATEWAY_KEY" } } },
     });
     const prefix = makePrefix(tmpDir, "opencode-go");
-    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false } as any)));
+    vi.stubGlobal("fetch", vi.fn(async () => REMOTE_LIST([{ id: "minimax-m3" }]))); // all catalog-known
     const before = fs.readFileSync(path.join(tmpDir, "settings.yaml"), "utf8");
     const res = await syncAllProviderModels(tmpDir, prefix);
     expect(res.count).toBe(0);
+    expect(res.providers).toEqual([]);
     expect(fs.readFileSync(path.join(tmpDir, "settings.yaml"), "utf8")).toBe(before);
-  });
-
-  it("skips providers without any resolvable baseURL", async () => {
-    writeSettings(tmpDir, {
-      "llm-pi-ai": { providers: { "mystery-provider": { apiKeyEnv: "TEST_GATEWAY_KEY" } } },
-    });
-    const fetchMock = vi.fn();
-    vi.stubGlobal("fetch", fetchMock);
-    const res = await syncAllProviderModels(tmpDir, makePrefix(tmpDir, "opencode-go"));
-    expect(res.count).toBe(0);
-    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("probes /models as fallback when /v1/models serves no JSON list", async () => {

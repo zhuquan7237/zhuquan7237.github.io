@@ -22,22 +22,30 @@ export interface SyncResult {
 /**
  * Model-list sync against the engine's real settings schema.
  *
- * dsh keeps providers under `llm-pi-ai.providers` as a map of
- * `{ apiKeyEnv?, baseURL?, api?, models? }`. A provider without a `models`
- * list serves the static catalog shipped inside the engine's
- * `@earendil-works/pi-ai` package, which lags behind the gateway. Configuring
- * `models` replaces the served catalog, so sync fetches the live list from
- * the gateway (Anthropic-style `/v1/models` first — OpenCode Zen and other
- * anthropic-compatible gateways only serve that shape — then OpenAI-style
- * `/models`) and merges remote-only ids in. Entries are never removed: a
- * user-curated list only grows. Catalog-known models stay minimal `{ id }`
- * entries so engine defaults (pricing, context window, wire protocol) keep
- * applying; unknown models carry the fields the engine cannot infer.
+ * dsh keeps providers under `llm-pi-ai.providers` as a map. A provider the
+ * engine's pi-ai catalog knows serves that catalog unchanged; a hand-declared
+ * provider (the shape the harness UI's "add provider" card writes) carries
+ * route-level `api` + `baseURL` plus a `models` list of `{ id, ... }` entries.
+ * Model entries have no per-entry `api`/`baseURL` fields — writing them (as
+ * 0.2.5 did) makes the engine reject the whole llm-pi-ai section: models stop
+ * loading and every settings.mutate in the namespace (including adding a
+ * provider in the UI) answers settings-rejected.
+ *
+ * Sync therefore never touches an existing provider profile. Gateway models
+ * that the installed catalog does not know land in a separate companion route
+ * `<id>-sync` written in exactly the hand-declared shape, sharing the parent's
+ * credential reference; the parent keeps serving the catalog (pricing,
+ * context windows, per-model wire protocols) untouched. Custom providers
+ * already own api + baseURL, so new ids append to their models list as bare
+ * `{ id }` entries. Everything is merge-only: entries are never removed, and
+ * user-curated lists on catalog providers are left alone.
  */
 
 const PI_AI_DATA_DIR = path.join(
   "node_modules", "@earendil-works", "pi-ai", "dist", "providers", "data",
 );
+
+const SYNC_ROUTE_SUFFIX = "-sync";
 
 interface CatalogModel {
   id: string;
@@ -54,7 +62,7 @@ interface ProviderCatalog {
 function readProviderCatalog(harnessPrefix: string | undefined, providerId: string): ProviderCatalog | null {
   if (!harnessPrefix) return null;
   const file = path.join(harnessPrefix, PI_AI_DATA_DIR, `${providerId}.json`);
-  let raw: Record<string, Record<string, CatalogModel & { baseUrl?: string }>>;
+  let raw: Record<string, Record<string, CatalogModel>>;
   try {
     raw = JSON.parse(fs.readFileSync(file, "utf8"));
   } catch {
@@ -179,12 +187,16 @@ function resolveSettingsFile(dshHome?: string): string {
   return path.join(home, "settings.yaml");
 }
 
-type ProviderConfig = {
+type ModelEntry = Record<string, unknown>;
+
+interface ProviderConfig {
   apiKeyEnv?: string;
-  baseURL?: string;
+  displayName?: string;
   api?: string;
-  models?: unknown[];
-};
+  baseURL?: string;
+  models?: ModelEntry[];
+  [key: string]: unknown;
+}
 
 function readProviderConfigs(parsed: Record<string, unknown>): Map<string, ProviderConfig> {
   const result = new Map<string, ProviderConfig>();
@@ -197,15 +209,35 @@ function readProviderConfigs(parsed: Record<string, unknown>): Map<string, Provi
   return result;
 }
 
-function effectiveModels(
+/**
+ * Strip entries 0.2.5 wrote with per-model `api`/`baseURL` fields the engine's
+ * model schema does not have. Catalog-known ids keep bare `{ id }`; unknown ids
+ * move to the companion sync route. Returns the cleaned entries (null when the
+ * list was not poisoned) and the ids to relocate.
+ */
+function remediatePoisonedModels(
   cfg: ProviderConfig,
   catalog: ProviderCatalog | null,
-): { entries: unknown[]; ids: Set<string> } {
-  if (Array.isArray(cfg.models)) {
-    return { entries: [...cfg.models], ids: new Set(cfg.models.map(modelIdOf).filter(Boolean)) };
+): { clean: ModelEntry[] | null; relocate: string[] } {
+  if (!Array.isArray(cfg.models)) return { clean: null, relocate: [] };
+  let poisoned = false;
+  const clean: ModelEntry[] = [];
+  const relocate: string[] = [];
+  for (const raw of cfg.models) {
+    if (raw && typeof raw === "object" && ("api" in raw || "baseURL" in raw)) {
+      poisoned = true;
+      const id = modelIdOf(raw);
+      if (id && !catalog?.models.has(id)) relocate.push(id);
+      else if (id) clean.push({ id });
+    } else {
+      clean.push(raw as ModelEntry);
+    }
   }
-  const entries = [...(catalog?.models.keys() ?? [])].map((id) => ({ id }));
-  return { entries, ids: new Set(entries.map((e) => modelIdOf(e)).filter(Boolean)) };
+  return poisoned ? { clean, relocate } : { clean: null, relocate };
+}
+
+function syncRouteId(providerId: string): string {
+  return `${providerId}${SYNC_ROUTE_SUFFIX}`;
 }
 
 export async function getProvidersInfo(dshHome?: string, harnessPrefix?: string): Promise<ProviderInfo[]> {
@@ -220,14 +252,15 @@ export async function getProvidersInfo(dshHome?: string, harnessPrefix?: string)
   const result: ProviderInfo[] = [];
   for (const [id, cfg] of readProviderConfigs(parsed)) {
     const catalog = readProviderCatalog(harnessPrefix, id);
-    const { entries } = effectiveModels(cfg, catalog);
-    const models = entries.map(modelIdOf).filter(Boolean);
+    const configured = Array.isArray(cfg.models)
+      ? cfg.models.map(modelIdOf).filter(Boolean)
+      : [...(catalog?.models.keys() ?? [])];
     result.push({
       id,
-      name: id,
+      name: cfg.displayName || id,
       baseURL: cfg.baseURL || catalog?.baseUrl || "",
-      modelCount: models.length,
-      models,
+      modelCount: configured.length,
+      models: configured,
     });
   }
   return result;
@@ -258,42 +291,87 @@ export async function syncAllProviderModels(dshHome?: string, harnessPrefix?: st
 
   await Promise.all(
     [...configs.entries()].map(async ([id, cfg]) => {
+      if (id.endsWith(SYNC_ROUTE_SUFFIX)) return; // companion routes are managed below
       const catalog = readProviderCatalog(harnessPrefix, id);
-      const baseURL = cfg.baseURL || catalog?.baseUrl;
-      if (!baseURL) return;
+      const fetchBase = cfg.baseURL || catalog?.baseUrl;
+      const { clean, relocate } = remediatePoisonedModels(cfg, catalog);
+      const remoteIds = fetchBase ? await fetchRemoteModelIds(fetchBase, resolveApiKey(home, cfg.apiKeyEnv)) : [];
+      if (remoteIds.length === 0 && relocate.length === 0 && clean === null) return;
 
-      const remoteIds = await fetchRemoteModelIds(baseURL, resolveApiKey(home, cfg.apiKeyEnv));
-      if (remoteIds.length === 0) return;
-
-      const { entries, ids } = effectiveModels(cfg, catalog);
-      let added = 0;
-      for (const remoteId of remoteIds) {
-        if (ids.has(remoteId)) continue;
-        const known = catalog?.models.get(remoteId);
-        const entry: Record<string, unknown> = known ? { id: remoteId } : { id: remoteId, name: remoteId };
-        if (!known) {
-          const api = cfg.api ?? catalog?.dominantApi;
-          if (!api) continue; // cannot build a valid entry without a wire protocol
-          entry.api = api;
-          // Base URLs are per wire protocol on gateways that multiplex
-          // (OpenCode Zen: anthropic at /go, OpenAI at /go/v1).
-          const apiBase = catalog?.baseUrlByApi.get(api) ?? catalog?.baseUrl ?? baseURL;
-          if (!cfg.baseURL) entry.baseURL = apiBase;
+      const isCatalogRoute = catalog !== null && catalog.models.size > 0;
+      if (!isCatalogRoute && typeof cfg.api === "string" && cfg.baseURL) {
+        // A hand-declared provider already owns its protocol and endpoint:
+        // strip any 0.2.5 poison, then append unknown ids to its own models.
+        const models = clean ?? (Array.isArray(cfg.models) ? cfg.models : []);
+        const known = new Set(models.map(modelIdOf).filter(Boolean));
+        let added = 0;
+        for (const rid of [...relocate, ...remoteIds]) {
+          if (!rid || known.has(rid)) continue;
+          models.push({ id: rid });
+          known.add(rid);
+          added += 1;
         }
-        entries.push(entry);
-        ids.add(remoteId);
+        cfg.models = models;
+        if (added > 0 || clean !== null) {
+          totalNew += added;
+          updatedProviders.push(id);
+          details.push({ id, added, total: models.length });
+        }
+        return;
+      }
+
+      // Catalog route: the parent keeps serving the catalog untouched (only
+      // stripped when 0.2.5 poisoned it); unknown gateway models go to the
+      // companion sync route in the hand-declared shape.
+      if (clean !== null) cfg.models = clean;
+      const api = cfg.api ?? catalog?.dominantApi;
+      if (!api) return;
+      const apiBase = catalog?.baseUrlByApi.get(api) ?? cfg.baseURL ?? catalog?.baseUrl;
+      if (!apiBase) return;
+
+      const routeKey = syncRouteId(id);
+      const providers = (parsed["llm-pi-ai"] as { providers: Record<string, ProviderConfig> }).providers;
+      let companion = providers[routeKey];
+      const existing = Array.isArray(companion?.models) ? companion!.models! : [];
+      const known = new Set(existing.map(modelIdOf).filter(Boolean));
+      // Gateway-new = remote ids neither the installed catalog nor the
+      // parent's own (possibly user-curated) list already serves.
+      const parentServes = new Set([
+        ...(catalog?.models.keys() ?? []),
+        ...(Array.isArray(cfg.models) ? cfg.models.map(modelIdOf) : []),
+      ]);
+      const candidates = new Set(relocate);
+      if (remoteIds.length > 0) {
+        for (const rid of remoteIds) {
+          if (!parentServes.has(rid)) candidates.add(rid);
+        }
+      }
+      let added = 0;
+      for (const rid of candidates) {
+        if (!rid || known.has(rid)) continue;
+        existing.push({ id: rid });
+        known.add(rid);
         added += 1;
       }
-      if (added === 0) return;
+      if (added === 0 && !companion) return;
 
-      cfg.models = entries;
-      totalNew += added;
-      updatedProviders.push(id);
-      details.push({ id, added, total: entries.length });
+      providers[routeKey] = {
+        ...(companion ?? {}),
+        displayName: (companion?.displayName as string) || `${id}${SYNC_ROUTE_SUFFIX}`,
+        apiKeyEnv: cfg.apiKeyEnv || (companion?.apiKeyEnv as string) || `${id.toUpperCase().replace(/[^A-Z0-9]+/g, "_")}_API_KEY`,
+        api,
+        baseURL: apiBase,
+        models: existing,
+      };
+      if (added > 0 || clean !== null) {
+        totalNew += added;
+        updatedProviders.push(routeKey);
+        details.push({ id: routeKey, added, total: existing.length });
+      }
     }),
   );
 
-  if (totalNew > 0) {
+  if (totalNew > 0 || updatedProviders.length > 0) {
     try {
       const dump = yaml.dump(parsed, { indent: 2, lineWidth: -1, noRefs: true });
       fs.writeFileSync(filePath, dump, "utf8");
