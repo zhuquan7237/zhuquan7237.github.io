@@ -840,6 +840,22 @@ async function boot(forceUpdate: boolean): Promise<void> {
     settings.lastHarnessVersion = install.version;
     await saveSettings(userData(), settings);
 
+    // Sync before the engine starts so models added now are served by this
+    // launch already; bounded so a dead endpoint cannot stall boot.
+    if (settings.autoSyncModels !== false) {
+      sendSplash("status", { phase: "start", text: "正在同步模型列表…" });
+      await Promise.race([
+        syncAllProviderModels(dshHomeDir(), install.prefix).then((res) => {
+          if (res.count > 0) {
+            sendSplash("log", `已同步 ${res.count} 个新模型 (${res.providers.join(", ")})`);
+          } else if (res.error) {
+            sendSplash("log", `模型同步失败：${res.error}`);
+          }
+        }).catch(() => undefined),
+        new Promise((resolve) => setTimeout(resolve, 15_000)),
+      ]);
+    }
+
     sendSplash("status", { phase: "start", text: `正在启动界面（dsh ${install.version}）…` });
     stopHarness(running);
     const dshHome = dshHomeDir();
@@ -871,13 +887,6 @@ async function boot(forceUpdate: boolean): Promise<void> {
         workspaceDir,
         version: app.getVersion(),
         userDataDir: userData(),
-      }).catch(() => undefined);
-    }
-    if (settings.autoSyncModels !== false) {
-      void syncAllProviderModels(dshHomeDir()).then((res) => {
-        if (res.count > 0) {
-          sendSplash("log", `已自动同步 ${res.count} 个新模型 (${res.providers.join(", ")})`);
-        }
       }).catch(() => undefined);
     }
     void maybeNotifyDesktopUpdate().then(() => maybeNotifyHarnessUpdate());
@@ -972,10 +981,10 @@ if (linuxReady) {
         await applySkinSelection(imported.id, true);
       });
       ipcMain.handle("models:sync", async () => {
-        return await syncAllProviderModels(dshHomeDir());
+        return await syncAllProviderModels(dshHomeDir(), lastInstall?.prefix);
       });
       ipcMain.handle("models:get-providers", async () => {
-        return await getProvidersInfo(dshHomeDir());
+        return await getProvidersInfo(dshHomeDir(), lastInstall?.prefix);
       });
       ipcMain.on("splash:quit", () => {
         app.quit();

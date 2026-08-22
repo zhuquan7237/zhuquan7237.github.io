@@ -696,11 +696,8 @@
             return;
           } catch(e) {}
         }
-        // Fallback default
-        renderProvidersData([
-          { id: "opencode-go", name: "OpenCode Go", baseURL: "https://opencode.ai/zen/go/v1", modelCount: 8,
-            models: ["deepseek-v4-pro", "deepseek-v4-flash", "kimi-k3", "qwen3.8-max", "glm-5.3", "minimax-m3", "gpt-5.6-luna", "grok-4.5"] }
-        ]);
+        // No engine bridge (e.g. page opened outside the app): honest empty state
+        renderProvidersData([]);
       }
 
       function renderProvidersData(raw) {
@@ -727,7 +724,7 @@
               <span class="provider-item-url">${p.baseURL || ''}</span>
             </div>
             <div class="row-flex">
-              <span class="badge" style="color:#60a5fa;">OpenAI 兼容</span>
+              <span class="badge" style="color:#60a5fa;">${p.id || ''}</span>
             </div>
           `;
           pList.appendChild(item);
@@ -759,7 +756,7 @@
             const ok = res && res.success === true;
             fb.className = ok ? "status-box success" : "status-box error";
             fb.textContent = ok
-              ? (res.count > 0 ? `已同步 ${res.count} 个新模型` : "同步完成，没有新模型")
+              ? (res.count > 0 ? `已同步 ${res.count} 个新模型。重启 DeepSeek 后在对话中新模型可用。` : "同步完成，没有新模型")
               : `同步失败：${res && res.error ? res.error : "未知错误"}`;
             fb.style.display = "flex";
             await renderProvidersUI();
