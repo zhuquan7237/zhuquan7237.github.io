@@ -188,6 +188,9 @@ ModelItem {
 历史 18 条（含 user/assistant 双方向）→ 模型文档（6 供应方 / 516 模型）→ WebSocket 事件流
 （turn 生命周期与断线回放）→ 引擎日志零失败。插件版本 0.1.1。
 
-尚未接线：`BUNDLED_PLUGINS` 收录、固定引擎端口（当前 `webPort: 0`，隧道无法固定 origin）、
-Cloudflare 隧道 hostname（只转发 `/mobile/*`；配对页在 `/mobile-local/*` 不转发）、git 提交。
-手机端下一步为原生 App（移动优先重排，消费同一套 `/mobile/*` 协议）。
+已接线（2026-09-21 晚）：`BUNDLED_PLUGINS` 收录、`webPort` 固定为 17731、Cloudflare 隧道
+`m.zhuquan.xyz → 127.0.0.1:17731`（仅放行 `^/mobile`；配对页 `/mobile-local/*` 不转发）、
+本地提交完成；0.5.7 portable 已本地构建并安装到日常实例，公网复验 10/10 通过
+（PWA 200 / 未认证 401 / 配对页公网 404 / 真实会话与模型文档可读）。
+GitHub 发布版仍为 0.5.6（未 push）。手机端下一步为原生 App（P1：配对 + 会话列表 +
+流式对话 + 停止/重生成；实施手册见 `dsh-mobile-app` 技能）。
