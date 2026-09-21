@@ -1,0 +1,9 @@
+{
+  "name": "DeepSeek Harness",
+  "short_name": "Harness",
+  "start_url": "/mobile/",
+  "display": "standalone",
+  "background_color": "#151517",
+  "theme_color": "#151517",
+  "icons": []
+}

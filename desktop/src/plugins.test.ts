@@ -86,6 +86,9 @@ describe("renderPluginRows", () => {
         "- id: web",
         "  config:",
         "    searchProvider: search-engines",
+        "- insert:",
+        "    - id: dsh-mobile-bridge",
+        "      name: '@dsh-desktop/dsh-mobile-bridge'",
       ]);
       expect(rows.join("\n")).not.toContain("web-search-tavily");
       expect(rows.join("\n")).not.toContain("vision-aux");
@@ -100,6 +103,20 @@ describe("renderPluginRows", () => {
       settingsWith({ visionAux: { ...DEFAULT_SETTINGS.visionAux, enabled: false }, webSearch: { provider: "deepseek-official", tavily: DEFAULT_SETTINGS.webSearch.tavily } }),
     ).join("\n");
     expect(off).toContain("id: dsh-desktop-panel");
+  });
+
+  it("always loads the mobile bridge and advertises its public URL when set", () => {
+    const plain = renderPluginRows(settingsWith()).join("\n");
+    expect(plain).toContain("- id: dsh-mobile-bridge");
+    expect(plain).toContain("name: '@dsh-desktop/dsh-mobile-bridge'");
+    expect(plain).not.toContain("publicUrl");
+
+    const withUrl = renderPluginRows(settingsWith({ mobile: { publicUrl: "https://m.zhuquan.xyz" } })).join("\n");
+    expect(withUrl).toContain("config:");
+    expect(withUrl).toContain("publicUrl: 'https://m.zhuquan.xyz'");
+
+    // Old settings files gain the group with its defaults.
+    expect(mergeNestedSettings({ channel: "next" }).mobile).toEqual({ publicUrl: "" });
   });
 
   it("emits the vision row only when enabled with a model", () => {

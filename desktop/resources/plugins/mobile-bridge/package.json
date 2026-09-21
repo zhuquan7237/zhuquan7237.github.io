@@ -1,0 +1,27 @@
+{
+  "name": "@dsh-desktop/dsh-mobile-bridge",
+  "description": "Mobile companion bridge for DeepSeek Harness: device pairing and scopes, a mobile-shaped session/history/event surface over the engine's own Remote methods, and a shared model-configuration document with revisions and reported conflicts",
+  "version": "0.1.1",
+  "private": true,
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "app",
+    "cordis.patch.yml"
+  ],
+  "license": "MIT",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": ">=4"
+  }
+}

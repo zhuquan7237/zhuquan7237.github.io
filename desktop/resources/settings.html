@@ -588,6 +588,16 @@
             <span class="card-desc">固定端口可以让依赖浏览器存储的界面插件在重启后保留设置；端口被占用会导致启动失败，改回 0 即可。引擎只监听 127.0.0.1，官方不支持对局域网开放。</span>
           </div>
 
+          <!-- Mobile companion -->
+          <div class="card">
+            <span class="card-title">手机端（配对地址）</span>
+            <div class="form-group">
+              <span class="form-label">公网地址（留空则只在电脑本机显示配对码）</span>
+              <input class="input-text" id="mobileUrl" placeholder="https://m.zhuquan.xyz" />
+            </div>
+            <span class="card-desc">配对二维码会指向这个地址；手机和电脑不在同一网络时填写隧道域名。</span>
+          </div>
+
           <!-- Update Settings -->
           <div class="card">
             <span class="card-title">自动更新检查</span>
@@ -687,6 +697,7 @@
         workspaceDir: "C:\\Users\\zhuquan\\DeepSeek",
         visionAux: { enabled: true, baseURL: "https://opencode.ai/zen/go/v1", apiKey: "", model: "minimax-m3", timeoutMs: 60000, skipWhenUnknown: false },
         webSearch: { provider: "deepseek-official", tavily: { apiKey: "", baseURL: "https://api.tavily.com", maxResults: 8 } },
+        mobile: { publicUrl: "" },
       };
 
       // Load Settings
@@ -712,6 +723,7 @@
         $("closeToTray").checked = s.closeToTray !== false;
         $("locale").value = s.locale || "";
         $("webPort").value = Number(s.webPort) > 0 ? String(Number(s.webPort)) : "0";
+        $("mobileUrl").value = (s.mobile && s.mobile.publicUrl) || "";
 
         const vision = s.visionAux || previewSettings.visionAux;
         $("visionEnabled").checked = vision.enabled === true;
@@ -855,6 +867,7 @@
           closeToTray: $("closeToTray").checked,
           locale: $("locale").value,
           webPort: Math.max(0, Math.min(65535, Math.trunc(Number($("webPort").value) || 0))),
+          mobile: { publicUrl: $("mobileUrl").value.trim() },
           visionAux: {
             enabled: $("visionEnabled").checked,
             baseURL: $("visionBase").value.trim(),

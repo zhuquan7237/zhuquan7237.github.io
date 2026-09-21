@@ -31,6 +31,9 @@ export const BUNDLED_PLUGINS: readonly BundledPlugin[] = [
   // unless the selected model declares `image`, and the shipped Models page
   // has no field for it, so a hand-declared route can never see an image.
   { rowId: "dsh-model-vision", packageName: "@dsh-desktop/dsh-model-vision", dir: "model-vision" },
+  // The mobile bridge is the only surface a paired phone can reach, so it must
+  // load whenever the engine runs: its row is unconditional like the panel's.
+  { rowId: "dsh-mobile-bridge", packageName: "@dsh-desktop/dsh-mobile-bridge", dir: "mobile-bridge" },
 ];
 
 export interface PluginPathOptions {
@@ -247,6 +250,16 @@ export function renderPluginRows(settings: DesktopSettings): string[] {
     "- id: web",
     "  config:",
     "    searchProvider: search-engines",
+  );
+  // The mobile bridge always loads: a phone that already holds a device token
+  // must keep working across restarts, with no setting to toggle. The public
+  // URL is what its pairing page and QR code point at; empty keeps them local.
+  const mobileUrl = settings.mobile.publicUrl.trim();
+  rows.push(
+    "- insert:",
+    "    - id: dsh-mobile-bridge",
+    "      name: '@dsh-desktop/dsh-mobile-bridge'",
+    ...(mobileUrl === "" ? [] : ["      config:", `        publicUrl: ${yamlString(mobileUrl)}`]),
   );
   // The old two-option Tavily row is deliberately gone: two providers registered
   // at once is exactly the ambiguity the seam refuses, and it left search

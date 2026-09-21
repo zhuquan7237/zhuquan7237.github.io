@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="auto">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#151517" media="(prefers-color-scheme: dark)" />
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<title>DeepSeek Harness</title>
+<link rel="manifest" href="/mobile/manifest.webmanifest" />
+<link rel="stylesheet" href="/mobile/theme.css" />
+<link rel="stylesheet" href="/mobile/app.css" />
+</head>
+<body>
+<div id="root">
+  <header id="topbar">
+    <button id="back" class="icon" aria-label="返回" hidden>‹</button>
+    <div id="title-block"><h1 id="title">DeepSeek Harness</h1><span id="subtitle"></span></div>
+    <button id="action" class="icon" aria-label="更多">⋯</button>
+  </header>
+  <main id="view"></main>
+  <footer id="composer" hidden>
+    <textarea id="input" rows="1" placeholder="给电脑端发消息…" enterkeyhint="send"></textarea>
+    <button id="send" class="send" aria-label="发送">↑</button>
+    <button id="stop" class="stop" aria-label="停止" hidden>■</button>
+  </footer>
+  <div id="sheet" hidden><div class="sheet-card" id="sheet-body"></div></div>
+  <div id="toast" hidden></div>
+</div>
+<script src="/mobile/app.js"></script>
+</body>
+</html>

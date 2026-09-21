@@ -25,6 +25,12 @@ export interface VisionAuxSettings {
   skipWhenUnknown: boolean;
 }
 
+/** Phone companion settings: the public address the pairing page advertises. */
+export interface MobileSettings {
+  /** Tunnel hostname the pairing page and its QR code point at, e.g. https://m.zhuquan.xyz. */
+  publicUrl: string;
+}
+
 /** Tavily search provider settings (the only custom provider shipped so far). */
 export interface TavilySearchSettings {
   /** Sent to the engine via DSH_TAVILY_API_KEY, never written into cordis.patch.yml. */
@@ -72,6 +78,7 @@ export interface DesktopSettings {
   activeSkinId: string;
   visionAux: VisionAuxSettings;
   webSearch: WebSearchSettings;
+  mobile: MobileSettings;
 }
 
 export const DEFAULT_SETTINGS: DesktopSettings = {
@@ -103,6 +110,7 @@ export const DEFAULT_SETTINGS: DesktopSettings = {
     provider: "deepseek-official",
     tavily: { apiKey: "", baseURL: "https://api.tavily.com", maxResults: 8 },
   },
+  mobile: { publicUrl: "" },
 };
 
 /** Old settings files predate the nested plugin groups; fill their blanks field by field. */
@@ -115,6 +123,7 @@ export function mergeNestedSettings(saved: Partial<DesktopSettings>): Partial<De
       ...(saved.webSearch ?? {}),
       tavily: { ...DEFAULT_SETTINGS.webSearch.tavily, ...(saved.webSearch?.tavily ?? {}) },
     },
+    mobile: { ...DEFAULT_SETTINGS.mobile, ...(saved.mobile ?? {}) },
   };
 }
 
