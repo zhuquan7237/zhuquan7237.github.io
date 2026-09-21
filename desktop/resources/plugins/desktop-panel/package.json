@@ -1,7 +1,7 @@
 {
   "name": "@dsh-desktop/dsh-desktop-panel",
   "description": "DeepSeek Harness desktop panel: shell and engine status, plugin toggles, log tail and diagnostics export inside the DSH web UI",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "private": true,
   "type": "module",
   "main": "lib/index.js",

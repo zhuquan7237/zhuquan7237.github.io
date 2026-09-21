@@ -204,6 +204,42 @@ describe("profile inventory", () => {
     expect(summarize(inv)).toMatchObject({ total: 5, disabled: 1, shell: 2 });
   });
 
+  it("only references theme variables the dsh client actually defines", () => {
+    // The panel renders inside the official UI. A made-up variable name does not
+    // resolve, so its fallback wins and a dark fallback paints a black slab on a
+    // light theme — which is exactly what shipped in 0.1.5. Every name here was
+    // checked against the @deepseek-ai/dsh-client-* packages.
+    const source = readFileSync(path.join(pluginRoot, "client", "client.js"), "utf8");
+    const defined = new Set([
+      "--dsw-alias-bg-base", "--dsw-alias-bg-layer-1", "--dsw-alias-bg-layer-2",
+      "--dsw-alias-border-l1", "--dsw-alias-border-l2",
+      "--dsw-alias-label-primary", "--dsw-alias-label-secondary", "--dsw-alias-label-tertiary",
+      "--dsw-alias-state-error-primary", "--dsw-alias-interactive-bg-hover",
+    ]);
+    const referenced = [...source.matchAll(/var\((--dsw-alias-[a-z0-9-]+)/g)].map((m) => m[1]);
+    expect(referenced.length).toBeGreaterThan(0);
+    for (const name of new Set(referenced)) {
+      expect(defined.has(name)).toBe(true);
+    }
+  });
+
+  it("keeps every fallback theme-neutral so no theme can be painted over", () => {
+    const source = readFileSync(path.join(pluginRoot, "client", "client.js"), "utf8");
+    const fallbacks = [...source.matchAll(/var\(--dsw-alias-[a-z0-9-]+,\s*([^)]+)\)/g)].map((m) => m[1].trim());
+    expect(fallbacks.length).toBeGreaterThan(0);
+    for (const value of fallbacks) {
+      const acceptable = value === "currentColor" || value.startsWith("rgba(127,127,127") ||
+        value === "#e2635f"; // the error red, legible on both themes
+      expect(`${value} -> ${acceptable}`).toBe(`${value} -> true`);
+    }
+  });
+
+  it("stays addressable from the outside for rendering checks", () => {
+    const source = readFileSync(path.join(pluginRoot, "client", "client.js"), "utf8");
+    expect(source).toContain('"data-dsw-desktop-panel"');
+    expect(source).toContain('"data-dsh-block": "log"');
+  });
+
   it("keeps its own switch out of the panel, because the patch layer applies live", () => {
     // Disabling this plugin removes its own routes, so a panel that offered the
     // toggle could not offer it back; the desktop market window owns that case.

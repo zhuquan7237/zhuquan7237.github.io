@@ -107,7 +107,7 @@ window.__ModuleLoader__.load({
     const box = (style, children) => h("div", { style: Object.assign({ display: "flex", flexDirection: "column", gap: "8px" }, style || {}) }, children);
     const row = (children) => h("div", { style: { display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" } }, children);
     const hint = (text) =>
-      h("span", { style: { color: "var(--dsw-alias-label-tertiary, #8b93a7)", fontSize: "12px" } }, text);
+      h("span", { style: { color: "var(--dsw-alias-label-tertiary, currentColor)", fontSize: "12px" } }, text);
     const button = (label, onClick, disabled) =>
       h(
         "button",
@@ -118,9 +118,9 @@ window.__ModuleLoader__.load({
           style: {
             padding: "4px 10px",
             borderRadius: "6px",
-            border: "1px solid var(--dsw-alias-border, #333a4a)",
-            background: "var(--dsw-alias-bg-secondary, #1b1f2a)",
-            color: "var(--dsw-alias-label-primary, #e7e9ee)",
+            border: "1px solid var(--dsw-alias-border-l2, rgba(127,127,127,.45))",
+            background: "var(--dsw-alias-bg-layer-2, rgba(127,127,127,.10))",
+            color: "var(--dsw-alias-label-primary, currentColor)",
             cursor: disabled ? "not-allowed" : "pointer",
             opacity: disabled ? 0.5 : 1,
             fontSize: "12px",
@@ -136,8 +136,8 @@ window.__ModuleLoader__.load({
             fontFamily: "ui-monospace, Consolas, monospace",
             fontSize: "11.5px",
             wordBreak: "break-all",
-            background: "var(--dsw-alias-bg-tertiary, #14161f)",
-            border: "1px solid var(--dsw-alias-border, #262b38)",
+            background: "var(--dsw-alias-bg-layer-1, rgba(127,127,127,.10))",
+            border: "1px solid var(--dsw-alias-border-l2, rgba(127,127,127,.28))",
             borderRadius: "6px",
             padding: "2px 6px",
           },
@@ -254,8 +254,12 @@ window.__ModuleLoader__.load({
               ),
             );
 
-      return box(
-        { width: "100%", maxWidth: "760px", color: "var(--dsw-alias-label-primary, #e7e9ee)" },
+      return h(
+        "div",
+        {
+          "data-dsw-desktop-panel": "",
+          style: { display: "flex", flexDirection: "column", gap: "8px", width: "100%", maxWidth: "760px", color: "var(--dsw-alias-label-primary, currentColor)" },
+        },
         [
           box({ gap: "2px" }, [h("h3", { style: { margin: 0 } }, t.title), hint(t.subtitle)]),
           message ? h("div", { style: { color: "var(--dsw-alias-state-error-primary, #e2635f)", fontSize: "12px" } }, message) : null,
@@ -299,12 +303,13 @@ window.__ModuleLoader__.load({
           h(
             "pre",
             {
+              "data-dsh-block": "log",
               style: {
                 margin: 0,
                 maxHeight: "220px",
                 overflow: "auto",
-                background: "var(--dsw-alias-bg-tertiary, #0f1218)",
-                border: "1px solid var(--dsw-alias-border, #262b38)",
+                background: "var(--dsw-alias-bg-layer-1, rgba(127,127,127,.12))",
+                border: "1px solid var(--dsw-alias-border-l2, rgba(127,127,127,.28))",
                 borderRadius: "8px",
                 padding: "10px",
                 fontSize: "11.5px",

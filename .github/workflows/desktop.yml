@@ -114,6 +114,11 @@ jobs:
           body: |
             请用 ${{ steps.version.outputs.version }}。不要用更早的版本。
 
+            **0.5.0 → 0.5.1**
+            - 修好桌面面板在浅色主题下变成黑块：面板引用的是三个**引擎里并不存在**的主题变量名（`--dsw-alias-bg-secondary` / `bg-tertiary` / `border`），取不到值就回落到写死的深色，于是浅色界面里出现黑底卡片和几乎看不清的日志区。现在改用引擎真实存在的变量（`--dsw-alias-bg-layer-1/2`、`--dsw-alias-border-l2`），并且所有兜底色改成与主题无关的半透明灰——任何主题下都不会再盖出黑块
+            - 实测对比（同一台机器、同一个浅色界面、同一段面板）：修复前设置面板里有 14 处比页面暗很多的表面（日志区 `#0f1218`、按钮 `#1b1f2a`），修复后为 0
+            - 修正下方安装包表格里标反的两行：`-win.exe` 是**便携版**（自解压运行，`/S` 静默安装不生效），`-win-x64.exe` / `-win-arm64.exe` 才是**安装器**
+
             **0.4.0 → 0.5.0**
             - 新增随安装包内置的**桌面面板插件**（`@dsh-desktop/dsh-desktop-panel`）：它走官方插件机制进引擎 profile，在 dsh 设置里多出一个「桌面端」页，显示外壳与引擎版本、日志目录、托盘与市场是否可用，可看外壳/引擎日志尾巴、一键导出诊断包、复制关键路径
             - 面板里可以直接**启停插件**（profile 依赖插件 + 随桌面端分发的插件分两组列出）。写的是引擎自己的配置层，**引擎约 1 秒内即时重载，不用重启**；面板不会给自己开关——停用自己会让这个开关一起消失，那种情况请在桌面端的插件市场里操作
@@ -213,8 +218,8 @@ jobs:
 
             | File | Platform |
             | --- | --- |
-            | `DeepSeek-${{ steps.version.outputs.version }}-win.exe` | Windows installer |
-            | `DeepSeek-${{ steps.version.outputs.version }}-win-x64.exe` / `*-win-arm64.exe` | Windows portable |
+            | `DeepSeek-${{ steps.version.outputs.version }}-win.exe` | Windows portable（自解压运行，免安装；软件内更新用的就是它） |
+            | `DeepSeek-${{ steps.version.outputs.version }}-win-x64.exe` / `*-win-arm64.exe` | Windows installer（NSIS 安装器，支持静默 `/S`） |
             | `DeepSeek-${{ steps.version.outputs.version }}-mac-arm64.dmg` | macOS Apple Silicon |
             | `DeepSeek-${{ steps.version.outputs.version }}-mac-x64.dmg` | macOS Intel |
             | `DeepSeek-${{ steps.version.outputs.version }}-linux-x64.tar.gz` / `*-linux-amd64.deb` / `*-linux-x86_64.rpm` | Linux x64 |
