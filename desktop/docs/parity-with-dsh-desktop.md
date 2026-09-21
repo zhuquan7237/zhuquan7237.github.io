@@ -80,6 +80,7 @@
 - **不加特权**：只用官方 `slots` 服务和宿主注入的 `react`，不需要 fork 引擎、不覆盖别人的内部实现——这正是上游《插件生态倡议书》里主张的写法。
 - **写法与验证**：Client 半边是手写的 `window.__ModuleLoader__.load({id, factory})` bundle（无打包工具），单元测试里直接执行它并断言 `inject`/`apply` 与槽位名；真机验证靠 `logs/desktop-panel-client.json` 的 `stage`/`seats` 回执，而不是「我看它应该出来了」。
 - **shared toggle format**：面板的启停和桌面市场的启停写同一个 `cordis.patch.yml` 区块，两个界面不会对「哪个插件被关了」产生分歧。
+- **实测发现：启停是即时生效的**。写 patch 层后引擎的 HMR 会在约 1 秒内重载该层，不需要重启——所以面板**不提供停用自己的开关**：那样做会让开关本身随插件一起消失（第一次实测就撞上了这个自锁，靠手写 patch 文件才捞回来）。同一个原因也让桌面市场成为「面板被关掉之后」的恢复入口。
 
 ## 4. 故意没学的四项，以及原因
 
@@ -119,6 +120,8 @@ it would expose remote code execution to the network; use 127.0.0.1 instead
 | 启停与卸载 | 停用/启用写读回一致（`disabled` 行）、卸载后 profile 只剩 `@deepseek-ai/dsh-base`、`@deepseek-ai/dsh-web-app`，卸载核心层被拒绝 |
 | 面板 Host 半边 | 真机 `GET /dsh-desktop/state` → 200 且返回真实外壳信息（shellVersion 0.4.0 / 引擎 0.1.5-rc.2 / 端口 / 日志目录 / tray / market） |
 | 面板 Client 半边 | boot manifest 含 `/plugins/??@dsh-desktop/dsh-desktop-panel/client.js`（HTTP 200 返回该文件），回执文件记录 `{"stage":"seated","seats":"settings.section"}`，即浏览器半边在真实 dsh 界面里注册成功 |
+| 面板启停实测 | 停用 `vision-aux` → 200 + patch 区块出现 `- id: vision-aux / disabled: true`；再启用 → 行消失；皮肤（`ui-skin-maid-atelier`）与 insert 行全程保留 |
+| 面板自我保护 | 对面板自身发停用 → `409 面板不能停用自己（停用后这个开关也会随之消失）` |
 
 ## 6. 仍然落后的部分（下一步可选）
 1. 窗口模式/原生材质（Mica、亚克力）与自定义标题栏。

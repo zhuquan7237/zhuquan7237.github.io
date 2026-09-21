@@ -9,8 +9,10 @@ import {
   mergeBlock,
   parseDisabled,
   renderBlock,
+  shellPluginsOf,
   summarize,
   tailFile,
+  toggleRowId,
 } from "../resources/plugins/desktop-panel/src/index";
 import { BUNDLED_PLUGINS } from "./plugins";
 
@@ -165,9 +167,62 @@ describe("profile inventory", () => {
 
   it("summarizes for the status card and survives an empty profile", () => {
     const inv = inventoryOf(manifest, "");
-    expect(summarize(inv)).toEqual({ total: 3, enabled: 3, disabled: 0, removable: 2 });
+    expect(summarize(inv)).toMatchObject({ total: 3, enabled: 3, disabled: 0, removable: 2, shell: 0 });
     expect(inventoryOf(null, "").plugins).toEqual([]);
-    expect(summarize(inventoryOf(null, ""))).toEqual({ total: 0, enabled: 0, disabled: 0, removable: 0 });
+    expect(summarize(inventoryOf(null, ""))).toEqual({ total: 0, enabled: 0, disabled: 0, removable: 0, shell: 0 });
+  });
+
+  it("reports shell-installed plugins, which never appear as dependencies", () => {
+    // The desktop links its bundled plugins into the profile and loads them
+    // through insert rows, so a manifest-only inventory would hide what is
+    // actually running.
+    const patch = [
+      "- insert:",
+      "    - id: web-search-tavily",
+      "      name: '@dsh-desktop/dsh-web-search-tavily'",
+      "- insert:",
+      "    - id: dsh-desktop-panel",
+      "      name: '@dsh-desktop/dsh-desktop-panel'",
+      "      config:",
+      "        keep: true",
+      MARKET_BLOCK_BEGIN,
+      "- id: dsh-desktop-panel",
+      "  disabled: true",
+      MARKET_BLOCK_END,
+    ].join("\n");
+    expect(shellPluginsOf(patch)).toEqual([
+      { rowId: "web-search-tavily", packageName: "@dsh-desktop/dsh-web-search-tavily" },
+      { rowId: "dsh-desktop-panel", packageName: "@dsh-desktop/dsh-desktop-panel" },
+    ]);
+    const inv = inventoryOf(manifest, patch);
+    expect(inv.shellPlugins).toEqual([
+      { rowId: "web-search-tavily", packageName: "@dsh-desktop/dsh-web-search-tavily", disabled: false },
+      { rowId: "dsh-desktop-panel", packageName: "@dsh-desktop/dsh-desktop-panel", disabled: true },
+    ]);
+    // Bundled plugins already in the bundle list are not duplicated.
+    expect(shellPluginsOf(patch).filter((row) => inv.plugins.some((p) => p.packageName === row.packageName))).toEqual([]);
+    expect(summarize(inv)).toMatchObject({ total: 5, disabled: 1, shell: 2 });
+  });
+
+  it("keeps its own switch out of the panel, because the patch layer applies live", () => {
+    // Disabling this plugin removes its own routes, so a panel that offered the
+    // toggle could not offer it back; the desktop market window owns that case.
+    const source = readFileSync(path.join(pluginRoot, "client", "client.js"), "utf8");
+    const hostSource = readFileSync(path.join(pluginRoot, "src", "index.ts"), "utf8");
+    expect(hostSource).toContain("packageName === name");
+    expect(hostSource).toContain("面板不能停用自己");
+    expect(source).toContain('plugin.rowId === "dsh-desktop-panel"');
+  });
+
+  it("resolves a toggle to the row id the patch layer keys on", () => {
+    const inv = inventoryOf(
+      manifest,
+      ["- insert:", "    - id: vision-aux", "      name: '@dsh-desktop/dsh-vision-aux'"].join("\n"),
+    );
+    expect(toggleRowId(inv, "dsh-pet")).toBe("dsh-pet");
+    expect(toggleRowId(inv, "vision-aux")).toBe("vision-aux");
+    expect(toggleRowId(inv, "@dsh-desktop/dsh-vision-aux")).toBe("vision-aux");
+    expect(toggleRowId(inv, "not-installed")).toBeNull();
   });
 });
 

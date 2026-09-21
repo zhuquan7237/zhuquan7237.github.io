@@ -25,7 +25,7 @@ Harness releases therefore land without rebuilding this desktop app. The shell o
 0.5.0 起，桌面端不再只是一个外壳：它随包附带一个**双面 DSH 插件**（`@dsh-desktop/dsh-desktop-panel`），并把它装进引擎的 profile。打开 dsh 界面 → **设置 → 桌面端**，就能在聊天界面里看到平时只有桌面窗口才有的东西：
 
 - **外壳事实**：桌面版版本、引擎版本与端口、profile、工作区、日志目录（一键复制）。
-- **插件开关**：列出当前 profile 的插件，可启用/停用（写引擎自己的 `cordis.patch.yml` 层，重启后依然生效）；profile 自带的层标为只读。
+- **插件开关**：列出 profile 的依赖插件与「随桌面端分发」的插件，可启用/停用。写的是引擎自己的 `cordis.patch.yml` 层，**引擎会即时重载该层（约 1 秒）**，不用重启；profile 自带的层标为只读。面板不会给自己开关——停用自己会让这个开关一起消失，那种情况请用桌面端的插件市场。
 - **日志**：直接看外壳日志与引擎日志的尾部，不用去翻文件夹。
 - **导出诊断包**：打包版里一键调用桌面端自己的 `--export-diagnostics`，返回 zip 路径。
 

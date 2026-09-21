@@ -43,6 +43,8 @@ window.__ModuleLoader__.load({
         toggleOff: "停用",
         toggleOn: "启用",
         core: "自带层",
+        shellGroup: "随桌面端分发（junction 进 profile，不是依赖）",
+        self: "面板自身：请到桌面端插件市场停用",
         empty: "没有内容",
         openMarket: "在桌面端打开插件市场（菜单 Harness → 插件市场…）",
       },
@@ -70,6 +72,8 @@ window.__ModuleLoader__.load({
         toggleOff: "Disable",
         toggleOn: "Enable",
         core: "In-box",
+        shellGroup: "Shipped with the desktop (linked into the profile, not a dependency)",
+        self: "This panel: disable it from the desktop market window",
         empty: "Nothing here",
         openMarket: "Open the plugin market in the desktop app (menu Harness → Plugin market…)",
       },
@@ -183,12 +187,15 @@ window.__ModuleLoader__.load({
       }, []);
 
       const toggle = async (plugin) => {
-        setBusy(plugin.packageName);
+        // A manifest dependency is disabled by package name; a shell plugin by
+        // its Cordis row id, which is what the patch layer keys on.
+        const key = plugin.rowId || plugin.packageName;
+        setBusy(key);
         try {
           const result = await getJson("/dsh-desktop/toggle", {
             method: "POST",
             headers: { "content-type": "application/json" },
-            body: JSON.stringify({ packageName: plugin.packageName, disabled: !plugin.disabled }),
+            body: JSON.stringify({ id: key, disabled: !plugin.disabled }),
           });
           setMessage(result.message || "");
           await load();
@@ -221,6 +228,31 @@ window.__ModuleLoader__.load({
 
       const facts = state || {};
       const pluginList = (plugins && plugins.plugins) || [];
+      const shellRows = (plugins && plugins.shellPlugins) || [];
+      const pluginRowList = (list) =>
+        list.length === 0
+          ? hint(t.empty)
+          : box(
+              {},
+              list.slice(0, 80).map((plugin) =>
+                row([
+                  mono(plugin.packageName),
+                  plugin.rowId && plugin.rowId !== plugin.packageName ? hint(`(${plugin.rowId})`) : null,
+                  plugin.version ? hint(plugin.version) : null,
+                  plugin.core ? hint(t.core) : null,
+                  plugin.disabled ? hint(`· ${t.disabled}`) : null,
+                  // The panel cannot disable itself: the patch layer applies
+                  // live, so its own routes would vanish with it.
+                  plugin.rowId === "dsh-desktop-panel"
+                    ? hint(t.self)
+                    : button(
+                        plugin.disabled ? t.toggleOn : t.toggleOff,
+                        () => toggle(plugin),
+                        busy === (plugin.rowId || plugin.packageName),
+                      ),
+                ]),
+              ),
+            );
 
       return box(
         { width: "100%", maxWidth: "760px", color: "var(--dsw-alias-label-primary, #e7e9ee)" },
@@ -248,26 +280,9 @@ window.__ModuleLoader__.load({
               ])
             : null,
           h("h4", { style: { margin: "6px 0 0" } }, t.plugins),
-          plugins === null
-            ? hint(t.empty)
-            : pluginList.length === 0
-              ? hint(t.empty)
-              : box(
-                  {},
-                  pluginList.slice(0, 80).map((plugin) =>
-                    row([
-                      mono(plugin.packageName),
-                      plugin.version ? hint(plugin.version) : null,
-                      plugin.core ? hint(t.core) : null,
-                      plugin.disabled ? hint(`· ${t.disabled}`) : null,
-                      button(
-                        plugin.disabled ? t.toggleOn : t.toggleOff,
-                        () => toggle(plugin),
-                        busy === plugin.packageName,
-                      ),
-                    ]),
-                  ),
-                ),
+          plugins === null ? hint(t.empty) : pluginRowList(pluginList),
+          shellRows.length > 0 ? h("h4", { style: { margin: "6px 0 0" } }, t.shellGroup) : null,
+          plugins === null ? null : pluginRowList(shellRows),
           h("h4", { style: { margin: "6px 0 0" } }, t.log),
           row([
             button(t.appLog, () => {

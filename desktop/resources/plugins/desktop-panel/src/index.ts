@@ -122,11 +122,44 @@ export function mergeBlock(existing: string, disabled: readonly string[]): strin
   return `${trimmed}\n\n${block}\n`;
 }
 
+/**
+ * The shell-installed plugins: `- insert:` rows naming a package. They are
+ * junctioned into the profile rather than resolved from a dependency, so the
+ * manifest never lists them and the market cannot remove them — but they are
+ * loaded profile layers all the same, and the panel has to show what is
+ * actually running. The row id is the Cordis name, which is what a disable row
+ * must reference.
+ * @param patch - the home patch body.
+ * @returns one row per inserted plugin, in file order.
+ */
+export function shellPluginsOf(patch: string): { rowId: string; packageName: string }[] {
+  const found: { rowId: string; packageName: string }[] = [];
+  let rowId = "";
+  for (const line of patch.split(/\r?\n/)) {
+    const id = /^\s*-\s*id:\s*['"]?([^'"\s]+)['"]?\s*$/.exec(line);
+    if (id) {
+      rowId = id[1];
+      continue;
+    }
+    const name = /^\s*name:\s*['"]?([^'"\s]+)['"]?\s*$/.exec(line);
+    if (name && rowId) {
+      found.push({ rowId, packageName: name[1] });
+      rowId = "";
+    }
+  }
+  return found;
+}
+
 /** Build the inventory from a profile manifest and the patch body. */
 export function inventoryOf(
   manifest: Record<string, unknown> | null,
   patch: string,
-): { plugins: PanelPlugin[]; disabled: string[]; profileBundles: string[] } {
+): {
+  plugins: PanelPlugin[];
+  shellPlugins: { rowId: string; packageName: string; disabled: boolean }[];
+  disabled: string[];
+  profileBundles: string[];
+} {
   const dependencies = (manifest?.dependencies && typeof manifest.dependencies === "object"
     ? manifest.dependencies
     : {}) as Record<string, unknown>;
@@ -146,7 +179,27 @@ export function inventoryOf(
       disabled: disabledSet.has(packageName),
     };
   });
-  return { plugins, disabled: [...disabledSet].sort(), profileBundles };
+  const known = new Set(plugins.map((plugin) => plugin.packageName));
+  const shellPlugins = shellPluginsOf(patch)
+    .filter((row) => !known.has(row.packageName))
+    .map((row) => ({ ...row, disabled: disabledSet.has(row.rowId) }));
+  return { plugins, shellPlugins, disabled: [...disabledSet].sort(), profileBundles };
+}
+
+/**
+ * Resolve a toggle request to the row id the patch layer keys on: a manifest
+ * dependency is disabled by package name, a shell plugin by its Cordis name.
+ * @param inv - current inventory.
+ * @param key - the package name or row id the caller sent.
+ * @returns the row id, or null when nothing matches.
+ */
+export function toggleRowId(
+  inv: { plugins: PanelPlugin[]; shellPlugins: { rowId: string; packageName: string }[] },
+  key: string,
+): string | null {
+  if (inv.plugins.some((plugin) => plugin.packageName === key)) return key;
+  const shell = inv.shellPlugins.find((row) => row.rowId === key || row.packageName === key);
+  return shell ? shell.rowId : null;
 }
 
 /** Minimal JSON reply helper. */
@@ -290,18 +343,28 @@ export function apply(ctx: Context, config: { profile?: string } = {}, hooks: Pa
 
     [`${ROUTE_PREFIX}/toggle`]: async (req, res) => {
       const body = await readBody(req);
-      const packageName = String(body.packageName ?? "").trim();
+      const key = String(body.id ?? body.packageName ?? "").trim();
       const disabled = Boolean(body.disabled);
-      if (!packageName) return sendJson(res, 400, { ok: false, message: "缺少 packageName" });
+      if (!key) return sendJson(res, 400, { ok: false, message: "缺少插件标识" });
       const inv = await inventory();
-      const target = inv.plugins.find((plugin) => plugin.packageName === packageName);
-      if (!target) return sendJson(res, 404, { ok: false, message: "这个插件不在当前 profile 里" });
+      const packageName = toggleRowId(inv, key);
+      if (!packageName) return sendJson(res, 404, { ok: false, message: "这个插件不在当前 profile 里" });
+      // Disabling this panel takes its own routes with it: the patch layer is
+      // applied live, so the switch that would turn it back on disappears with
+      // the plugin. The desktop's market window owns that case instead.
+      if (packageName === name) {
+        return sendJson(res, 409, {
+          ok: false,
+          message: "面板不能停用自己（停用后这个开关也会随之消失），请在桌面端的插件市场里操作",
+          restartRequired: false,
+        });
+      }
       const next = new Set(inv.disabled.filter((item) => item !== packageName));
       if (disabled) next.add(packageName);
       await mkdir(dshHome, { recursive: true });
       await writeFile(patchPath, mergeBlock(await readPatch(), [...next]), "utf8");
-      log(disabled ? `面板停用插件 ${packageName}（重启后生效）` : `面板启用插件 ${packageName}（重启后生效）`);
-      sendJson(res, 200, { ok: true, message: disabled ? `${packageName} 已停用，重启引擎后生效` : `${packageName} 已启用，重启引擎后生效`, restartRequired: true });
+      log(disabled ? `面板停用插件 ${packageName}（即时生效）` : `面板启用插件 ${packageName}（即时生效）`);
+      sendJson(res, 200, { ok: true, message: disabled ? `${packageName} 已停用（引擎即时重载该层）` : `${packageName} 已启用（引擎即时重载该层）`, restartRequired: true });
     },
 
     [`${ROUTE_PREFIX}/diagnostics`]: async (_req, res) => {
@@ -347,17 +410,25 @@ export function apply(ctx: Context, config: { profile?: string } = {}, hooks: Pa
 }
 
 /** Compact inventory summary for the state card. */
-function summarize(inv: { plugins: PanelPlugin[]; disabled: string[] }): {
+function summarize(inv: {
+  plugins: PanelPlugin[];
+  shellPlugins?: { rowId: string; packageName: string; disabled: boolean }[];
+  disabled: string[];
+}): {
   total: number;
   enabled: number;
   disabled: number;
   removable: number;
+  shell: number;
 } {
+  const shell = inv.shellPlugins ?? [];
+  const all = [...inv.plugins, ...shell];
   return {
-    total: inv.plugins.length,
-    enabled: inv.plugins.filter((plugin) => !plugin.disabled).length,
+    total: all.length,
+    enabled: all.filter((plugin) => !plugin.disabled).length,
     disabled: inv.disabled.length,
     removable: inv.plugins.filter((plugin) => plugin.removable).length,
+    shell: shell.length,
   };
 }
 
