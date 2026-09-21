@@ -1,7 +1,7 @@
 {
   "name": "@dsh-desktop/dsh-model-vision",
-  "description": "Declare which models of a pi-ai provider route accept image input, from the Models settings page: the engine refuses images for any model that does not declare `input: [text, image]`, and the shipped UI has no field for it",
-  "version": "0.1.0",
+  "description": "Model capabilities that look after themselves for DeepSeek Harness: resolve whether each model accepts images, its context window and its output cap from the endpoint's own metadata, a cross-vendor catalogue refreshed daily, and family rules — then apply them with a diff",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "main": "lib/index.js",
@@ -14,6 +14,7 @@
   "files": [
     "lib",
     "client",
+    "data",
     "cordis.patch.yml"
   ],
   "license": "MIT",
@@ -25,7 +26,6 @@
       "inject": [
         "@deepseek-ai/dsh-client-locale",
         "@deepseek-ai/dsh-client-ui-settings",
-        "@deepseek-ai/dsh-client-ui-settings-models",
         "@deepseek-ai/dsh-client-ui-theme"
       ],
       "platform": "web"

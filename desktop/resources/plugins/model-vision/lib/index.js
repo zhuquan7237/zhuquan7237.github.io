@@ -1,113 +1,52 @@
 /**
- * `@dsh-desktop/dsh-model-vision` — declare which models accept image input,
- * from the Models settings page.
+ * `@dsh-desktop/dsh-model-vision` — model capabilities that look after
+ * themselves.
  *
  * The engine refuses an image before it is attached unless the selected model
- * declares `image` in its input modalities
- * (`dsh-llm-pi-ai` resolves a model entry's `input`, then the installed
- * catalog entry, then the route's `defaultInput`, which is `[text]`), and the
- * shipped Models page has no field for `input`. On a hand-declared route —
- * any private gateway, and ours — nothing declares it, so every model is
- * judged text-only and the composer answers 当前模型不支持图片.
+ * declares `image` in its input modalities, and it sizes a model's context from
+ * declarations too (`dsh-llm-pi-ai` resolves an entry's own fields, then the
+ * installed catalog, then route fallbacks of `[text]` / 128k / 32k). The shipped
+ * Models page edits none of that, so on a hand-declared route — every private
+ * gateway, all six of ours — a user fills in a URL and a key and then hand-typing
+ * every model entry is the only path to their real capabilities.
  *
- * This plugin adds the missing surface: a per-model toggle on every pi-ai
- * provider card (the `settings.models.provider-card` seat, keyed by
- * `settingsNs`), plus the HTTP routes its browser half reads and writes
- * through. Writes go through the engine's own settings service, so the
- * document is validated, persisted, and announced exactly like a change made
- * in the shipped editor.
- *
- * Modalities are a claim about the endpoint, not a check of it: nothing can
- * interrogate a gateway for what it accepts, so the UI states that over-claiming
- * is refused downstream mid-turn.
+ * This plugin resolves them instead: an endpoint's own `/v1/models` metadata when
+ * it publishes any, a cross-vendor catalogue snapshot refreshed from the network
+ * (which matches ~95% of the models declared on this machine), and family rules
+ * for the rest — with every value carrying the source it came from, additions
+ * applied automatically, corrections offered as a diff for confirmation, and the
+ * whole thing re-checked daily.
  *
  * @module @dsh-desktop/dsh-model-vision
  */
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { homedir } from 'node:os';
+import { fileURLToPath } from 'node:url';
+import { MODALITIES, catalogueFromModels, normalizeModelId, parseCatalogue, sourceLabel, upstreamCapabilities, } from './capabilities.js';
+import { applyPlan, normalizedInput, planRoute, summarizePlan } from './sync.js';
+export * from './capabilities.js';
+export * from './sync.js';
 /** Cordis plugin name — the patch row id and the client bundle id both use it. */
 export const name = 'dsh-model-vision';
-/** Services the host half needs; a missing one leaves the client half inert. */
+/** Services the host half needs. */
 export const inject = ['settings', 'llm', 'webServer'];
 /** Settings namespace that owns pi-ai provider routes. */
 export const SETTINGS_NS = 'llm-pi-ai';
-/** Slot key this plugin's browser half registers under (the pi-ai namespace). */
-export const PROVIDER_CARD_KEY = 'llm-pi-ai';
+/** Where a refreshed catalogue comes from (public, no key, capability metadata included). */
+export const CATALOGUE_URL = 'https://openrouter.ai/api/v1/models';
+/** How long a fetched catalogue is trusted before a refresh is offered. */
+export const CATALOGUE_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+export const ROUTE_OVERVIEW = '/dsh-model-vision/overview';
+export const ROUTE_PLAN = '/dsh-model-vision/plan';
+export const ROUTE_APPLY = '/dsh-model-vision/apply';
+export const ROUTE_SYNC = '/dsh-model-vision/sync';
+export const ROUTE_OVERRIDE = '/dsh-model-vision/override';
+export const ROUTE_CATALOGUE = '/dsh-model-vision/catalogue';
 export const ROUTE_STATE = '/dsh-model-vision/state';
 export const ROUTE_SET = '/dsh-model-vision/set';
 export const ROUTE_SEAT = '/dsh-model-vision/seat';
-/** Every modality a pi-ai profile may declare (mirrors dsh-llm-pi-ai MODALITIES). */
-export const MODALITIES = ['text', 'image'];
-/** Normalize one declared `input` value: junk filtered, empty means "declares nothing". */
-export function normalizeDeclared(value) {
-    if (!Array.isArray(value))
-        return null;
-    const kept = value.filter((part) => MODALITIES.includes(part));
-    return kept.length === 0 ? null : [...new Set(kept)];
-}
-/** Declared modalities per model id, read from a raw user section. */
-export function declaredInputsOf(section, provider) {
-    const out = new Map();
-    const entries = modelsArrayOf(section, provider);
-    for (const entry of entries) {
-        const id = typeof entry.id === 'string' ? entry.id : undefined;
-        if (id !== undefined)
-            out.set(id, normalizeDeclared(entry.input));
-    }
-    return out;
-}
-/** The user layer's model array for one route, or `[]` when it declares none. */
-export function modelsArrayOf(section, provider) {
-    const providers = isRecord(section) && isRecord(section.providers) ? section.providers : {};
-    const route = isRecord(providers[provider]) ? providers[provider] : undefined;
-    const models = route?.models;
-    if (!Array.isArray(models))
-        return [];
-    return models.filter(isRecord);
-}
-/**
- * The next `models` array with one model's declaration replaced.
- *
- * Path ops in the settings service walk plain objects only — an array element
- * cannot be addressed — so the whole array is restated. A route that declares
- * no list (its models come from the installed catalog) is materialized from the
- * catalog with every model's current effective modalities spelled out, so the
- * write cannot narrow or silently re-declare the catalog's other models
- * whichever way the profile resolves.
- *
- * @param current - the array to restate (the user's own when it has one).
- * @param modelId - model whose declaration changes.
- * @param image - whether the model should declare image input.
- * @returns the restated array.
- */
-export function withModelInput(current, modelId, image) {
-    const input = image ? ['text', 'image'] : ['text'];
-    let seen = false;
-    const next = current.map((entry) => {
-        if (entry.id !== modelId)
-            return { ...entry };
-        seen = true;
-        return { ...entry, input: [...input] };
-    });
-    if (!seen)
-        next.push({ id: modelId, input: [...input] });
-    return next;
-}
-/** Whether a raw user section declares this route's model list. */
-export function routeDeclaresList(section, provider) {
-    return modelsArrayOf(section, provider).length > 0;
-}
-/** Build the state rows: the engine's own model list joined with the stored declarations. */
-export function buildRows(models, declared) {
-    return models.map((model) => {
-        const effective = (model.inputModalities ?? ['text']).filter((part) => MODALITIES.includes(part));
-        return {
-            id: model.id,
-            name: model.name ?? model.id,
-            declared: declared.get(model.id) ?? null,
-            effective: [...effective],
-            supportsImage: effective.includes('image'),
-        };
-    });
-}
+export { MODALITIES, normalizeModelId, sourceLabel };
 function isRecord(value) {
     return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
@@ -117,7 +56,7 @@ function sendJson(res, status, body) {
     res.setHeader('cache-control', 'no-store');
     res.end(JSON.stringify(body));
 }
-async function readBody(req, cap = 64 * 1024) {
+async function readBody(req, cap = 512 * 1024) {
     const chunks = [];
     let size = 0;
     for await (const chunk of req) {
@@ -133,6 +72,15 @@ async function readBody(req, cap = 64 * 1024) {
         throw new Error('请求体必须是 JSON 对象');
     return parsed;
 }
+/** Path of the bundled catalogue snapshot shipped inside this plugin. */
+export function bundledCataloguePath() {
+    return fileURLToPath(new URL('../data/catalogue.json', import.meta.url));
+}
+/** Where the refreshed catalogue and sync bookkeeping live for this dsh home. */
+export function statePath() {
+    const home = process.env.DSH_HOME || join(homedir(), '.dsh');
+    return join(home, 'model-vision-state.json');
+}
 /** Host half entry point. */
 export function apply(ctx) {
     const log = (line) => {
@@ -142,84 +90,308 @@ export function apply(ctx) {
     const settings = ctx.get('settings');
     const llm = ctx.get('llm');
     if (!settings || !llm) {
-        log(`服务缺失（settings=${settings !== undefined} llm=${llm !== undefined}），模型能力开关不可用`);
+        log(`服务缺失（settings=${settings !== undefined} llm=${llm !== undefined}），模型能力不可用`);
         return;
     }
-    const stateOf = async (provider) => {
-        const section = settings.section(SETTINGS_NS);
-        const resolved = settings.get(SETTINGS_NS);
-        const declared = declaredInputsOf(section, provider);
-        const models = await llm.listModels(provider);
-        const route = isRecord(isRecord(resolved) ? resolved.providers : undefined)
-            ? resolved.providers[provider]
-            : undefined;
-        return {
-            ok: true,
-            provider,
-            configured: route !== undefined,
-            declaredList: routeDeclaresList(section, provider),
-            models: buildRows(models, declared),
-        };
-    };
-    const setOne = async (provider, modelId, image) => {
-        const section = settings.section(SETTINGS_NS);
-        const current = modelsArrayOf(section, provider);
-        const source = current.length > 0 ? current : (await llm.listModels(provider)).map((model) => ({
-            id: model.id,
-            input: [...(model.inputModalities ?? ['text'])],
-        }));
-        const next = withModelInput(source, modelId, image);
-        await settings.mutate(SETTINGS_NS, [{ op: 'set', path: ['providers', provider, 'models'], value: next }], undefined);
-        const state = await stateOf(provider);
-        if (current.length === 0) {
-            state.note = `该路由原先不声明模型列表（用内置目录），已按目录把 ${next.length} 个模型写进配置`;
+    // ---------------------------------------------------------------- catalogue
+    let state = {};
+    try {
+        state = JSON.parse(readFileSync(statePath(), 'utf8'));
+    }
+    catch {
+        state = {};
+    }
+    let catalogue = parseCatalogue(state.catalogue);
+    let catalogueOrigin = 'cache';
+    if (!catalogue) {
+        try {
+            catalogue = parseCatalogue(JSON.parse(readFileSync(bundledCataloguePath(), 'utf8')));
+            catalogueOrigin = 'bundled';
         }
-        log(`${image ? '声明' : '取消'}「支持图片输入」：${provider} / ${modelId}（共 ${next.length} 条模型条目）`);
-        return state;
-    };
-    const webServer = ctx.get('webServer');
-    if (!webServer) {
-        log('webServer 服务不可用，仅保留客户端界面（模型能力开关不可用）');
-        return;
+        catch (error) {
+            log(`内置能力目录读取失败：${error instanceof Error ? error.message : String(error)}`);
+        }
     }
+    if (!catalogue) {
+        // Last resort: an empty catalogue. Family rules still answer a lot.
+        catalogue = { version: 1, generatedAt: '', source: 'empty', keys: {} };
+        catalogueOrigin = 'empty';
+    }
+    let refreshing = false;
+    const persist = () => {
+        try {
+            mkdirSync(dirname(statePath()), { recursive: true });
+            writeFileSync(statePath(), JSON.stringify(state), 'utf8');
+        }
+        catch (error) {
+            log(`状态写入失败：${error instanceof Error ? error.message : String(error)}`);
+        }
+    };
+    const catalogueStatus = () => ({
+        origin: catalogueOrigin,
+        generatedAt: catalogue?.generatedAt ?? '',
+        source: catalogue?.source ?? '',
+        count: Object.keys(catalogue?.keys ?? {}).length,
+        fetchedAt: state.catalogueFetchedAt ?? 0,
+        stale: Date.now() - (state.catalogueFetchedAt ?? 0) > CATALOGUE_MAX_AGE_MS,
+        refreshing,
+    });
+    const refreshCatalogue = async (reason) => {
+        if (refreshing)
+            return { ok: false, count: Object.keys(catalogue?.keys ?? {}).length, message: '已在刷新中' };
+        refreshing = true;
+        try {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), 60_000);
+            const response = await fetch(CATALOGUE_URL, { signal: controller.signal });
+            clearTimeout(timer);
+            if (!response.ok)
+                throw new Error(`HTTP ${response.status}`);
+            const keys = catalogueFromModels(await response.json());
+            const count = Object.keys(keys).length;
+            if (count === 0)
+                throw new Error('目录为空（结构可能变了）');
+            catalogue = { version: 1, generatedAt: new Date().toISOString(), source: CATALOGUE_URL, keys };
+            state.catalogue = catalogue;
+            state.catalogueFetchedAt = Date.now();
+            catalogueOrigin = 'network';
+            persist();
+            log(`能力目录已刷新（${reason}）：${count} 条`);
+            return { ok: true, count, message: `已更新 ${count} 条` };
+        }
+        catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            log(`能力目录刷新失败（${reason}）：${message}`);
+            return { ok: false, count: Object.keys(catalogue?.keys ?? {}).length, message };
+        }
+        finally {
+            refreshing = false;
+        }
+    };
+    // ------------------------------------------------------------------- routes
+    const storedRoutes = () => {
+        const resolved = settings.get(SETTINGS_NS);
+        return isRecord(resolved) && isRecord(resolved.providers)
+            ? resolved.providers
+            : {};
+    };
+    const storedModels = (route) => {
+        const section = settings.section(SETTINGS_NS);
+        const providers = isRecord(section) && isRecord(section.providers) ? section.providers : {};
+        const entry = isRecord(providers[route]) ? providers[route] : undefined;
+        return entry && Array.isArray(entry.models) ? entry.models : [];
+    };
+    /** Best effort: a gateway that publishes nothing simply contributes nothing. */
+    const upstreamFor = async (route) => {
+        const out = {};
+        if (typeof llm.discoverModels !== 'function')
+            return out;
+        try {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), 20_000);
+            const discovered = await llm.discoverModels(SETTINGS_NS, { provider: route }, controller.signal);
+            clearTimeout(timer);
+            for (const row of discovered ?? []) {
+                if (!isRecord(row))
+                    continue;
+                const id = typeof row.id === 'string' ? row.id : undefined;
+                if (id === undefined)
+                    continue;
+                const caps = upstreamCapabilities(row);
+                if (Object.keys(caps).length > 0)
+                    out[id] = caps;
+            }
+        }
+        catch {
+            /* the endpoint needs a key this plugin must not hold, or publishes nothing */
+        }
+        return out;
+    };
+    const planFor = async (route) => {
+        const models = await llm.listModels(route);
+        const upstream = storedModels(route).length > 0 ? await upstreamFor(route) : {};
+        return planRoute({ route, models, stored: storedModels(route), catalogue, upstream });
+    };
+    const overview = async () => {
+        const routes = storedRoutes();
+        if (catalogueStatus().stale && !refreshing)
+            void refreshCatalogue('目录过期');
+        const out = [];
+        for (const [route, entry] of Object.entries(routes)) {
+            let plan;
+            let error = '';
+            try {
+                plan = await planFor(route);
+            }
+            catch (problem) {
+                error = problem instanceof Error ? problem.message : String(problem);
+            }
+            const models = plan?.models ?? [];
+            const vision = models.filter((model) => (model.capabilities.input.value ?? ['text']).includes('image')).length;
+            out.push({
+                route,
+                displayName: typeof entry.displayName === 'string' ? entry.displayName : route,
+                baseURL: typeof entry.baseURL === 'string' ? entry.baseURL : '',
+                total: models.length,
+                vision,
+                unknown: models.filter((model) => model.unknown).length,
+                pendingCorrections: plan?.counts.correctable ?? 0,
+                summary: plan ? summarizePlan(plan) : '',
+                lastSync: state.lastSync?.[route] ?? null,
+                error,
+            });
+        }
+        return { ok: true, catalogue: catalogueStatus(), routes: out };
+    };
+    const applyRoute = async (route, accepted) => {
+        const plan = await planFor(route);
+        const next = applyPlan({ stored: storedModels(route), plan, accepted });
+        const written = plan.models.filter((model) => model.changes.some((change) => change.verdict !== 'correct' || accepted.includes(model.id))).length;
+        if (written > 0) {
+            await settings.mutate(SETTINGS_NS, [{ op: 'set', path: ['providers', route, 'models'], value: next }], undefined);
+        }
+        const summary = summarizePlan(plan);
+        state.lastSync = { ...(state.lastSync ?? {}), [route]: { at: new Date().toISOString(), summary, applied: written } };
+        persist();
+        log(`应用模型能力：${route} — 写入 ${written} 个模型（${summary}）`);
+        return { ok: true, route, applied: written, summary, plan: await planFor(route) };
+    };
     const handlers = {
-        [ROUTE_STATE]: async (req, res, url) => {
-            const provider = url.searchParams.get('provider') ?? '';
-            if (provider === '') {
-                sendJson(res, 400, { ok: false, message: '缺少 provider 参数', code: 'provider-required' });
+        [ROUTE_OVERVIEW]: async (_req, res) => {
+            sendJson(res, 200, await overview());
+        },
+        [ROUTE_PLAN]: async (_req, res, url) => {
+            const route = url.searchParams.get('provider') ?? url.searchParams.get('route') ?? '';
+            if (route === '') {
+                sendJson(res, 400, { ok: false, message: '缺少 provider 参数' });
                 return;
             }
-            sendJson(res, 200, await stateOf(provider));
+            sendJson(res, 200, { ok: true, plan: await planFor(route), catalogue: catalogueStatus() });
+        },
+        [ROUTE_APPLY]: async (req, res) => {
+            const body = await readBody(req);
+            const route = typeof body.provider === 'string' ? body.provider : typeof body.route === 'string' ? body.route : '';
+            const accepted = Array.isArray(body.accepted) ? body.accepted.filter((v) => typeof v === 'string') : [];
+            if (route === '') {
+                sendJson(res, 400, { ok: false, message: '缺少 provider' });
+                return;
+            }
+            sendJson(res, 200, await applyRoute(route, accepted));
+        },
+        [ROUTE_SYNC]: async (req, res) => {
+            const body = await readBody(req);
+            const refresh = body.refresh !== false;
+            const report = refresh
+                ? await refreshCatalogue('手动同步')
+                : { ok: true, count: catalogueStatus().count, message: '跳过刷新' };
+            const results = [];
+            for (const route of Object.keys(storedRoutes())) {
+                try {
+                    results.push(await applyRoute(route, []));
+                }
+                catch (error) {
+                    results.push({ ok: false, route, message: error instanceof Error ? error.message : String(error) });
+                }
+            }
+            sendJson(res, 200, { ok: true, catalogue: catalogueStatus(), refresh: report, results });
+        },
+        [ROUTE_OVERRIDE]: async (req, res) => {
+            const body = await readBody(req);
+            const route = typeof body.provider === 'string' ? body.provider : '';
+            const model = typeof body.model === 'string' ? body.model : '';
+            const field = body.field === 'contextWindow' || body.field === 'maxTokens' || body.field === 'input' ? body.field : undefined;
+            if (route === '' || model === '' || field === undefined) {
+                sendJson(res, 400, { ok: false, message: '缺少 provider / model / field' });
+                return;
+            }
+            const next = storedModels(route).map((entry) => ({ ...entry }));
+            let index = next.findIndex((entry) => entry.id === model);
+            if (index < 0) {
+                index = next.length;
+                next.push({ id: model });
+            }
+            const current = { ...next[index] };
+            if (field === 'input') {
+                const raw = Array.isArray(body.value) ? body.value : [];
+                const kept = raw.filter((v) => MODALITIES.includes(v));
+                current.input = kept.length > 0 ? [...new Set(kept)] : ['text'];
+            }
+            else if (body.value === null) {
+                delete current[field];
+            }
+            else {
+                const value = Number(body.value);
+                if (!Number.isFinite(value) || value <= 0) {
+                    sendJson(res, 400, { ok: false, message: `${field} 必须是正数` });
+                    return;
+                }
+                current[field] = Math.floor(value);
+            }
+            next[index] = current;
+            await settings.mutate(SETTINGS_NS, [{ op: 'set', path: ['providers', route, 'models'], value: next }], undefined);
+            log(`手动覆盖：${route} / ${model} ${field}`);
+            sendJson(res, 200, { ok: true, plan: await planFor(route) });
+        },
+        [ROUTE_CATALOGUE]: async (req, res) => {
+            if (req.method === 'POST') {
+                const report = await refreshCatalogue('界面手动刷新');
+                sendJson(res, report.ok ? 200 : 502, { ok: report.ok, catalogue: catalogueStatus(), message: report.message });
+                return;
+            }
+            sendJson(res, 200, { ok: true, catalogue: catalogueStatus() });
+        },
+        [ROUTE_STATE]: async (_req, res, url) => {
+            const route = url.searchParams.get('provider') ?? '';
+            const plan = await planFor(route);
+            const stored = storedModels(route);
+            sendJson(res, 200, {
+                ok: true,
+                provider: route,
+                configured: storedRoutes()[route] !== undefined,
+                declaredList: stored.length > 0,
+                models: plan.models.map((model) => ({
+                    id: model.id,
+                    name: model.name,
+                    declared: normalizedInput(stored.find((entry) => entry.id === model.id)?.input) ?? null,
+                    effective: model.capabilities.input.value ?? ['text'],
+                    supportsImage: (model.capabilities.input.value ?? ['text']).includes('image'),
+                    source: model.capabilities.input.source,
+                    sourceLabel: sourceLabel(model.capabilities.input.source),
+                })),
+            });
         },
         [ROUTE_SET]: async (req, res) => {
             const body = await readBody(req);
-            const provider = typeof body.provider === 'string' ? body.provider : '';
+            const route = typeof body.provider === 'string' ? body.provider : '';
             const model = typeof body.model === 'string' ? body.model : '';
-            const image = body.image === true;
-            if (provider === '' || model === '') {
-                sendJson(res, 400, { ok: false, message: '缺少 provider / model', code: 'target-required' });
+            if (route === '' || model === '') {
+                sendJson(res, 400, { ok: false, message: '缺少 provider / model' });
                 return;
             }
-            const models = await llm.listModels(provider);
-            if (!models.some((entry) => entry.id === model)) {
-                sendJson(res, 404, {
-                    ok: false,
-                    message: `路由 ${provider} 没有名为 ${model} 的模型`,
-                    code: 'model-unknown',
-                });
-                return;
-            }
-            sendJson(res, 200, await setOne(provider, model, image));
+            const value = { input: body.image === true ? ['text', 'image'] : ['text'] };
+            const next = storedModels(route).map((entry) => entry.id === model ? { ...entry, input: [...(value.input ?? [])] } : { ...entry });
+            if (!next.some((entry) => entry.id === model))
+                next.push({ id: model, input: [...(value.input ?? [])] });
+            await settings.mutate(SETTINGS_NS, [{ op: 'set', path: ['providers', route, 'models'], value: next }], undefined);
+            log(`手动设置图片能力：${route} / ${model} = ${body.image === true ? '支持' : '不支持'}`);
+            sendJson(res, 200, { ok: true, plan: await planFor(route) });
         },
         [ROUTE_SEAT]: async (req, res) => {
             const body = await readBody(req);
-            const provider = typeof body.provider === 'string' ? body.provider : '?';
-            const rendered = typeof body.rendered === 'number' ? body.rendered : -1;
-            const failure = typeof body.failure === 'string' ? body.failure : '';
-            log(`客户端已就座：provider=${provider} 模型=${rendered} 失败=${failure === '' ? '无' : failure}`);
-            sendJson(res, 200, { ok: true, seats: 'settings.models.provider-card' });
+            log(`客户端已就座：${JSON.stringify(body).slice(0, 220)}`);
+            sendJson(res, 200, { ok: true, seats: 'settings.section' });
         },
     };
+    if (catalogueStatus().stale)
+        void refreshCatalogue('启动时目录过期');
+    const interval = setInterval(() => void refreshCatalogue('每日定时'), CATALOGUE_MAX_AGE_MS);
+    interval.unref?.();
+    ctx.effect(() => () => clearInterval(interval), 'dsh-model-vision: catalogue timer');
+    const webServer = ctx.get('webServer');
+    if (!webServer) {
+        log('webServer 服务不可用，仅保留客户端界面');
+        return;
+    }
     ctx.effect(() => {
         const disposers = Object.entries(handlers).map(([routePath, handler]) => webServer.register({
             kind: 'exact',
@@ -230,10 +402,7 @@ export function apply(ctx) {
                     await handler(req, res, url);
                 }
                 catch (error) {
-                    sendJson(res, 500, {
-                        ok: false,
-                        message: error instanceof Error ? error.message : String(error),
-                    });
+                    sendJson(res, 500, { ok: false, message: error instanceof Error ? error.message : String(error) });
                 }
             },
         }));
@@ -242,4 +411,5 @@ export function apply(ctx) {
                 dispose();
         };
     }, 'dsh-model-vision: routes');
+    log(`已就绪：能力目录 ${catalogueStatus().count} 条（来源 ${catalogueOrigin}），路由 ${Object.keys(storedRoutes()).length} 条`);
 }
