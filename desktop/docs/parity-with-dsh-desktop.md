@@ -28,7 +28,7 @@
 | 日志留档 | ✅ 有应用日志与诊断包 | ❌ 无文件日志 | ✅ `logs/app.log`、`logs/engine.log`（1MB 轮转） |
 | Windows 进程树回收 | ✅ 上游 subprocess service 管整棵树 | ⚠️ 只杀主进程 | ✅ 退出时 `taskkill /t`（3.5） |
 | 工作配置 Profile | ✅ desktop/web/自定义 profile，last-known-good | ❌ 单 DSH home（引擎多版本目录已保留） | ❌ 未做（见 4.1） |
-| 插件市场 | ✅ DSH Community Market 内置 | ❌ | ❌ 未做（见 4.2） |
+| 插件市场 | ✅ DSH Community Market 内置 | ❌ | ✅ 已实现（0.4.0，见 3.6） |
 | 手机远程控制 | ✅ Agents-Anywhere 内置 | ❌ | ❌ 未做（见 4.3） |
 | 局域网访问 | ✅ 明确确认风险后可开 | ❌ | ❌ **引擎层不支持**（见 4.4） |
 | 窗口模式/原生材质 | ✅ 兼容/扩展/增强三种模式 + Mica | ⚠️ 闪屏有 Mica，主窗口无 | ❌ 未做 |
@@ -62,13 +62,24 @@
 - `settings.closeToTray`：默认只在托盘隐藏；设为 false 时关窗即退出。
 - 退出时 Windows 走 `taskkill /pid <pid> /t /f` 打整棵进程树（POSIX 保持 SIGTERM，因为子进程不是组长，负 pid 可能误伤）。
 
+### 3.6 插件市场（0.4.0）
+- **目录**：内置 DSH 1024Store（13,701 条目录，其中 100 条为可安装投影；公开查询 API 匿名 50 次/天）与自适应来源；搜索、分类筛选、卡片、详情（含 README）。
+- **可安装判定**：条目的安装命令必须是**纯 npm 形式**（`dsh plugin --profile web add <pkg>`）才提供一键安装；随后再向 npm 查 `latest`，要求包名一致、版本是稳定三段式、且清单里声明了 `dsh.bundle.patch`。目录里写的版本号只作展示，npm 才是版本权威——与上游同一套判定思路。
+- **安装**：只调用官方引擎自己的 `dsh plugin --profile web add <pkg>@<version>`，pnpm 安装 + profile 层重建都由引擎完成，桌面端不自己写 node_modules，也不执行数据源给的任何命令文本。
+- **卸载**：只允许卸载「既是直接依赖、又是 profile 层」的插件；profile 自带的层（如 `@deepseek-ai/dsh-base`）是只读的。
+- **启停**：写 `$DSH_HOME/cordis.patch.yml` 里由市场自己管理的一个区块（`# >>> desktop plugin market >>>`），这是引擎自带的 patch 层机制，重启后依然生效；皮肤系统管理的行和手写的行**一个字节都不动**（有测试保证）。
+- **数据源开放**：任何返回本市场开放 JSON 格式（`{name, categories[], entries[]}`）的 HTTPS 地址都能加进来，等于「fork 一份自建市场」的能力；请求只允许 HTTPS、无凭据、有体积上限、禁内网地址、失败如实报错而不是静默空列表。
+- **缓存与配额**：目录/搜索响应 10 分钟缓存 + 并发去重，避免把匿名配额（50 次/天）烧掉。
+- **入口**：菜单「Harness → 插件市场…」、托盘同名项、以及 `DeepSeek --market` 直接开市场（引擎坏了也能用）。
+- **界面诊断**：市场窗口每次渲染都把「哪个页签、渲染了几张卡、示例包名」写进桌面日志，支持包和排查都看得到。
+
 ## 4. 故意没学的四项，以及原因
 
 ### 4.1 工作配置 Profile
 上游的 profile 是一整套 generation 生命周期（dispose 当前 generation 再起新的，service/窗口/subprocess 句柄不能跨 generation 缓存）。这需要把桌面壳做成 DSH 插件、由 Loader 组合 bundle，属于**架构级改造**，与本项目的薄壳路线冲突。当前替代方案：多版本引擎目录 + 恢复模式回滚。
 
-### 4.2 插件市场
-上游 DSH Community Market 是一个独立子项目（数据源 Schema、adapter 审核、详情页/安装流程）。本项目的插件安装继续用官方 CLI（`dsh plugin --profile web add <pkg>`），本次不引入市场。
+### 4.2 插件市场（0.4.0 已补齐，改为「已实现」）
+见 3.6。上游的路由与归一层级更多（受审 adapter、快照、健康度检查），本项目直接吃两家公开目录 API，并用同一套规范化模型接纳自定义数据源，覆盖了上游那句「任何人都可以提供、接入和使用符合公开 Schema 的来源」的核心诉求。差异在于：上游把市场做成 DSH 插件（装在 dsh web 里），本项目做成桌面壳窗口（不依赖引擎启动即可浏览，且能在引擎坏掉时用它排查）。
 
 ### 4.3 手机远程控制
 上游内置 Agents-Anywhere（P2P + APIProxy）。本项目只监听回环地址，没有对外通道；接入需要独立服务端与账号体系，超出「桌面薄壳」范围。
@@ -95,6 +106,9 @@ it would expose remote code execution to the network; use 127.0.0.1 instead
 | 崩溃环 → 恢复模式 | 再连续杀 2 次 → 「引擎连续 3 次异常退出，已打开恢复模式。」且引擎进程数归 0（不再重启）；恢复窗口标题为「恢复模式」 |
 | 关闭到托盘 | `closeToTray=true` 时关闭主窗口：Electron 仍在运行、无可见窗口、引擎继续服务（HTTP 401 = 正常无 token 回应） |
 | 优雅退出 | `closeToTray=false` 时关闭窗口：Electron 与引擎进程**都归 0**，无残留 |
+| 插件市场目录 | 应用内实测：`插件目录：100 条（共 13701 条，源 dsh1024）`，界面渲染 100 张卡片 |
+| 插件市场安装 | 隔离 DSH_HOME 下经市场服务实测：搜索「桌宠」→ 选中 `PC2005-cloud/dsh-pet/dsh-pet` → 一键安装 `dsh-pet@0.2.11`，profile 里成为可卸载的层 |
+| 启停与卸载 | 停用/启用写读回一致（`disabled` 行）、卸载后 profile 只剩 `@deepseek-ai/dsh-base`、`@deepseek-ai/dsh-web-app`，卸载核心层被拒绝 |
 
 ## 6. 仍然落后的部分（下一步可选）
 1. 窗口模式/原生材质（Mica、亚克力）与自定义标题栏。

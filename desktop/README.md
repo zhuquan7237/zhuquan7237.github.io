@@ -20,6 +20,23 @@ This package does **not** vendor the official monorepo. Other community desktops
 
 Harness releases therefore land without rebuilding this desktop app. The shell only needs a new version if windowing, installers, or the updater itself change.
 
+## 0.4.0 新增：插件市场
+
+DeepSeek Harness 的生态已经有一万多个插件，0.4.0 把「发现 → 一键安装 → 启停 → 卸载」放进了桌面端，不用切浏览器，也不用记命令：
+
+- **目录**：内置 **DSH 1024Store**（13,701 条目录）作为默认数据源，支持搜索、分类筛选、详情与 README；数据源可换、可加，任何返回本市场开放 JSON 格式的 HTTPS 地址都能接进来（等于自带「自建市场」能力）。
+- **一键安装**：只有暴露**纯 npm 包名**的条目才给安装按钮，点了之后还会先向 npm 查 `latest`，要求包名一致、版本是稳定三段式、并声明了 `dsh.bundle.patch`，然后调用官方引擎自己的 `dsh plugin --profile web add <包名>@<版本>`。桌面端不自己写 `node_modules`，也**不执行目录里给的任何命令**；目录里的版本号只作展示。
+- **启停与卸载**：停用/启用写进 `$DSH_HOME/cordis.patch.yml` 的市场区块（引擎自带的 patch 机制，重启后依然生效，皮肤和手写的行不会被碰）；卸载只允许卸**直接依赖且是 profile 层**的插件，`@deepseek-ai/dsh-base` 这类自带层是只读的。
+- **入口**：菜单/托盘的 **插件市场…**，或用 `DeepSeek --market` 直接打开（引擎起不来时也能开，方便先卸掉装坏的插件）。
+- **隐私与配额**：数据源请求只允许 HTTPS、不带凭据、有体积上限、禁内网地址；目录与搜索响应缓存 10 分钟并做并发去重，避免烧掉公开 API 的匿名配额。
+
+```sh
+# 市场窗口每次渲染都会把状态写进日志，排查时先看它
+# %APPDATA%\DeepSeek\logs\app.log
+#  插件目录：100 条（共 13701 条，源 dsh1024）
+#  插件市场界面：discover 渲染 100 张卡片（示例：dsh1024, @openviking/dsh-memory-plugin, …）
+```
+
 ## 0.3.0 新增（对照 anywhere-labs/dsh-desktop 补齐）
 
 社区里使用人数最多的桌面端 [anywhere-labs/dsh-desktop](https://github.com/anywhere-labs/dsh-desktop) 有几项能力值得一提，0.3.0 把能在「薄壳 + 官方 npm 引擎」路线上实现的部分补齐了，逐项对照与差异原因见 [docs/parity-with-dsh-desktop.md](./docs/parity-with-dsh-desktop.md)：
@@ -123,6 +140,7 @@ Menus:
 - **文件 → 打开工作区** — `dsh` 的工作目录（默认 `~/DeepSeek`）
 - **Harness → 检查 Harness 更新 / 检查桌面版更新** — npm 上的 `@deepseek-ai/dsh` 与 GitHub Release
 - **Harness → 重启引擎 / 打开日志文件夹 / 导出诊断信息… / 恢复模式…** — 引擎生命周期与排查入口
+- **Harness → 插件市场…** — 浏览目录、一键安装、启停、卸载插件
 - **Harness → 引擎设置** — npm 渠道、registry、本地端口、关闭行为、界面语言、皮肤中心开关，或本地已构建的 checkout
 - **皮肤 → 打开皮肤列表 / 关闭皮肤中心** — 右上角鲸鱼按钮，或在这里开关皮肤中心
 - **托盘图标** — 左键显示/隐藏窗口，右键是同样的功能菜单（含退出）

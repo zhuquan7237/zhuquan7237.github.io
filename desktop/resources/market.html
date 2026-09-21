@@ -1,0 +1,700 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <title>插件市场</title>
+    <style>
+      :root {
+        --bg: #0c0e14;
+        --panel: #14161f;
+        --panel-2: #191c27;
+        --line: #232733;
+        --text: #e7e9ee;
+        --muted: #8b93a7;
+        --accent: #4f8cff;
+        --accent-soft: rgba(79, 140, 255, 0.14);
+        --ok: #3fbf7f;
+        --warn: #e0a44a;
+        --bad: #e2635f;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font: 13px/1.5 -apple-system, "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+        -webkit-user-select: none;
+        user-select: none;
+      }
+      header {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--line);
+        background: linear-gradient(180deg, #171a24, #12141c);
+      }
+      h1 { font-size: 15px; margin: 0; font-weight: 600; letter-spacing: 0.2px; }
+      .grow { flex: 1; }
+      select, input, button, textarea {
+        font: inherit;
+        color: var(--text);
+        background: var(--panel-2);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 7px 10px;
+        outline: none;
+      }
+      input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+      input[type="search"] { min-width: 220px; }
+      button { cursor: pointer; }
+      button:hover { border-color: #39405a; background: #1d2130; }
+      button.primary { background: var(--accent-soft); border-color: #35507f; color: #cfe0ff; }
+      button.danger { color: #ffc9c7; border-color: #5a3330; background: #241a1a; }
+      button.ghost { background: transparent; }
+      button[disabled] { opacity: 0.45; cursor: not-allowed; }
+      nav { display: flex; gap: 4px; padding: 8px 16px 0; }
+      nav button {
+        border: 1px solid transparent;
+        border-bottom: none;
+        background: transparent;
+        color: var(--muted);
+        border-radius: 8px 8px 0 0;
+        padding: 7px 14px;
+      }
+      nav button.active { color: var(--text); background: var(--panel); border-color: var(--line); }
+      main { padding: 12px 16px 20px; }
+      .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+      .chip {
+        font-size: 12px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: var(--panel);
+        color: var(--muted);
+        cursor: pointer;
+      }
+      .chip.active { color: #cfe0ff; border-color: #35507f; background: var(--accent-soft); }
+      .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 10px; }
+      .card {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: var(--panel);
+        padding: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .card h3 { margin: 0; font-size: 13.5px; display: flex; align-items: center; gap: 8px; }
+      .card h3 span.owner { color: var(--muted); font-weight: 400; font-size: 12px; }
+      .desc { color: #b9c0d0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; min-height: 40px; }
+      .meta { display: flex; flex-wrap: wrap; gap: 8px; color: var(--muted); font-size: 11.5px; }
+      .row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+      .badge { font-size: 11px; padding: 2px 7px; border-radius: 6px; border: 1px solid var(--line); color: var(--muted); }
+      .badge.ok { color: #b6f0d3; border-color: #2d5f45; background: #14251c; }
+      .badge.bad { color: #ffc9c7; border-color: #5a3330; background: #241a1a; }
+      .badge.warn { color: #f3dcb4; border-color: #5f4d2d; background: #241f14; }
+      .empty { color: var(--muted); padding: 28px 4px; text-align: center; }
+      .banner {
+        border: 1px solid var(--line);
+        border-left: 3px solid var(--accent);
+        background: var(--panel-2);
+        border-radius: 8px;
+        padding: 9px 12px;
+        margin-bottom: 12px;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+      .banner.ok { border-left-color: var(--ok); }
+      .banner.bad { border-left-color: var(--bad); }
+      pre.log {
+        margin: 0;
+        max-height: 200px;
+        overflow: auto;
+        background: #0a0b10;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 10px;
+        color: #a9b2c6;
+        font: 11.5px/1.45 ui-monospace, Consolas, monospace;
+        white-space: pre-wrap;
+        -webkit-user-select: text;
+        user-select: text;
+      }
+      dialog {
+        border: 1px solid var(--line);
+        background: var(--panel);
+        color: var(--text);
+        border-radius: 14px;
+        width: min(760px, 92vw);
+        max-height: 84vh;
+        padding: 0;
+      }
+      dialog::backdrop { background: rgba(4, 5, 9, 0.72); }
+      .dlg-head { display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-bottom: 1px solid var(--line); }
+      .dlg-body { padding: 14px 16px; overflow: auto; max-height: 62vh; -webkit-user-select: text; user-select: text; }
+      .dlg-foot { display: flex; gap: 8px; justify-content: flex-end; padding: 12px 16px; border-top: 1px solid var(--line); }
+      code, .mono { font: 11.5px ui-monospace, Consolas, monospace; background: #0a0b10; border: 1px solid var(--line); border-radius: 6px; padding: 2px 6px; display: inline-block; word-break: break-all; }
+      .src-row { display: flex; gap: 8px; align-items: center; border: 1px solid var(--line); border-radius: 10px; padding: 10px; margin-bottom: 8px; background: var(--panel-2); }
+      .pill { font-size: 11px; color: var(--muted); }
+      label.inline { display: flex; gap: 8px; align-items: center; color: var(--muted); }
+      .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+      .hint { color: var(--muted); font-size: 11.5px; }
+      a { color: #8fb6ff; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1 id="title">插件市场</h1>
+      <select id="source" title="数据源"></select>
+      <input id="query" type="search" placeholder="搜索插件（回车）" />
+      <button id="searchBtn" class="primary">搜索</button>
+      <button id="browseBtn" class="ghost">全部</button>
+      <span class="grow"></span>
+      <button id="refreshBtn" class="ghost">刷新</button>
+    </header>
+
+    <nav>
+      <button data-tab="discover" class="active">发现</button>
+      <button data-tab="installable">可安装</button>
+      <button data-tab="installed">已安装</button>
+      <button data-tab="sources">数据源</button>
+    </nav>
+
+    <main>
+      <div id="banner" hidden></div>
+      <div id="chips" class="chips"></div>
+      <div id="list" class="grid"></div>
+      <div id="installed" hidden></div>
+      <div id="sourcesPane" hidden></div>
+      <pre id="log" class="log" hidden></pre>
+    </main>
+
+    <dialog id="detailDlg">
+      <div class="dlg-head">
+        <strong id="dName"></strong>
+        <span class="grow"></span>
+        <button id="dClose" class="ghost">关闭</button>
+      </div>
+      <div class="dlg-body" id="dBody"></div>
+      <div class="dlg-foot">
+        <button id="dRepo" class="ghost">打开仓库</button>
+        <button id="dInstall" class="primary">安装</button>
+      </div>
+    </dialog>
+
+    <script>
+      const dict = {
+        "zh-CN": {
+          title: "插件市场",
+          discover: "发现", installable: "可安装", installed: "已安装", sources: "数据源",
+          search: "搜索插件（回车）", searchBtn: "搜索", all: "全部", refresh: "刷新",
+          install: "安装", installing: "安装中…", uninstall: "卸载", confirmUninstall: "确认卸载",
+          disable: "停用", enable: "启用", detail: "详情", close: "关闭", repo: "打开仓库",
+          empty: "没有内容。换关键字、换数据源，或检查网络。",
+          loading: "读取目录…",
+          noInstalled: "当前 profile 没有装任何插件。",
+          core: "自带层", bundle: "层级插件", disabledTag: "已停用", plainDep: "普通依赖",
+          restart: "重启引擎", restartHint: "安装/停用/卸载后需要重启引擎才会生效。",
+          addSource: "添加数据源", sourceLabel: "名称", sourceUrl: "地址", save: "保存",
+          active: "浏览中", remove: "删除", customHint: "自定义数据源可以是任何返回本市场开放格式 JSON 的 HTTPS 地址。",
+          qualification: "安装前校验", qualified: "npm latest", browseOnly: "只提供源码安装，桌面端不会执行目录里的命令",
+          category: "分类", stars: "星标", installs: "安装", updated: "更新", readme: "README",
+          progress: "安装输出", sourcesHint: "数据源按顺序保存，第一个是默认浏览源。",
+        },
+        en: {
+          title: "Plugin Market",
+          discover: "Discover", installable: "Installable", installed: "Installed", sources: "Sources",
+          search: "Search plugins (Enter)", searchBtn: "Search", all: "All", refresh: "Refresh",
+          install: "Install", installing: "Installing…", uninstall: "Uninstall", confirmUninstall: "Confirm uninstall",
+          disable: "Disable", enable: "Enable", detail: "Details", close: "Close", repo: "Open repository",
+          empty: "Nothing here. Try another keyword or source, or check the network.",
+          loading: "Reading catalog…",
+          noInstalled: "This profile has no plugins installed.",
+          core: "In-box", bundle: "Bundle", disabledTag: "Disabled", plainDep: "Plain dependency",
+          restart: "Restart engine", restartHint: "Install, disable and uninstall take effect after an engine restart.",
+          addSource: "Add source", sourceLabel: "Label", sourceUrl: "URL", save: "Save",
+          active: "Browsing", remove: "Remove", customHint: "A custom source is any HTTPS URL returning the market's open JSON schema.",
+          qualification: "Pre-install check", qualified: "npm latest", browseOnly: "Source-only install: the desktop never runs the catalog command",
+          category: "Category", stars: "Stars", installs: "Installs", updated: "Updated", readme: "README",
+          progress: "Install output", sourcesHint: "Sources are stored in order; the first one is the default browse source.",
+        },
+      };
+      const locale = new URLSearchParams(location.search).get("locale") || "zh-CN";
+      const t = (key) => (dict[locale] || dict.en)[key] || key;
+      const shortLocale = String(locale).toLowerCase().startsWith("zh") ? "zh" : "en";
+
+      const el = (id) => document.getElementById(id);
+      const state = {
+        tab: "discover",
+        page: { entries: [], categories: [], total: 0 },
+        installed: { plugins: [], disabled: [] },
+        sources: [],
+        sourceId: "",
+        query: "",
+        category: "",
+        busy: false,
+        result: null,
+      };
+
+      function localeText(description) {
+        if (!description) return "";
+        const zh = description.zh || "";
+        const en = description.en || "";
+        return shortLocale === "zh" ? zh || en : en || zh;
+      }
+
+      function banner(text, kind) {
+        const node = el("banner");
+        if (!text) { node.hidden = true; return; }
+        node.hidden = false;
+        node.className = "banner" + (kind ? " " + kind : "");
+        node.innerHTML = "";
+        const span = document.createElement("span");
+        span.textContent = text;
+        node.appendChild(span);
+        if (state.result && state.result.restartRequired) {
+          const btn = document.createElement("button");
+          btn.className = "primary";
+          btn.textContent = t("restart");
+          btn.onclick = async () => { await window.desktop.marketRestart(); };
+          node.appendChild(btn);
+        }
+      }
+
+      function logLine(text) {
+        const node = el("log");
+        node.hidden = false;
+        node.textContent += text;
+        node.scrollTop = node.scrollHeight;
+      }
+
+      function clearLog() {
+        const node = el("log");
+        node.textContent = "";
+        node.hidden = true;
+      }
+
+      function card(entry, actions) {
+        const node = document.createElement("div");
+        node.className = "card";
+        const head = document.createElement("h3");
+        const name = document.createElement("span");
+        name.textContent = entry.name;
+        const owner = document.createElement("span");
+        owner.className = "owner";
+        owner.textContent = entry.owner;
+        head.append(name, owner);
+        const desc = document.createElement("div");
+        desc.className = "desc";
+        desc.textContent = localeText(entry.description) || "—";
+        const meta = document.createElement("div");
+        meta.className = "meta";
+        const bits = [
+          t("category") + ": " + (entry.categoryId || "unclassified"),
+          t("stars") + ": " + entry.stars,
+          t("installs") + ": " + entry.installs,
+        ];
+        if (entry.added) bits.push(t("updated") + ": " + entry.added);
+        for (const bit of bits) {
+          const span = document.createElement("span");
+          span.textContent = bit;
+          meta.appendChild(span);
+        }
+        const row = document.createElement("div");
+        row.className = "row";
+        const pkg = document.createElement("span");
+        pkg.className = "badge" + (entry.npmPackage ? " ok" : " warn");
+        pkg.textContent = entry.npmPackage || t("browseOnly");
+        row.appendChild(pkg);
+        for (const action of actions) row.appendChild(action);
+        node.append(head, desc, meta, row);
+        return node;
+      }
+
+      function button(label, cls, onClick) {
+        const node = document.createElement("button");
+        node.className = cls || "";
+        node.textContent = label;
+        node.onclick = onClick;
+        return node;
+      }
+
+      function renderChips() {
+        const chips = el("chips");
+        chips.innerHTML = "";
+        const all = document.createElement("button");
+        all.className = "chip" + (state.category ? "" : " active");
+        all.textContent = t("all");
+        all.onclick = async () => { state.category = ""; await load(); };
+        chips.appendChild(all);
+        for (const category of state.page.categories || []) {
+          const chip = document.createElement("button");
+          chip.className = "chip" + (state.category === category.id ? " active" : "");
+          chip.textContent = (shortLocale === "zh" ? category.zh : category.en) + (category.count ? ` ${category.count}` : "");
+          chip.onclick = async () => {
+            state.category = state.category === category.id ? "" : category.id;
+            await load();
+          };
+          chips.appendChild(chip);
+        }
+      }
+
+      function renderList() {
+        const list = el("list");
+        list.innerHTML = "";
+        list.hidden = false;
+        el("installed").hidden = true;
+        el("sourcesPane").hidden = true;
+        const entries = state.tab === "installable"
+          ? state.page.entries.filter((entry) => entry.npmPackage)
+          : state.page.entries;
+        if (!entries.length) {
+          const empty = document.createElement("div");
+          empty.className = "empty";
+          empty.textContent = t("empty");
+          list.appendChild(empty);
+          return;
+        }
+        window.desktop.marketUiLog({
+          tab: state.tab,
+          cards: entries.length,
+          sample: entries.slice(0, 3).map((entry) => entry.npmPackage || entry.name).join(", "),
+        });
+        for (const entry of entries) {
+          const installed = state.installed.plugins.some((plugin) => plugin.packageName === entry.npmPackage);
+          const actions = [
+            button(t("detail"), "ghost", () => openDetail(entry)),
+            installed
+              ? button(t("uninstall"), "danger", () => uninstall(entry.npmPackage))
+              : button(entry.npmPackage ? t("install") : t("browseOnly"), "primary", () => install(entry)),
+          ];
+          list.appendChild(card(entry, actions));
+        }
+      }
+
+      function renderInstalled() {
+        el("list").hidden = true;
+        el("chips").innerHTML = "";
+        const pane = el("installed");
+        pane.hidden = false;
+        pane.innerHTML = "";
+        const info = document.createElement("div");
+        info.className = "hint";
+        info.textContent = t("restartHint");
+        pane.appendChild(info);
+        if (!state.installed.plugins.length) {
+          const empty = document.createElement("div");
+          empty.className = "empty";
+          empty.textContent = t("noInstalled");
+          pane.appendChild(empty);
+          return;
+        }
+        const grid = document.createElement("div");
+        grid.className = "grid";
+        for (const plugin of state.installed.plugins) {
+          const node = document.createElement("div");
+          node.className = "card";
+          const head = document.createElement("h3");
+          head.textContent = plugin.packageName;
+          const meta = document.createElement("div");
+          meta.className = "meta";
+          const badge = document.createElement("span");
+          badge.className = "badge " + (plugin.core ? "" : "ok");
+          badge.textContent = plugin.core ? t("core") : plugin.bundle ? t("bundle") : t("plainDep");
+          meta.appendChild(badge);
+          if (plugin.disabled) {
+            const off = document.createElement("span");
+            off.className = "badge warn";
+            off.textContent = t("disabledTag");
+            meta.appendChild(off);
+          }
+          if (plugin.version) {
+            const version = document.createElement("span");
+            version.textContent = plugin.version;
+            meta.appendChild(version);
+          }
+          const row = document.createElement("div");
+          row.className = "row";
+          if (plugin.removable) {
+            row.appendChild(
+              button(plugin.disabled ? t("enable") : t("disable"), "ghost", () => toggle(plugin.packageName, !plugin.disabled)),
+            );
+            row.appendChild(button(t("uninstall"), "danger", () => uninstall(plugin.packageName)));
+          } else {
+            row.appendChild(
+              button(plugin.disabled ? t("enable") : t("disable"), "ghost", () => toggle(plugin.packageName, !plugin.disabled)),
+            );
+          }
+          node.append(head, meta, row);
+          grid.appendChild(node);
+        }
+        pane.appendChild(grid);
+        window.desktop.marketUiLog({
+          tab: "installed",
+          cards: state.installed.plugins.length,
+          sample: state.installed.plugins.slice(0, 3).map((plugin) => plugin.packageName).join(", "),
+        });
+      }
+
+      function renderSources() {
+        el("list").hidden = true;
+        el("chips").innerHTML = "";
+        const pane = el("sourcesPane");
+        pane.hidden = false;
+        pane.innerHTML = "";
+        const hint = document.createElement("div");
+        hint.className = "hint";
+        hint.textContent = t("sourcesHint") + " " + t("customHint");
+        pane.appendChild(hint);
+        const wrap = document.createElement("div");
+        wrap.style.marginTop = "10px";
+        for (const source of state.sources) {
+          const row = document.createElement("div");
+          row.className = "src-row";
+          const radio = document.createElement("input");
+          radio.type = "radio";
+          radio.name = "activeSource";
+          radio.checked = source.id === state.sourceId;
+          radio.onchange = async () => {
+            state.sourceId = source.id;
+            await load();
+          };
+          const text = document.createElement("div");
+          text.className = "grow";
+          const label = document.createElement("div");
+          label.textContent = source.label;
+          const url = document.createElement("div");
+          url.className = "pill mono";
+          url.textContent = source.url;
+          text.append(label, url);
+          row.append(radio, text);
+          if (source.id === state.sourceId) {
+            const pill = document.createElement("span");
+            pill.className = "badge ok";
+            pill.textContent = t("active");
+            row.appendChild(pill);
+          }
+          row.appendChild(button(t("remove"), "danger", () => removeSource(source.id)));
+          wrap.appendChild(row);
+        }
+        pane.appendChild(wrap);
+
+        const form = document.createElement("div");
+        form.className = "card";
+        form.style.marginTop = "10px";
+        const title = document.createElement("h3");
+        title.textContent = t("addSource");
+        const labelField = document.createElement("div");
+        labelField.className = "field";
+        const labelInput = document.createElement("input");
+        labelInput.placeholder = t("sourceLabel");
+        labelField.appendChild(labelInput);
+        const urlField = document.createElement("div");
+        urlField.className = "field";
+        const urlInput = document.createElement("input");
+        urlInput.placeholder = t("sourceUrl") + " (https://…)";
+        urlField.appendChild(urlInput);
+        const save = button(t("save"), "primary", async () => {
+          const label = labelInput.value.trim();
+          const url = urlInput.value.trim();
+          if (!url) return;
+          const id = "custom-" + url.replace(/[^a-z0-9]/gi, "").slice(-12).toLowerCase();
+          const next = [...state.sources, { id, label: label || id, kind: "custom", url }];
+          const saved = await window.desktop.marketSaveSources(next);
+          state.sources = saved;
+          state.sourceId = id;
+          renderSources();
+          await load();
+        });
+        form.append(title, labelField, urlField, save);
+        pane.appendChild(form);
+      }
+
+      async function load() {
+        const list = el("list");
+        list.innerHTML = "";
+        const loading = document.createElement("div");
+        loading.className = "empty";
+        loading.textContent = t("loading");
+        list.appendChild(loading);
+        banner("");
+        try {
+          state.page = await window.desktop.marketBrowse({
+            sourceId: state.sourceId,
+            query: state.query,
+            category: state.category,
+          });
+        } catch (error) {
+          state.page = { entries: [], categories: [], total: 0, totalPages: 0, catalogTotal: 0 };
+          banner(String(error && error.message ? error.message : error), "bad");
+        }
+        state.installed = await window.desktop.marketInventory();
+        renderChips();
+        render();
+      }
+
+      function render() {
+        if (state.tab === "installed") return renderInstalled();
+        if (state.tab === "sources") return renderSources();
+        renderList();
+      }
+
+      async function openDetail(entry) {
+        el("dName").textContent = entry.name;
+        const body = el("dBody");
+        body.innerHTML = "";
+        const add = (tag, text, cls) => {
+          const node = document.createElement(tag);
+          if (cls) node.className = cls;
+          if (text !== undefined) node.textContent = text;
+          body.appendChild(node);
+          return node;
+        };
+        add("div", localeText(entry.description));
+        add("div", t("category") + ": " + entry.categoryId, "hint");
+        if (entry.displayCommand) add("div", entry.displayCommand, "mono");
+        add("div", t("qualification") + "…", "hint");
+        const check = add("div", "");
+        el("dInstall").onclick = async () => {
+          el("detailDlg").close();
+          await install(entry);
+        };
+        el("dInstall").disabled = !entry.npmPackage;
+        el("dRepo").onclick = () => entry.repoUrl && window.desktop.marketOpenExternal(entry.repoUrl);
+        el("detailDlg").showModal();
+        const qualified = await window.desktop.marketCheck({ sourceId: state.sourceId, id: entry.id });
+        check.textContent = qualified.ok
+          ? `${t("qualified")}: ${qualified.spec}（声明 dsh.bundle.patch ✓）`
+          : qualified.reason;
+        check.className = qualified.ok ? "badge ok" : "badge bad";
+        const detail = await window.desktop.marketDetail({ sourceId: state.sourceId, id: entry.id }).catch(() => null);
+        if (detail && detail.readme) {
+          add("h4", t("readme"));
+          add("pre", String(detail.readme).slice(0, 6000), "log");
+        }
+      }
+
+      async function install(entry) {
+        if (state.busy) return;
+        state.busy = true;
+        clearLog();
+        banner(`${t("installing")} ${entry.npmPackage || entry.name}`, "");
+        logLine(`$ dsh plugin --profile web add ${entry.npmPackage || entry.name}\n`);
+        try {
+          state.result = await window.desktop.marketInstall({ sourceId: state.sourceId, id: entry.id });
+          banner(state.result.message, state.result.ok ? "ok" : "bad");
+        } catch (error) {
+          state.result = { ok: false, restartRequired: false };
+          banner(String(error && error.message ? error.message : error), "bad");
+        }
+        state.busy = false;
+        state.installed = await window.desktop.marketInventory();
+        render();
+      }
+
+      let pendingUninstall = "";
+      async function uninstall(packageName) {
+        if (!packageName) return;
+        if (pendingUninstall !== packageName) {
+          pendingUninstall = packageName;
+          banner(`${t("confirmUninstall")}: ${packageName}`, "");
+          state.result = null;
+          setTimeout(() => { if (pendingUninstall === packageName) pendingUninstall = ""; }, 6000);
+          return;
+        }
+        pendingUninstall = "";
+        clearLog();
+        state.result = await window.desktop.marketUninstall(packageName);
+        banner(state.result.message, state.result.ok ? "ok" : "bad");
+        state.installed = await window.desktop.marketInventory();
+        render();
+      }
+
+      async function toggle(packageName, disabled) {
+        state.result = await window.desktop.marketToggle({ packageName, disabled });
+        banner(state.result.message, state.result.ok ? "ok" : "bad");
+        state.installed = await window.desktop.marketInventory();
+        render();
+      }
+
+      async function removeSource(id) {
+        const next = state.sources.filter((source) => source.id !== id);
+        state.sources = await window.desktop.marketSaveSources(next);
+        if (!state.sources.some((source) => source.id === state.sourceId)) state.sourceId = state.sources[0].id;
+        renderSources();
+      }
+
+      async function boot() {
+        document.title = t("title");
+        el("title").textContent = t("title");
+        document.querySelectorAll("nav button").forEach((node) => {
+          const key = node.dataset.tab;
+          node.textContent = t(key);
+          node.onclick = () => {
+            state.tab = key;
+            document.querySelectorAll("nav button").forEach((other) => other.classList.toggle("active", other === node));
+            render();
+          };
+        });
+        el("query").placeholder = t("search");
+        el("searchBtn").textContent = t("searchBtn");
+        el("browseBtn").textContent = t("all");
+        el("refreshBtn").textContent = t("refresh");
+        el("dClose").textContent = t("close");
+        el("dRepo").textContent = t("repo");
+        el("dInstall").textContent = t("install");
+        el("log").hidden = true;
+        el("log").closest("main").querySelector("#log").previousElementSibling;
+        const progress = document.createElement("div");
+        progress.className = "hint";
+        progress.textContent = t("progress");
+        el("log").parentNode.insertBefore(progress, el("log"));
+        progress.hidden = true;
+
+        el("searchBtn").onclick = async () => {
+          state.query = el("query").value.trim();
+          await load();
+        };
+        el("query").onkeydown = async (event) => {
+          if (event.key === "Enter") {
+            state.query = el("query").value.trim();
+            await load();
+          }
+        };
+        el("browseBtn").onclick = async () => {
+          el("query").value = "";
+          state.query = "";
+          state.category = "";
+          await load();
+        };
+        el("refreshBtn").onclick = async () => {
+          state.installed = await window.desktop.marketInventory();
+          await load();
+        };
+        el("dClose").onclick = () => el("detailDlg").close();
+
+        state.sources = await window.desktop.marketSources();
+        state.sourceId = state.sources[0] ? state.sources[0].id : "";
+        const select = el("source");
+        for (const source of state.sources) {
+          const option = document.createElement("option");
+          option.value = source.id;
+          option.textContent = source.label;
+          select.appendChild(option);
+        }
+        select.value = state.sourceId;
+        select.onchange = async () => {
+          state.sourceId = select.value;
+          await load();
+        };
+        window.desktop.onMarketProgress((chunk) => logLine(chunk));
+        state.installed = await window.desktop.marketInventory();
+        await load();
+      }
+
+      boot();
+    </script>
+  </body>
+</html>

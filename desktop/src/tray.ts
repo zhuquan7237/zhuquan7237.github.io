@@ -30,6 +30,7 @@ export interface TrayActions {
   openWorkspace: () => void;
   restartEngine: () => void;
   openSettings: () => void;
+  openMarket: () => void;
   checkEngineUpdate: () => void;
   checkDesktopUpdate: () => void;
   openLogs: () => void;
@@ -74,6 +75,7 @@ export function trayMenuTemplate(
     { label: trayStateLabel(t, state), enabled: false },
     { label: t("menu.harness.restartEngine"), click: actions.restartEngine },
     { label: t("menu.harness.settings"), click: actions.openSettings },
+    { label: t("menu.harness.market"), click: actions.openMarket },
     { label: t("menu.harness.checkEngine"), click: actions.checkEngineUpdate },
     { label: t("menu.harness.checkDesktop"), click: actions.checkDesktopUpdate },
     { type: "separator" },

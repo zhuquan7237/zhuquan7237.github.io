@@ -1,0 +1,115 @@
+{
+ "plugins": [
+  {
+   "installCount": 73,
+   "installerCount": 59,
+   "firstInstallCount": 59,
+   "reinstallCount": 21,
+   "updateCount": 0,
+   "removeCount": 0,
+   "failureCount": 1102,
+   "installs24h": 0,
+   "installs7d": 0,
+   "installs30d": 21,
+   "latestInstallAt": "2026-09-06T09:45:21.370Z",
+   "npmDownloads7d": null,
+   "npmDownloadsStart": null,
+   "npmDownloadsEnd": null,
+   "id": "nexu-io/open-design/packages/dsh-runtime",
+   "name": "dsh-runtime",
+   "owner": "nexu-io",
+   "url": "https://github.com/nexu-io/open-design",
+   "repository": "open-design",
+   "category": "ui",
+   "description": {
+    "en": "Transforms DeepSeek Harness into a local-first design engine for prototypes, landing pages, dashboards, slides, images, and video with HTML/PDF/PPTX/MP4 export.",
+    "zh": "将 DeepSeek Harness 变成本地优先的设计引擎，可生成原型、落地页、仪表盘、幻灯片、图片和视频，并导出为 HTML、PDF、PPTX、MP4 等格式。"
+   },
+   "install": "dsh plugin --profile web add github:nexu-io/open-design#path:packages/dsh-runtime",
+   "added": "2026-09-20",
+   "stars": 97241,
+   "forks": 11295,
+   "pushedAt": "2026-09-20T14:53:59Z",
+   "updatedAt": "2026-09-20T15:09:12Z",
+   "latestReleaseAt": null,
+   "growth24h": 349,
+   "growth7d": 1356,
+   "growth30d": 7163
+  },
+  {
+   "installCount": 222,
+   "installerCount": 203,
+   "firstInstallCount": 205,
+   "reinstallCount": 14,
+   "updateCount": 0,
+   "removeCount": 0,
+   "failureCount": 130,
+   "installs24h": 7,
+   "installs7d": 25,
+   "installs30d": 192,
+   "latestInstallAt": "2026-09-20T16:26:04.736Z",
+   "npmDownloads7d": 3242,
+   "npmDownloadsStart": "2026-09-12",
+   "npmDownloadsEnd": "2026-09-18",
+   "id": "tt-a1i/archify/integrations/deepseek-harness",
+   "name": "deepseek-harness",
+   "owner": "tt-a1i",
+   "url": "https://github.com/tt-a1i/archify",
+   "repository": "archify",
+   "category": "skill",
+   "description": {
+    "en": "Generates self-contained, motion-rich diagrams for architecture, workflow, and data-flow with crisp export, packaged as an agent skill.",
+    "zh": "将架构、流程、时序、数据流等图表生成能力打包为技能，输出带动效的自包含 HTML 并支持清晰导出。"
+   },
+   "install": "dsh plugin --profile web add @tt-a1i/archify-dsh",
+   "added": "2026-09-20",
+   "stars": 68033,
+   "forks": 4549,
+   "pushedAt": "2026-09-20T15:09:53Z",
+   "updatedAt": "2026-09-20T15:11:09Z",
+   "latestReleaseAt": null,
+   "growth24h": 1546,
+   "growth7d": 7608,
+   "growth30d": 53116
+  }
+ ],
+ "page": 1,
+ "limit": 100,
+ "total": 13701,
+ "totalPages": 138,
+ "catalogTotal": 13701,
+ "categories": [
+  {
+   "id": "tools",
+   "en": "Tools & Capabilities",
+   "zh": "工具与能力",
+   "count": 3969
+  },
+  {
+   "id": "ui",
+   "en": "UI Enhancements",
+   "zh": "UI 增强",
+   "count": 2622
+  },
+  {
+   "id": "dev",
+   "en": "Development & Runtime",
+   "zh": "开发与运行时",
+   "count": 1626
+  },
+  {
+   "id": "skill",
+   "en": "Skills",
+   "zh": "技能包",
+   "count": 1045
+  },
+  {
+   "id": "session",
+   "en": "Sessions & Messages",
+   "zh": "会话与消息",
+   "count": 862
+  }
+ ],
+ "generatedAt": "2026-09-20T16:41:08.315Z",
+ "source": "stale"
+}

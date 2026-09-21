@@ -1,0 +1,61 @@
+{
+ "query": "pet",
+ "page": 1,
+ "limit": 3,
+ "sortBy": "stars",
+ "total": 259,
+ "totalPages": 87,
+ "results": [
+  {
+   "id": "zhu1090093659/dsh-web-ui/packages/dsh-doctor",
+   "name": "dsh-doctor",
+   "owner": "zhu1090093659",
+   "url": "https://github.com/zhu1090093659/dsh-web",
+   "category": "ui",
+   "description": {
+    "en": "Adds task board, git graph, right-side panel, remote mobile UI, pet, live token stats, and a skin center to the DSH web interface.",
+    "zh": "为DSH网页界面添加任务板、Git图、右侧面板、远程移动UI、宠物、实时Token统计和皮肤中心。"
+   },
+   "stars": 7850,
+   "installCount": 31,
+   "growth24h": 115,
+   "added": "2026-09-20",
+   "pushedAt": "2026-09-20T14:07:30Z",
+   "install": "dsh plugin --profile web add @linxin666/dsh-doctor"
+  },
+  {
+   "id": "zhu1090093659/dsh-web-ui/packages/dsh-pet",
+   "name": "dsh-pet",
+   "owner": "zhu1090093659",
+   "url": "https://github.com/zhu1090093659/dsh-web",
+   "category": "fun",
+   "description": {
+    "en": "Introduces a virtual pet to the DSH web interface, offering playful interactions and visual engagement for users.",
+    "zh": "在 DSH 网页界面中引入虚拟宠物，为用户提供趣味互动与视觉陪伴。"
+   },
+   "stars": 7850,
+   "installCount": 13,
+   "growth24h": 115,
+   "added": "2026-09-20",
+   "pushedAt": "2026-09-20T14:07:30Z",
+   "install": "dsh plugin --profile web add @linxin666/dsh-pet"
+  },
+  {
+   "id": "zhu1090093659/dsh-web-ui/packages/dsh-web-ui-all",
+   "name": "dsh-web-ui",
+   "owner": "zhu1090093659",
+   "url": "https://github.com/zhu1090093659/dsh-web-ui",
+   "category": "ui",
+   "description": {
+    "en": "Plugin and skin collection for the DSH Web UI: task board, Git graph, right-side panel, remote mobile UI, pet, live token stats, and a skin center.",
+    "zh": "DSH Web UI 插件与皮肤合集：任务看板、git 图、右侧面板、远程移动端 UI、桌宠、实时 token 统计与皮肤中心。"
+   },
+   "stars": 7850,
+   "installCount": 8,
+   "growth24h": 115,
+   "added": "2026-08-14",
+   "pushedAt": "2026-09-20T14:07:30Z",
+   "install": "dsh plugin --profile web add github:zhu1090093659/dsh-web-ui#path:packages/dsh-web-ui-all"
+  }
+ ]
+}

@@ -1,0 +1,95 @@
+{
+ "installCount": 31,
+ "installerCount": 28,
+ "firstInstallCount": 28,
+ "reinstallCount": 0,
+ "updateCount": 0,
+ "removeCount": 0,
+ "failureCount": 20,
+ "installs24h": 0,
+ "installs7d": 1,
+ "installs30d": 31,
+ "latestInstallAt": "2026-09-18T10:24:15.576Z",
+ "npmDownloads7d": null,
+ "npmDownloadsStart": null,
+ "npmDownloadsEnd": null,
+ "id": "zhu1090093659/dsh-web-ui/packages/dsh-doctor",
+ "name": "dsh-doctor",
+ "owner": "zhu1090093659",
+ "url": "https://github.com/zhu1090093659/dsh-web",
+ "repository": "dsh-web",
+ "category": {
+  "id": "ui",
+  "order": 10,
+  "label": {
+   "en": "UI Enhancements",
+   "zh": "UI 增强"
+  }
+ },
+ "description": {
+  "en": "Adds task board, git graph, right-side panel, remote mobile UI, pet, live token stats, and a skin center to the DSH web interface.",
+  "zh": "为DSH网页界面添加任务板、Git图、右侧面板、远程移动UI、宠物、实时Token统计和皮肤中心。"
+ },
+ "install": "dsh plugin --profile web add @linxin666/dsh-doctor",
+ "installMethods": [
+  {
+   "kind": "npm",
+   "spec": "@linxin666/dsh-doctor",
+   "command": "dsh plugin --profile web add @linxin666/dsh-doctor",
+   "verification": "verified",
+   "code": "published_package",
+   "requiresBuildAllowance": false,
+   "buildPackage": null,
+   "revision": "0.3.24",
+   "checkedAt": "2026-09-20T13:00:54.000Z"
+  },
+  {
+   "kind": "github",
+   "spec": "github:zhu1090093659/dsh-web-ui#path:packages/dsh-doctor",
+   "command": "dsh plugin --profile web add --allow-build=@linxin666/dsh-doctor github:zhu1090093659/dsh-web-ui#path:packages/dsh-doctor",
+   "verification": "verified",
+   "code": "prepare_builds_entry",
+   "requiresBuildAllowance": true,
+   "buildPackage": "@linxin666/dsh-doctor",
+   "revision": null,
+   "checkedAt": "2026-09-07T03:07:41Z"
+  }
+ ],
+ "added": "2026-09-20",
+ "stars": 7850,
+ "forks": 529,
+ "pushedAt": "2026-09-20T14:07:30Z",
+ "updatedAt": "2026-09-20T14:34:53Z",
+ "latestReleaseAt": null,
+ "growth24h": 115,
+ "growth7d": 346,
+ "growth30d": 2030,
+ "github": {
+  "stars": 7868,
+  "forks": 533,
+  "openIssues": 14,
+  "defaultBranch": "dev",
+  "updatedAt": "2026-09-21T03:12:01Z",
+  "pushedAt": "2026-09-20T14:07:30Z",
+  "license": "Apache-2.0",
+  "homepage": "https://dsh-market.com",
+  "avatarUrl": "https://avatars.githubusercontent.com/u/46916148?v=4"
+ },
+ "manifest": {
+  "name": "@linxin666/dsh-doctor",
+  "version": "0.3.24",
+  "license": "BSD-3-Clause",
+  "bundlePatch": "./cordis.patch.yml",
+  "dependencies": 2,
+  "peerDependencies": 2,
+  "engines": {
+   "node": "^22.19.0 || >=24.0.0"
+  }
+ },
+ "readme": "# @linxin666/dsh-doctor\n\nEnglish | [中文](README.zh.md)\n\nTransactional rescue mode for DeepSeek Harness profiles: a Doctor\nSupervisor plus a transparent Doctor Launcher keep an isolated rescue capsule\nready, detect boot failures, process crashes, heartbeat timeouts, Web failures\nand browser white screens, and restore the profile through snapshots,\ndeterministic repairs, isolated health gates and atomic promote or rollback.\nThe package ships enabled by default: fresh installs and Web UI version\nupdates boot with rescue mode active, while an explicit off choice in the\nDoctor card is preserved. It can be toggled from its Doctor card in\nSettings → Plugin configuration → Web UI plugins. It does not modify a DSH\ninstallation.\n\n## What it does\n\n- The Doctor Host Plugin runs inside every protected DSH host: it exposes the\n  loopback recovery API, reports heartbeat and launch-phase facts to the\n  Supervisor, and collects browser failure reports.\n- The Doctor Web Console (the family plugin card inside Settings → Plugin\n  configuration → Web UI plugins) shows the system phase, protected profiles,\n  incidents and the client failure probe, records Web UI plugins that were\n  enabled but never star",
+ "readmeBasePath": "packages/dsh-doctor",
+ "verification": {
+  "repositoryReachable": true,
+  "bundleDeclared": true
+ }
+}

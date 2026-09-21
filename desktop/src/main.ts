@@ -29,6 +29,9 @@ import {
 import { trayIconSize, trayMenuTemplate, trayTooltip, type TrayState } from "./tray";
 import { buildRecoveryInfo, recoveryPagePath, pickRollbackTarget, type RecoveryReason } from "./recovery";
 import { resolveNodeRuntime, type NodeRuntime } from "./node-runtime";
+import { qualifyEntry } from "./market/install";
+import { createMarketService, type MarketService } from "./market/service";
+import { DSH1024_SOURCE, type CatalogSource } from "./market/catalog";
 import { explainFirstRunError } from "./first-run-error";
 import { appIconFile, installUserShortcuts, needsUserShortcuts } from "./desktop-integration";
 import {
@@ -119,6 +122,11 @@ const linuxReady = applyLinuxRuntimeFlags(uiLocale);
 let mainWindow: BrowserWindow | null = null;
 let splashWindow: BrowserWindow | null = null;
 let running: RunningHarness | null = null;
+/** The plugin market window, created on demand from the menu or the tray. */
+let marketWindow: BrowserWindow | null = null;
+let marketService: MarketService | null = null;
+/** `--market` opens the market on launch, so a broken engine UI is not in the way. */
+const marketOnly = process.argv.includes("--market");
 let lastRuntime: NodeRuntime | null = null;
 let lastInstall: HarnessInstall | null = null;
 let skinBusy = false;
@@ -824,6 +832,9 @@ function trayActions() {
     restartEngine: () => {
       void restartEngine().catch(() => undefined);
     },
+    openMarket: () => {
+      void openMarket();
+    },
     openSettings: () => {
       void openSettings();
     },
@@ -966,6 +977,12 @@ function buildMenu(): void {
           label: uiText("menu.harness.settings"),
           click: () => {
             void openSettings();
+          },
+        },
+        {
+          label: uiText("menu.harness.market"),
+          click: () => {
+            void openMarket();
           },
         },
         { type: "separator" },
@@ -1325,6 +1342,56 @@ async function maybeNotifyDesktopUpdate(): Promise<void> {
   await checkDesktopUpdates(false);
 }
 
+/**
+ * The market service, built once per app run. It reads `dshHomeDir()` and the
+ * engine runtime lazily, so a market opened before the first boot finishes
+ * still lists the catalog and simply refuses to install until the engine is
+ * installed.
+ */
+function market(): MarketService {
+  marketService = marketService ?? createMarketService({
+    userData: userData(),
+    dshHome: dshHomeDir,
+    engine: () =>
+      lastRuntime && lastInstall ? { nodePath: lastRuntime.node, engineBin: lastInstall.bin } : null,
+    onLog: shellLog,
+    onProgress: (chunk) => {
+      if (marketWindow && !marketWindow.isDestroyed()) marketWindow.webContents.send("market:progress", chunk);
+    },
+  });
+  return marketService;
+}
+
+/** Open (or focus) the plugin market window. */
+async function openMarket(): Promise<void> {
+  if (marketWindow && !marketWindow.isDestroyed()) {
+    marketWindow.show();
+    marketWindow.focus();
+    return;
+  }
+  const win = new BrowserWindow({
+    width: 1080,
+    height: 760,
+    minWidth: 720,
+    minHeight: 480,
+    backgroundColor: "#0c0e14",
+    icon: windowIcon(),
+    title: uiText("market.title"),
+    webPreferences: {
+      preload: path.join(__dirname, "preload.js"),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  });
+  marketWindow = win;
+  win.on("closed", () => {
+    if (marketWindow === win) marketWindow = null;
+  });
+  await win.loadFile(path.join(__dirname, "..", "resources", "market.html"), {
+    query: { locale: shellLocale },
+  });
+}
+
 async function openSettings(): Promise<void> {
   const win = new BrowserWindow({
     width: 520,
@@ -1583,9 +1650,68 @@ if (linuxReady) {
       ipcMain.handle("recovery:action", async (_event, action: string) => {
         await runRecoveryAction(String(action || ""));
       });
+      ipcMain.handle("market:sources", async () => await market().sources());
+      ipcMain.handle("market:save-sources", async (_event, sources: CatalogSource[]) => {
+        const saved = await market().saveSources(sources);
+        shellLog(`插件市场数据源已保存：${saved.map((source) => source.label).join("、") || DSH1024_SOURCE.label}`);
+        return saved;
+      });
+      ipcMain.handle(
+        "market:browse",
+        async (_event, input: { sourceId?: string; query?: string; category?: string }) => {
+          const page = await market().browse({
+            sourceId: String(input?.sourceId ?? DSH1024_SOURCE.id),
+            query: String(input?.query ?? ""),
+            category: String(input?.category ?? ""),
+          });
+          shellLog(`插件目录：${page.entries.length} 条（共 ${page.catalogTotal} 条，源 ${String(input?.sourceId ?? DSH1024_SOURCE.id)}）`);
+          return page;
+        },
+      );
+      ipcMain.handle("market:detail", async (_event, input: { sourceId?: string; id?: string }) =>
+        await market().detail({ sourceId: String(input?.sourceId ?? ""), id: String(input?.id ?? "") }),
+      );
+      ipcMain.handle("market:check", async (_event, input: { sourceId?: string; id?: string }) => {
+        const entry = await market().detail({ sourceId: String(input?.sourceId ?? ""), id: String(input?.id ?? "") });
+        if (!entry) return { ok: false, reason: "在目录里找不到这个插件" };
+        const qualified = await qualifyEntry(entry);
+        return qualified.ok ? { ok: true, spec: qualified.spec } : { ok: false, reason: qualified.reason };
+      });
+      ipcMain.handle("market:inventory", async () => await market().inventory());
+      ipcMain.handle("market:install", async (_event, input: { sourceId?: string; id?: string }) =>
+        await market().install({ sourceId: String(input?.sourceId ?? ""), id: String(input?.id ?? "") }),
+      );
+      ipcMain.handle("market:uninstall", async (_event, packageName: string) =>
+        await market().uninstall(String(packageName || "")),
+      );
+      ipcMain.handle("market:toggle", async (_event, input: { packageName?: string; disabled?: boolean }) =>
+        await market().setDisabled(String(input?.packageName ?? ""), Boolean(input?.disabled)),
+      );
+      ipcMain.handle("market:open-external", async (_event, url: string) => {
+        const target = String(url || "");
+        const parsed = (() => {
+          try {
+            return new URL(target);
+          } catch {
+            return null;
+          }
+        })();
+        if (!parsed || (parsed.protocol !== "https:" && parsed.protocol !== "http:")) {
+          throw new Error("只允许打开 http(s) 链接");
+        }
+        await shell.openExternal(target);
+      });
+      ipcMain.handle("market:ui-log", async (_event, info: { tab?: string; cards?: number; sample?: string }) => {
+        shellLog(`插件市场界面：${String(info?.tab ?? "?")} 渲染 ${Number(info?.cards ?? 0)} 张卡片${info?.sample ? `（示例：${String(info.sample).slice(0, 120)}）` : ""}`);
+      });
+      ipcMain.handle("market:restart", async () => {
+        await restartEngine();
+        if (marketWindow && !marketWindow.isDestroyed()) marketWindow.webContents.send("log", "已重启引擎\n");
+      });
       buildMenu();
       createTray();
       await boot(false);
+      if (marketOnly) await openMarket();
     });
 
     app.on("window-all-closed", () => {
