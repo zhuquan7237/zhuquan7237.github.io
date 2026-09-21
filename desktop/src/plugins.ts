@@ -1,4 +1,5 @@
-import { cp, mkdir, readFile, rm, stat, symlink } from "node:fs/promises";
+import { createHash } from "node:crypto";
+import { cp, mkdir, readdir, readFile, rm, stat, symlink } from "node:fs/promises";
 import path from "node:path";
 import { looksLikeAsarVirtualPath } from "./skins";
 import type { DesktopSettings } from "./util";
@@ -87,7 +88,46 @@ export function installedPluginDir(userData: string, plugin: BundledPlugin): str
   return path.join(userData, "plugins", plugin.dir);
 }
 
-/** Copy a bundled plugin into userData/plugins when the version changed (staging + swap). */
+/**
+ * A digest of everything that decides what an installed plugin does.
+ *
+ * Version alone is not enough to decide whether a copy is current: 0.5.4
+ * rewrote the model-vision plugin without touching its version, so every machine
+ * that already had it kept the old behaviour and nothing reported a problem.
+ * Comparing content makes that mistake harmless instead of silent. Files are
+ * hashed by relative path and bytes only — timestamps would make every launch
+ * look like a change.
+ */
+async function pluginContentStamp(dir: string): Promise<string> {
+  let entries: string[];
+  try {
+    entries = (await readdir(dir, { recursive: true })) as string[];
+  } catch {
+    return "";
+  }
+  const hash = createHash("sha256");
+  const files = entries
+    .map((entry) => entry.split(path.sep).join("/"))
+    .filter((entry) => !entry.includes("node_modules") && !entry.includes(".staging"))
+    .sort();
+  for (const rel of files) {
+    const abs = path.join(dir, rel);
+    try {
+      const info = await stat(abs);
+      if (!info.isFile()) continue;
+      hash.update(rel);
+      hash.update(await readFile(abs));
+    } catch {
+      // A file that vanished mid-scan cannot be part of a stable stamp.
+    }
+  }
+  return hash.digest("hex").slice(0, 24);
+}
+
+/**
+ * Copy a bundled plugin into userData/plugins when its version or its content
+ * changed (staging + swap).
+ */
 export async function installPluginFromDir(
   source: string,
   dest: string,
@@ -95,7 +135,14 @@ export async function installPluginFromDir(
 ): Promise<"installed" | "updated" | "unchanged"> {
   const have = await readPluginVersion(dest);
   const want = await readPluginVersion(source);
-  if (have && have === want && (await pluginPackageReady(dest))) return "unchanged";
+  if (
+    have &&
+    have === want &&
+    (await pluginPackageReady(dest)) &&
+    (await pluginContentStamp(dest)) === (await pluginContentStamp(source))
+  ) {
+    return "unchanged";
+  }
   onLog(`正在安装内置插件 ${path.basename(source)}…`);
   const staging = `${dest}.staging`;
   await rm(staging, { recursive: true, force: true });

@@ -191,3 +191,36 @@ describe("plugin rows inside the managed skin patch", () => {
     expect(again.match(new RegExp(MANAGED_START.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g"))).toHaveLength(1);
   });
 });
+
+
+describe("bundled plugin installation", () => {
+  it("reinstalls when the version changed, and when only the content did", async () => {
+    const { mkdtemp, mkdir, writeFile, readFile } = await import("node:fs/promises");
+    const os = await import("node:os");
+    const root = await mkdtemp(path.join(os.tmpdir(), "dsh-plugin-install-"));
+    const source = path.join(root, "bundled");
+    const dest = path.join(root, "installed");
+    const logs: string[] = [];
+    const write = async (body: string) => {
+      await mkdir(path.join(source, "lib"), { recursive: true });
+      await mkdir(path.join(source, "client"), { recursive: true });
+      await writeFile(path.join(source, "package.json"), JSON.stringify({ name: "@dsh-desktop/x", version: "1.0.0" }));
+      await writeFile(path.join(source, "lib", "index.js"), body);
+      await writeFile(path.join(source, "client", "client.js"), "window.__ModuleLoader__.load({});\n");
+    };
+    await write("module.exports = 1;\n");
+
+    expect(await installPluginFromDir(source, dest, (line) => logs.push(line))).toBe("installed");
+    expect(await installPluginFromDir(source, dest, (line) => logs.push(line))).toBe("unchanged");
+
+    // The case that shipped broken in 0.5.4: same version, new behaviour.
+    await write("module.exports = 2;\n");
+    expect(await installPluginFromDir(source, dest, (line) => logs.push(line))).toBe("updated");
+    expect(await readFile(path.join(dest, "lib", "index.js"), "utf8")).toContain("2");
+
+    // A re-run with identical content must not rewrite the installed copy.
+    const stamp = await readFile(path.join(dest, "lib", "index.js"), "utf8");
+    expect(await installPluginFromDir(source, dest, (line) => logs.push(line))).toBe("unchanged");
+    expect(await readFile(path.join(dest, "lib", "index.js"), "utf8")).toBe(stamp);
+  });
+});
