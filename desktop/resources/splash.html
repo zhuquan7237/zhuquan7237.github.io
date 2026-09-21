@@ -278,7 +278,7 @@
       }
 
       .log:empty::before {
-        content: "准备就绪后，这里会显示安装和启动日志。";
+        content: var(--log-placeholder, "");
         color: #8a8a8a;
       }
 
@@ -349,7 +349,7 @@
           <div class="tile"><img src="./icon.png" alt="" /></div>
           <div>
             <h1>DeepSeek Harness</h1>
-            <p>首次启动会联网准备官方引擎，完成后自动打开窗口。请保持网络畅通。</p>
+            <p id="heroHint"></p>
           </div>
         </section>
 
@@ -360,7 +360,7 @@
         <div class="bar" id="bar" role="progressbar" aria-label="启动进度"><span></span></div>
 
         <section class="log-card">
-          <div class="log-label">详细信息</div>
+          <div class="log-label" id="logLabel"></div>
           <pre class="log" id="log"></pre>
         </section>
 
@@ -380,7 +380,52 @@
       const phase = document.getElementById("phase");
       const log = document.getElementById("log");
       const bar = document.getElementById("bar");
-      const phaseLabel = { runtime: "环境", engine: "引擎", start: "界面", error: "出错" };
+
+      /* The shell follows the same resolved locale as its menus, so the first
+         window a user sees is not a language they cannot read. */
+      const I18N = {
+        "zh-CN": {
+          lang: "zh-CN",
+          hero: "首次启动会联网准备官方引擎，完成后自动打开窗口。请保持网络畅通。",
+          starting: "正在启动…",
+          phases: { runtime: "环境", engine: "引擎", start: "界面", error: "出错" },
+          phaseFallback: "启动",
+          details: "详细信息",
+          placeholder: "准备就绪后，这里会显示安装和启动日志。",
+          retry: "重试",
+          quit: "退出",
+          close: "关闭",
+        },
+        en: {
+          lang: "en",
+          hero: "The first launch downloads the official engine; the window opens when it is ready. Keep the network connected.",
+          starting: "Starting…",
+          phases: { runtime: "Runtime", engine: "Engine", start: "Interface", error: "Failed" },
+          phaseFallback: "Start",
+          details: "Details",
+          placeholder: "Install and startup logs will appear here.",
+          retry: "Retry",
+          quit: "Quit",
+          close: "Close",
+        },
+      };
+      const localeParam = params.get("locale");
+      const strings =
+        localeParam === null || localeParam.toLowerCase().startsWith("zh") ? I18N["zh-CN"] : I18N.en;
+      const phaseLabel = strings.phases;
+
+      function applyLocale() {
+        document.documentElement.lang = strings.lang;
+        document.getElementById("heroHint").textContent = strings.hero;
+        document.getElementById("logLabel").textContent = strings.details;
+        document.getElementById("retry").textContent = strings.retry;
+        document.getElementById("quit").textContent = strings.quit;
+        document.getElementById("quitCaption").setAttribute("aria-label", strings.close);
+        document.getElementById("quitCaption").setAttribute("title", strings.close);
+        document.documentElement.style.setProperty("--log-placeholder", JSON.stringify(strings.placeholder));
+        status.textContent = strings.starting;
+        phase.textContent = strings.phaseFallback;
+      }
 
       function quit() {
         if (window.desktop && window.desktop.quit) window.desktop.quit();
@@ -393,7 +438,7 @@
       function applyStatus(payload) {
         status.textContent = payload.text;
         const kind = payload.phase || "";
-        phase.textContent = phaseLabel[kind] || "启动";
+        phase.textContent = phaseLabel[kind] || strings.phaseFallback;
         const failed = kind === "error";
         status.classList.toggle("error", failed);
         bar.classList.toggle("error", failed);
@@ -412,13 +457,15 @@
         if (event.key === "Escape") quit();
       });
 
+      applyLocale();
+
       if (window.desktop) {
         window.desktop.onStatus(applyStatus);
         window.desktop.onLog(appendLog);
       }
 
       if (params.has("preview")) {
-        applyStatus({ phase: "runtime", text: "正在检查运行环境。首次启动需要联网下载引擎。" });
+        applyStatus({ phase: "runtime", text: strings.hero });
         const lines = [
           "npm 源：https://registry.npmmirror.com",
           "正在准备官方 DeepSeek Harness…",

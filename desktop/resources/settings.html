@@ -556,6 +556,38 @@
             <span class="card-desc">会话存储、本地任务及运行产物的根工作目录。</span>
           </div>
 
+          <!-- Window, tray and language -->
+          <div class="card">
+            <span class="card-title">窗口、托盘与语言</span>
+            <label class="switch-label">
+              <div class="switch-info">
+                <span class="switch-title">关闭窗口时最小化到托盘</span>
+                <span class="switch-desc">关闭窗口不再退出应用，引擎继续运行；从托盘菜单选「退出」才结束进程。</span>
+              </div>
+              <input id="closeToTray" type="checkbox" checked />
+              <div class="switch-toggle"></div>
+            </label>
+            <div class="form-group">
+              <span class="form-label">界面语言</span>
+              <select class="select-input" id="locale">
+                <option value="">跟随系统</option>
+                <option value="zh-CN">中文</option>
+                <option value="en">English</option>
+              </select>
+              <span class="card-desc">只影响桌面版外壳（菜单、托盘、对话框、恢复窗口），切换后立即生效；官方界面语言跟随系统区域。</span>
+            </div>
+          </div>
+
+          <!-- Local port -->
+          <div class="card">
+            <span class="card-title">本地端口</span>
+            <div class="form-group">
+              <span class="form-label">dsh web 监听端口（0 = 自动选择空闲端口）</span>
+              <input class="input-text" id="webPort" type="number" min="0" max="65535" placeholder="0" />
+            </div>
+            <span class="card-desc">固定端口可以让依赖浏览器存储的界面插件在重启后保留设置；端口被占用会导致启动失败，改回 0 即可。引擎只监听 127.0.0.1，官方不支持对局域网开放。</span>
+          </div>
+
           <!-- Update Settings -->
           <div class="card">
             <span class="card-title">自动更新检查</span>
@@ -642,6 +674,9 @@
       // Default state
       const previewSettings = {
         channel: "latest",
+        webPort: 0,
+        closeToTray: true,
+        locale: "",
         autoUpdateHarness: true,
         autoUpdateDesktop: true,
         autoSyncModels: true,
@@ -673,6 +708,10 @@
         $("registry").value = s.registry || CHINA;
         $("local").value = s.localHarnessDir || "";
         $("workspace").value = s.workspaceDir || "C:\\Users\\zhuquan\\DeepSeek";
+
+        $("closeToTray").checked = s.closeToTray !== false;
+        $("locale").value = s.locale || "";
+        $("webPort").value = Number(s.webPort) > 0 ? String(Number(s.webPort)) : "0";
 
         const vision = s.visionAux || previewSettings.visionAux;
         $("visionEnabled").checked = vision.enabled === true;
@@ -813,6 +852,9 @@
           registry,
           registrySource: registry === current.registry ? current.registrySource : "user",
           localHarnessDir: $("local").value.trim(),
+          closeToTray: $("closeToTray").checked,
+          locale: $("locale").value,
+          webPort: Math.max(0, Math.min(65535, Math.trunc(Number($("webPort").value) || 0))),
           visionAux: {
             enabled: $("visionEnabled").checked,
             baseURL: $("visionBase").value.trim(),

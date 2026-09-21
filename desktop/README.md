@@ -20,6 +20,26 @@ This package does **not** vendor the official monorepo. Other community desktops
 
 Harness releases therefore land without rebuilding this desktop app. The shell only needs a new version if windowing, installers, or the updater itself change.
 
+## 0.3.0 新增（对照 anywhere-labs/dsh-desktop 补齐）
+
+社区里使用人数最多的桌面端 [anywhere-labs/dsh-desktop](https://github.com/anywhere-labs/dsh-desktop) 有几项能力值得一提，0.3.0 把能在「薄壳 + 官方 npm 引擎」路线上实现的部分补齐了，逐项对照与差异原因见 [docs/parity-with-dsh-desktop.md](./docs/parity-with-dsh-desktop.md)：
+
+- **系统托盘**：关闭窗口只是隐藏，引擎继续跑；托盘菜单可打开/隐藏窗口、在浏览器打开、复制本机地址、重启引擎、打开工作区、打开日志、导出诊断、进入恢复模式、退出。要关窗即退出，把「关闭窗口时最小化到托盘」关掉即可。
+- **外壳双语**：菜单、托盘、对话框、闪屏、恢复窗口都跟随系统语言（中文系统中文，其余英文），也可以在 **引擎设置 → 界面语言** 里固定，切换即时生效。
+- **诊断导出**：菜单/托盘 **Harness → 导出诊断信息…** 生成 `diagnostics-<时间>.zip`（系统信息、已脱敏的设置、桌面日志、引擎日志、运行状态）。窗口根本起不来时，用命令行导出，不会启动引擎：
+
+  ```sh
+  # Windows
+  "%LOCALAPPDATA%\Programs\DeepSeek\DeepSeek.exe" --export-diagnostics
+  # Linux / macOS（源码运行时）
+  npx electron . --export-diagnostics
+  ```
+
+  命令会在终端打印 zip 的绝对路径。
+- **引擎看门狗与恢复模式**：引擎异常退出会自动退避重启；连续 3 次失败则弹出**恢复模式**窗口，可重新启动引擎、回滚到本机另一个已装引擎版本、重装当前版本、打开日志或导出诊断。
+- **本地端口与日志留档**：引擎设置里可固定 `dsh web` 端口（0 = 自动），退出时在 Windows 打整棵进程树，不留残余进程；桌面版与引擎日志写入 `userData/logs/`（1 MB 轮转），诊断包直接取这两份。
+- 仍然没有的：插件市场、手机远程控制、Profile 工作配置、局域网访问（官方引擎明确拒绝 `--host 0.0.0.0`，需要 vendor 内核才能像上游那样开放，本项目不补丁上游源码）。
+
 ## 给一般使用者
 
 只需下载这一个软件，**不要**再 `git clone` DeepSeek Harness。首次启动必须联网（下载官方引擎，大约 1–3 分钟），完成后会自动打开界面。默认皮肤已打进安装包。从旧版升级时会尽量继承 API 密钥。API Key 在官方界面里配置，或打开 [platform.deepseek.com](https://platform.deepseek.com)。
@@ -101,9 +121,11 @@ npm start
 Menus:
 
 - **文件 → 打开工作区** — `dsh` 的工作目录（默认 `~/DeepSeek`）
-- **Harness → 检查 Harness 更新** — 拉取最新 `@deepseek-ai/dsh`
-- **Harness → 引擎设置** — npm 渠道、registry、皮肤中心开关，或本地已构建的 checkout
+- **Harness → 检查 Harness 更新 / 检查桌面版更新** — npm 上的 `@deepseek-ai/dsh` 与 GitHub Release
+- **Harness → 重启引擎 / 打开日志文件夹 / 导出诊断信息… / 恢复模式…** — 引擎生命周期与排查入口
+- **Harness → 引擎设置** — npm 渠道、registry、本地端口、关闭行为、界面语言、皮肤中心开关，或本地已构建的 checkout
 - **皮肤 → 打开皮肤列表 / 关闭皮肤中心** — 右上角鲸鱼按钮，或在这里开关皮肤中心
+- **托盘图标** — 左键显示/隐藏窗口，右键是同样的功能菜单（含退出）
 
 ## Why this is not a fork
 

@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer } from "electron";
 import type { SkinCard } from "./skins";
 import type { DesktopSettings } from "./util";
+import type { RecoveryActionId, RecoveryInfo } from "./recovery";
 
 contextBridge.exposeInMainWorld("desktop", {
   onStatus: (handler: (payload: { phase: string; text: string }) => void) => {
@@ -23,4 +24,8 @@ contextBridge.exposeInMainWorld("desktop", {
   importSkinUrl: (url: string): Promise<void> => ipcRenderer.invoke("skins:import-url", url),
   syncModels: (): Promise<any> => ipcRenderer.invoke("models:sync"),
   getProviders: (): Promise<any> => ipcRenderer.invoke("models:get-providers"),
+  /** Diagnostics bundle, also reachable as `DeepSeek --export-diagnostics`. */
+  exportDiagnostics: (): Promise<string | null> => ipcRenderer.invoke("diagnostics:export"),
+  getRecoveryInfo: (): Promise<RecoveryInfo> => ipcRenderer.invoke("recovery:info"),
+  recoveryAction: (action: RecoveryActionId): Promise<void> => ipcRenderer.invoke("recovery:action", action),
 });

@@ -7,6 +7,7 @@ import { buildToolsHint, explainFirstRunError } from "./first-run-error";
 import {
   DSH_PACKAGE,
   NPM_REGISTRY,
+  normalizeWebPort,
   npmInvocation,
   npmSpec,
   parseDshWebUrl,
@@ -248,6 +249,31 @@ export async function ensureHarness(
   return { version, bin: dshBin(prefix), prefix };
 }
 
+/**
+ * `dsh web` flags. The engine refuses `--host 0.0.0.0` on purpose ("it would
+ * expose remote code execution to the network"), so the shell stays on loopback
+ * and only chooses the port — the LAN toggle other desktops offer is not
+ * available without patching the upstream source.
+ */
+export function harnessWebArgs(bin: string, port: number): string[] {
+  return [bin, "web", "--no-open", "--host", "127.0.0.1", "--port", String(normalizeWebPort(port))];
+}
+
+/**
+ * Windows has no process groups for spawn(), so dsh's plugin/subprocess children
+ * survive a plain kill and keep the port busy. Only Windows needs the tree walk;
+ * on POSIX the child is not a group leader, so `kill -pid` could hit the wrong
+ * processes and plain SIGTERM stays the right call.
+ */
+export function killTreeInvocation(
+  pid: number | undefined,
+  platform: NodeJS.Platform,
+): { command: string; args: string[] } | null {
+  if (platform !== "win32") return null;
+  if (!pid || !Number.isFinite(pid) || pid <= 0) return null;
+  return { command: "taskkill", args: ["/pid", String(pid), "/t", "/f"] };
+}
+
 export async function startHarnessWeb(options: {
   runtime: NodeRuntime;
   install: HarnessInstall;
@@ -255,6 +281,8 @@ export async function startHarnessWeb(options: {
   dshHome: string;
   onLog: (line: string) => void;
   extraEnv?: NodeJS.ProcessEnv;
+  /** Fixed loopback port; 0 (the default) lets the OS pick a free one. */
+  port?: number;
 }): Promise<RunningHarness> {
   await mkdir(options.dshHome, { recursive: true });
   await mkdir(options.workspaceDir, { recursive: true });
@@ -262,7 +290,7 @@ export async function startHarnessWeb(options: {
   const { ELECTRON_RUN_AS_NODE: _electronNode, ...baseEnv } = process.env;
   let child: ChildProcess;
   try {
-    child = spawn(options.runtime.node, [options.install.bin, "web", "--no-open", "--host", "127.0.0.1", "--port", "0"], {
+    child = spawn(options.runtime.node, harnessWebArgs(options.install.bin, options.port ?? 0), {
       cwd: options.workspaceDir,
       env: sanitizeEnv({
         ...baseEnv,
@@ -316,4 +344,22 @@ export async function startHarnessWeb(options: {
 export function stopHarness(running: RunningHarness | null): void {
   if (!running?.process.pid) return;
   running.process.kill("SIGTERM");
+}
+
+/** SIGTERM, then a Windows tree kill so plugin children cannot hold the port. */
+export function stopHarnessTree(
+  running: RunningHarness | null,
+  platform: NodeJS.Platform = process.platform,
+): void {
+  const pid = running?.process.pid;
+  stopHarness(running);
+  const invocation = killTreeInvocation(pid, platform);
+  if (!invocation) return;
+  try {
+    const child = spawn(invocation.command, invocation.args, { stdio: "ignore", windowsHide: true });
+    child.on("error", () => undefined);
+    child.unref();
+  } catch {
+    // A missing taskkill is not worth failing shutdown over.
+  }
 }

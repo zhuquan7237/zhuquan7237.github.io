@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <title>恢复模式</title>
+    <style>
+      :root {
+        --bg: #101218;
+        --card: #171b24;
+        --card-hover: #1d222d;
+        --stroke: rgba(255, 255, 255, 0.08);
+        --text: #eef2f8;
+        --muted: #93a0b5;
+        --accent: #4d93f8;
+        --accent-hover: #6aa6ff;
+        --danger: #ef4444;
+        --warn: #f59e0b;
+        --font: "Segoe UI Variable", "Segoe UI", "Microsoft YaHei UI", "PingFang SC", "Noto Sans SC", system-ui, sans-serif;
+        --mono: "Cascadia Mono", ui-monospace, Consolas, monospace;
+      }
+
+      * { box-sizing: border-box; }
+
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--font);
+        user-select: none;
+      }
+
+      .wrap {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        padding: 22px 24px 18px;
+      }
+
+      .head {
+        display: flex;
+        gap: 14px;
+        align-items: flex-start;
+      }
+
+      .badge {
+        width: 40px;
+        height: 40px;
+        flex: none;
+        border-radius: 10px;
+        display: grid;
+        place-items: center;
+        background: rgba(245, 158, 11, 0.14);
+        border: 1px solid rgba(245, 158, 11, 0.32);
+        color: var(--warn);
+      }
+
+      .badge svg { width: 22px; height: 22px; }
+
+      h1 {
+        margin: 0 0 4px;
+        font-size: 17px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+      }
+
+      .reason {
+        margin: 0;
+        font-size: 13px;
+        line-height: 1.55;
+        color: var(--muted);
+        user-select: text;
+      }
+
+      .card {
+        background: var(--card);
+        border: 1px solid var(--stroke);
+        border-radius: 12px;
+        padding: 12px 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .card h2 {
+        margin: 0;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+
+      .mono {
+        margin: 0;
+        font: 12px/1.5 var(--mono);
+        color: var(--text);
+        word-break: break-all;
+        user-select: text;
+      }
+
+      .hint {
+        margin: 0;
+        font-size: 12.5px;
+        line-height: 1.55;
+        color: var(--muted);
+        user-select: text;
+      }
+
+      .spacer { flex: 1; min-height: 0; }
+
+      .actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+
+      button {
+        appearance: none;
+        height: 34px;
+        padding: 0 14px;
+        border-radius: 8px;
+        font: 600 13px/1 var(--font);
+        cursor: pointer;
+        border: 1px solid var(--stroke);
+        background: rgba(255, 255, 255, 0.06);
+        color: var(--text);
+        transition: background 0.15s, border-color 0.15s;
+      }
+
+      button:hover:not(:disabled) { background: var(--card-hover); }
+      button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+      button.primary {
+        grid-column: span 2;
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #071018;
+      }
+
+      button.primary:hover:not(:disabled) { background: var(--accent-hover); }
+
+      button.quiet {
+        background: transparent;
+        color: var(--muted);
+      }
+
+      button.danger {
+        background: rgba(239, 68, 68, 0.14);
+        border-color: rgba(239, 68, 68, 0.32);
+        color: #fca5a5;
+      }
+
+      .status {
+        min-height: 16px;
+        font-size: 12px;
+        color: var(--accent);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="head">
+        <div class="badge">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+            <line x1="12" y1="9" x2="12" y2="13" />
+            <line x1="12" y1="17" x2="12.01" y2="17" />
+          </svg>
+        </div>
+        <div>
+          <h1 id="heading">恢复模式</h1>
+          <p class="reason" id="reason"></p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 id="stateLabel">引擎</h2>
+        <p class="mono" id="installed"></p>
+      </div>
+
+      <p class="hint" id="hint"></p>
+
+      <div class="card">
+        <h2 id="logsLabel">日志</h2>
+        <p class="mono" id="paths"></p>
+      </div>
+
+      <div class="spacer"></div>
+
+      <div class="status" id="status"></div>
+
+      <div class="actions">
+        <button class="primary" id="restart" type="button">重新启动引擎</button>
+        <button id="rollback" type="button">回滚到上一个版本</button>
+        <button id="reinstall" type="button">重装当前版本</button>
+        <button class="quiet" id="logs" type="button">打开日志文件夹</button>
+        <button class="quiet" id="diagnostics" type="button">导出诊断信息</button>
+        <button class="danger" id="quit" type="button">退出桌面版</button>
+      </div>
+    </div>
+
+    <script>
+      const $ = (id) => document.getElementById(id);
+      const buttons = ["restart", "rollback", "reinstall", "logs", "diagnostics", "quit"];
+
+      function setBusy(busy) {
+        buttons.forEach((id) => {
+          const button = $(id);
+          button.disabled = busy || (id === "rollback" && button.dataset.disabled === "1");
+        });
+      }
+
+      async function load() {
+        if (!window.desktop || !window.desktop.getRecoveryInfo) return;
+        const info = await window.desktop.getRecoveryInfo();
+        document.documentElement.lang = info.locale || "zh-CN";
+        $("heading").textContent = info.heading;
+        $("reason").textContent = info.reason;
+        $("hint").textContent = info.hint;
+        $("installed").textContent = info.installed;
+        $("paths").textContent = `${info.logsPath}\n${info.workspaceDir}`;
+        $("restart").textContent = info.labels.restart;
+        $("rollback").textContent = info.canRollback ? info.labels.rollback : info.labels.rollbackNone;
+        $("reinstall").textContent = info.labels.reinstall;
+        $("logs").textContent = info.labels.openLogs;
+        $("diagnostics").textContent = info.labels.diagnostics;
+        $("quit").textContent = info.labels.quit;
+        $("rollback").dataset.disabled = info.canRollback ? "0" : "1";
+        $("rollback").disabled = !info.canRollback;
+        return info;
+      }
+
+      async function run(action) {
+        if (!window.desktop || !window.desktop.recoveryAction) return;
+        setBusy(true);
+        $("status").textContent = "…";
+        try {
+          await window.desktop.recoveryAction(action);
+        } finally {
+          setBusy(false);
+        }
+      }
+
+      buttons.forEach((id) => $(id).addEventListener("click", () => void run(id)));
+      window.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") void run("quit");
+      });
+      void load();
+    </script>
+  </body>
+</html>

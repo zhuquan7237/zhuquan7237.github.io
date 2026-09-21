@@ -56,6 +56,16 @@ export interface DesktopSettings {
   skippedHarnessVersion: string;
   /** Startup prompt will not ask again until GitHub publishes a newer desktop tag. */
   skippedDesktopVersion: string;
+  /**
+   * Loopback port for `dsh web`. 0 lets the OS pick a free one; a fixed port
+   * keeps browser `localStorage` (and therefore UI plugins that use it) stable
+   * across restarts — the same trade-off DSH Desktop documents as `port: 0`.
+   */
+  webPort: number;
+  /** Closing the window hides it to the tray instead of quitting. */
+  closeToTray: boolean;
+  /** "" follows the system language; otherwise a tag such as zh-CN or en. */
+  locale: string;
   /** Show the in-window skin picker and apply third-party dsh skins. */
   skinsEnabled: boolean;
   /** "official" keeps the stock Harness look; default is maid-atelier. */
@@ -76,6 +86,9 @@ export const DEFAULT_SETTINGS: DesktopSettings = {
   lastHarnessVersion: "",
   skippedHarnessVersion: "",
   skippedDesktopVersion: "",
+  webPort: 0,
+  closeToTray: true,
+  locale: "",
   skinsEnabled: true,
   activeSkinId: "maid-atelier",
   visionAux: {
@@ -167,6 +180,19 @@ export function shouldPromptHarnessUpdate(current: string, latest: string, skipp
   if (current === latest || skipped === latest) return false;
   if (!/^\d/.test(current.replace(/^v/, "")) || !/^\d/.test(latest.replace(/^v/, ""))) return false;
   return compareVersions(current, latest) < 0;
+}
+
+/**
+ * `dsh web --port` only accepts an integer in 0..65535 and refuses anything
+ * else, so a hand-edited settings file must never reach the engine: an invalid
+ * value falls back to 0, where the OS picks a free port.
+ */
+export function normalizeWebPort(value: unknown): number {
+  const parsed = typeof value === "number" ? value : Number.parseInt(String(value ?? "").trim(), 10);
+  if (!Number.isFinite(parsed)) return 0;
+  const port = Math.floor(parsed);
+  if (port <= 0 || port > 65535) return 0;
+  return port;
 }
 
 function splitVersion(input: string): { core: number[]; pre: string[] } {
