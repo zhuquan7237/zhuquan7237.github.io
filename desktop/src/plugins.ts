@@ -21,6 +21,11 @@ export const BUNDLED_PLUGINS: readonly BundledPlugin[] = [
   // DSH web UI, so shell facts and plugin toggles are reachable without
   // switching windows.
   { rowId: "dsh-desktop-panel", packageName: "@dsh-desktop/dsh-desktop-panel", dir: "desktop-panel" },
+  // The model-vision plugin adds the missing "does this model accept images"
+  // declaration to every pi-ai provider card: the engine refuses an image
+  // unless the selected model declares `image`, and the shipped Models page
+  // has no field for it, so a hand-declared route can never see an image.
+  { rowId: "dsh-model-vision", packageName: "@dsh-desktop/dsh-model-vision", dir: "model-vision" },
 ];
 
 export interface PluginPathOptions {
@@ -170,6 +175,13 @@ export function renderPluginRows(settings: DesktopSettings): string[] {
     "- insert:",
     "    - id: dsh-desktop-panel",
     "      name: '@dsh-desktop/dsh-desktop-panel'",
+  );
+  // Same reasoning: the image-input declaration is a property of the engine's
+  // own model registry, so it must be available whenever the engine runs.
+  rows.push(
+    "- insert:",
+    "    - id: dsh-model-vision",
+    "      name: '@dsh-desktop/dsh-model-vision'",
   );
   if (settings.webSearch.provider === "tavily") {
     const tavily = settings.webSearch.tavily;

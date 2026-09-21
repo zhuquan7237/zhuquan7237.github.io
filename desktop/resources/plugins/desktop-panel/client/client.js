@@ -353,6 +353,7 @@ window.__ModuleLoader__.load({
               order: 90,
               label: () => COPY[lang].nav,
               locale: "dsh-desktop-panel",
+              inject: () => ({ lang }),
             },
             Panel,
           );

@@ -56,8 +56,8 @@ describe("renderPluginRows", () => {
   });
 
   it("emits no web rows while the official provider is selected", () => {
-    // The desktop panel always loads, so its row is the baseline every other
-    // assertion here is measured against.
+    // The desktop panel and the model-vision switch always load, so their rows
+    // are the baseline every other assertion here is measured against.
     for (const settings of [
       settingsWith(),
       settingsWith({ webSearch: { provider: "deepseek-official", tavily: DEFAULT_SETTINGS.webSearch.tavily } }),
@@ -67,6 +67,9 @@ describe("renderPluginRows", () => {
         "- insert:",
         "    - id: dsh-desktop-panel",
         "      name: '@dsh-desktop/dsh-desktop-panel'",
+        "- insert:",
+        "    - id: dsh-model-vision",
+        "      name: '@dsh-desktop/dsh-model-vision'",
       ]);
       expect(rows.join("\n")).not.toContain("web-search-tavily");
       expect(rows.join("\n")).not.toContain("vision-aux");
