@@ -13,12 +13,12 @@ Windows · Linux · macOS 开箱即用。引擎从 npm 安装官方 [`@deepseek-
 
 [主页 / 下载](https://dsh.zhuquan.xyz) ·
 [关于作者](https://dsh.zhuquan.xyz/me.html) ·
-[下载 0.2.6](https://dsh.zhuquan.xyz/dl/) ·
-[Windows](https://dsh.zhuquan.xyz/dl/DeepSeek-0.2.6-win.exe) ·
-[Linux tar.gz](https://dsh.zhuquan.xyz/dl/DeepSeek-0.2.6-linux-x64.tar.gz) ·
-[macOS Apple Silicon](https://dsh.zhuquan.xyz/dl/DeepSeek-0.2.6-mac-arm64.dmg)
+[下载 0.5.0](https://dsh.zhuquan.xyz/dl/) ·
+[Windows](https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.0-win.exe) ·
+[Linux tar.gz](https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.0-linux-x64.tar.gz) ·
+[macOS Apple Silicon](https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.0-mac-arm64.dmg)
 
-<img src="assets/desktop-preview.png" alt="DeepSeek Harness 桌面版 0.2.6：默认皮肤「深海女仆工坊」" width="920" />
+<img src="assets/desktop-preview.png" alt="DeepSeek Harness 桌面版 0.5.0：默认皮肤「深海女仆工坊」" width="920" />
 
 </div>
 
@@ -39,6 +39,10 @@ Windows · Linux · macOS 开箱即用。引擎从 npm 安装官方 [`@deepseek-
 | Desktop | 官方引擎，不整仓拷贝 |
 | --- | --- |
 | 把官方本地 Web UI 带到原生窗口。自动准备 Node、启动 dsh、记住工作区。Windows / Linux / macOS 都有安装包。 | 不把 `deepseek-ai/deepseek-harness` 整仓拷进仓库。官方发新版时，菜单里检查更新即可。 |
+| **插件市场** | **桌面面板插件** |
+| 浏览 1024Store 的 13000+ 插件与自定义源，一键安装 / 启停 / 卸载；安装只走官方 CLI（`dsh plugin add`），市场不会执行第三方提供的命令文本。 | 用官方插件机制把「桌面端」页注入 dsh 设置：外壳与引擎状态、日志尾巴、诊断导出、插件启停。启停写引擎自己的配置层，约 1 秒即时生效、不用重启。 |
+| **托盘与引擎看护** | **诊断包与多语言** |
+| 关窗口不再顺手杀掉引擎；异常退出按 1s / 2s / 4s 退避重启，连续失败进入恢复界面（重启 / 回退上一个可用引擎 / 重装 / 看日志）。 | 一键导出日志与设置（密钥打码）的 zip；界面语言跟随系统（中文之外为英文）。 |
 | **皮肤中心** | **国内网络与旧配置** |
 | 默认「深海女仆工坊」打进安装包，离线也能用。右上角鲸鱼按钮可换皮或导入。 | 中文系统默认国内 npm 镜像。0.1.16 会尽量把旧版 API 密钥接过来。 |
 
@@ -59,19 +63,19 @@ GitHub 搜索名：[zhuquan7237/deepseek-harness-desktop](https://github.com/zhu
 
 | 系统 | 下载 | 说明 |
 | --- | --- | --- |
-| Windows | [DeepSeek-0.2.6-win.exe](https://dsh.zhuquan.xyz/dl/DeepSeek-0.2.6-win.exe) | 会创建桌面和开始菜单快捷方式。便携版快捷方式指向该 exe 本身。SmartScreen 选「更多信息 → 仍要运行」 |
-| Linux | [x64 tar.gz](https://dsh.zhuquan.xyz/dl/DeepSeek-0.2.6-linux-x64.tar.gz) · [deb](https://dsh.zhuquan.xyz/dl/DeepSeek-0.2.6-linux-amd64.deb) · [arm64 tar.gz](https://dsh.zhuquan.xyz/dl/DeepSeek-0.2.6-linux-arm64.tar.gz) | 优先 tar.gz 或 deb。AppImage 在 Ubuntu 24.04 常缺 libfuse2，请用 tar.gz 或同目录的 `-no-fuse.sh` |
-| macOS | [arm64 dmg](https://dsh.zhuquan.xyz/dl/DeepSeek-0.2.6-mac-arm64.dmg) · [Intel dmg](https://dsh.zhuquan.xyz/dl/DeepSeek-0.2.6-mac-x64.dmg) | 拖到「应用程序」。若提示已损坏，终端运行 `xattr -cr /Applications/DeepSeek.app`。说明：[mac.html](https://dsh.zhuquan.xyz/mac.html) |
+| Windows | [DeepSeek-0.5.0-win.exe](https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.0-win.exe) | 会创建桌面和开始菜单快捷方式。便携版快捷方式指向该 exe 本身。SmartScreen 选「更多信息 → 仍要运行」 |
+| Linux | [x64 tar.gz](https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.0-linux-x64.tar.gz) · [deb](https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.0-linux-amd64.deb) · [arm64 tar.gz](https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.0-linux-arm64.tar.gz) | 优先 tar.gz 或 deb。AppImage 在 Ubuntu 24.04 常缺 libfuse2，请用 tar.gz 或同目录的 `-no-fuse.sh` |
+| macOS | [arm64 dmg](https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.0-mac-arm64.dmg) · [Intel dmg](https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.0-mac-x64.dmg) | 拖到「应用程序」。若提示已损坏，终端运行 `xattr -cr /Applications/DeepSeek.app`。说明：[mac.html](https://dsh.zhuquan.xyz/mac.html) |
 
 ```sh
 # Linux
-tar -xzf DeepSeek-0.2.6-linux-x64.tar.gz
-./DeepSeek-0.2.6-linux-x64/DeepSeek
+tar -xzf DeepSeek-0.5.0-linux-x64.tar.gz
+./DeepSeek-0.5.0-linux-x64/DeepSeek
 ```
 
 首次启动需要联网大约 1–3 分钟（下载 Node 和官方 dsh）。默认皮肤已打进安装包，不用再从 GitHub 拉。API Key 在官方界面里填写，或打开 [platform.deepseek.com](https://platform.deepseek.com)。从旧桌面版升级时，会尽量把 `%AppData%\DeepSeek`（以及更早的 `深度求索` / `~/.dsh`）里的密钥和配置接过来。中文系统或中国时区会默认走国内 npm 镜像。
 
-请用 **0.2.6**。不要用 0.1.0–0.1.19。安装包优先从 [dsh.zhuquan.xyz/dl/](https://dsh.zhuquan.xyz/dl/) 下载。
+请用 **0.5.0**。不要用 0.1.0–0.1.19。安装包优先从 [dsh.zhuquan.xyz/dl/](https://dsh.zhuquan.xyz/dl/) 下载。
 
 ## 皮肤中心与版权
 
