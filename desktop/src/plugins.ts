@@ -16,6 +16,11 @@ export interface BundledPlugin {
 export const BUNDLED_PLUGINS: readonly BundledPlugin[] = [
   { rowId: "web-search-tavily", packageName: "@dsh-desktop/dsh-web-search-tavily", dir: "web-search-tavily" },
   { rowId: "vision-aux", packageName: "@dsh-desktop/dsh-vision-aux", dir: "vision-aux" },
+  // The panel is a dual-face package: a host half serving /dsh-desktop routes
+  // and a browser half that registers the "Desktop" settings section inside the
+  // DSH web UI, so shell facts and plugin toggles are reachable without
+  // switching windows.
+  { rowId: "dsh-desktop-panel", packageName: "@dsh-desktop/dsh-desktop-panel", dir: "desktop-panel" },
 ];
 
 export interface PluginPathOptions {
@@ -159,6 +164,13 @@ function yamlString(value: string): string {
  */
 export function renderPluginRows(settings: DesktopSettings): string[] {
   const rows: string[] = [];
+  // The panel has no settings of its own: it always loads, so the shell's facts
+  // and the profile's plugin toggles are reachable from inside the DSH web UI.
+  rows.push(
+    "- insert:",
+    "    - id: dsh-desktop-panel",
+    "      name: '@dsh-desktop/dsh-desktop-panel'",
+  );
   if (settings.webSearch.provider === "tavily") {
     const tavily = settings.webSearch.tavily;
     rows.push(

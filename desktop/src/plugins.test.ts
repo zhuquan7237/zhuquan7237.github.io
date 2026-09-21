@@ -56,12 +56,31 @@ describe("renderPluginRows", () => {
   });
 
   it("emits no web rows while the official provider is selected", () => {
-    expect(renderPluginRows(settingsWith())).toEqual([]);
-    expect(
-      renderPluginRows(
-        settingsWith({ webSearch: { provider: "deepseek-official", tavily: DEFAULT_SETTINGS.webSearch.tavily } }),
-      ),
-    ).toEqual([]);
+    // The desktop panel always loads, so its row is the baseline every other
+    // assertion here is measured against.
+    for (const settings of [
+      settingsWith(),
+      settingsWith({ webSearch: { provider: "deepseek-official", tavily: DEFAULT_SETTINGS.webSearch.tavily } }),
+    ]) {
+      const rows = renderPluginRows(settings);
+      expect(rows).toEqual([
+        "- insert:",
+        "    - id: dsh-desktop-panel",
+        "      name: '@dsh-desktop/dsh-desktop-panel'",
+      ]);
+      expect(rows.join("\n")).not.toContain("web-search-tavily");
+      expect(rows.join("\n")).not.toContain("vision-aux");
+    }
+  });
+
+  it("always loads the desktop panel, so its row survives every settings combination", () => {
+    const rows = renderPluginRows(settingsWith()).join("\n");
+    expect(rows).toContain("id: dsh-desktop-panel");
+    expect(rows).toContain("name: '@dsh-desktop/dsh-desktop-panel'");
+    const off = renderPluginRows(
+      settingsWith({ visionAux: { ...DEFAULT_SETTINGS.visionAux, enabled: false }, webSearch: { provider: "deepseek-official", tavily: DEFAULT_SETTINGS.webSearch.tavily } }),
+    ).join("\n");
+    expect(off).toContain("id: dsh-desktop-panel");
   });
 
   it("emits the vision row only when enabled with a model", () => {
@@ -75,8 +94,9 @@ describe("renderPluginRows", () => {
 
     const noModel = renderPluginRows(
       settingsWith({ visionAux: { ...DEFAULT_SETTINGS.visionAux, enabled: true, model: "  " } }),
-    );
-    expect(noModel).toEqual([]);
+    ).join("\n");
+    expect(noModel).not.toContain("vision-aux");
+    expect(noModel).toContain("dsh-desktop-panel");
   });
 
   it("exposes the secrets as env values instead", () => {

@@ -20,6 +20,24 @@ This package does **not** vendor the official monorepo. Other community desktops
 
 Harness releases therefore land without rebuilding this desktop app. The shell only needs a new version if windowing, installers, or the updater itself change.
 
+## 0.5.0 新增：桌面端面板（第一个第一方 DSH 插件）
+
+0.5.0 起，桌面端不再只是一个外壳：它随包附带一个**双面 DSH 插件**（`@dsh-desktop/dsh-desktop-panel`），并把它装进引擎的 profile。打开 dsh 界面 → **设置 → 桌面端**，就能在聊天界面里看到平时只有桌面窗口才有的东西：
+
+- **外壳事实**：桌面版版本、引擎版本与端口、profile、工作区、日志目录（一键复制）。
+- **插件开关**：列出当前 profile 的插件，可启用/停用（写引擎自己的 `cordis.patch.yml` 层，重启后依然生效）；profile 自带的层标为只读。
+- **日志**：直接看外壳日志与引擎日志的尾部，不用去翻文件夹。
+- **导出诊断包**：打包版里一键调用桌面端自己的 `--export-diagnostics`，返回 zip 路径。
+
+实现方式：
+
+- **Host 半边**（`resources/plugins/desktop-panel/src/index.ts`）在引擎内注册 `/dsh-desktop/*` 路由，把外壳通过 `DSH_DESKTOP_*` 环境变量交给引擎的事实（版本、日志目录、是否打包、托盘是否可用…）暴露出来，并读写 profile 清单与 patch 层。它不自己管 node_modules，也不执行数据源给的命令。
+- **Client 半边**（`resources/plugins/desktop-panel/client/client.js`）是手写的模块加载器 bundle（`window.__ModuleLoader__.load` + `dsh.client` 声明），只用宿主注入的 `react`，通过官方 `slots` 服务注册 `settings.section` 槽位——和社区插件走同一条组合路径，没有任何特权。
+- **装法**：和其它内置插件一样随包分发、启动时安装并链接进 profile，patch 行由 `renderPluginRows` 无条件写入，所以升级桌面端就会跟着更新。
+- **可观测**：客户端半边每次落地都会把「apply / seated / failed」阶段写进 `logs/desktop-panel-client.json` 并记日志，支持包里能直接看出界面到底注册成功没有。
+
+桌面端版本与插件版本分开：面板插件升到 `0.1.3`，桌面外壳 `0.5.0`。
+
 ## 0.4.0 新增：插件市场
 
 DeepSeek Harness 的生态已经有一万多个插件，0.4.0 把「发现 → 一键安装 → 启停 → 卸载」放进了桌面端，不用切浏览器，也不用记命令：

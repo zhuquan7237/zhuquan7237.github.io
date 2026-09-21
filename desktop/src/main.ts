@@ -347,11 +347,34 @@ async function syncSkins(onLog: (line: string) => void = shellLog): Promise<Inst
   return catalog;
 }
 
-/** Locale plus the plugin secrets and engine anchor the engine process needs. */
+/**
+ * Facts the engine cannot derive itself, handed to the desktop panel plugin:
+ * which shell version is running, where it writes logs, which engine it
+ * launched, and whether a diagnostics export is possible from here. Secrets
+ * never travel this way — that is `pluginSecretsEnv`'s job.
+ */
+function desktopPanelEnv(): NodeJS.ProcessEnv {
+  return {
+    DSH_DESKTOP_VERSION: app.getVersion(),
+    DSH_DESKTOP_EXE: app.isPackaged ? process.execPath : "",
+    DSH_DESKTOP_LOG_DIR: logsDir(userData()),
+    DSH_DESKTOP_USER_DATA: userData(),
+    DSH_DESKTOP_WORKSPACE: settings.workspaceDir,
+    DSH_DESKTOP_CHANNEL: settings.channel,
+    DSH_DESKTOP_LOCALE: shellLocale,
+    DSH_DESKTOP_TRAY: tray ? "1" : "0",
+    DSH_DESKTOP_MARKET: "1",
+    DSH_DESKTOP_PACKAGED: app.isPackaged ? "1" : "0",
+    ...(lastInstall?.version ? { DSH_ENGINE_VERSION: lastInstall.version } : {}),
+  };
+}
+
+/** Locale plus the plugin secrets, shell facts and engine anchor the engine process needs. */
 function engineExtraEnv(): NodeJS.ProcessEnv {
   return {
     ...harnessLocaleEnv(uiLocale),
     ...pluginSecretsEnv(settings),
+    ...desktopPanelEnv(),
     ...(lastInstall?.prefix ? { DSH_ENGINE_ROOT: lastInstall.prefix } : {}),
   };
 }

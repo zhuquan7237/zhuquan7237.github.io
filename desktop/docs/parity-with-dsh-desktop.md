@@ -29,6 +29,7 @@
 | Windows 进程树回收 | ✅ 上游 subprocess service 管整棵树 | ⚠️ 只杀主进程 | ✅ 退出时 `taskkill /t`（3.5） |
 | 工作配置 Profile | ✅ desktop/web/自定义 profile，last-known-good | ❌ 单 DSH home（引擎多版本目录已保留） | ❌ 未做（见 4.1） |
 | 插件市场 | ✅ DSH Community Market 内置 | ❌ | ✅ 已实现（0.4.0，见 3.6） |
+| 桌面能力注入 DSH 界面 | ✅ 桌面壳本身就是 DSH 插件 | ❌ 只有独立窗口 | ✅ 第一方面板插件（0.5.0，见 3.7） |
 | 手机远程控制 | ✅ Agents-Anywhere 内置 | ❌ | ❌ 未做（见 4.3） |
 | 局域网访问 | ✅ 明确确认风险后可开 | ❌ | ❌ **引擎层不支持**（见 4.4） |
 | 窗口模式/原生材质 | ✅ 兼容/扩展/增强三种模式 + Mica | ⚠️ 闪屏有 Mica，主窗口无 | ❌ 未做 |
@@ -73,6 +74,13 @@
 - **入口**：菜单「Harness → 插件市场…」、托盘同名项、以及 `DeepSeek --market` 直接开市场（引擎坏了也能用）。
 - **界面诊断**：市场窗口每次渲染都把「哪个页签、渲染了几张卡、示例包名」写进桌面日志，支持包和排查都看得到。
 
+### 3.7 第一方面板插件（0.5.0）
+上游走的是「桌面壳本身是 DSH 插件」的路线，因此它的 profile/市场/终端都长在 dsh 界面里。本项目 0.5.0 用同一条组合路径补上了自己的第一方插件 `@dsh-desktop/dsh-desktop-panel`：
+- **双面包**：Host 半边注册 `/dsh-desktop/*` 路由（状态、插件清单、启停、日志尾巴、诊断导出、客户端回执），Client 半边声明 `dsh.client` 并注册 `settings.section` 槽位，出现在 dsh 的 **设置 → 桌面端**。
+- **不加特权**：只用官方 `slots` 服务和宿主注入的 `react`，不需要 fork 引擎、不覆盖别人的内部实现——这正是上游《插件生态倡议书》里主张的写法。
+- **写法与验证**：Client 半边是手写的 `window.__ModuleLoader__.load({id, factory})` bundle（无打包工具），单元测试里直接执行它并断言 `inject`/`apply` 与槽位名；真机验证靠 `logs/desktop-panel-client.json` 的 `stage`/`seats` 回执，而不是「我看它应该出来了」。
+- **shared toggle format**：面板的启停和桌面市场的启停写同一个 `cordis.patch.yml` 区块，两个界面不会对「哪个插件被关了」产生分歧。
+
 ## 4. 故意没学的四项，以及原因
 
 ### 4.1 工作配置 Profile
@@ -109,6 +117,8 @@ it would expose remote code execution to the network; use 127.0.0.1 instead
 | 插件市场目录 | 应用内实测：`插件目录：100 条（共 13701 条，源 dsh1024）`，界面渲染 100 张卡片 |
 | 插件市场安装 | 隔离 DSH_HOME 下经市场服务实测：搜索「桌宠」→ 选中 `PC2005-cloud/dsh-pet/dsh-pet` → 一键安装 `dsh-pet@0.2.11`，profile 里成为可卸载的层 |
 | 启停与卸载 | 停用/启用写读回一致（`disabled` 行）、卸载后 profile 只剩 `@deepseek-ai/dsh-base`、`@deepseek-ai/dsh-web-app`，卸载核心层被拒绝 |
+| 面板 Host 半边 | 真机 `GET /dsh-desktop/state` → 200 且返回真实外壳信息（shellVersion 0.4.0 / 引擎 0.1.5-rc.2 / 端口 / 日志目录 / tray / market） |
+| 面板 Client 半边 | boot manifest 含 `/plugins/??@dsh-desktop/dsh-desktop-panel/client.js`（HTTP 200 返回该文件），回执文件记录 `{"stage":"seated","seats":"settings.section"}`，即浏览器半边在真实 dsh 界面里注册成功 |
 
 ## 6. 仍然落后的部分（下一步可选）
 1. 窗口模式/原生材质（Mica、亚克力）与自定义标题栏。
