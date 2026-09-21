@@ -42,22 +42,32 @@ async function makeFakePlugin(root: string, version: string): Promise<string> {
 }
 
 describe("renderPluginRows", () => {
-  it("emits the tavily insert and the web searchProvider override", () => {
-    const rows = renderPluginRows(
+  it("inserts the search-engines router and pins ctx.web to it", () => {
+    // The seam refuses to choose between two usable providers, and the official
+    // DeepSeek provider is registered by the base layer whether or not its key
+    // works — so the pin is written unconditionally, and which engine answers is
+    // decided by the plugin's own settings page at request time.
+    for (const settings of [
+      settingsWith(),
       settingsWith({ webSearch: { provider: "tavily", tavily: { apiKey: "tvly-secret", baseURL: "https://api.tavily.com", maxResults: 6 } } }),
-    ).join("\n");
-    expect(rows).toContain("- id: web-search-tavily");
-    expect(rows).toContain("name: '@dsh-desktop/dsh-web-search-tavily'");
-    expect(rows).toContain("maxResults: 6");
-    expect(rows).toContain("- id: web");
-    expect(rows).toContain("searchProvider: tavily");
-    // Secrets never land in the plaintext patch file.
-    expect(rows).not.toContain("tvly-secret");
+    ]) {
+      const rows = renderPluginRows(settings).join("\n");
+      expect(rows).toContain("- id: dsh-search-engines");
+      expect(rows).toContain("name: '@dsh-desktop/dsh-search-engines'");
+      expect(rows).toContain("- id: web");
+      expect(rows).toContain("searchProvider: search-engines");
+      // The old two-option provider row is gone: two registered providers that
+      // could disagree is what made search fail with WEB_PROVIDER_AMBIGUOUS.
+      expect(rows).not.toContain("- id: web-search-tavily");
+      // Secrets never land in the plaintext patch file.
+      expect(rows).not.toContain("tvly-secret");
+    }
   });
 
-  it("emits no web rows while the official provider is selected", () => {
-    // The desktop panel and the model-vision switch always load, so their rows
-    // are the baseline every other assertion here is measured against.
+  it("carries the always-on rows and nothing stateful but the optional ones", () => {
+    // The panel, the capability resolver and the search-engine router always
+    // load: each owns a settings page or an engine-level registration, so their
+    // rows are the baseline every other assertion here is measured against.
     for (const settings of [
       settingsWith(),
       settingsWith({ webSearch: { provider: "deepseek-official", tavily: DEFAULT_SETTINGS.webSearch.tavily } }),
@@ -70,6 +80,12 @@ describe("renderPluginRows", () => {
         "- insert:",
         "    - id: dsh-model-vision",
         "      name: '@dsh-desktop/dsh-model-vision'",
+        "- insert:",
+        "    - id: dsh-search-engines",
+        "      name: '@dsh-desktop/dsh-search-engines'",
+        "- id: web",
+        "  config:",
+        "    searchProvider: search-engines",
       ]);
       expect(rows.join("\n")).not.toContain("web-search-tavily");
       expect(rows.join("\n")).not.toContain("vision-aux");
@@ -183,8 +199,8 @@ describe("plugin rows inside the managed skin patch", () => {
     );
     const merged = mergeSkinPatch("", [], "official", [], pluginRows);
     expect(merged).toContain(MANAGED_START);
-    expect(merged).toContain("- id: web-search-tavily");
-    expect(merged).toContain("searchProvider: tavily");
+    expect(merged).toContain("- id: dsh-search-engines");
+    expect(merged).toContain("searchProvider: search-engines");
     expect(stripManagedPatch(merged).trim()).toBe("");
 
     const again = mergeSkinPatch(merged, [], "official", [], pluginRows);

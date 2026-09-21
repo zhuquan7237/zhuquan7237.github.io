@@ -2,7 +2,7 @@
   "name": "deepseek-desktop",
   "productName": "DeepSeek",
   "desktopName": "DeepSeek",
-  "version": "0.5.5",
+  "version": "0.5.6",
   "description": "Codex-style desktop shell for DeepSeek Harness. The engine is always @deepseek-ai/dsh from npm, so harness updates do not require a new desktop build.",
   "homepage": "https://dsh.zhuquan.xyz",
   "author": "DeepSeek Desktop",
@@ -30,7 +30,7 @@
   "scripts": {
     "postinstall": "node scripts/ensure-electron.cjs",
     "build": "node scripts/run-generate-icon.cjs && tsc && npm run build:plugins",
-    "build:plugins": "node ../scripts/bundle-catalogue.mjs && tsc -p resources/plugins/web-search-tavily && tsc -p resources/plugins/vision-aux && tsc -p resources/plugins/desktop-panel && tsc -p resources/plugins/model-vision",
+    "build:plugins": "node ../scripts/bundle-catalogue.mjs && tsc -p resources/plugins/web-search-tavily && tsc -p resources/plugins/vision-aux && tsc -p resources/plugins/desktop-panel && tsc -p resources/plugins/search-engines && tsc -p resources/plugins/model-vision",
     "start": "npm run build && electron .",
     "test": "vitest run",
     "pack": "npm run build && electron-builder --dir",

@@ -16,6 +16,10 @@ export interface BundledPlugin {
 
 export const BUNDLED_PLUGINS: readonly BundledPlugin[] = [
   { rowId: "web-search-tavily", packageName: "@dsh-desktop/dsh-web-search-tavily", dir: "web-search-tavily" },
+  // Search engines: one routing provider plus the 「搜索引擎」 settings page. It
+  // replaces the shell's two-option dropdown and the official card's bare
+  // Endpoint field, which accepted a URL that could not possibly work.
+  { rowId: "dsh-search-engines", packageName: "@dsh-desktop/dsh-search-engines", dir: "search-engines" },
   { rowId: "vision-aux", packageName: "@dsh-desktop/dsh-vision-aux", dir: "vision-aux" },
   // The panel is a dual-face package: a host half serving /dsh-desktop routes
   // and a browser half that registers the "Desktop" settings section inside the
@@ -230,22 +234,25 @@ export function renderPluginRows(settings: DesktopSettings): string[] {
     "    - id: dsh-model-vision",
     "      name: '@dsh-desktop/dsh-model-vision'",
   );
-  if (settings.webSearch.provider === "tavily") {
-    const tavily = settings.webSearch.tavily;
-    rows.push(
-      "- insert:",
-      "    - id: web-search-tavily",
-      "      name: '@dsh-desktop/dsh-web-search-tavily'",
-      "      config:",
-      `        baseURL: ${yamlString(tavily.baseURL.trim())}`,
-      `        maxResults: ${tavily.maxResults}`,
-      "        includeAnswer: true",
-      // Override the base layer's web row so ctx.web resolves our provider.
-      "- id: web",
-      "  config:",
-      "    searchProvider: tavily",
-    );
-  }
+  // Search engines are chosen from that plugin's own settings page, so the row
+  // and the provider pin are unconditional: which engine answers is a runtime
+  // decision stored in the plugin's namespace, not a shell setting. The pin is
+  // required because the seam refuses to guess between two usable providers
+  // (WEB_PROVIDER_AMBIGUOUS), and the official DeepSeek provider is registered
+  // in the base layer whether or not it has a working key.
+  rows.push(
+    "- insert:",
+    "    - id: dsh-search-engines",
+    "      name: '@dsh-desktop/dsh-search-engines'",
+    "- id: web",
+    "  config:",
+    "    searchProvider: search-engines",
+  );
+  // The old two-option Tavily row is deliberately gone: two providers registered
+  // at once is exactly the ambiguity the seam refuses, and it left search
+  // configurable in two places that could disagree. A key already saved in the
+  // shell's settings still reaches the engine as DSH_TAVILY_API_KEY, which the
+  // search-engines plugin accepts as a fallback while the user migrates.
   const vision = settings.visionAux;
   if (vision.enabled && vision.model.trim().length > 0) {
     rows.push(
