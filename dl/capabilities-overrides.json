@@ -1,0 +1,4 @@
+{
+  "_note": "手工修正，优先级高于所有自动目录源。字段：id 必填；modalities 只认 text/image；context 上下文；output 输出上限。填进来的是实测确定的值，不要猜。",
+  "models": []
+}

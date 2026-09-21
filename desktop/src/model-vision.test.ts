@@ -127,6 +127,9 @@ describe("id normalization and family rules", () => {
     expect(normalizeModelId("gemini-3.5-flash-low")).toBe("gemini-3-5-flash");
     expect(normalizeModelId("z-ai/glm-5.3-flashx")).toBe("glm-5-3-flashx");
     expect(normalizeModelId("claude-opus-4-6-thinking")).toBe("claude-opus-4-6");
+    // A routing decoration routes the same weights and must not hide a hit.
+    expect(normalizeModelId("openai/gpt-oss-20b:free")).toBe("gpt-oss-20b");
+    expect(normalizeModelId("google/gemma-4-31b-it:batch")).toBe("gemma-4-31b-it");
   });
 
   it("recognizes an image generator before the gpt-* vision rule", () => {
@@ -163,6 +166,9 @@ describe("catalogue parsing", () => {
   });
 
   it("points at a public catalogue and refuses a shapeless document", () => {
+    // Its own merged catalogue first, a public directory as the fallback.
+    expect(hostSource).toContain("https://dsh.zhuquan.xyz/dl/capabilities.json");
+    expect(hostSource).toContain("CATALOGUE_FALLBACK_URL");
     expect(hostSource).toContain("https://openrouter.ai/api/v1/models");
     expect(parseCatalogue({ nope: true })).toBeUndefined();
   });
@@ -197,6 +203,10 @@ describe("capability resolution order", () => {
     expect(caps.input).toEqual({ value: undefined, source: "unknown" });
     expect(sourceLabel(caps.input.source)).toBe("未知");
     expect(sourceLabel("catalogue")).toBe("目录");
+    // Family rules see the normalised id, so a dotted family must still match.
+    expect(ruleFor("kimi-k2.7")?.input).toEqual(["text", "image"]);
+    expect(ruleFor("gpt-4.1-mini")?.input).toEqual(["text", "image"]);
+    expect(ruleFor("glm-4.5v")?.input).toEqual(["text", "image"]);
   });
 
   it("narrows every modality list to the engine's own vocabulary", () => {

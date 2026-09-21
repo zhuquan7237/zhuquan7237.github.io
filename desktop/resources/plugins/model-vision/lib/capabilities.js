@@ -38,6 +38,9 @@ const SUFFIXES = /-(thinking|reasoning|non-thinking|high|low|medium|extra-low|mi
 export function normalizeModelId(id) {
     let s = String(id || '').trim().toLowerCase();
     s = s.replace(/^[~@]+/, '');
+    // A routing decoration is not part of the model's identity: `:free`, `:batch`
+    // and friends route the same weights, so they must not hide a catalogue hit.
+    s = s.replace(/:.*$/, '');
     const parts = s.split('/');
     s = parts[parts.length - 1] || s;
     let previous = '';
@@ -70,7 +73,10 @@ export const FAMILY_RULES = [
     },
     {
         name: 'vision-family',
-        test: /(gemini|claude|gpt-4o|gpt-4\.1|gpt-5|gpt-6|glm-4\.5v|glm-5|qwen[0-9.]*-?vl|minimax-m|kimi-k(2\.[5-9]|[3-9])|grok-[2-9]|mimo.*omni|internvl|pixtral|llava|moondream|llama-4|phi-4-multimodal|yi-vl|step-1v|doubao.*vision|seed.*vision)/,
+        // Rules run against the normalised id, where every dot has become a dash:
+        // a family written as `gpt-4.1` or `kimi-k2.7` must accept both spellings or
+        // it silently matches nothing.
+        test: /(gemini|claude|gpt-4o|gpt-4[.-]1|gpt-5|gpt-6|glm-4[.-]5v|glm-5|qwen[0-9.-]*-?vl|minimax-m|kimi-k(2[.-][5-9]|[3-9])|grok-[2-9]|mimo.*omni|internvl|pixtral|llava|moondream|llama-4|phi-4-multimodal|yi-vl|step-1v|doubao.*vision|seed.*vision)/,
         input: ['text', 'image'],
         note: '该家族普遍支持图片输入',
     },

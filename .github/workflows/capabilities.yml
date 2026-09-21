@@ -1,0 +1,53 @@
+name: Model capabilities catalogue
+
+# The catalogue every client resolves models against. Building it centrally is
+# the whole point: a gateway's own /v1/models publishes almost nothing (one of
+# six routes on the author's machine gives a context length, one gives nothing
+# at all), so per-machine guessing was the only alternative. Runs in CI, so it
+# needs neither a developer's machine nor any credential.
+on:
+  schedule:
+    # 22:10 UTC = 06:10 Asia/Shanghai, ahead of the working day.
+    - cron: "10 22 * * *"
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/build-capabilities.mjs"
+      - "scripts/capabilities-*.mjs"
+      - ".github/workflows/capabilities.yml"
+      - "dl/capabilities-overrides.json"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: capabilities
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # The builder borrows the plugin's own normaliser from its built bundle
+      # rather than reimplementing it, so the keys it writes are the keys the
+      # plugin looks up. That bundle is committed; a missing one fails the run.
+      - name: Build the catalogue
+        run: node scripts/build-capabilities.mjs
+      - name: Commit when it actually changed
+        run: |
+          if git diff --quiet -- dl/capabilities.json; then
+            echo "catalogue unchanged"
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add dl/capabilities.json
+          git commit -m "chore(capabilities): refresh the daily model catalogue [skip ci]"
+          git push

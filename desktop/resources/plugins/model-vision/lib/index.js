@@ -34,7 +34,18 @@ export const inject = ['settings', 'llm', 'webServer'];
 /** Settings namespace that owns pi-ai provider routes. */
 export const SETTINGS_NS = 'llm-pi-ai';
 /** Where a refreshed catalogue comes from (public, no key, capability metadata included). */
-export const CATALOGUE_URL = 'https://openrouter.ai/api/v1/models';
+/**
+ * The catalogue this client prefers: built once a day by the repository's own
+ * scheduled job, merged from several public directories, and served from the
+ * project's domain. Every client therefore resolves the same model the same way.
+ */
+export const CATALOGUE_URL = 'https://dsh.zhuquan.xyz/dl/capabilities.json';
+/**
+ * Fallback for a machine that cannot reach the project domain (restricted
+ * network, offline mirror): the same public directory the daily job reads,
+ * fetched directly and merged by this plugin instead.
+ */
+export const CATALOGUE_FALLBACK_URL = 'https://openrouter.ai/api/v1/models';
 /** How long a fetched catalogue is trusted before a refresh is offered. */
 export const CATALOGUE_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 export const ROUTE_OVERVIEW = '/dsh-model-vision/overview';
@@ -141,17 +152,39 @@ export function apply(ctx) {
             return { ok: false, count: Object.keys(catalogue?.keys ?? {}).length, message: '已在刷新中' };
         refreshing = true;
         try {
-            const controller = new AbortController();
-            const timer = setTimeout(() => controller.abort(), 60_000);
-            const response = await fetch(CATALOGUE_URL, { signal: controller.signal });
-            clearTimeout(timer);
-            if (!response.ok)
-                throw new Error(`HTTP ${response.status}`);
-            const keys = catalogueFromModels(await response.json());
-            const count = Object.keys(keys).length;
-            if (count === 0)
-                throw new Error('目录为空（结构可能变了）');
-            catalogue = { version: 1, generatedAt: new Date().toISOString(), source: CATALOGUE_URL, keys };
+            const attempt = async (url, parse) => {
+                const controller = new AbortController();
+                const timer = setTimeout(() => controller.abort(), 60_000);
+                try {
+                    const response = await fetch(url, { signal: controller.signal });
+                    if (!response.ok)
+                        throw new Error(`HTTP ${response.status}`);
+                    const keys = parse(await response.json());
+                    const total = Object.keys(keys).length;
+                    if (total === 0)
+                        throw new Error('目录为空（结构可能变了）');
+                    return { url, keys, total };
+                }
+                finally {
+                    clearTimeout(timer);
+                }
+            };
+            // The project's own catalogue is a merged one, so a client that reaches it
+            // resolves more models than the fallback can — but never fewer, and never
+            // nothing: an unreachable or reshaped artifact falls through to the public
+            // directory instead of leaving the machine with only the bundled snapshot.
+            let picked;
+            const failures = [];
+            try {
+                picked = await attempt(CATALOGUE_URL, (raw) => parseCatalogue(raw)?.keys ?? {});
+            }
+            catch (error) {
+                failures.push(`${CATALOGUE_URL}: ${error instanceof Error ? error.message : String(error)}`);
+                log(`自有能力目录不可用，改用公共目录兜底：${failures[0]}`);
+                picked = await attempt(CATALOGUE_FALLBACK_URL, catalogueFromModels);
+            }
+            const { keys, total: count, url } = picked;
+            catalogue = { version: 1, generatedAt: new Date().toISOString(), source: url, keys };
             state.catalogue = catalogue;
             state.catalogueFetchedAt = Date.now();
             catalogueOrigin = 'network';
