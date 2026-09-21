@@ -80,6 +80,9 @@ function keysFor(id, normalizeModelId) {
     if (!value) continue;
     keys.add(normalizeModelId(value));
     keys.add(normalizeModelId(String(value).replace(/:.*$/, "")));
+    // Alias for a client whose normaliser predates decoration stripping: a
+    // published catalogue must not stop answering an installer already out there.
+    keys.add(String(value).trim().toLowerCase().replace(/^[~@]+/, "").replace(/[._\s]+/g, "-").replace(/-{2,}/g, "-").replace(/^-|-$/g, ""));
   }
   return [...keys].filter(Boolean);
 }
@@ -189,18 +192,25 @@ async function main() {
   const withContext = Object.values(keys).filter((entry) => entry.c !== undefined).length;
 
   // Regression guard: a source changing shape must fail the run, not halve the
-  // catalogue every client silently relies on.
+  // catalogue every client silently relies on. A publication timestamp is not a
+  // change either — rewriting the file for it alone would commit half a megabyte
+  // a day and redeploy the site for nothing, so the timestamp describes the data.
   if (existsSync(OUT)) {
+    let previous;
     try {
-      const previous = JSON.parse(readFileSync(OUT, "utf8"));
-      const before = Object.keys(previous?.keys ?? {}).length;
-      if (before > 200 && total < before * 0.8) {
-        throw new Error(`refusing to publish ${total} keys after ${before} — a source probably changed shape`);
-      }
-      console.log(`previous ${before} keys`);
-    } catch (error) {
-      if (String(error.message).startsWith("refusing")) throw error;
+      previous = JSON.parse(readFileSync(OUT, "utf8"));
+    } catch {
+      previous = undefined;
     }
+    const before = Object.keys(previous?.keys ?? {}).length;
+    if (before > 200 && total < before * 0.8) {
+      throw new Error(`refusing to publish ${total} keys after ${before} — a source probably changed shape`);
+    }
+    if (previous && before === total && JSON.stringify(previous.keys) === JSON.stringify(keys)) {
+      console.log(`unchanged — keeping the published catalogue (${before} keys, ${previous.generatedAt})`);
+      return;
+    }
+    console.log(`previous ${before} keys`);
   }
 
   const doc = {
