@@ -344,6 +344,7 @@
       .btn-danger:hover {
         background: rgba(239, 68, 68, 0.25);
       }
+      .load-error { margin: 0 0 12px; padding: 10px 14px; border-radius: 10px; background: rgba(248,113,113,.12); color: #f87171; font-size: 13px; }
       .pair-box { display: flex; gap: 18px; align-items: flex-start; margin-top: 14px; flex-wrap: wrap; }
       .pair-qr { flex: 0 0 auto; text-align: center; }
       .pair-qr-holder { width: 156px; height: 156px; border-radius: 14px; background: #ffffff; padding: 8px; display: flex; align-items: center; justify-content: center; box-sizing: border-box; }
@@ -736,16 +737,37 @@
         mobile: { publicUrl: "" },
       };
 
+      // Keys the page never displays: keep what the main process handed us and
+      // only replace it when the user actually types in the field. Saving the form
+      // again used to write an empty string over a saved key — that is how a
+      // Tavily key disappeared for users who opened this window after 0.5.6.
+      const loadedSecrets = { vision: "", tavily: "" };
+      const secretDirty = { vision: false, tavily: false };
+      // Saving a form that never loaded would write the defaults over the real
+      // settings, so the save button stays disabled until initData() finishes.
+      let formReady = false;
+
       // Load Settings
       async function initData() {
+        $("btnSave").disabled = true;
         if (window.desktop && window.desktop.getVersion) {
           try {
             $("versionBadge").textContent = `Desktop v${await window.desktop.getVersion()}`;
           } catch (e) {}
         }
-        const s = window.desktop && window.desktop.getSettings
-          ? await window.desktop.getSettings()
-          : previewSettings;
+        let s;
+        try {
+          s = window.desktop && window.desktop.getSettings
+            ? await window.desktop.getSettings()
+            : previewSettings;
+        } catch (error) {
+          const message = (error && error.message) ? error.message : String(error);
+          document.body.insertAdjacentHTML(
+            "afterbegin",
+            `<div class="load-error">读不到当前设置（${message}），已禁止保存以免覆盖原有配置。请关闭本窗口后重试。</div>`,
+          );
+          return;
+        }
 
         $("channel").value = s.channel === "next" ? "next" : "latest";
         $("auto").checked = s.autoUpdateHarness !== false;
@@ -766,12 +788,19 @@
         $("visionBase").value = vision.baseURL || "";
         $("visionKey").value = vision.apiKey || "";
         $("visionModel").value = vision.model || "minimax-m3";
+        loadedSecrets.vision = vision.apiKey || "";
 
         const search = s.webSearch || previewSettings.webSearch;
         $("searchProvider").value = search.provider === "tavily" ? "tavily" : "deepseek-official";
         $("tavilyKey").value = (search.tavily && search.tavily.apiKey) || "";
+        loadedSecrets.tavily = (search.tavily && search.tavily.apiKey) || "";
+
+        $("visionKey").addEventListener("input", () => { secretDirty.vision = true; });
+        $("tavilyKey").addEventListener("input", () => { secretDirty.tavily = true; });
 
         renderProvidersUI();
+        formReady = true;
+        $("btnSave").disabled = false;
       }
 
       // Render Providers and Models List
@@ -881,6 +910,10 @@
 
       // Save
       $("btnSave").onclick = async () => {
+        if (!formReady) {
+          window.alert("设置还没加载完，等一下再保存（现在保存会覆盖原有配置）。");
+          return;
+        }
         $("btnSave").disabled = true;
         $("btnSave").textContent = "正在保存…";
 
@@ -907,7 +940,7 @@
           visionAux: {
             enabled: $("visionEnabled").checked,
             baseURL: $("visionBase").value.trim(),
-            apiKey: $("visionKey").value.trim(),
+            apiKey: secretDirty.vision ? $("visionKey").value.trim() : loadedSecrets.vision,
             model: $("visionModel").value.trim(),
             timeoutMs: (current.visionAux && current.visionAux.timeoutMs) || 60000,
             skipWhenUnknown: (current.visionAux && current.visionAux.skipWhenUnknown) || false,
@@ -915,7 +948,7 @@
           webSearch: {
             provider: $("searchProvider").value === "tavily" ? "tavily" : "deepseek-official",
             tavily: {
-              apiKey: $("tavilyKey").value.trim(),
+              apiKey: secretDirty.tavily ? $("tavilyKey").value.trim() : loadedSecrets.tavily,
               baseURL: (current.webSearch && current.webSearch.tavily && current.webSearch.tavily.baseURL) || "https://api.tavily.com",
               maxResults: (current.webSearch && current.webSearch.tavily && current.webSearch.tavily.maxResults) || 8,
             },
