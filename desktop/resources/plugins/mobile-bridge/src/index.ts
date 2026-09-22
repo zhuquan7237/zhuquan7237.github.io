@@ -55,9 +55,11 @@ import {
   overlayFor,
 } from './models.js'
 import { qrSvg } from './qr.js'
+import { normalizeSince } from './hello.js'
 import { type WsConnection, acceptUpgrade } from './ws.js'
 
 export * from './devices.js'
+export * from './hello.js'
 export * from './models.js'
 export * from './qr.js'
 export * from './ws.js'
@@ -355,6 +357,12 @@ export function apply(ctx: Context, config: { publicUrl?: string } = {}): void {
   const frames: EventFrame[] = []
   const clients = new Map<WsConnection, { deviceId: string; since: number }>()
   let seq = 0
+  /**
+   * Names this counter's lifetime. `seq` restarts with the process, so a phone
+   * whose stored watermark outlives a restart must not be trusted (see
+   * `normalizeSince`); the epoch is what lets a client notice that happened.
+   */
+  const epoch = randomUUID()
   /** Highest event seq seen per session, from the live event stream. */
   const headSeqs = new Map<string, number>()
 
@@ -1187,11 +1195,12 @@ document.addEventListener('click', async (event) => {
               try {
                 const parsed = JSON.parse(text) as Record<string, unknown>
                 if (parsed.type === 'hello') {
-                  const since = Number(parsed.since ?? 0)
                   const state = clients.get(client)
-                  if (state !== undefined) state.since = Number.isFinite(since) ? since : 0
-                  const backlog = frames.filter((frame) => frame.seq > state!.since)
-                  client.send(JSON.stringify({ kind: 'hello', seq, time: Date.now(), data: { server: { bridge: 'dsh-mobile-bridge', version: 1 }, replay: backlog.length } }))
+                  const oldest = frames.length > 0 ? (frames[0] as EventFrame).seq : undefined
+                  const info = normalizeSince(Number(parsed.since ?? 0), seq, oldest)
+                  if (state !== undefined) state.since = info.since
+                  const backlog = frames.filter((frame) => frame.seq > info.since)
+                  client.send(JSON.stringify({ kind: 'hello', seq, time: Date.now(), data: { server: { bridge: 'dsh-mobile-bridge', version: 1, epoch }, replay: backlog.length, gap: info.gap } }))
                   for (const frame of backlog) client.send(JSON.stringify(frame))
                   return
                 }
@@ -1205,7 +1214,7 @@ document.addEventListener('click', async (event) => {
         )
         if (connection !== undefined) {
           clients.set(connection, { deviceId: auth.device.id, since: 0 })
-          connection.send(JSON.stringify({ kind: 'hello', seq, time: Date.now(), data: { server: { bridge: 'dsh-mobile-bridge', version: 1 }, replay: 0 } }))
+          connection.send(JSON.stringify({ kind: 'hello', seq, time: Date.now(), data: { server: { bridge: 'dsh-mobile-bridge', version: 1, epoch }, replay: 0, gap: false } }))
           log(`设备已连接事件流：${auth.device.name}（当前 ${clients.size} 条连接）`)
         }
       },
