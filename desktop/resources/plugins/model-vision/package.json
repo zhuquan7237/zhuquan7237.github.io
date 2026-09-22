@@ -1,7 +1,7 @@
 {
   "name": "@dsh-desktop/dsh-model-vision",
-  "description": "Model capabilities that look after themselves for DeepSeek Harness: resolve whether each model accepts images, its context window and its output cap from the endpoint's own metadata, a cross-vendor catalogue refreshed daily, and family rules — then apply them with a diff",
-  "version": "0.2.1",
+  "description": "Model capabilities that look after themselves for DeepSeek Harness: resolve whether each model accepts images, its context window, its output cap and its selectable reasoning levels from the endpoint's own metadata, a cross-vendor catalogue refreshed daily, and family rules — then apply them with a diff",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "main": "lib/index.js",

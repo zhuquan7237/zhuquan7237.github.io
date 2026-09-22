@@ -57,12 +57,18 @@ describe("settings page keeps what the user already had", () => {
 
   it("matches the harness light palette and animates only cheap properties", async () => {
     const html = await readFile(path.join(__dirname, "..", "resources", "settings.html"), "utf8");
+    // Values measured off the engine's own settings dialog on 2026-09-22 (see
+    // the comment at the top of the stylesheet): they are the whole point of
+    // this page looking like the product it configures.
     for (const token of [
       "--bg-main: #ffffff",
-      "--bg-card: #f8f9fa",
-      "--border-color: #e5e7eb",
-      "--text-main: #111827",
-      "--accent: #2563eb",
+      "--bg-panel: #f5f6f7",
+      "--bg-selected: #ebeef2",
+      "--text-main: #0f1115",
+      "--text-muted: #61666b",
+      "--text-dim: #81858c",
+      "--accent: #4176e6",
+      "--radius-control: 18px",
       "color-scheme: light",
     ]) {
       expect(html).toContain(token);

@@ -95,6 +95,40 @@ function engineModalities(list) {
 
 const positive = (value) => (typeof value === "number" && Number.isFinite(value) && value > 0 ? Math.floor(value) : undefined);
 
+/**
+ * Reasoning levels the engine's selector can name (dsh-llm-pi-ai THINKING_LEVELS).
+ * A source that spells a level differently cannot be offered as that level, so
+ * unknown spellings are dropped here rather than shipped for clients to ignore.
+ */
+const REASONING_LEVELS = new Set(["off", "minimal", "low", "medium", "high", "xhigh", "max"]);
+
+/** Keep only effort spellings a client can actually offer as levels. */
+function engineEfforts(values) {
+  const kept = (Array.isArray(values) ? values : [])
+    .map((value) => String(value ?? "").trim().toLowerCase())
+    .filter((value) => REASONING_LEVELS.has(value));
+  return [...new Set(kept)];
+}
+
+/**
+ * One directory row's reasoning: `0` for a model that does not reason, `1` for
+ * one that reasons with no named levels, or the effort spellings it accepts.
+ */
+function reasoningFields(model) {
+  const options = Array.isArray(model?.reasoning_options) ? model.reasoning_options : [];
+  const efforts = [];
+  let toggle = false;
+  for (const option of options) {
+    const type = String(option?.type ?? "");
+    if (type === "effort") efforts.push(...engineEfforts(option?.values));
+    else if (type === "toggle" || type === "budget_tokens") toggle = true;
+  }
+  if (efforts.length > 0) return [...new Set(efforts)];
+  if (toggle) return 1;
+  if (model?.reasoning === false) return 0;
+  return undefined;
+}
+
 /** One provider directory → the same flat shape for every source. */
 function openRouterModels(doc) {
   const rows = Array.isArray(doc?.data) ? doc.data : [];
@@ -103,6 +137,9 @@ function openRouterModels(doc) {
     modalities: engineModalities(row?.architecture?.input_modalities),
     context: positive(row?.context_length),
     output: positive(row?.top_provider?.max_completion_tokens ?? row?.per_request_limits?.max_completion_tokens),
+    // OpenRouter names the reasoning parameters a model accepts but not the
+    // levels, so this is the weakest positive signal: "it reasons".
+    reasoning: (row?.supported_parameters ?? []).some((name) => name === "reasoning" || name === "reasoning_effort") ? 1 : undefined,
   }));
 }
 
@@ -119,6 +156,7 @@ function modelsDevModels(doc) {
         modalities: modalities.length > 0 ? modalities : attachment ? ["text", "image"] : ["text"],
         context: positive(model?.limit?.context),
         output: positive(model?.limit?.output),
+        reasoning: reasoningFields(model),
       });
     }
   }
@@ -163,7 +201,13 @@ async function main() {
   if (existsSync(OVERRIDES)) {
     const raw = JSON.parse(readFileSync(OVERRIDES, "utf8"));
     const rows = Array.isArray(raw?.models) ? raw.models : [];
-    layers.push(["manual", rows.map((row) => ({ id: String(row?.id ?? ""), modalities: engineModalities(row?.modalities), context: positive(row?.context), output: positive(row?.output) }))]);
+    layers.push(["manual", rows.map((row) => ({
+      id: String(row?.id ?? ""),
+      modalities: engineModalities(row?.modalities),
+      context: positive(row?.context),
+      output: positive(row?.output),
+      reasoning: row?.reasoning === undefined ? undefined : Array.isArray(row.reasoning) ? engineEfforts(row.reasoning) : positive(row.reasoning),
+    }))]);
     console.log(`overrides ${rows.length}`);
   }
   if (fetched.modelsdev) layers.push(["models.dev", modelsDevModels(fetched.modelsdev)]);
@@ -180,6 +224,7 @@ async function main() {
         if (row.modalities.length > 0 && !entry.m) entry.m = row.modalities;
         if (row.context !== undefined && !entry.c) entry.c = row.context;
         if (row.output !== undefined && !entry.o) entry.o = row.output;
+        if (row.reasoning !== undefined && entry.r === undefined) entry.r = row.reasoning;
         if (!entry.s) entry.s = source;
       }
       kept += 1;
@@ -190,6 +235,7 @@ async function main() {
   const total = Object.keys(keys).length;
   const withImage = Object.values(keys).filter((entry) => (entry.m ?? []).includes("image")).length;
   const withContext = Object.values(keys).filter((entry) => entry.c !== undefined).length;
+  const withReasoning = Object.values(keys).filter((entry) => Array.isArray(entry.r)).length;
 
   // Regression guard: a source changing shape must fail the run, not halve the
   // catalogue every client silently relies on. A publication timestamp is not a
@@ -214,19 +260,20 @@ async function main() {
   }
 
   const doc = {
-    version: 1,
+    version: 2,
     generatedAt: new Date().toISOString(),
     source: "dsh.zhuquan.xyz",
     counts,
     total,
     withImage,
     withContext,
+    withReasoning,
     keys,
   };
   mkdirSync(path.dirname(OUT), { recursive: true });
   writeFileSync(OUT, `${JSON.stringify(doc)}\n`, "utf8");
   const bytes = readFileSync(OUT).length;
-  console.log(`wrote ${path.relative(ROOT, OUT)} — ${total} keys, ${withImage} image, ${withContext} context, ${(bytes / 1024).toFixed(1)} KB`);
+  console.log(`wrote ${path.relative(ROOT, OUT)} — ${total} keys, ${withImage} image, ${withContext} context, ${withReasoning} with effort levels, ${(bytes / 1024).toFixed(1)} KB`);
   if (problems.length > 0) console.log(`incomplete sources: ${problems.join("; ")}`);
 }
 

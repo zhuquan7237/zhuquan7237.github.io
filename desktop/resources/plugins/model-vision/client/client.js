@@ -68,6 +68,9 @@ window.__ModuleLoader__.load({
         images: "图片",
         context: "上下文",
         output: "输出上限",
+        reasoning: "推理",
+        noReasoning: "无推理",
+        reasoningToggle: "开关",
         sourceLabel: "来源",
         srcManual: "手动",
         srcUpstream: "上游",
@@ -123,6 +126,9 @@ window.__ModuleLoader__.load({
         images: "images",
         context: "context",
         output: "output",
+        reasoning: "reasoning",
+        noReasoning: "none",
+        reasoningToggle: "on/off",
         sourceLabel: "source",
         srcManual: "manual",
         srcUpstream: "upstream",
@@ -278,6 +284,15 @@ window.__ModuleLoader__.load({
         ],
       );
 
+    const reasoningText = (t, cap) =>
+      !cap || !cap.value
+        ? t.srcUnknown
+        : cap.value.kind === "efforts"
+          ? cap.value.levels.join("/")
+          : cap.value.kind === "none"
+            ? t.noReasoning
+            : t.reasoningToggle;
+
     function ModelRow(props) {
       const t = props.t;
       const route = props.route;
@@ -325,6 +340,9 @@ window.__ModuleLoader__.load({
                 ? chip("ctx", `${t.context} ${formatTokens(caps.contextWindow.value)}`, V.dim)
                 : chip("ctx", `${t.context} ${t.srcUnknown}`, V.bad),
               caps.maxTokens && caps.maxTokens.value ? chip("out", `${t.output} ${formatTokens(caps.maxTokens.value)}`, V.dim) : null,
+              caps.reasoning && caps.reasoning.value
+                ? chip("eff", `${t.reasoning} ${reasoningText(t, caps.reasoning)}`, caps.reasoning.value.kind === "efforts" ? V.good : V.dim)
+                : null,
               chip("src", `${t.sourceLabel} · ${sourceText(t, input.source)}`, sourceColor(input.source)),
               model.present ? null : chip("new", "new", V.good),
             ]),

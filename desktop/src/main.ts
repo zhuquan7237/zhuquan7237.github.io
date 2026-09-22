@@ -268,7 +268,7 @@ async function createMain(url: string, version: string): Promise<void> {
     icon: windowIcon(),
     // The harness UI itself has no menu bar: hide the native one so the window
     // matches it. Alt still reveals it, and every accelerator stays registered.
-    autoHideMenuBar: true,
+    autoHideMenuBar: false,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
@@ -1473,11 +1473,13 @@ async function openEngineSettings(section: string): Promise<{ ok: boolean; error
 
 async function openSettings(): Promise<void> {
   const win = new BrowserWindow({
-    width: 520,
-    height: 700,
+    // Matches the engine's own settings dialog (800x800 panel + rails); the page
+    // inside is the same harness language, so the two read as one product.
+    width: 860,
+    height: 800,
     parent: mainWindow ?? undefined,
     modal: Boolean(mainWindow),
-    backgroundColor: "#0c0e14",
+    backgroundColor: "#ffffff",
     icon: windowIcon(),
     title: "引擎设置",
     webPreferences: {

@@ -21,12 +21,16 @@
 
 import {
   MODALITIES,
+  REASONING_LEVELS,
   type CapabilitySource,
   type CapabilityOverride,
   type Catalogue,
   type Modality,
   type ModelCapabilities,
+  type ReasoningCapability,
+  type ReasoningLevel,
   resolveCapabilities,
+  wireReasoning,
 } from './capabilities.js'
 
 /** One model as the engine lists it for a route. */
@@ -38,7 +42,7 @@ export interface RouteModel {
 
 /** A field the plan proposes to write. */
 export interface FieldChange {
-  field: 'input' | 'contextWindow' | 'maxTokens'
+  field: 'input' | 'contextWindow' | 'maxTokens' | 'reasoningEfforts'
   from: unknown
   to: unknown
   source: CapabilitySource
@@ -65,7 +69,10 @@ export interface RoutePlan {
   sources: Partial<Record<CapabilitySource, number>>
 }
 
-const FIELDS = ['input', 'contextWindow', 'maxTokens'] as const
+const FIELDS = ['input', 'contextWindow', 'maxTokens', 'reasoningEfforts'] as const
+
+/** Every field this module may write, except the reasoning entry itself. */
+type SimpleField = Exclude<(typeof FIELDS)[number], 'reasoningEfforts'>
 
 /** Normalize a stored modality list the way the engine reads it. */
 export function normalizedInput(value: unknown): Modality[] | undefined {
@@ -76,7 +83,29 @@ export function normalizedInput(value: unknown): Modality[] | undefined {
 
 function same(a: unknown, b: unknown): boolean {
   if (Array.isArray(a) && Array.isArray(b)) return a.length === b.length && a.every((v, i) => v === b[i])
+  if (typeof a === 'object' && a !== null && typeof b === 'object' && b !== null) {
+    const left = a as Record<string, unknown>
+    const right = b as Record<string, unknown>
+    const keys = Object.keys(left).sort()
+    const other = Object.keys(right).sort()
+    return keys.length === other.length && keys.every((key, index) => key === other[index] && left[key] === right[key])
+  }
   return a === b
+}
+
+/**
+ * A stored `reasoningEfforts` value read back as a capability, so an entry the
+ * user already set is a *declaration* — never silently overwritten by a source.
+ * @param value - the stored entry field.
+ * @returns the capability it describes, or `undefined` when it describes none.
+ */
+export function declaredReasoning(value: unknown): ReasoningCapability | undefined {
+  if (value === false) return { kind: 'none' }
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return undefined
+  const levels = Object.entries(value as Record<string, unknown>)
+    .filter(([level, wire]) => (REASONING_LEVELS as readonly string[]).includes(level) && typeof wire === 'string' && wire.length > 0)
+    .map(([level]) => level as ReasoningLevel)
+  return levels.length > 0 ? { kind: 'efforts', levels } : undefined
 }
 
 /**
@@ -96,7 +125,7 @@ export function planRoute(options: {
   models: readonly RouteModel[]
   stored: readonly Record<string, unknown>[]
   catalogue?: Catalogue | undefined
-  upstream?: Record<string, { input?: Modality[]; contextWindow?: number; maxTokens?: number }> | undefined
+  upstream?: Record<string, { input?: Modality[]; contextWindow?: number; maxTokens?: number; reasoning?: ReasoningCapability }> | undefined
   overrides?: Record<string, CapabilityOverride> | undefined
 }): RoutePlan {
   const storedById = new Map<string, Record<string, unknown>>()
@@ -114,30 +143,30 @@ export function planRoute(options: {
       override: options.overrides?.[model.id],
       upstream: options.upstream?.[model.id],
       catalogue: options.catalogue,
-      declared: { input: normalizedInput(current?.input) },
+      declared: { input: normalizedInput(current?.input), reasoning: declaredReasoning(current?.reasoningEfforts) },
     })
     const changes: PlannedModel['changes'] = []
     for (const field of FIELDS) {
-      const resolved = capabilities[field]
+      const resolved =
+        field === 'reasoningEfforts'
+          ? ({ value: wireReasoning(capabilities.reasoning.value), source: capabilities.reasoning.source } as const)
+          : { value: capabilities[field as SimpleField].value as unknown, source: capabilities[field as SimpleField].source }
       const value = resolved.value
+      // `undefined` is not "leave it alone" for every field: for reasoning it is
+      // the resolver saying "this route states nothing writable", and the entry
+      // must keep whatever it has.
       if (value === undefined) continue
       sources[resolved.source] = (sources[resolved.source] ?? 0) + 1
       const previous = current?.[field]
-      if (field === 'input' && same(normalizedInput(previous), value)) continue
-      if (field !== 'input' && same(previous, value)) continue
+      const normalized: unknown = field === 'input' ? normalizedInput(previous) : previous
+      if (same(normalized, value)) continue
       const verdict: 'add' | 'enrich' | 'correct' =
         current === undefined || previous === undefined ? 'add' : 'correct'
       if (verdict === 'add' && current !== undefined && previous === undefined) {
         changes.push({ field, from: previous, to: value, source: resolved.source, verdict: 'enrich' })
         continue
       }
-      changes.push({
-        field,
-        from: field === 'input' ? normalizedInput(previous) ?? previous : previous,
-        to: value,
-        source: resolved.source,
-        verdict,
-      })
+      changes.push({ field, from: normalized ?? previous, to: value, source: resolved.source, verdict })
     }
     const unknown = capabilities.input.value === undefined && capabilities.contextWindow.value === undefined
     models.push({

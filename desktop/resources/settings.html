@@ -6,30 +6,45 @@
     <title>DeepSeek 引擎与模型设置</title>
     <link rel="stylesheet" href="./theme.css" />
     <style>
-      /* Light palette measured off the Harness desktop window: white canvas,
-         #f8f9fa panels, #e5e7eb hairlines, #111827/#4b5563/#9ca3af text, #2563eb
-         accent — the settings window must look like the engine it configures. */
+      /* DeepSeek Harness 的界面语言，逐项量自引擎自带的「设置」弹窗
+         （2026-09-22，1280x860 / dpr1 / 浅色主题）：
+           · 面板 #ffffff，圆角 32，外圈 0.5px 发丝描边，无投影
+           · 左侧导航 188px；导航项 40px 高、圆角 12、内边距 9/16/9/12、字号 14
+             未选中透明，悬停 #f5f6f7，选中 #ebeef2
+           · 内容区左右留白 24；分组之间 1px 发丝线；每行上下 16px
+           · 行 = 14px 标题 + 12px #81858c 说明；控件挂在右侧
+           · 选择器/输入 36px 高、#f5f6f7 底、圆角 18、左右内边距 14，无边框
+           · 按钮为胶囊：主按钮 #4176e6 白字；次按钮 #f5f6f7
+           · 文本色 #0f1115 / #61666b / #81858c；强调色 #4176e6
+         窗口只做「像引擎自己的设置页」这件事：不引入渐变、不引入模糊。 */
       :root {
         color-scheme: light;
         --bg-main: #ffffff;
-        --bg-card: #f8f9fa;
-        --bg-card-hover: #f3f4f6;
+        --bg-panel: #f5f6f7;
+        --bg-selected: #ebeef2;
+        --bg-hover: #f5f6f7;
+        --bg-card: #f5f6f7;
+        --bg-card-hover: #eff1f3;
         --bg-card-sub: #ffffff;
-        --border-color: #e5e7eb;
-        --border-focus: #2563eb;
-        --text-main: #111827;
-        --text-muted: #4b5563;
-        --text-dim: #9ca3af;
-        --accent: #2563eb;
-        --accent-glow: rgba(37, 99, 235, 0.14);
+        --border-color: rgba(0, 0, 0, 0.12);
+        --border-soft: rgba(0, 0, 0, 0.07);
+        --border-focus: #4176e6;
+        --text-main: #0f1115;
+        --text-muted: #61666b;
+        --text-dim: #81858c;
+        --accent: #4176e6;
+        --accent-glow: rgba(65, 118, 230, 0.18);
         --success: #17803d;
         --success-dim: rgba(23, 128, 61, 0.1);
         --warning: #b45309;
         --danger: #dc2626;
         --danger-dim: rgba(220, 38, 38, 0.1);
-        --radius-card: 14px;
         --radius-sm: 8px;
-        --radius-full: 9999px;
+        --radius-card: 12px;
+        --radius-control: 18px;
+        --radius-full: 999px;
+        /* 导航轨宽度与引擎弹窗一致（188px），窗口更窄时自动收窄 */
+        --rail: 188px;
       }
 
       * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -37,218 +52,130 @@
         height: 100%;
         background: var(--bg-main);
         color: var(--text-main);
-        font-family: var(--font, ui-sans-serif, system-ui, -apple-system, sans-serif);
+        font-family: var(--font, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif);
         font-size: 13px;
         line-height: 1.5;
         overflow: hidden;
         user-select: none;
       }
 
+      /* 两列栅格：顶栏与底栏横跨，中间是导航轨 + 内容区 */
       .app-layout {
-        display: flex;
-        flex-direction: column;
+        display: grid;
+        grid-template-columns: minmax(148px, var(--rail)) 1fr;
+        grid-template-rows: auto minmax(0, 1fr) auto;
         height: 100vh;
       }
 
-      /* Header */
       .header {
-        padding: 16px 20px 12px;
-        border-bottom: 1px solid var(--border-color);
-        background: var(--bg-main);
+        grid-column: 1 / -1;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        flex-shrink: 0;
+        gap: 12px;
+        padding: 18px 24px 10px;
       }
-      .header-title-group {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
-      .header-icon {
-        width: 28px;
-        height: 28px;
-        border-radius: 8px;
-        background: linear-gradient(135deg, #1d4ed8, #3b82f6);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #fff;
-        font-weight: bold;
-        font-size: 14px;
-        box-shadow: 0 4px 12px var(--accent-glow);
-      }
+      .header-title-group { display: flex; align-items: center; gap: 10px; min-width: 0; }
       .header h1 {
         font-size: 16px;
-        font-weight: 600;
+        font-weight: 500;
         letter-spacing: -0.01em;
-      }
-      .badge {
-        font-size: 11px;
-        padding: 2px 8px;
-        border-radius: var(--radius-full);
-        background: var(--bg-card);
-        color: var(--text-muted);
-        border: 1px solid var(--border-color);
-      }
-      .badge.success {
-        background: var(--success-dim);
-        color: var(--success);
-        border-color: rgba(23, 128, 61, 0.25);
+        color: var(--text-main);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
 
-      /* Tabs */
+      /* 左侧导航轨 */
       .nav-tabs {
+        grid-column: 1;
+        grid-row: 2;
         display: flex;
+        flex-direction: column;
         gap: 4px;
-        padding: 8px 16px;
-        background: var(--bg-card-sub);
-        border-bottom: 1px solid var(--border-color);
-        flex-shrink: 0;
+        padding: 0 12px;
+        min-height: 0;
+        overflow-y: auto;
       }
       .nav-tab {
-        flex: 1;
         display: flex;
         align-items: center;
-        justify-content: center;
-        gap: 6px;
-        padding: 8px 12px;
-        border-radius: var(--radius-sm);
-        color: var(--text-muted);
+        gap: 8px;
+        height: 40px;
+        padding: 9px 16px 9px 12px;
+        border: 0;
+        border-radius: 12px;
         background: transparent;
-        border: none;
-        font-size: 12.5px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: color 160ms cubic-bezier(0.2, 0, 0, 1), background-color 160ms cubic-bezier(0.2, 0, 0, 1), border-color 160ms cubic-bezier(0.2, 0, 0, 1);
-      }
-      .nav-tab:hover {
         color: var(--text-main);
-        background: #f3f4f6;
-      }
-      .nav-tab.active {
-        color: var(--text-main);
-        background: var(--bg-main);
-        border: 1px solid var(--border-color);
-        box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
-      }
-
-      /* Scroll Content */
-      .tab-content {
-        flex: 1;
-        overflow-y: auto;
-        padding: 16px 20px;
-      }
-      .tab-panel {
-        display: none;
-        flex-direction: column;
-        gap: 14px;
-      }
-      .tab-panel.active {
-        display: flex;
-      }
-
-      /* Cards & Sections */
-      .card {
-        background: var(--bg-card);
-        border: 1px solid var(--border-color);
-        border-radius: var(--radius-card);
-        padding: 14px 16px;
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-        transition: border-color 160ms cubic-bezier(0.2, 0, 0, 1), background-color 160ms cubic-bezier(0.2, 0, 0, 1);
-      }
-      .card:hover {
-        border-color: #d8dce3;
-      }
-      .card-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-      }
-      .card-title {
+        font-family: inherit;
         font-size: 14px;
-        font-weight: 600;
-        display: flex;
-        align-items: center;
-        gap: 8px;
+        text-align: left;
+        cursor: pointer;
+        transition: background-color 0.12s ease;
       }
-      .card-desc {
-        font-size: 12px;
-        color: var(--text-muted);
-        line-height: 1.45;
-      }
+      .nav-tab:hover { background: var(--bg-hover); }
+      .nav-tab.active { background: var(--bg-selected); }
+      .nav-tab svg { flex-shrink: 0; opacity: 0.7; }
+      .nav-tab span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-      /* Form Controls */
-      .form-group {
+      /* 右侧内容区 */
+      .tab-content {
+        grid-column: 2;
+        grid-row: 2;
+        min-width: 0;
+        min-height: 0;
+        overflow-y: auto;
+        padding: 4px 24px 24px;
+      }
+      .tab-content::-webkit-scrollbar { width: 10px; }
+      .tab-content::-webkit-scrollbar-thumb {
+        background: rgba(0, 0, 0, 0.14);
+        border: 3px solid var(--bg-main);
+        border-radius: var(--radius-full);
+      }
+      .tab-panel { display: none; }
+      .tab-panel.active { display: flex; flex-direction: column; }
+
+      /* 分组：引擎里是留白 + 发丝线，不用卡片底色 */
+      .card {
         display: flex;
         flex-direction: column;
         gap: 6px;
+        padding: 16px 0;
+        border-bottom: 1px solid var(--border-soft);
       }
-      .form-label {
-        font-size: 12px;
-        color: var(--text-muted);
-        font-weight: 500;
-        display: flex;
-        justify-content: space-between;
-      }
-      .input-text, .select-input {
-        width: 100%;
-        background: var(--bg-card-sub);
-        border: 1px solid var(--border-color);
-        border-radius: var(--radius-sm);
-        color: var(--text-main);
-        padding: 8px 12px;
-        font-size: 13px;
-        font-family: inherit;
-        outline: none;
-        transition: border-color 160ms cubic-bezier(0.2, 0, 0, 1), box-shadow 160ms cubic-bezier(0.2, 0, 0, 1);
-      }
-      .input-text:focus, .select-input:focus {
-        border-color: var(--border-focus);
-        box-shadow: 0 0 0 2px var(--accent-glow);
-      }
-      .input-text::placeholder {
-        color: var(--text-dim);
-      }
+      .card:last-child { border-bottom: 0; }
+      .card-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+      .card-title { font-size: 14px; font-weight: 500; color: var(--text-main); }
+      .card-desc { font-size: 12px; color: var(--text-dim); }
+      .row-flex { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+      .form-group { display: flex; flex-direction: column; gap: 6px; padding: 6px 0; }
+      .form-label { font-size: 12px; color: var(--text-muted); }
 
-      .row-flex {
-        display: flex;
-        gap: 8px;
-        align-items: center;
-      }
-
-      /* Switch Component */
+      /* 行：左侧标题+说明，右侧控件 */
       .switch-label {
         display: flex;
         align-items: center;
         justify-content: space-between;
+        gap: 24px;
+        padding: 6px 0;
         cursor: pointer;
-        gap: 12px;
       }
-      .switch-info {
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-      }
-      .switch-title {
-        font-size: 13.5px;
-        font-weight: 500;
-        color: var(--text-main);
-      }
-      .switch-desc {
-        font-size: 12px;
-        color: var(--text-muted);
-      }
+      .switch-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; padding-right: 8px; }
+      .switch-title { font-size: 14px; color: var(--text-main); }
+      .switch-desc { font-size: 12px; color: var(--text-dim); }
+
+      /* 开关：引擎的胶囊开关，开启态用强调色 */
+      .switch-label input[type="checkbox"] { display: none; }
+      input[type="checkbox"] { display: none; }
       .switch-toggle {
         position: relative;
-        width: 38px;
+        width: 40px;
         height: 22px;
-        background: #d1d5db;
-        border-radius: var(--radius-full);
-        transition: background-color 160ms cubic-bezier(0.2, 0, 0, 1);
         flex-shrink: 0;
+        background: #e3e5e8;
+        border-radius: var(--radius-full);
+        transition: background-color 0.12s ease;
       }
       .switch-toggle::after {
         content: "";
@@ -259,183 +186,133 @@
         height: 18px;
         background: #fff;
         border-radius: 50%;
-        transition: transform 180ms cubic-bezier(0.2, 0, 0, 1);
         box-shadow: 0 1px 3px rgba(16, 24, 40, 0.24);
+        transition: transform 0.12s ease;
       }
-      input[type="checkbox"] {
-        display: none;
+      input[type="checkbox"]:checked + .switch-toggle { background: var(--accent); }
+      input[type="checkbox"]:checked + .switch-toggle::after { transform: translateX(18px); }
+      input[type="checkbox"]:disabled + .switch-toggle { opacity: 0.45; }
+
+      /* 输入与下拉：36px 高、浅底、无边框、胶囊圆角 */
+      .input-text, .select-input {
+        height: 36px;
+        width: 100%;
+        padding: 0 14px;
+        border: 0;
+        border-radius: var(--radius-control);
+        background: var(--bg-panel);
+        color: var(--text-main);
+        font-family: inherit;
+        font-size: 14px;
+        outline: none;
+        transition: box-shadow 0.12s ease, background-color 0.12s ease;
       }
-      input[type="checkbox"]:checked + .switch-toggle {
-        background: var(--accent);
+      .input-text::placeholder { color: var(--text-dim); }
+      .input-text:focus, .select-input:focus {
+        background: var(--bg-main);
+        box-shadow: inset 0 0 0 1px var(--accent), 0 0 0 3px var(--accent-glow);
       }
-      input[type="checkbox"]:checked + .switch-toggle::after {
-        transform: translateX(16px);
+      .select-input { appearance: none; padding-right: 34px; cursor: pointer;
+        background-image: linear-gradient(45deg, transparent 50%, var(--text-muted) 50%),
+                          linear-gradient(135deg, var(--text-muted) 50%, transparent 50%);
+        background-position: calc(100% - 19px) 15px, calc(100% - 14px) 15px;
+        background-size: 5px 5px, 5px 5px;
+        background-repeat: no-repeat;
       }
 
-      /* Provider Card Item */
-      .provider-item {
-        background: var(--bg-card-sub);
-        border: 1px solid var(--border-color);
-        border-radius: var(--radius-sm);
-        padding: 10px 14px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-      }
-      .provider-item-info {
-        display: flex;
-        flex-direction: column;
-        gap: 3px;
-      }
-      .provider-item-name {
-        font-weight: 600;
-        font-size: 13px;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-      }
-      .provider-item-url {
-        font-size: 11.5px;
-        color: var(--text-muted);
-        font-family: monospace;
-      }
-
-      /* Buttons */
+      /* 按钮：胶囊 */
       .btn {
-        appearance: none;
-        border: none;
-        border-radius: var(--radius-sm);
-        font-size: 12.5px;
-        font-weight: 600;
-        padding: 7px 14px;
-        cursor: pointer;
         display: inline-flex;
         align-items: center;
         justify-content: center;
         gap: 6px;
-        transition: background-color 140ms cubic-bezier(0.2, 0, 0, 1), border-color 140ms cubic-bezier(0.2, 0, 0, 1), color 140ms cubic-bezier(0.2, 0, 0, 1), opacity 140ms cubic-bezier(0.2, 0, 0, 1);
-      }
-      .btn-primary {
-        background: var(--accent);
-        color: #ffffff;
-      }
-      .btn-primary:hover {
-        background: #1d4ed8;
-      }
-      .btn-secondary {
-        background: #f3f4f6;
-        color: var(--text-main);
-        border: 1px solid var(--border-color);
-      }
-      .btn-secondary:hover {
-        background: #e5e7eb;
-      }
-      .btn-outline {
+        height: 36px;
+        padding: 0 16px;
+        border: 0;
+        border-radius: var(--radius-control);
         background: transparent;
-        color: var(--accent);
-        border: 1px solid var(--accent);
+        color: var(--text-main);
+        font-family: inherit;
+        font-size: 14px;
+        white-space: nowrap;
+        cursor: pointer;
+        transition: background-color 0.12s ease, color 0.12s ease, box-shadow 0.12s ease;
       }
-      .btn-outline:hover {
-        background: var(--accent-glow);
-      }
-      .btn-danger {
-        background: var(--danger-dim);
-        color: var(--danger);
-        border: 1px solid rgba(220, 38, 38, 0.28);
-      }
-      .btn-danger:hover {
-        background: rgba(220, 38, 38, 0.16);
-      }
-      .load-error { margin: 0 0 12px; padding: 10px 14px; border-radius: 10px; background: rgba(220, 38, 38, 0.08); color: var(--danger); font-size: 13px; }
-      .pair-box { display: flex; gap: 18px; align-items: flex-start; margin-top: 14px; flex-wrap: wrap; }
-      .pair-qr { flex: 0 0 auto; text-align: center; }
-      .pair-qr-holder { width: 156px; height: 156px; border-radius: 14px; background: #ffffff; padding: 8px; display: flex; align-items: center; justify-content: center; box-sizing: border-box; }
-      .pair-qr-holder svg { width: 100%; height: 100%; display: block; }
-      .pair-qr-holder span { color: var(--text-dim); font-size: 12px; }
-      .pair-main { flex: 1 1 260px; min-width: 240px; }
-      .pair-code { font: 700 28px/1.25 ui-monospace, Consolas, monospace; letter-spacing: 3px; margin: 2px 0 4px; }
-      .pair-devices { margin-top: 16px; border-top: 1px solid var(--border-color); padding-top: 12px; }
-      .dev-list { list-style: none; padding: 0; margin: 6px 0 0; }
-      .dev-list li { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; padding: 7px 0; border-bottom: 1px solid var(--border-color); }
-      .dev-list li:last-child { border-bottom: 0; }
-      .dev-list .dev-name { flex: 1 1 auto; min-width: 140px; }
-      .dev-list .dev-meta { color: var(--text-muted); font-size: 12px; }
-      .pair-error { color: var(--danger); }
-      .btn:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-      }
+      .btn:disabled { opacity: 0.5; cursor: default; }
+      .btn-primary { background: var(--accent); color: #fff; }
+      .btn-primary:hover:not(:disabled) { background: #3567d6; }
+      .btn-secondary { background: var(--bg-panel); color: var(--text-main); }
+      .btn-secondary:hover:not(:disabled) { background: var(--bg-selected); }
+      .btn-outline { background: transparent; box-shadow: inset 0 0 0 1px var(--border-color); }
+      .btn-outline:hover:not(:disabled) { background: var(--bg-panel); }
+      .btn-sm { height: 28px; padding: 0 10px; font-size: 12px; border-radius: 14px; }
 
-      /* Status Feedback */
-      .status-box {
-        padding: 10px 14px;
-        border-radius: var(--radius-sm);
-        background: var(--bg-card-sub);
-        border: 1px solid var(--border-color);
+      .badge {
+        flex-shrink: 0;
         font-size: 12px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
+        padding: 3px 10px;
+        border-radius: var(--radius-full);
+        background: var(--bg-panel);
+        color: var(--text-muted);
       }
-      .status-box.success {
-        border-color: rgba(23, 128, 61, 0.28);
-        background: rgba(23, 128, 61, 0.07);
-        color: var(--success);
-      }
-      .status-box.error {
-        border-color: rgba(220, 38, 38, 0.28);
-        background: rgba(220, 38, 38, 0.07);
-        color: var(--danger);
-      }
+      .badge.success { background: var(--success-dim); color: var(--success); }
 
-      /* Footer */
-      .footer {
-        padding: 12px 20px;
-        border-top: 1px solid var(--border-color);
-        background: var(--bg-main);
+      /* 接口行与模型标签 */
+      .provider-item {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        flex-shrink: 0;
+        gap: 12px;
+        padding: 12px 14px;
+        border-radius: var(--radius-card);
+        background: var(--bg-panel);
       }
-      .footer-msg {
-        font-size: 12px;
-        color: var(--text-muted);
-      }
-
-      /* Model Pill Tag */
-      .model-tags {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 4px;
-        max-height: 120px;
-        overflow-y: auto;
-        padding: 4px 0;
-      }
+      .provider-item-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+      .provider-item-name { font-size: 13px; color: var(--text-main); }
+      .provider-item-url { font-size: 11px; color: var(--text-dim); word-break: break-all; }
+      .model-tags { display: flex; flex-wrap: wrap; gap: 4px; max-height: 132px; overflow-y: auto; padding: 6px 0; }
       .model-tag {
         font-size: 11px;
-        padding: 2px 7px;
-        border-radius: 4px;
-        background: #f3f4f6;
+        padding: 3px 9px;
+        border-radius: var(--radius-full);
+        background: var(--bg-panel);
         color: var(--text-muted);
-        border: 1px solid var(--border-color);
       }
-      .model-tag.highlight {
-        background: var(--accent-glow);
-        color: var(--accent);
-        border-color: rgba(37, 99, 235, 0.28);
+      .model-tag.highlight { background: var(--accent-glow); color: var(--accent); }
+
+      .status-box { margin-top: 8px; padding: 10px 14px; border-radius: var(--radius-card); font-size: 12px; }
+      .status-box.success { background: var(--success-dim); color: var(--success); }
+      .status-box.error { background: var(--danger-dim); color: var(--danger); }
+      .load-error {
+        margin: 12px 0;
+        padding: 12px 14px;
+        border-radius: var(--radius-card);
+        background: var(--danger-dim);
+        color: var(--danger);
+        font-size: 12px;
       }
-    </style>
+      .animate-spin { animation: spin 1s linear infinite; }
+      @keyframes spin { to { transform: rotate(360deg); } }
+
+      /* 底栏 */
+      .footer {
+        grid-column: 1 / -1;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 12px 24px 16px;
+        border-top: 1px solid var(--border-soft);
+      }
+      .footer-msg { font-size: 12px; color: var(--text-muted); }
+</style>
   </head>
   <body>
     <div class="app-layout">
       <!-- Top Header -->
       <header class="header">
         <div class="header-title-group">
-          <div class="header-icon">D</div>
-          <div>
-            <h1>DeepSeek 引擎与模型设置</h1>
-          </div>
+          <h1>设置</h1>
         </div>
         <span class="badge" id="versionBadge">Desktop</span>
       </header>
@@ -474,7 +351,7 @@
               <input id="autoSyncModels" type="checkbox" checked />
               <div class="switch-toggle"></div>
             </label>
-            <div class="row-flex" style="justify-content: space-between; border-top: 1px solid var(--border-color); padding-top: 10px;">
+            <div class="row-flex" style="justify-content: space-between; border-top: 1px solid var(--border-soft); padding-top: 10px;">
               <span class="card-desc" id="syncStatText">已配置 1 个接口 (OpenCode Go)</span>
               <button class="btn btn-outline" id="btnSyncNow" type="button">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
@@ -620,8 +497,8 @@
 
           <!-- Menu bar: hidden so the window matches the harness UI itself -->
           <div class="card">
-            <span class="card-title">菜单栏</span>
-            <span class="card-desc">原生菜单栏默认隐藏，和 Harness 引擎界面保持一致（按 Alt 临时唤出，Ctrl+O / Ctrl+U 等快捷键不变；本窗口用 Ctrl+, 打开）。常用动作放在这里：</span>
+            <span class="card-title">菜单栏与常用入口</span>
+            <span class="card-desc">左上角原生菜单栏（文件 / 编辑 / 引擎 / 查看 / 皮肤 / 界面语言 / 帮助）里有检查更新、皮肤、诊断导出、恢复工具等全部入口；下面这三个也做了直达按钮：</span>
             <div class="row-flex">
               <button class="btn btn-secondary" id="btnMarket" type="button">插件市场</button>
               <button class="btn btn-secondary" id="btnRecovery" type="button">恢复工具</button>
@@ -639,7 +516,7 @@
               <input id="autoDesktop" type="checkbox" checked />
               <div class="switch-toggle"></div>
             </label>
-            <div style="border-top: 1px solid var(--border-color); margin: 4px 0;"></div>
+            <div style="border-top: 1px solid var(--border-soft); margin: 4px 0;"></div>
             <label class="switch-label">
               <div class="switch-info">
                 <span class="switch-title">检查 Harness 引擎更新</span>
@@ -831,9 +708,11 @@
               </div>
               <span class="provider-item-url">${p.baseURL || ''}</span>
             </div>
-            <div class="row-flex">
-              <span class="badge" style="color:#60a5fa;">${p.id || ''}</span>
-            </div>
+            ${
+              p.id && p.id !== name
+                ? `<div class="row-flex"><span class="badge">${p.id}</span></div>`
+                : ''
+            }
           `;
           pList.appendChild(item);
         });

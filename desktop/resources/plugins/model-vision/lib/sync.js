@@ -18,8 +18,8 @@
  *
  * @module @dsh-desktop/dsh-model-vision/sync
  */
-import { MODALITIES, resolveCapabilities, } from './capabilities.js';
-const FIELDS = ['input', 'contextWindow', 'maxTokens'];
+import { MODALITIES, REASONING_LEVELS, resolveCapabilities, wireReasoning, } from './capabilities.js';
+const FIELDS = ['input', 'contextWindow', 'maxTokens', 'reasoningEfforts'];
 /** Normalize a stored modality list the way the engine reads it. */
 export function normalizedInput(value) {
     if (!Array.isArray(value))
@@ -30,7 +30,30 @@ export function normalizedInput(value) {
 function same(a, b) {
     if (Array.isArray(a) && Array.isArray(b))
         return a.length === b.length && a.every((v, i) => v === b[i]);
+    if (typeof a === 'object' && a !== null && typeof b === 'object' && b !== null) {
+        const left = a;
+        const right = b;
+        const keys = Object.keys(left).sort();
+        const other = Object.keys(right).sort();
+        return keys.length === other.length && keys.every((key, index) => key === other[index] && left[key] === right[key]);
+    }
     return a === b;
+}
+/**
+ * A stored `reasoningEfforts` value read back as a capability, so an entry the
+ * user already set is a *declaration* — never silently overwritten by a source.
+ * @param value - the stored entry field.
+ * @returns the capability it describes, or `undefined` when it describes none.
+ */
+export function declaredReasoning(value) {
+    if (value === false)
+        return { kind: 'none' };
+    if (typeof value !== 'object' || value === null || Array.isArray(value))
+        return undefined;
+    const levels = Object.entries(value)
+        .filter(([level, wire]) => REASONING_LEVELS.includes(level) && typeof wire === 'string' && wire.length > 0)
+        .map(([level]) => level);
+    return levels.length > 0 ? { kind: 'efforts', levels } : undefined;
 }
 /**
  * Build a route's plan: what every model's capabilities are, what the stored
@@ -59,32 +82,30 @@ export function planRoute(options) {
             override: options.overrides?.[model.id],
             upstream: options.upstream?.[model.id],
             catalogue: options.catalogue,
-            declared: { input: normalizedInput(current?.input) },
+            declared: { input: normalizedInput(current?.input), reasoning: declaredReasoning(current?.reasoningEfforts) },
         });
         const changes = [];
         for (const field of FIELDS) {
-            const resolved = capabilities[field];
+            const resolved = field === 'reasoningEfforts'
+                ? { value: wireReasoning(capabilities.reasoning.value), source: capabilities.reasoning.source }
+                : { value: capabilities[field].value, source: capabilities[field].source };
             const value = resolved.value;
+            // `undefined` is not "leave it alone" for every field: for reasoning it is
+            // the resolver saying "this route states nothing writable", and the entry
+            // must keep whatever it has.
             if (value === undefined)
                 continue;
             sources[resolved.source] = (sources[resolved.source] ?? 0) + 1;
             const previous = current?.[field];
-            if (field === 'input' && same(normalizedInput(previous), value))
-                continue;
-            if (field !== 'input' && same(previous, value))
+            const normalized = field === 'input' ? normalizedInput(previous) : previous;
+            if (same(normalized, value))
                 continue;
             const verdict = current === undefined || previous === undefined ? 'add' : 'correct';
             if (verdict === 'add' && current !== undefined && previous === undefined) {
                 changes.push({ field, from: previous, to: value, source: resolved.source, verdict: 'enrich' });
                 continue;
             }
-            changes.push({
-                field,
-                from: field === 'input' ? normalizedInput(previous) ?? previous : previous,
-                to: value,
-                source: resolved.source,
-                verdict,
-            });
+            changes.push({ field, from: normalized ?? previous, to: value, source: resolved.source, verdict });
         }
         const unknown = capabilities.input.value === undefined && capabilities.contextWindow.value === undefined;
         models.push({

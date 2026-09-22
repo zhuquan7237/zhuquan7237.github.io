@@ -27,6 +27,13 @@
  */
 /** Request modalities the engine understands (dsh-llm-pi-ai MODALITIES). */
 export const MODALITIES = ['text', 'image'];
+/**
+ * Reasoning levels the engine's selector understands, in escalation order —
+ * dsh-llm-pi-ai's own THINKING_LEVELS. A level is the selector's identity; what
+ * is actually sent is the spelling stored beside it, so a gateway that names its
+ * levels differently still receives what it expects.
+ */
+export const REASONING_LEVELS = ['off', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max'];
 const SUFFIXES = /-(thinking|reasoning|non-thinking|high|low|medium|extra-low|mini-high|preview|beta|alpha|exp|experimental|free|latest|instruct|chat|turbo)$/i;
 /**
  * Normalize one model id into the catalogue's key space: vendor prefixes and
@@ -168,7 +175,82 @@ export function upstreamCapabilities(row) {
         out.contextWindow = contextWindow;
     if (maxTokens !== undefined)
         out.maxTokens = maxTokens;
+    const reasoning = upstreamReasoning(item);
+    if (reasoning !== undefined)
+        out.reasoning = reasoning;
     return out;
+}
+/** Keep only the spellings the engine's selector can name. */
+export function engineReasoningLevels(value) {
+    if (!Array.isArray(value))
+        return [];
+    const kept = value
+        .map((level) => String(level ?? '').trim().toLowerCase())
+        .filter((level) => REASONING_LEVELS.includes(level));
+    return [...new Set(kept)];
+}
+/**
+ * Reasoning a catalogue entry states. A list is only useful when at least one of
+ * its spellings is a level the engine can offer; a list of unknown spellings is
+ * treated as "reasons, no selectable levels" rather than as no information.
+ * @param entry - one catalogue entry.
+ * @returns the capability, or `undefined` when the entry says nothing.
+ */
+export function reasoningFromEntry(entry) {
+    if (!entry || entry.r === undefined)
+        return undefined;
+    if (typeof entry.r === 'number')
+        return entry.r === 0 ? { kind: 'none' } : { kind: 'toggle' };
+    const levels = engineReasoningLevels(entry.r);
+    return levels.length > 0 ? { kind: 'efforts', levels } : { kind: 'toggle' };
+}
+/**
+ * Reasoning an endpoint's own `/v1/models` row states. Gateways that publish
+ * anything at all use one of a handful of shapes; this reads those.
+ * @param item - one row of such a reply.
+ * @returns the capability, or `undefined` when the row says nothing usable.
+ */
+export function upstreamReasoning(item) {
+    if (typeof item !== 'object' || item === null)
+        return undefined;
+    const list = item.reasoning_options ?? item.reasoning_efforts ?? item.reasoningEfforts ?? item.capabilities?.reasoning_options;
+    if (Array.isArray(list)) {
+        const flattened = list.flatMap((entry) => typeof entry === 'string' ? [entry] : Array.isArray(entry?.values) ? entry.values : []);
+        const levels = engineReasoningLevels(flattened);
+        if (levels.length > 0)
+            return { kind: 'efforts', levels };
+        if (list.length > 0)
+            return { kind: 'toggle' };
+    }
+    const flag = item.reasoning ?? item.capabilities?.reasoning;
+    if (flag === false)
+        return { kind: 'none' };
+    if (flag === true)
+        return { kind: 'toggle' };
+    return undefined;
+}
+/**
+ * The value to write into a model entry's `reasoningEfforts`, or `undefined`
+ * when there is nothing this plugin may write.
+ *
+ * The engine accepts either `false` (this model does not reason) or a dict of
+ * level → wire spelling, and refuses an empty dict; levels are offered only when
+ * known, and each one sends its own name because that is the spelling the
+ * catalogue source recorded for that model.
+ * @param cap - the resolved capability.
+ * @returns the entry value, or `undefined` for "write nothing".
+ */
+export function wireReasoning(cap) {
+    if (cap === undefined)
+        return undefined;
+    if (cap.kind === 'toggle')
+        return undefined;
+    if (cap.kind === 'none')
+        return false;
+    const map = {};
+    for (const level of cap.levels)
+        map[level] = level;
+    return map;
 }
 function numberOr(value) {
     const n = typeof value === 'string' ? Number(value) : value;
@@ -227,7 +309,12 @@ export function resolveCapabilities(id, options = {}) {
         [upstream?.maxTokens, 'upstream'],
         [entry?.o, 'catalogue'],
     ]);
-    const out = { id, input, contextWindow, maxTokens };
+    const reasoning = pick(override?.reasoning, [
+        [upstream?.reasoning, 'upstream'],
+        [reasoningFromEntry(entry), 'catalogue'],
+        [declared?.reasoning, 'declared'],
+    ]);
+    const out = { id, input, contextWindow, maxTokens, reasoning };
     if (input.source === 'catalogue' && entry?.i)
         out.matched = entry.i;
     return out;

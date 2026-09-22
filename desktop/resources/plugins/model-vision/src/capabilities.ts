@@ -30,6 +30,28 @@
 export const MODALITIES = ['text', 'image'] as const
 export type Modality = (typeof MODALITIES)[number]
 
+/**
+ * Reasoning levels the engine's selector understands, in escalation order —
+ * dsh-llm-pi-ai's own THINKING_LEVELS. A level is the selector's identity; what
+ * is actually sent is the spelling stored beside it, so a gateway that names its
+ * levels differently still receives what it expects.
+ */
+export const REASONING_LEVELS = ['off', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max'] as const
+export type ReasoningLevel = (typeof REASONING_LEVELS)[number]
+
+/**
+ * What one model offers for reasoning.
+ *
+ * `toggle` is deliberately never written back: the engine's per-model field
+ * names levels, and "on" has no spelling this plugin may invent for a gateway it
+ * has not called. An on/off model therefore keeps the engine's default and shows
+ * no level selector — which is the honest answer.
+ */
+export type ReasoningCapability =
+  | { kind: 'none' }
+  | { kind: 'toggle' }
+  | { kind: 'efforts'; levels: ReasoningLevel[] }
+
 /** Where one resolved value came from, most authoritative first. */
 export type CapabilitySource = 'manual' | 'upstream' | 'catalogue' | 'rule' | 'declared' | 'unknown'
 
@@ -48,6 +70,8 @@ export interface ModelCapabilities {
   contextWindow: Resolved<number>
   /** Maximum output tokens. */
   maxTokens: Resolved<number>
+  /** Selectable reasoning levels, when the model publishes any. */
+  reasoning: Resolved<ReasoningCapability>
   /** Catalogue id this row matched, when it came from the catalogue. */
   matched?: string
 }
@@ -62,6 +86,12 @@ export interface CatalogueEntry {
   c?: number
   /** Max output tokens. */
   o?: number
+  /**
+   * Reasoning: `0` states the model does not reason, `1` that it reasons with no
+   * named levels, and a list is the effort spellings the model accepts — each
+   * one a level the selector may offer.
+   */
+  r?: number | string[]
 }
 
 export interface Catalogue {
@@ -76,6 +106,7 @@ export interface CapabilityOverride {
   input?: Modality[]
   contextWindow?: number
   maxTokens?: number
+  reasoning?: ReasoningCapability
 }
 
 const SUFFIXES =
@@ -200,7 +231,7 @@ export function catalogueFromModels(raw: unknown): Record<string, CatalogueEntry
  * @param row - one row of a `/v1/models` reply.
  * @returns the capabilities it states (empty when the row states none).
  */
-export function upstreamCapabilities(row: unknown): { input?: Modality[]; contextWindow?: number; maxTokens?: number } {
+export function upstreamCapabilities(row: unknown): { input?: Modality[]; contextWindow?: number; maxTokens?: number; reasoning?: ReasoningCapability } {
   if (typeof row !== 'object' || row === null) return {}
   const item = row as Record<string, any>
   const raw = item.architecture?.input_modalities ?? item.input_modalities ?? item.capabilities?.input ?? item.modalities
@@ -209,11 +240,79 @@ export function upstreamCapabilities(row: unknown): { input?: Modality[]; contex
     : undefined
   const contextWindow = numberOr(item.context_length ?? item.context_window ?? item.max_context_length ?? item.max_input_tokens)
   const maxTokens = numberOr(item.max_output_tokens ?? item.max_tokens ?? item.top_provider?.max_completion_tokens)
-  const out: { input?: Modality[]; contextWindow?: number; maxTokens?: number } = {}
+  const out: { input?: Modality[]; contextWindow?: number; maxTokens?: number; reasoning?: ReasoningCapability } = {}
   if (input && input.length > 0) out.input = [...new Set(input)]
   if (contextWindow !== undefined) out.contextWindow = contextWindow
   if (maxTokens !== undefined) out.maxTokens = maxTokens
+  const reasoning = upstreamReasoning(item)
+  if (reasoning !== undefined) out.reasoning = reasoning
   return out
+}
+
+/** Keep only the spellings the engine's selector can name. */
+export function engineReasoningLevels(value: unknown): ReasoningLevel[] {
+  if (!Array.isArray(value)) return []
+  const kept = value
+    .map((level) => String(level ?? '').trim().toLowerCase())
+    .filter((level): level is ReasoningLevel => (REASONING_LEVELS as readonly string[]).includes(level))
+  return [...new Set(kept)]
+}
+
+/**
+ * Reasoning a catalogue entry states. A list is only useful when at least one of
+ * its spellings is a level the engine can offer; a list of unknown spellings is
+ * treated as "reasons, no selectable levels" rather than as no information.
+ * @param entry - one catalogue entry.
+ * @returns the capability, or `undefined` when the entry says nothing.
+ */
+export function reasoningFromEntry(entry: CatalogueEntry | undefined): ReasoningCapability | undefined {
+  if (!entry || entry.r === undefined) return undefined
+  if (typeof entry.r === 'number') return entry.r === 0 ? { kind: 'none' } : { kind: 'toggle' }
+  const levels = engineReasoningLevels(entry.r)
+  return levels.length > 0 ? { kind: 'efforts', levels } : { kind: 'toggle' }
+}
+
+/**
+ * Reasoning an endpoint's own `/v1/models` row states. Gateways that publish
+ * anything at all use one of a handful of shapes; this reads those.
+ * @param item - one row of such a reply.
+ * @returns the capability, or `undefined` when the row says nothing usable.
+ */
+export function upstreamReasoning(item: Record<string, any>): ReasoningCapability | undefined {
+  if (typeof item !== 'object' || item === null) return undefined
+  const list = item.reasoning_options ?? item.reasoning_efforts ?? item.reasoningEfforts ?? item.capabilities?.reasoning_options
+  if (Array.isArray(list)) {
+    const flattened = list.flatMap((entry) =>
+      typeof entry === 'string' ? [entry] : Array.isArray((entry as { values?: unknown })?.values) ? ((entry as { values: unknown[] }).values as unknown[]) : [],
+    )
+    const levels = engineReasoningLevels(flattened)
+    if (levels.length > 0) return { kind: 'efforts', levels }
+    if (list.length > 0) return { kind: 'toggle' }
+  }
+  const flag = item.reasoning ?? item.capabilities?.reasoning
+  if (flag === false) return { kind: 'none' }
+  if (flag === true) return { kind: 'toggle' }
+  return undefined
+}
+
+/**
+ * The value to write into a model entry's `reasoningEfforts`, or `undefined`
+ * when there is nothing this plugin may write.
+ *
+ * The engine accepts either `false` (this model does not reason) or a dict of
+ * level → wire spelling, and refuses an empty dict; levels are offered only when
+ * known, and each one sends its own name because that is the spelling the
+ * catalogue source recorded for that model.
+ * @param cap - the resolved capability.
+ * @returns the entry value, or `undefined` for "write nothing".
+ */
+export function wireReasoning(cap: ReasoningCapability | undefined): false | Record<string, string> | undefined {
+  if (cap === undefined) return undefined
+  if (cap.kind === 'toggle') return undefined
+  if (cap.kind === 'none') return false
+  const map: Record<string, string> = {}
+  for (const level of cap.levels) map[level] = level
+  return map
 }
 
 function numberOr(value: unknown): number | undefined {
@@ -249,7 +348,7 @@ export function resolveCapabilities(
   id: string,
   options: {
     override?: CapabilityOverride | undefined
-    upstream?: { input?: Modality[]; contextWindow?: number; maxTokens?: number } | undefined
+    upstream?: { input?: Modality[]; contextWindow?: number; maxTokens?: number; reasoning?: ReasoningCapability } | undefined
     catalogue?: Catalogue | undefined
     declared?: CapabilityOverride | undefined
   } = {},
@@ -284,8 +383,13 @@ export function resolveCapabilities(
     [upstream?.maxTokens, 'upstream'],
     [entry?.o, 'catalogue'],
   ])
+  const reasoning = pick<ReasoningCapability>(override?.reasoning, [
+    [upstream?.reasoning, 'upstream'],
+    [reasoningFromEntry(entry), 'catalogue'],
+    [declared?.reasoning, 'declared'],
+  ])
 
-  const out: ModelCapabilities = { id, input, contextWindow, maxTokens }
+  const out: ModelCapabilities = { id, input, contextWindow, maxTokens, reasoning }
   if (input.source === 'catalogue' && entry?.i) out.matched = entry.i
   return out
 }

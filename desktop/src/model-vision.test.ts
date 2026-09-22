@@ -11,8 +11,14 @@ import {
   ruleFor,
   sourceLabel,
   upstreamCapabilities,
+  wireReasoning,
 } from "../resources/plugins/model-vision/src/capabilities";
-import { applyPlan, normalizedInput, planRoute, summarizePlan } from "../resources/plugins/model-vision/src/sync";
+import { applyPlan, declaredReasoning, normalizedInput, planRoute, summarizePlan } from "../resources/plugins/model-vision/src/sync";
+
+/** A catalogue with just the entries a case needs. */
+function catalogueWith(keys: Record<string, Record<string, unknown>>) {
+  return parseCatalogue({ version: 2, generatedAt: "2026-09-22T00:00:00.000Z", source: "test", keys })!;
+}
 import { BUNDLED_PLUGINS, renderPluginRows } from "./plugins";
 import { DEFAULT_SETTINGS } from "./util";
 
@@ -328,5 +334,97 @@ describe("host wiring", () => {
     expect(hostSource).toContain("setInterval(");
     expect(hostSource).toContain("内置能力目录读取失败");
     expect(hostSource).toContain("能力目录刷新失败");
+  });
+});
+
+describe("reasoning efforts", () => {
+  it("reads selectable levels out of a catalogue entry, in the engine's own vocabulary", () => {
+    const caps = resolveCapabilities("vendor/gpt-5.6-luna", {
+      catalogue: catalogueWith({ "gpt-5-6-luna": { i: "openai/gpt-5.6-luna", r: ["low", "medium", "high", "xhigh", "max"] } }),
+    });
+    expect(caps.reasoning.value).toEqual({ kind: "efforts", levels: ["low", "medium", "high", "xhigh", "max"] });
+    expect(caps.reasoning.source).toBe("catalogue");
+  });
+
+  it("drops a spelling the selector cannot name and keeps the rest", () => {
+    const caps = resolveCapabilities("m", { catalogue: catalogueWith({ m: { r: ["low", "ultra", "high", "low"] } }) });
+    expect(caps.reasoning.value).toEqual({ kind: "efforts", levels: ["low", "high"] });
+  });
+
+  it("states reasoning without levels when no spelling is usable, and none when the entry says so", () => {
+    expect(resolveCapabilities("m", { catalogue: catalogueWith({ m: { r: ["ultra"] } }) }).reasoning.value).toEqual({ kind: "toggle" });
+    expect(resolveCapabilities("m", { catalogue: catalogueWith({ m: { r: 1 } }) }).reasoning.value).toEqual({ kind: "toggle" });
+    expect(resolveCapabilities("m", { catalogue: catalogueWith({ m: { r: 0 } }) }).reasoning.value).toEqual({ kind: "none" });
+    expect(resolveCapabilities("m", { catalogue: catalogueWith({ m: {} }) }).reasoning.value).toBeUndefined();
+  });
+
+  it("never writes an on/off model: the engine's field names levels", () => {
+    expect(wireReasoning({ kind: "toggle" })).toBeUndefined();
+    expect(wireReasoning(undefined)).toBeUndefined();
+    expect(wireReasoning({ kind: "none" })).toBe(false);
+    expect(wireReasoning({ kind: "efforts", levels: ["low", "max"] })).toEqual({ low: "low", max: "max" });
+  });
+
+  it("lets an explicit override outrank the catalogue, and the endpoint outrank the catalogue", () => {
+    const catalogue = catalogueWith({ m: { r: ["low", "high"] } });
+    expect(resolveCapabilities("m", { catalogue, override: { reasoning: { kind: "none" } } }).reasoning.source).toBe("manual");
+    expect(
+      resolveCapabilities("m", { catalogue, upstream: { reasoning: { kind: "efforts", levels: ["minimal"] } } }).reasoning,
+    ).toEqual({ value: { kind: "efforts", levels: ["minimal"] }, source: "upstream" });
+  });
+
+  it("plans an enrichment when the entry never chose levels, and a correction when it disagrees", () => {
+    const plan = planRoute({
+      route: "route",
+      models: [{ id: "fresh" }, { id: "agrees" }, { id: "disagrees" }],
+      stored: [
+        { id: "fresh" },
+        { id: "agrees", reasoningEfforts: { low: "low", high: "high" } },
+        { id: "disagrees", reasoningEfforts: { high: "high" } },
+      ],
+      catalogue: catalogueWith({
+        fresh: { r: ["low", "high"] },
+        agrees: { r: ["low", "high"] },
+        disagrees: { r: ["low", "high"] },
+      }),
+    });
+    const byId = new Map(plan.models.map((model) => [model.id, model]));
+    expect(byId.get("fresh")!.changes).toContainEqual({
+      field: "reasoningEfforts",
+      from: undefined,
+      to: { low: "low", high: "high" },
+      source: "catalogue",
+      verdict: "enrich",
+    });
+    expect(byId.get("agrees")!.changes.some((change) => change.field === "reasoningEfforts")).toBe(false);
+    expect(byId.get("disagrees")!.changes.find((change) => change.field === "reasoningEfforts")!.verdict).toBe("correct");
+  });
+
+  it("keeps a user's own reasoningEfforts as a declaration rather than a gap to fill", () => {
+    const plan = planRoute({
+      route: "route",
+      models: [{ id: "m" }],
+      stored: [{ id: "m", reasoningEfforts: { low: "low" } }],
+      catalogue: catalogueWith({ m: { r: ["high"] } }),
+    });
+    expect(plan.models[0].changes.find((change) => change.field === "reasoningEfforts")!.verdict).toBe("correct");
+    expect(declaredReasoning({ low: "low" })).toEqual({ kind: "efforts", levels: ["low"] });
+    expect(declaredReasoning(false)).toEqual({ kind: "none" });
+    expect(declaredReasoning(undefined)).toBeUndefined();
+  });
+
+  it("applies the field without disturbing anything else in the entry", () => {
+    const plan = planRoute({
+      route: "route",
+      models: [{ id: "m" }],
+      stored: [{ id: "m", name: "M", maxTokens: 4096 }],
+      catalogue: catalogueWith({ m: { r: ["low", "high"] } }),
+    });
+    expect(applyPlan({ stored: [{ id: "m", name: "M", maxTokens: 4096 }], plan, accepted: ["m"] })[0]).toEqual({
+      id: "m",
+      name: "M",
+      maxTokens: 4096,
+      reasoningEfforts: { low: "low", high: "high" },
+    });
   });
 });
