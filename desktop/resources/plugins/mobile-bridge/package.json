@@ -1,17 +1,20 @@
 {
   "name": "@dsh-desktop/dsh-mobile-bridge",
-  "description": "Mobile companion bridge for DeepSeek Harness: device pairing and scopes, a mobile-shaped session/history/event surface over the engine's own Remote methods, and a shared model-configuration document with revisions and reported conflicts",
-  "version": "0.1.3",
+  "description": "Mobile companion bridge for DeepSeek Harness: device pairing and scopes, a mobile-shaped session/history/event surface over the engine's own Remote methods, a shared model-configuration document with revisions and reported conflicts, and the 「手机配对」 settings page inside the engine UI",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "main": "lib/index.js",
   "exports": {
     ".": "./lib/index.js",
+    "./client": "./client/client.js",
     "./cordis.patch.yml": "./cordis.patch.yml",
     "./package.json": "./package.json"
   },
   "files": [
     "lib",
+    "client",
+    "vendor",
     "app",
     "cordis.patch.yml"
   ],
@@ -19,6 +22,14 @@
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "inject": [
+        "@deepseek-ai/dsh-client-locale",
+        "@deepseek-ai/dsh-client-ui-settings",
+        "@deepseek-ai/dsh-client-ui-theme"
+      ],
+      "platform": "web"
     }
   },
   "peerDependencies": {

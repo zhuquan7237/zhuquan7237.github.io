@@ -32,6 +32,10 @@ contextBridge.exposeInMainWorld("desktop", {
     ipcRenderer.invoke("mobile:revoke", id),
   mobileOpenSearchSettings: (): Promise<{ ok: boolean; error?: string; url?: string }> =>
     ipcRenderer.invoke("mobile:open-search-settings"),
+  mobileOpenPairingSettings: (): Promise<{ ok: boolean; error?: string; url?: string }> =>
+    ipcRenderer.invoke("mobile:open-pairing-settings"),
+  desktopAction: (action: string): Promise<{ ok: boolean; error?: string }> =>
+    ipcRenderer.invoke("desktop:action", action),
   syncModels: (): Promise<any> => ipcRenderer.invoke("models:sync"),
   getProviders: (): Promise<any> => ipcRenderer.invoke("models:get-providers"),
   /** Diagnostics bundle, also reachable as `DeepSeek --export-diagnostics`. */

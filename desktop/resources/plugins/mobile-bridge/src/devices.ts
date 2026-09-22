@@ -59,12 +59,30 @@ export interface BridgeStore {
   pairing?: PairingState
   devices: DeviceRecord[]
   /**
+   * Public base URL the pairing QR points at. Stored here (rather than only in
+   * the profile config) so the settings page can change it without an engine
+   * restart; the profile's `publicUrl` stays the fallback.
+   */
+  publicUrl?: string
+  /**
    * Mobile-side model metadata the engine's configuration has no field for
    * (display name, enabled, tags, order). Kept here so no invented key ever
    * reaches the engine's schema-validated namespace.
    */
   models?: Record<string, unknown>
 }
+
+/**
+ * Trim a public base URL and refuse anything that cannot be one. Empty means
+ * "not configured"; a missing scheme would produce a QR that fails silently on
+ * the phone, so it is rejected with a message instead.
+ */
+export function normalizePublicUrl(value: unknown): string {
+  const raw = String(value ?? '').trim().replace(/\/+$/, '')
+  if (raw === '') return ''
+  return /^https?:\/\/[^\s]+$/i.test(raw) ? raw : ''
+}
+
 
 /** How long a pairing code stays valid. */
 export const PAIR_CODE_TTL_MS = 5 * 60 * 1000
@@ -92,6 +110,7 @@ export function readStore(env: NodeJS.ProcessEnv = process.env): BridgeStore {
       seq: typeof raw.seq === 'number' ? raw.seq : 0,
       ...(raw.pairing !== undefined ? { pairing: raw.pairing } : {}),
       devices: Array.isArray(raw.devices) ? (raw.devices as DeviceRecord[]) : [],
+      ...(typeof raw.publicUrl === 'string' ? { publicUrl: raw.publicUrl } : {}),
       ...(raw.models !== undefined ? { models: raw.models } : {}),
     }
   } catch {

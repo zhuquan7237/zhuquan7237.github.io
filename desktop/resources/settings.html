@@ -6,23 +6,27 @@
     <title>DeepSeek 引擎与模型设置</title>
     <link rel="stylesheet" href="./theme.css" />
     <style>
+      /* Light palette measured off the Harness desktop window: white canvas,
+         #f8f9fa panels, #e5e7eb hairlines, #111827/#4b5563/#9ca3af text, #2563eb
+         accent — the settings window must look like the engine it configures. */
       :root {
-        --bg-main: #0c0e14;
-        --bg-card: #141824;
-        --bg-card-hover: #191f2e;
-        --bg-card-sub: #0f131d;
-        --border-color: rgba(255, 255, 255, 0.08);
-        --border-focus: #4d93f8;
-        --text-main: #f0f4fc;
-        --text-muted: #8b95a8;
-        --text-dim: #5d677a;
-        --accent: #4d93f8;
-        --accent-glow: rgba(77, 147, 248, 0.22);
-        --success: #10b981;
-        --success-dim: rgba(16, 185, 129, 0.15);
-        --warning: #f59e0b;
-        --danger: #ef4444;
-        --danger-dim: rgba(239, 68, 68, 0.15);
+        color-scheme: light;
+        --bg-main: #ffffff;
+        --bg-card: #f8f9fa;
+        --bg-card-hover: #f3f4f6;
+        --bg-card-sub: #ffffff;
+        --border-color: #e5e7eb;
+        --border-focus: #2563eb;
+        --text-main: #111827;
+        --text-muted: #4b5563;
+        --text-dim: #9ca3af;
+        --accent: #2563eb;
+        --accent-glow: rgba(37, 99, 235, 0.14);
+        --success: #17803d;
+        --success-dim: rgba(23, 128, 61, 0.1);
+        --warning: #b45309;
+        --danger: #dc2626;
+        --danger-dim: rgba(220, 38, 38, 0.1);
         --radius-card: 14px;
         --radius-sm: 8px;
         --radius-full: 9999px;
@@ -50,8 +54,7 @@
       .header {
         padding: 16px 20px 12px;
         border-bottom: 1px solid var(--border-color);
-        background: rgba(12, 14, 20, 0.85);
-        backdrop-filter: blur(12px);
+        background: var(--bg-main);
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -66,7 +69,7 @@
         width: 28px;
         height: 28px;
         border-radius: 8px;
-        background: linear-gradient(135deg, #2b6cb0, #4d93f8);
+        background: linear-gradient(135deg, #1d4ed8, #3b82f6);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -84,14 +87,14 @@
         font-size: 11px;
         padding: 2px 8px;
         border-radius: var(--radius-full);
-        background: rgba(255, 255, 255, 0.06);
+        background: var(--bg-card);
         color: var(--text-muted);
         border: 1px solid var(--border-color);
       }
       .badge.success {
         background: var(--success-dim);
-        color: #34d399;
-        border-color: rgba(52, 211, 153, 0.3);
+        color: var(--success);
+        border-color: rgba(23, 128, 61, 0.25);
       }
 
       /* Tabs */
@@ -117,17 +120,17 @@
         font-size: 12.5px;
         font-weight: 500;
         cursor: pointer;
-        transition: all 0.18s ease;
+        transition: color 160ms cubic-bezier(0.2, 0, 0, 1), background-color 160ms cubic-bezier(0.2, 0, 0, 1), border-color 160ms cubic-bezier(0.2, 0, 0, 1);
       }
       .nav-tab:hover {
         color: var(--text-main);
-        background: rgba(255, 255, 255, 0.04);
+        background: #f3f4f6;
       }
       .nav-tab.active {
-        color: #fff;
-        background: var(--bg-card);
+        color: var(--text-main);
+        background: var(--bg-main);
         border: 1px solid var(--border-color);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+        box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
       }
 
       /* Scroll Content */
@@ -154,10 +157,10 @@
         display: flex;
         flex-direction: column;
         gap: 12px;
-        transition: border-color 0.15s;
+        transition: border-color 160ms cubic-bezier(0.2, 0, 0, 1), background-color 160ms cubic-bezier(0.2, 0, 0, 1);
       }
       .card:hover {
-        border-color: rgba(255, 255, 255, 0.13);
+        border-color: #d8dce3;
       }
       .card-header {
         display: flex;
@@ -200,7 +203,7 @@
         font-size: 13px;
         font-family: inherit;
         outline: none;
-        transition: border-color 0.15s, box-shadow 0.15s;
+        transition: border-color 160ms cubic-bezier(0.2, 0, 0, 1), box-shadow 160ms cubic-bezier(0.2, 0, 0, 1);
       }
       .input-text:focus, .select-input:focus {
         border-color: var(--border-focus);
@@ -242,9 +245,9 @@
         position: relative;
         width: 38px;
         height: 22px;
-        background: rgba(255, 255, 255, 0.12);
+        background: #d1d5db;
         border-radius: var(--radius-full);
-        transition: background-color 0.2s;
+        transition: background-color 160ms cubic-bezier(0.2, 0, 0, 1);
         flex-shrink: 0;
       }
       .switch-toggle::after {
@@ -256,8 +259,8 @@
         height: 18px;
         background: #fff;
         border-radius: 50%;
-        transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        transition: transform 180ms cubic-bezier(0.2, 0, 0, 1);
+        box-shadow: 0 1px 3px rgba(16, 24, 40, 0.24);
       }
       input[type="checkbox"] {
         display: none;
@@ -310,23 +313,22 @@
         align-items: center;
         justify-content: center;
         gap: 6px;
-        transition: all 0.15s ease;
+        transition: background-color 140ms cubic-bezier(0.2, 0, 0, 1), border-color 140ms cubic-bezier(0.2, 0, 0, 1), color 140ms cubic-bezier(0.2, 0, 0, 1), opacity 140ms cubic-bezier(0.2, 0, 0, 1);
       }
       .btn-primary {
         background: var(--accent);
-        color: #071018;
-        box-shadow: 0 4px 14px var(--accent-glow);
+        color: #ffffff;
       }
       .btn-primary:hover {
-        background: #6aa6ff;
+        background: #1d4ed8;
       }
       .btn-secondary {
-        background: rgba(255, 255, 255, 0.08);
+        background: #f3f4f6;
         color: var(--text-main);
         border: 1px solid var(--border-color);
       }
       .btn-secondary:hover {
-        background: rgba(255, 255, 255, 0.13);
+        background: #e5e7eb;
       }
       .btn-outline {
         background: transparent;
@@ -338,18 +340,18 @@
       }
       .btn-danger {
         background: var(--danger-dim);
-        color: #f87171;
-        border: 1px solid rgba(239, 68, 68, 0.3);
+        color: var(--danger);
+        border: 1px solid rgba(220, 38, 38, 0.28);
       }
       .btn-danger:hover {
-        background: rgba(239, 68, 68, 0.25);
+        background: rgba(220, 38, 38, 0.16);
       }
-      .load-error { margin: 0 0 12px; padding: 10px 14px; border-radius: 10px; background: rgba(248,113,113,.12); color: #f87171; font-size: 13px; }
+      .load-error { margin: 0 0 12px; padding: 10px 14px; border-radius: 10px; background: rgba(220, 38, 38, 0.08); color: var(--danger); font-size: 13px; }
       .pair-box { display: flex; gap: 18px; align-items: flex-start; margin-top: 14px; flex-wrap: wrap; }
       .pair-qr { flex: 0 0 auto; text-align: center; }
       .pair-qr-holder { width: 156px; height: 156px; border-radius: 14px; background: #ffffff; padding: 8px; display: flex; align-items: center; justify-content: center; box-sizing: border-box; }
       .pair-qr-holder svg { width: 100%; height: 100%; display: block; }
-      .pair-qr-holder span { color: #9ca3af; font-size: 12px; }
+      .pair-qr-holder span { color: var(--text-dim); font-size: 12px; }
       .pair-main { flex: 1 1 260px; min-width: 240px; }
       .pair-code { font: 700 28px/1.25 ui-monospace, Consolas, monospace; letter-spacing: 3px; margin: 2px 0 4px; }
       .pair-devices { margin-top: 16px; border-top: 1px solid var(--border-color); padding-top: 12px; }
@@ -357,8 +359,8 @@
       .dev-list li { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; padding: 7px 0; border-bottom: 1px solid var(--border-color); }
       .dev-list li:last-child { border-bottom: 0; }
       .dev-list .dev-name { flex: 1 1 auto; min-width: 140px; }
-      .dev-list .dev-meta { color: var(--text-secondary, #9ca3af); font-size: 12px; }
-      .pair-error { color: #f87171; }
+      .dev-list .dev-meta { color: var(--text-muted); font-size: 12px; }
+      .pair-error { color: var(--danger); }
       .btn:disabled {
         opacity: 0.5;
         cursor: not-allowed;
@@ -376,21 +378,21 @@
         gap: 8px;
       }
       .status-box.success {
-        border-color: rgba(16, 185, 129, 0.3);
-        background: rgba(16, 185, 129, 0.06);
-        color: #34d399;
+        border-color: rgba(23, 128, 61, 0.28);
+        background: rgba(23, 128, 61, 0.07);
+        color: var(--success);
       }
       .status-box.error {
-        border-color: rgba(239, 68, 68, 0.3);
-        background: rgba(239, 68, 68, 0.06);
-        color: #f87171;
+        border-color: rgba(220, 38, 38, 0.28);
+        background: rgba(220, 38, 38, 0.07);
+        color: var(--danger);
       }
 
       /* Footer */
       .footer {
         padding: 12px 20px;
         border-top: 1px solid var(--border-color);
-        background: rgba(12, 14, 20, 0.9);
+        background: var(--bg-main);
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -414,14 +416,14 @@
         font-size: 11px;
         padding: 2px 7px;
         border-radius: 4px;
-        background: rgba(255, 255, 255, 0.05);
+        background: #f3f4f6;
         color: var(--text-muted);
-        border: 1px solid rgba(255, 255, 255, 0.08);
+        border: 1px solid var(--border-color);
       }
       .model-tag.highlight {
         background: var(--accent-glow);
-        color: #93c5fd;
-        border-color: rgba(77, 147, 248, 0.3);
+        color: var(--accent);
+        border-color: rgba(37, 99, 235, 0.28);
       }
     </style>
   </head>
@@ -570,7 +572,7 @@
           <div class="card">
             <span class="card-title">工作区路径</span>
             <div class="row-flex">
-              <input class="input-text" id="workspace" readonly style="color:#93c5fd; font-family:monospace;" />
+              <input class="input-text" id="workspace" readonly style="color:var(--accent); font-family:monospace;" />
             </div>
             <span class="card-desc">会话存储、本地任务及运行产物的根工作目录。</span>
           </div>
@@ -607,31 +609,22 @@
             <span class="card-desc">固定端口可以让依赖浏览器存储的界面插件在重启后保留设置；端口被占用会导致启动失败，改回 0 即可。引擎只监听 127.0.0.1，官方不支持对局域网开放。</span>
           </div>
 
-          <!-- Mobile companion -->
+          <!-- Phone pairing lives in the engine's own settings page -->
           <div class="card">
-            <span class="card-title">手机端（配对与设备）</span>
-            <div class="form-group">
-              <span class="form-label">公网地址（留空则只显示本机地址，手机在外网连不上）</span>
-              <input class="input-text" id="mobileUrl" placeholder="https://m.zhuquan.xyz" />
+            <span class="card-title">手机配对</span>
+            <span class="card-desc">配对码、二维码和已绑定设备都在引擎设置里：打开引擎界面左下角的「设置」，选「手机配对」。公网地址（二维码指向的隧道域名）也在那一页修改，保存后二维码立即生效、不用重启。</span>
+            <div class="row-flex">
+              <button class="btn btn-primary" id="btnOpenPairing" type="button">打开手机配对页</button>
             </div>
-            <span class="card-desc">配对二维码指向这个地址；手机和电脑不在同一网络时填写隧道域名，保存后回到本页生效。</span>
-            <div id="pairBox" class="pair-box">
-              <div class="pair-qr">
-                <div id="pairQrHolder" class="pair-qr-holder"><span class="muted">二维码</span></div>
-                <div class="muted" id="pairQrHint">手机 App →「扫码配对」</div>
-              </div>
-              <div class="pair-main">
-                <div class="pair-code" id="pairCode">——</div>
-                <div class="card-desc" id="pairMeta">正在读取配对状态…</div>
-                <div class="row-flex" style="margin-top: 10px; gap: 8px;">
-                  <button class="btn btn-secondary" id="btnRotate" type="button">重新生成配对码</button>
-                  <button class="btn btn-outline" id="btnCopyLink" type="button">复制配对链接</button>
-                </div>
-              </div>
-            </div>
-            <div class="pair-devices">
-              <span class="form-label">已绑定设备 <span id="devCount" class="muted"></span></span>
-              <ul class="dev-list" id="devList"><li class="muted">读取中…</li></ul>
+          </div>
+
+          <!-- Menu bar: hidden so the window matches the harness UI itself -->
+          <div class="card">
+            <span class="card-title">菜单栏</span>
+            <span class="card-desc">原生菜单栏默认隐藏，和 Harness 引擎界面保持一致（按 Alt 临时唤出，Ctrl+O / Ctrl+U 等快捷键不变）。常用动作放在这里：</span>
+            <div class="row-flex">
+              <button class="btn btn-secondary" id="btnMarket" type="button">插件市场</button>
+              <button class="btn btn-secondary" id="btnRecovery" type="button">恢复工具</button>
             </div>
           </div>
 
@@ -781,7 +774,6 @@
         $("closeToTray").checked = s.closeToTray !== false;
         $("locale").value = s.locale || "";
         $("webPort").value = Number(s.webPort) > 0 ? String(Number(s.webPort)) : "0";
-        $("mobileUrl").value = (s.mobile && s.mobile.publicUrl) || "";
 
         const vision = s.visionAux || previewSettings.visionAux;
         $("visionEnabled").checked = vision.enabled === true;
@@ -936,7 +928,7 @@
           closeToTray: $("closeToTray").checked,
           locale: $("locale").value,
           webPort: Math.max(0, Math.min(65535, Math.trunc(Number($("webPort").value) || 0))),
-          mobile: { publicUrl: $("mobileUrl").value.trim() },
+          mobile: { publicUrl: (current.mobile && current.mobile.publicUrl) || "" },
           visionAux: {
             enabled: $("visionEnabled").checked,
             baseURL: $("visionBase").value.trim(),
@@ -962,115 +954,37 @@
         window.close();
       };
 
-      // ---- 手机端配对卡片 -------------------------------------------------
-      let pairTimer = null;
-
-      function renderPairing(snapshot) {
-        const holder = $("pairQrHolder");
-        const codeEl = $("pairCode");
-        const meta = $("pairMeta");
-        const list = $("devList");
-        if (!snapshot || snapshot.ok !== true) {
-          codeEl.textContent = "——";
-          meta.innerHTML = `<span class="pair-error">${(snapshot && snapshot.error) || "读不到配对状态。"}</span>`;
-          holder.innerHTML = '<span>二维码</span>';
-          list.innerHTML = '<li class="muted">读不到设备列表</li>';
-          $("devCount").textContent = "";
-          return;
-        }
-        codeEl.textContent = snapshot.pairCode || "（暂无有效配对码）";
-        if (snapshot.pairCode && snapshot.pairExpiresAt) {
-          const tick = () => {
-            const left = Math.max(0, Math.round((snapshot.pairExpiresAt - Date.now()) / 1000));
-            meta.textContent = left > 0
-              ? `5 分钟内有效，剩余 ${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}；手机 App →「扫码配对」或直接输入这串码。`
-              : "配对码已过期，点上面的按钮重新生成。";
-            if (left <= 0 && pairTimer) { clearInterval(pairTimer); pairTimer = null; }
-          };
-          if (pairTimer) clearInterval(pairTimer);
-          tick();
-          pairTimer = setInterval(tick, 1000);
-        } else {
-          if (pairTimer) { clearInterval(pairTimer); pairTimer = null; }
-          meta.textContent = snapshot.publicUrl
-            ? "点「重新生成配对码」开始配对。"
-            : "先填公网地址并保存，手机才能扫到；本机调试可直接输入配对码。";
-        }
-        if (snapshot.qrSvg) {
-          holder.innerHTML = snapshot.qrSvg;
-          $("pairQrHint").textContent = "手机 App →「扫码配对」";
-        } else {
-          holder.innerHTML = `<span>${snapshot.publicUrl ? "先生成配对码" : "需要公网地址"}</span>`;
-          $("pairQrHint").textContent = snapshot.publicUrl ? "" : "填好公网地址并保存后会显示二维码";
-        }
-        const devices = Array.isArray(snapshot.devices) ? snapshot.devices : [];
-        $("devCount").textContent = devices.length ? `（${devices.length}）` : "";
-        if (!devices.length) {
-          list.innerHTML = '<li class="muted">还没有设备绑定</li>';
-          return;
-        }
-        list.innerHTML = "";
-        for (const device of devices) {
-          const li = document.createElement("li");
-          const devName = document.createElement("span");
-          devName.className = "dev-name";
-          devName.textContent = device.name || "未命名设备";
-          const devMeta = document.createElement("span");
-          devMeta.className = "dev-meta";
-          const scopes = (device.scopes || []).join(" / ") || "无权限";
-          const seen = device.lastSeenAt ? new Date(device.lastSeenAt).toLocaleString() : "从未";
-          devMeta.textContent = `${scopes} · 最近 ${seen}`;
-          const revoke = document.createElement("button");
-          revoke.className = "btn btn-danger";
-          revoke.type = "button";
-          revoke.textContent = "解除";
-          revoke.onclick = async () => {
-            if (!window.confirm(`解除「${device.name || "这台设备"}」？它会立刻失去访问权限。`)) return;
-            revoke.disabled = true;
-            const result = await window.desktop.mobileRevoke(device.id);
-            if (result && result.ok && result.snapshot) renderPairing(result.snapshot);
-            else { revoke.disabled = false; window.alert((result && result.error) || "解除失败"); }
-          };
-          li.append(devName, devMeta, revoke);
-          list.appendChild(li);
-        }
+      // ---- 引擎侧快捷入口 ---------------------------------------------------
+      // Pairing itself lives in the engine's own settings page: it must look and
+      // behave like the harness, and the mobile-bridge plugin owns that data.
+      // This window only links there, so there is no second source of truth.
+      function onReady(id, handler) {
+        const el = $(id);
+        if (el) el.onclick = handler;
       }
 
-      async function loadPairing(ensure) {
-        if (!(window.desktop && window.desktop.mobilePairing)) {
-          renderPairing({ ok: false, error: "当前窗口没有桥接权限。" });
-          return;
-        }
-        renderPairing(await window.desktop.mobilePairing({ ensure: ensure === true }));
-      }
+      onReady("btnOpenPairing", async () => {
+        const result = await window.desktop.mobileOpenPairingSettings();
+        if (result && result.ok === false) window.alert(result.error || "打不开引擎设置页");
+      });
 
-      $("btnRotate").onclick = async () => {
-        $("btnRotate").disabled = true;
-        try {
-          const result = await window.desktop.mobileRotate();
-          if (result && result.ok === false) window.alert(result.error || "生成失败");
-          await loadPairing(false);
-        } finally {
-          $("btnRotate").disabled = false;
-        }
-      };
+      onReady("btnMarket", async () => {
+        const result = await window.desktop.desktopAction("market");
+        if (result && result.ok === false) window.alert(result.error || "打不开插件市场");
+      });
 
-      $("btnCopyLink").onclick = async () => {
-        const result = await window.desktop.mobilePairing({});
-        if (!result || !result.pairLink) { window.alert("先生成配对码（并确认已填公网地址）。"); return; }
-        await window.desktop.mobileCopy(result.pairLink);
-        $("btnCopyLink").textContent = "已复制";
-        setTimeout(() => { $("btnCopyLink").textContent = "复制配对链接"; }, 1500);
-      };
+      onReady("btnRecovery", async () => {
+        const result = await window.desktop.desktopAction("recovery");
+        if (result && result.ok === false) window.alert(result.error || "打不开恢复工具");
+      });
 
+      // The search-engine page is a plugin page too: open it inside the app
+      // instead of handing the user a browser tab.
       $("btnSearchEngines").onclick = async () => {
         const result = await window.desktop.mobileOpenSearchSettings();
         if (result && result.ok === false) window.alert(result.error || "打不开引擎界面");
       };
 
-      // Opening the card generates a code when none is live: the user came here
-      // to pair a phone, not to press a button first.
-      loadPairing(true);
 
       initData();
     </script>

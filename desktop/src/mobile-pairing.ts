@@ -73,6 +73,9 @@ async function bridgeFetch(
   timeoutMs = 4000,
 ): Promise<{ ok: boolean; status: number; payload: unknown }> {
   const base = bridgeBase.trim().replace(/\/+$/, "");
+  // An empty base would turn into a relative URL and fail with a parser error
+  // that says nothing to the person reading the settings window.
+  if (base === "") throw new Error("引擎地址为空：引擎可能还没起来。");
   const response = await fetch(`${base}${path}`, {
     method: init.method ?? "GET",
     signal: AbortSignal.timeout(timeoutMs),

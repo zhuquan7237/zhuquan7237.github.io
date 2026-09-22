@@ -40,6 +40,7 @@ import {
   issuePairing,
   newToken,
   normalizeCode,
+  normalizePublicUrl,
   readStore,
   scopeAllows,
   storePath,
@@ -53,10 +54,12 @@ import {
   mergeDocs,
   overlayFor,
 } from './models.js'
+import { qrSvg } from './qr.js'
 import { type WsConnection, acceptUpgrade } from './ws.js'
 
 export * from './devices.js'
 export * from './models.js'
+export * from './qr.js'
 export * from './ws.js'
 
 /** Cordis plugin name — the patch row id. */
@@ -504,9 +507,27 @@ export function apply(ctx: Context, config: { publicUrl?: string } = {}): void {
     return buildDoc(view, overlayOf(store), keyConfigured)
   }
 
+  /** Public URL from the profile config, before the store's own value wins. */
+  const configuredPublicUrl = (): string => (config.publicUrl ?? '').trim().replace(/\/+$/, '')
+
+  /**
+   * Effective public base URL. The store's value wins over the profile config so
+   * the settings page can change it without an engine restart; the config stays
+   * as the fallback for machines that set it before this existed.
+   */
+  const publicUrl = (): string => {
+    const stored = normalizePublicUrl(load().publicUrl)
+    return stored !== '' ? stored : configuredPublicUrl()
+  }
+
+  const publicUrlSource = (): 'store' | 'config' | '' => {
+    if (normalizePublicUrl(load().publicUrl) !== '') return 'store'
+    return configuredPublicUrl() !== '' ? 'config' : ''
+  }
+
   const pairingUrl = (code: string): string => {
-    const base = (config.publicUrl ?? '').trim()
-    return base === '' ? code : `${base.replace(/\/+$/, '')}/mobile/#pair=${encodeURIComponent(code)}`
+    const base = publicUrl()
+    return base === '' ? code : `${base}/mobile/?pair=${encodeURIComponent(code)}`
   }
 
   // -------------------------------------------------------------- local routes
@@ -519,7 +540,9 @@ export function apply(ctx: Context, config: { publicUrl?: string } = {}): void {
       pairCode: live ? pairing?.code : null,
       pairExpiresAt: live ? pairing?.expiresAt : null,
       pairUrl: live && pairing !== undefined ? pairingUrl(pairing.code) : null,
-      publicUrl: (config.publicUrl ?? '').trim(),
+      publicUrl: publicUrl(),
+      publicUrlSource: publicUrlSource(),
+      publicUrlConfigured: configuredPublicUrl(),
       devices: store.devices.map(deviceView),
       scopes: SCOPES.map((scope) => ({ id: scope, label: SCOPE_LABELS[scope] })),
     }
@@ -602,6 +625,105 @@ document.addEventListener('click', async (event) => {
         save(store)
         log(`已生成配对码（5 分钟内有效）`)
         sendJson(res, 200, { ok: true, code: pairing.code, expiresAt: pairing.expiresAt })
+        return
+      }
+      // QR for the current pairing link, rendered server-side so the settings
+      // page only needs an <img> and the shell and the plugin always draw the
+      // same code for the same link.
+      if (path.startsWith('/qr')) {
+        const state = localState()
+        const code = state.pairCode as string | null
+        const link = state.pairUrl as string | null
+        if (code === null || link === null || link === code) {
+          res.writeHead(404, { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' })
+          res.end(
+            link === code
+              ? '还没有配置公网地址，二维码会指向不可达的地址：请在上方填入公网地址后重试。'
+              : '当前没有有效配对码：先生成配对码。',
+          )
+          return
+        }
+        try {
+          const svg = qrSvg(link)
+          res.writeHead(200, { 'content-type': 'image/svg+xml; charset=utf-8', 'cache-control': 'no-store' })
+          res.end(svg)
+        } catch (error) {
+          res.writeHead(500, { 'content-type': 'text/plain; charset=utf-8' })
+          res.end(`二维码生成失败：${error instanceof Error ? error.message : String(error)}`)
+        }
+        return
+      }
+      // Public address used by the QR. Stored in the bridge's own store, so the
+      // settings page can change it without an engine restart.
+      if (path.startsWith('/config')) {
+        if (req.method !== 'POST') {
+          sendJson(res, 200, {
+            ok: true,
+            publicUrl: publicUrl(),
+            publicUrlSource: publicUrlSource(),
+            configuredUrl: configuredPublicUrl(),
+            storePath: storePath(),
+          })
+          return
+        }
+        void (async () => {
+          try {
+            const body = await readJsonBody(req)
+            const raw = String(body.publicUrl ?? '').trim()
+            const next = normalizePublicUrl(raw)
+            if (raw !== '' && next === '') {
+              sendJson(res, 200, {
+                ok: false,
+                code: 'E_PUBLIC_URL',
+                message: '公网地址需要以 http:// 或 https:// 开头，例如 https://m.example.com（留空表示清除）。',
+              })
+              return
+            }
+            const store = load()
+            if (next === '') {
+              delete store.publicUrl
+            } else {
+              store.publicUrl = next
+            }
+            save(store)
+            log(next === '' ? '已清除公网地址（回退为 profile 配置）' : `公网地址已更新：${next}`)
+            // A new base makes the previously scanned code point at the wrong
+            // host, so issue a fresh code and hand it back with the new link.
+            const rotated = load()
+            const pairing = issuePairing(rotated)
+            save(rotated)
+            sendJson(res, 200, {
+              ok: true,
+              publicUrl: publicUrl(),
+              publicUrlSource: publicUrlSource(),
+              pairCode: pairing.code,
+              pairExpiresAt: pairing.expiresAt,
+              pairUrl: pairingUrl(pairing.code),
+            })
+          } catch (error) {
+            sendJson(res, 200, {
+              ok: false,
+              code: 'E_CONFIG',
+              message: error instanceof Error ? error.message : String(error),
+            })
+          }
+        })()
+        return
+      }
+      // The settings section reports that it mounted, so a blank page has a
+      // server-side trace instead of silence.
+      if (path.startsWith('/seat')) {
+        void (async () => {
+          try {
+            const body = await readJsonBody(req)
+            const stage = String(body.stage ?? '').trim()
+            const failure = String(body.failure ?? '').trim()
+            log(`设置页${stage === 'seated' ? '已挂载' : `挂载失败${failure === '' ? '' : `：${failure}`}`}`)
+          } catch {
+            /* the seat ping is best-effort */
+          }
+          sendJson(res, 200, { ok: true })
+        })()
         return
       }
       const revoke = path.match(/^\/devices\/([^/?]+)/)
@@ -1097,5 +1219,6 @@ document.addEventListener('click', async (event) => {
   }
   log(`已就绪：${initial.devices.length} 台设备已绑定 · 公开前缀 ${PUBLIC_PREFIX} · 本机配对页 ${LOCAL_PREFIX}/ · 存储 ${storePath()}`)
   log(`手机端静态资源目录：${APP_DIR}（${existsSync(join(APP_DIR, 'index.html')) ? '已找到 index.html' : '缺少 index.html，静态页面不可用'}）`)
-  log(`手机端地址：${(config.publicUrl ?? '').trim() || '（未配置 publicUrl，手机可先用局域网地址）'}${PUBLIC_PREFIX}/`)
+  const effectiveUrl = publicUrl()
+  log(`手机端地址：${effectiveUrl === '' ? '（未配置 publicUrl，手机可先用局域网地址）' : effectiveUrl}${PUBLIC_PREFIX}/`)
 }

@@ -22,6 +22,8 @@ declare global {
       mobileCopy: (text: string) => Promise<{ ok: boolean }>;
       mobileRevoke: (id: string) => Promise<{ ok: boolean; error?: string }>;
       mobileOpenSearchSettings: () => Promise<{ ok: boolean; error?: string; url?: string }>;
+      mobileOpenPairingSettings: () => Promise<{ ok: boolean; error?: string; url?: string }>;
+      desktopAction: (action: string) => Promise<{ ok: boolean; error?: string }>;
     };
   }
 }

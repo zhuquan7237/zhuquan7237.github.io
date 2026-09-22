@@ -23,6 +23,17 @@ export const SCOPE_LABELS = {
     config: '修改模型配置与凭据',
     admin: '管理已绑定的设备',
 };
+/**
+ * Trim a public base URL and refuse anything that cannot be one. Empty means
+ * "not configured"; a missing scheme would produce a QR that fails silently on
+ * the phone, so it is rejected with a message instead.
+ */
+export function normalizePublicUrl(value) {
+    const raw = String(value ?? '').trim().replace(/\/+$/, '');
+    if (raw === '')
+        return '';
+    return /^https?:\/\/[^\s]+$/i.test(raw) ? raw : '';
+}
 /** How long a pairing code stays valid. */
 export const PAIR_CODE_TTL_MS = 5 * 60 * 1000;
 /** Failed attempts before the code stops answering. */
@@ -45,6 +56,7 @@ export function readStore(env = process.env) {
             seq: typeof raw.seq === 'number' ? raw.seq : 0,
             ...(raw.pairing !== undefined ? { pairing: raw.pairing } : {}),
             devices: Array.isArray(raw.devices) ? raw.devices : [],
+            ...(typeof raw.publicUrl === 'string' ? { publicUrl: raw.publicUrl } : {}),
             ...(raw.models !== undefined ? { models: raw.models } : {}),
         };
     }

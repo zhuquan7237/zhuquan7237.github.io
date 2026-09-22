@@ -40,20 +40,37 @@ describe("settings page keeps what the user already had", () => {
     expect(html).toContain("已禁止保存以免覆盖原有配置");
   });
 
-  it("renders the phone pairing card off the bridge routes", async () => {
+  it("points pairing at the engine's own settings page instead of duplicating it", async () => {
     const html = await readFile(path.join(__dirname, "..", "resources", "settings.html"), "utf8");
-    for (const marker of [
-      "window.desktop.mobilePairing",
-      "loadPairing(true)",
-      "window.desktop.mobileRotate()",
-      "window.desktop.mobileRevoke(device.id)",
-      "window.desktop.mobileCopy(result.pairLink)",
-      "window.desktop.mobileOpenSearchSettings()",
-      "pairQrHolder",
-      "btnRotate",
-      "devList",
-    ]) {
-      expect(html).toContain(marker);
+    // The pairing code, QR and device list live in the mobile-bridge plugin's
+    // settings section now: one source of truth, styled by the engine itself.
+    // This window only links there.
+    expect(html).toContain("window.desktop.mobileOpenPairingSettings()");
+    expect(html).toContain("btnOpenPairing");
+    for (const gone of ["btnRotate", "pairQrHolder", "devList", "loadPairing", "mobileUrl"]) {
+      expect(html).not.toContain(gone);
     }
+    expect(html).toContain("window.desktop.desktopAction(\"market\")");
+    expect(html).toContain("window.desktop.desktopAction(\"recovery\")");
+    expect(html).toContain("window.desktop.mobileOpenSearchSettings()");
+  });
+
+  it("matches the harness light palette and animates only cheap properties", async () => {
+    const html = await readFile(path.join(__dirname, "..", "resources", "settings.html"), "utf8");
+    for (const token of [
+      "--bg-main: #ffffff",
+      "--bg-card: #f8f9fa",
+      "--border-color: #e5e7eb",
+      "--text-main: #111827",
+      "--accent: #2563eb",
+      "color-scheme: light",
+    ]) {
+      expect(html).toContain(token);
+    }
+    // A backdrop blur over a scrolling list is the jank source that was reported;
+    // hover transitions must stay on border/background, not on shadows.
+    expect(html).not.toContain("backdrop-filter");
+    expect(html).not.toContain("transition: all");
+    expect(html).not.toContain("box-shadow 0.15s");
   });
 });

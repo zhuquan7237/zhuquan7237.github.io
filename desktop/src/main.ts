@@ -266,7 +266,9 @@ async function createMain(url: string, version: string): Promise<void> {
     backgroundColor: "#101218",
     title: `${APP_DISPLAY_NAME} — dsh ${version}`,
     icon: windowIcon(),
-    autoHideMenuBar: false,
+    // The harness UI itself has no menu bar: hide the native one so the window
+    // matches it. Alt still reveals it, and every accelerator stays registered.
+    autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
@@ -1419,6 +1421,26 @@ async function openMarket(): Promise<void> {
   });
 }
 
+/**
+ * Bring one of the engine's own settings pages up inside the main window. The
+ * engine owns that UI and its auth cookie lives in that window, so the shell
+ * navigates instead of opening a browser tab or a second, differently styled
+ * surface that would drift from the harness design.
+ */
+async function openEngineSettingsPage(route: string): Promise<{ ok: boolean; error?: string; url?: string }> {
+  const base = (running?.url ?? "").trim().replace(/\/+$/, "");
+  if (base === "") return { ok: false, error: "引擎还没起来，稍等一下再试。" };
+  const url = `${base}${route.startsWith("/") ? route : `/${route}`}`;
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    await mainWindow.webContents.loadURL(url);
+    if (!mainWindow.isVisible()) mainWindow.show();
+    mainWindow.focus();
+    return { ok: true, url };
+  }
+  await shell.openExternal(url);
+  return { ok: true, url };
+}
+
 async function openSettings(): Promise<void> {
   const win = new BrowserWindow({
     width: 520,
@@ -1657,7 +1679,11 @@ if (linuxReady) {
           ensure: options?.ensure === true,
         });
       });
-      ipcMain.handle("mobile:rotate", async () => await rotatePairing(bridgeBaseUrl()));
+      ipcMain.handle("mobile:rotate", async () => {
+        const base = bridgeBaseUrl();
+        if (base === "") return { ok: false, error: "引擎还没起来，稍等一下再试。" };
+        return await rotatePairing(base);
+      });
       ipcMain.handle("mobile:copy", async (_event, text: string) => {
         clipboard.writeText(String(text ?? ""));
         return { ok: true };
@@ -1673,12 +1699,30 @@ if (linuxReady) {
           }),
         };
       });
-      ipcMain.handle("mobile:open-search-settings", async () => {
-        const base = running?.url ?? "";
-        if (base === "") return { ok: false, error: "引擎还没起来。" };
-        const url = `${base.replace(/\/+$/, "")}/settings/search-engines`;
-        await shell.openExternal(url);
-        return { ok: true, url };
+      ipcMain.handle("mobile:open-search-settings", async () =>
+        await openEngineSettingsPage("/settings/search-engines"),
+      );
+      ipcMain.handle("mobile:open-pairing-settings", async () =>
+        await openEngineSettingsPage("/settings/mobile-bridge"),
+      );
+      // Actions that only the hidden native menu offered. They live in the
+      // settings window now; every one of them answers with a reason on failure.
+      ipcMain.handle("desktop:action", async (_event, action: string) => {
+        switch (String(action)) {
+          case "market":
+            await openMarket();
+            return { ok: true };
+          case "recovery":
+            await openRecovery({ kind: "manual" });
+            return { ok: true };
+          case "logs":
+            await shell.openPath(logsDir(userData()));
+            return { ok: true };
+          case "engine-settings":
+            return await openEngineSettingsPage("/settings");
+          default:
+            return { ok: false, error: `未知操作：${String(action)}` };
+        }
       });
       ipcMain.on("settings:apply", () => {
         void boot(true);
