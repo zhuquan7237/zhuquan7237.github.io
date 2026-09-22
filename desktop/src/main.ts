@@ -1004,6 +1004,9 @@ function buildMenu(): void {
         },
         {
           label: uiText("menu.harness.settings"),
+          // The bar is hidden by default, so the settings window needs a way in
+          // that does not require knowing about Alt.
+          accelerator: "CmdOrCtrl+,",
           click: () => {
             void openSettings();
           },
