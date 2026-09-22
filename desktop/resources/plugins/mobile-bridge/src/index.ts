@@ -904,7 +904,7 @@ document.addEventListener('click', async (event) => {
       log(`模型配置已保存：${ops.length} 项引擎改动，overlay 修订 ${overlay.revision}`)
       publish({ kind: 'notify', level: 'info', title: '模型配置已更新', body: `${ops.length} 项改动` })
       sendJson(res, 200, { ok: true, doc: await buildModelDoc(load()) })
-    }),
+    }, true),
   }),
 
   webServer.register({
@@ -932,7 +932,7 @@ document.addEventListener('click', async (event) => {
       const described = await credentials.describe(ref)
       log(`凭据 ${ref} ${value === '' ? '已清除' : '已更新'}（值不回显）`)
       sendJson(res, 200, { ok: true, ref, configured: described?.configured === true })
-    }),
+    }, true),
   })
 
   webServer.register({

@@ -24,6 +24,14 @@ contextBridge.exposeInMainWorld("desktop", {
   setSkinsEnabled: (enabled: boolean): Promise<void> => ipcRenderer.invoke("skins:set-enabled", enabled),
   importSkinDir: (): Promise<void> => ipcRenderer.invoke("skins:import-dir"),
   importSkinUrl: (url: string): Promise<void> => ipcRenderer.invoke("skins:import-url", url),
+  mobilePairing: (options?: { ensure?: boolean }): Promise<import("./mobile-pairing").PairingSnapshot> =>
+    ipcRenderer.invoke("mobile:pairing", options),
+  mobileRotate: (): Promise<{ ok: boolean; error?: string }> => ipcRenderer.invoke("mobile:rotate"),
+  mobileCopy: (text: string): Promise<{ ok: boolean }> => ipcRenderer.invoke("mobile:copy", text),
+  mobileRevoke: (id: string): Promise<{ ok: boolean; error?: string }> =>
+    ipcRenderer.invoke("mobile:revoke", id),
+  mobileOpenSearchSettings: (): Promise<{ ok: boolean; error?: string; url?: string }> =>
+    ipcRenderer.invoke("mobile:open-search-settings"),
   syncModels: (): Promise<any> => ipcRenderer.invoke("models:sync"),
   getProviders: (): Promise<any> => ipcRenderer.invoke("models:get-providers"),
   /** Diagnostics bundle, also reachable as `DeepSeek --export-diagnostics`. */

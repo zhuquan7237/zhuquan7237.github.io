@@ -34,6 +34,7 @@ import { createMarketService, type MarketService } from "./market/service";
 import { DSH1024_SOURCE, type CatalogSource } from "./market/catalog";
 import { explainFirstRunError } from "./first-run-error";
 import { appIconFile, installUserShortcuts, needsUserShortcuts } from "./desktop-integration";
+import { readPairingSnapshot, rotatePairing, revokePairingDevice } from "./mobile-pairing";
 import {
   DESKTOP_DOWNLOAD_PAGE,
   downloadDesktopAssetFromMirrors,
@@ -61,7 +62,7 @@ import {
 } from "./skins";
 import { migrateLegacyDesktopData, summarizeMigration, type LegacyMigrateResult } from "./legacy-home";
 import { loadWindowState, saveWindowState } from "./window-state";
-import { ensureBundledPlugins, pluginSecretsEnv, renderPluginRows } from "./plugins";
+import { ensureBundledPlugins, migrateLegacySearchSettings, pluginSecretsEnv, renderPluginRows } from "./plugins";
 import {
   APP_DISPLAY_NAME,
   APP_ID,
@@ -326,6 +327,9 @@ async function syncSkins(onLog: (line: string) => void = shellLog): Promise<Inst
     resourcesPath: process.resourcesPath,
     onLog: (line) => onLog(String(line)),
   }).catch((error) => onLog(`内置插件未能安装：${error instanceof Error ? error.message : String(error)}`));
+  await migrateLegacySearchSettings({ dshHome: dshHomeDir(), settings, onLog: (line) => onLog(String(line)) }).catch(
+    (error) => onLog(`搜索设置迁移失败：${error instanceof Error ? error.message : String(error)}`),
+  );
   const pluginRows = renderPluginRows(settings);
   if (!settings.skinsEnabled) {
     const catalog = await loadCatalog(userData()).catch(() => []);
@@ -1615,6 +1619,8 @@ if (linuxReady) {
       shellLog(
         uiText("log.shellLocale", { locale: shellLocale, source: settings.locale ? "setting" : "system" }),
       );
+      /** Loopback base of the running engine: the bridge shares its port. */
+      const bridgeBaseUrl = (): string => (running?.url ?? "").trim().replace(/\/+$/, "");
       ipcMain.handle("app:version", () => app.getVersion());
       ipcMain.handle("settings:get", () => settings);
       ipcMain.handle("settings:save", async (_event, next: DesktopSettings) => {
@@ -1627,6 +1633,52 @@ if (linuxReady) {
       ipcMain.handle("settings:pick-dir", async () => {
         const picked = await dialog.showOpenDialog({ properties: ["openDirectory"] });
         return picked.filePaths[0] ?? "";
+      });
+      // Phone companion: the settings window shows the live pairing code, its QR
+      // and the bound devices. Every call goes through the bridge's loopback
+      // routes, so the plugin stays the only writer of the pairing store.
+      ipcMain.handle("mobile:pairing", async (_event, options?: { ensure?: boolean }) => {
+        const base = bridgeBaseUrl();
+        if (base === "") {
+          return {
+            ok: false,
+            error: "引擎还没起来，稍后再打开这个页面。",
+            publicUrl: settings.mobile.publicUrl,
+            pairCode: null,
+            pairExpiresAt: null,
+            pairLink: null,
+            qrSvg: null,
+            devices: [],
+          };
+        }
+        return await readPairingSnapshot({
+          bridgeBase: base,
+          publicUrl: settings.mobile.publicUrl,
+          ensure: options?.ensure === true,
+        });
+      });
+      ipcMain.handle("mobile:rotate", async () => await rotatePairing(bridgeBaseUrl()));
+      ipcMain.handle("mobile:copy", async (_event, text: string) => {
+        clipboard.writeText(String(text ?? ""));
+        return { ok: true };
+      });
+      ipcMain.handle("mobile:revoke", async (_event, id: string) => {
+        const result = await revokePairingDevice(bridgeBaseUrl(), String(id ?? ""));
+        if (!result.ok) return result;
+        return {
+          ok: true,
+          snapshot: await readPairingSnapshot({
+            bridgeBase: bridgeBaseUrl(),
+            publicUrl: settings.mobile.publicUrl,
+          }),
+        };
+      });
+      ipcMain.handle("mobile:open-search-settings", async () => {
+        const base = running?.url ?? "";
+        if (base === "") return { ok: false, error: "引擎还没起来。" };
+        const url = `${base.replace(/\/+$/, "")}/settings/search-engines`;
+        await shell.openExternal(url);
+        return { ok: true, url };
       });
       ipcMain.on("settings:apply", () => {
         void boot(true);

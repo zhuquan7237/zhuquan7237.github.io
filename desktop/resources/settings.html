@@ -344,6 +344,20 @@
       .btn-danger:hover {
         background: rgba(239, 68, 68, 0.25);
       }
+      .pair-box { display: flex; gap: 18px; align-items: flex-start; margin-top: 14px; flex-wrap: wrap; }
+      .pair-qr { flex: 0 0 auto; text-align: center; }
+      .pair-qr-holder { width: 156px; height: 156px; border-radius: 14px; background: #ffffff; padding: 8px; display: flex; align-items: center; justify-content: center; box-sizing: border-box; }
+      .pair-qr-holder svg { width: 100%; height: 100%; display: block; }
+      .pair-qr-holder span { color: #9ca3af; font-size: 12px; }
+      .pair-main { flex: 1 1 260px; min-width: 240px; }
+      .pair-code { font: 700 28px/1.25 ui-monospace, Consolas, monospace; letter-spacing: 3px; margin: 2px 0 4px; }
+      .pair-devices { margin-top: 16px; border-top: 1px solid var(--border-color); padding-top: 12px; }
+      .dev-list { list-style: none; padding: 0; margin: 6px 0 0; }
+      .dev-list li { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; padding: 7px 0; border-bottom: 1px solid var(--border-color); }
+      .dev-list li:last-child { border-bottom: 0; }
+      .dev-list .dev-name { flex: 1 1 auto; min-width: 140px; }
+      .dev-list .dev-meta { color: var(--text-secondary, #9ca3af); font-size: 12px; }
+      .pair-error { color: #f87171; }
       .btn:disabled {
         opacity: 0.5;
         cursor: not-allowed;
@@ -530,6 +544,10 @@
               <span class="form-label">Tavily API Key</span>
               <input class="input-text" id="tavilyKey" type="password" placeholder="tvly-…" autocomplete="off" />
             </div>
+            <span class="card-desc">这里保存的 Tavily 密钥会注入引擎（DSH_TAVILY_API_KEY），启用哪个搜索引擎在引擎界面里选。</span>
+            <div class="row-flex" style="margin-top: 8px;">
+              <button class="btn btn-outline" id="btnSearchEngines" type="button">打开搜索引擎设置</button>
+            </div>
           </div>
 
           <!-- Skins -->
@@ -590,12 +608,30 @@
 
           <!-- Mobile companion -->
           <div class="card">
-            <span class="card-title">手机端（配对地址）</span>
+            <span class="card-title">手机端（配对与设备）</span>
             <div class="form-group">
-              <span class="form-label">公网地址（留空则只在电脑本机显示配对码）</span>
+              <span class="form-label">公网地址（留空则只显示本机地址，手机在外网连不上）</span>
               <input class="input-text" id="mobileUrl" placeholder="https://m.zhuquan.xyz" />
             </div>
-            <span class="card-desc">配对二维码会指向这个地址；手机和电脑不在同一网络时填写隧道域名。</span>
+            <span class="card-desc">配对二维码指向这个地址；手机和电脑不在同一网络时填写隧道域名，保存后回到本页生效。</span>
+            <div id="pairBox" class="pair-box">
+              <div class="pair-qr">
+                <div id="pairQrHolder" class="pair-qr-holder"><span class="muted">二维码</span></div>
+                <div class="muted" id="pairQrHint">手机 App →「扫码配对」</div>
+              </div>
+              <div class="pair-main">
+                <div class="pair-code" id="pairCode">——</div>
+                <div class="card-desc" id="pairMeta">正在读取配对状态…</div>
+                <div class="row-flex" style="margin-top: 10px; gap: 8px;">
+                  <button class="btn btn-secondary" id="btnRotate" type="button">重新生成配对码</button>
+                  <button class="btn btn-outline" id="btnCopyLink" type="button">复制配对链接</button>
+                </div>
+              </div>
+            </div>
+            <div class="pair-devices">
+              <span class="form-label">已绑定设备 <span id="devCount" class="muted"></span></span>
+              <ul class="dev-list" id="devList"><li class="muted">读取中…</li></ul>
+            </div>
           </div>
 
           <!-- Update Settings -->
@@ -892,6 +928,116 @@
         }
         window.close();
       };
+
+      // ---- 手机端配对卡片 -------------------------------------------------
+      let pairTimer = null;
+
+      function renderPairing(snapshot) {
+        const holder = $("pairQrHolder");
+        const codeEl = $("pairCode");
+        const meta = $("pairMeta");
+        const list = $("devList");
+        if (!snapshot || snapshot.ok !== true) {
+          codeEl.textContent = "——";
+          meta.innerHTML = `<span class="pair-error">${(snapshot && snapshot.error) || "读不到配对状态。"}</span>`;
+          holder.innerHTML = '<span>二维码</span>';
+          list.innerHTML = '<li class="muted">读不到设备列表</li>';
+          $("devCount").textContent = "";
+          return;
+        }
+        codeEl.textContent = snapshot.pairCode || "（暂无有效配对码）";
+        if (snapshot.pairCode && snapshot.pairExpiresAt) {
+          const tick = () => {
+            const left = Math.max(0, Math.round((snapshot.pairExpiresAt - Date.now()) / 1000));
+            meta.textContent = left > 0
+              ? `5 分钟内有效，剩余 ${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}；手机 App →「扫码配对」或直接输入这串码。`
+              : "配对码已过期，点上面的按钮重新生成。";
+            if (left <= 0 && pairTimer) { clearInterval(pairTimer); pairTimer = null; }
+          };
+          if (pairTimer) clearInterval(pairTimer);
+          tick();
+          pairTimer = setInterval(tick, 1000);
+        } else {
+          if (pairTimer) { clearInterval(pairTimer); pairTimer = null; }
+          meta.textContent = snapshot.publicUrl
+            ? "点「重新生成配对码」开始配对。"
+            : "先填公网地址并保存，手机才能扫到；本机调试可直接输入配对码。";
+        }
+        if (snapshot.qrSvg) {
+          holder.innerHTML = snapshot.qrSvg;
+          $("pairQrHint").textContent = "手机 App →「扫码配对」";
+        } else {
+          holder.innerHTML = `<span>${snapshot.publicUrl ? "先生成配对码" : "需要公网地址"}</span>`;
+          $("pairQrHint").textContent = snapshot.publicUrl ? "" : "填好公网地址并保存后会显示二维码";
+        }
+        const devices = Array.isArray(snapshot.devices) ? snapshot.devices : [];
+        $("devCount").textContent = devices.length ? `（${devices.length}）` : "";
+        if (!devices.length) {
+          list.innerHTML = '<li class="muted">还没有设备绑定</li>';
+          return;
+        }
+        list.innerHTML = "";
+        for (const device of devices) {
+          const li = document.createElement("li");
+          const devName = document.createElement("span");
+          devName.className = "dev-name";
+          devName.textContent = device.name || "未命名设备";
+          const devMeta = document.createElement("span");
+          devMeta.className = "dev-meta";
+          const scopes = (device.scopes || []).join(" / ") || "无权限";
+          const seen = device.lastSeenAt ? new Date(device.lastSeenAt).toLocaleString() : "从未";
+          devMeta.textContent = `${scopes} · 最近 ${seen}`;
+          const revoke = document.createElement("button");
+          revoke.className = "btn btn-danger";
+          revoke.type = "button";
+          revoke.textContent = "解除";
+          revoke.onclick = async () => {
+            if (!window.confirm(`解除「${device.name || "这台设备"}」？它会立刻失去访问权限。`)) return;
+            revoke.disabled = true;
+            const result = await window.desktop.mobileRevoke(device.id);
+            if (result && result.ok && result.snapshot) renderPairing(result.snapshot);
+            else { revoke.disabled = false; window.alert((result && result.error) || "解除失败"); }
+          };
+          li.append(devName, devMeta, revoke);
+          list.appendChild(li);
+        }
+      }
+
+      async function loadPairing(ensure) {
+        if (!(window.desktop && window.desktop.mobilePairing)) {
+          renderPairing({ ok: false, error: "当前窗口没有桥接权限。" });
+          return;
+        }
+        renderPairing(await window.desktop.mobilePairing({ ensure: ensure === true }));
+      }
+
+      $("btnRotate").onclick = async () => {
+        $("btnRotate").disabled = true;
+        try {
+          const result = await window.desktop.mobileRotate();
+          if (result && result.ok === false) window.alert(result.error || "生成失败");
+          await loadPairing(false);
+        } finally {
+          $("btnRotate").disabled = false;
+        }
+      };
+
+      $("btnCopyLink").onclick = async () => {
+        const result = await window.desktop.mobilePairing({});
+        if (!result || !result.pairLink) { window.alert("先生成配对码（并确认已填公网地址）。"); return; }
+        await window.desktop.mobileCopy(result.pairLink);
+        $("btnCopyLink").textContent = "已复制";
+        setTimeout(() => { $("btnCopyLink").textContent = "复制配对链接"; }, 1500);
+      };
+
+      $("btnSearchEngines").onclick = async () => {
+        const result = await window.desktop.mobileOpenSearchSettings();
+        if (result && result.ok === false) window.alert(result.error || "打不开引擎界面");
+      };
+
+      // Opening the card generates a code when none is live: the user came here
+      // to pair a phone, not to press a button first.
+      loadPairing(true);
 
       initData();
     </script>

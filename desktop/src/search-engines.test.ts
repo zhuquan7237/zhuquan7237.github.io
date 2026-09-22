@@ -236,3 +236,22 @@ describe("client bundle", () => {
     }
   });
 });
+
+describe("engine key status", () => {
+  it("sees a key the shell injected into the environment", async () => {
+    const { envHasKey } = await import("../resources/plugins/search-engines/src/index");
+    const saved = process.env.TAVILY_API_KEY;
+    const savedDsh = process.env.DSH_TAVILY_API_KEY;
+    delete process.env.TAVILY_API_KEY;
+    delete process.env.DSH_TAVILY_API_KEY;
+    expect(envHasKey("TAVILY_API_KEY")).toBe(false);
+    process.env.DSH_TAVILY_API_KEY = "tvly-from-shell";
+    expect(envHasKey("TAVILY_API_KEY")).toBe(true);
+    process.env.TAVILY_API_KEY = "tvly-plain";
+    delete process.env.DSH_TAVILY_API_KEY;
+    expect(envHasKey("TAVILY_API_KEY")).toBe(true);
+    delete process.env.TAVILY_API_KEY;
+    if (saved !== undefined) process.env.TAVILY_API_KEY = saved;
+    if (savedDsh !== undefined) process.env.DSH_TAVILY_API_KEY = savedDsh;
+  });
+});

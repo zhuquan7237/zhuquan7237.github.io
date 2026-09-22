@@ -17,6 +17,11 @@ declare global {
       setSkinsEnabled: (enabled: boolean) => Promise<void>;
       importSkinDir: () => Promise<void>;
       importSkinUrl: (url: string) => Promise<void>;
+      mobilePairing: (options?: { ensure?: boolean }) => Promise<import("./mobile-pairing").PairingSnapshot>;
+      mobileRotate: () => Promise<{ ok: boolean; error?: string }>;
+      mobileCopy: (text: string) => Promise<{ ok: boolean }>;
+      mobileRevoke: (id: string) => Promise<{ ok: boolean; error?: string }>;
+      mobileOpenSearchSettings: () => Promise<{ ok: boolean; error?: string; url?: string }>;
     };
   }
 }

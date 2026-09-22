@@ -92,3 +92,37 @@ button.danger { color: var(--dsw-alias-state-error-primary); border-color: curre
 .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--dsw-alias-label-tertiary); display: inline-block; margin-right: 5px; }
 .dot.live { background: var(--dsw-alias-state-business-primary, #3ba55d); }
 .dot.bad { background: var(--dsw-alias-state-error-primary); }
+
+/* Folded thinking: one quiet line per reasoning block, tap to read it. */
+.msg.think { padding: 4px 14px 0; }
+.msg.think .bubble { max-width: 100%; }
+.think-line {
+  display: inline-flex; align-items: center; gap: 6px; align-self: flex-start;
+  padding: 5px 9px; border: 0; border-radius: 10px; background: transparent;
+  color: var(--dsw-alias-label-secondary); font: inherit; font-size: 12.5px; cursor: pointer;
+}
+.think-line:hover { background: var(--dsw-alias-bg-layer-2); }
+.think-line .glyph { opacity: .8; }
+.think-line .chev { opacity: .7; font-size: 11px; }
+.msg.think .think-body {
+  margin-top: 4px; padding: 10px 12px; border-radius: 12px;
+  background: var(--dsw-alias-bg-layer-2, rgba(127,127,127,.08));
+  border: 1px solid var(--dsw-alias-border-l1, rgba(127,127,127,.18));
+  color: var(--dsw-alias-label-secondary); font-size: 12.5px; line-height: 1.55;
+  max-height: 320px; overflow-y: auto; white-space: pre-wrap; word-break: break-word;
+}
+.msg.think .think-body[hidden] { display: none; }
+.msg.think.running .bubble { display: inline-flex; align-items: center; gap: 6px; background: transparent; border: 0; padding: 4px 2px; color: var(--dsw-alias-label-secondary); font-size: 12.5px; }
+.bubble .detail { display: block; margin-top: 3px; font-size: 12px; color: var(--dsw-alias-label-tertiary); }
+.preview-chip {
+  margin-top: 9px; display: flex; width: fit-content; align-items: center; gap: 5px;
+  padding: 5px 11px; border: 0; border-radius: 9px; cursor: pointer;
+  background: color-mix(in srgb, #4b93ff 22%, transparent); color: #6aa8ff;
+  font: inherit; font-size: 12px; font-weight: 500;
+}
+.preview-frame {
+  margin-top: 10px; height: 60vh; border-radius: 12px; overflow: hidden;
+  border: 1px solid var(--dsw-alias-border-l2, rgba(127,127,127,.25)); background: #fff;
+}
+.preview-frame iframe { width: 100%; height: 100%; border: 0; background: #fff; }
+.sheet-actions { display: flex; gap: 8px; margin-top: 12px; }

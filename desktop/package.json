@@ -2,7 +2,7 @@
   "name": "deepseek-desktop",
   "productName": "DeepSeek",
   "desktopName": "DeepSeek",
-  "version": "0.5.7",
+  "version": "0.5.9",
   "description": "Codex-style desktop shell for DeepSeek Harness. The engine is always @deepseek-ai/dsh from npm, so harness updates do not require a new desktop build.",
   "homepage": "https://dsh.zhuquan.xyz",
   "author": "DeepSeek Desktop",
@@ -25,7 +25,8 @@
   ],
   "main": "dist/main.js",
   "dependencies": {
-    "js-yaml": "^4.1.0"
+    "js-yaml": "^4.1.0",
+    "qrcode-generator": "^2.0.4"
   },
   "scripts": {
     "postinstall": "node scripts/ensure-electron.cjs",

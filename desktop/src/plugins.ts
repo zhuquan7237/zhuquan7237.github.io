@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
-import { cp, mkdir, readdir, readFile, rm, stat, symlink } from "node:fs/promises";
+import { cp, mkdir, readdir, readFile, rm, stat, symlink, writeFile } from "node:fs/promises";
+import { existsSync } from "node:fs";
 import path from "node:path";
 import { looksLikeAsarVirtualPath } from "./skins";
 import type { DesktopSettings } from "./util";
@@ -209,6 +210,47 @@ export async function ensureBundledPlugins(options: {
       options.onLog(`插件 ${plugin.rowId} 安装失败：${error instanceof Error ? error.message : String(error)}`);
     }
   }
+}
+
+/**
+ * Carry the shell's legacy search settings into the engine plugin's own config.
+ *
+ * Before the search-engines plugin existed the Tavily key lived in the desktop
+ * settings window and the provider was a shell dropdown. Upgrading must not
+ * silently drop either: when the plugin has never been configured we seed its
+ * file from what the user already had, so the first search after an update
+ * behaves like the last search before it. Once the plugin's file exists it owns
+ * the settings and this never touches them again.
+ */
+export async function migrateLegacySearchSettings(options: {
+  dshHome: string;
+  settings: DesktopSettings;
+  onLog: (line: string) => void;
+}): Promise<void> {
+  const file = path.join(options.dshHome, "search-engines.json");
+  if (existsSync(file)) return;
+  const legacy = options.settings.webSearch;
+  const key = (legacy?.tavily?.apiKey ?? "").trim();
+  const wantsTavily = legacy?.provider === "tavily" || key !== "";
+  if (!wantsTavily) return;
+  const baseURL = (legacy?.tavily?.baseURL ?? "").trim() || "https://api.tavily.com";
+  const maxResults = Number.isFinite(legacy?.tavily?.maxResults) ? Number(legacy.tavily.maxResults) : 8;
+  const seed = {
+    engines: {
+      tavily: {
+        enabled: true,
+        baseURL,
+        maxResults: maxResults > 0 ? maxResults : 8,
+        searchDepth: "basic",
+        apiKeyEnv: "TAVILY_API_KEY",
+      },
+    },
+    order: ["tavily"],
+    global: {},
+  };
+  await mkdir(options.dshHome, { recursive: true });
+  await writeFile(file, `${JSON.stringify(seed, null, 2)}\n`, "utf8");
+  options.onLog("已把桌面端旧的搜索设置迁移到引擎的搜索引擎设置（Tavily 已启用）");
 }
 
 function yamlString(value: string): string {

@@ -8,6 +8,7 @@ import {
   ensureBundledPlugins,
   installPluginFromDir,
   linkPluginPackage,
+  migrateLegacySearchSettings,
   pluginBundledCandidates,
   pluginSecretsEnv,
   renderPluginRows,
@@ -255,5 +256,66 @@ describe("bundled plugin installation", () => {
     const stamp = await readFile(path.join(dest, "lib", "index.js"), "utf8");
     expect(await installPluginFromDir(source, dest, (line) => logs.push(line))).toBe("unchanged");
     expect(await readFile(path.join(dest, "lib", "index.js"), "utf8")).toBe(stamp);
+  });
+});
+
+describe("legacy search settings migration", () => {
+  it("seeds the plugin config from the Tavily key the shell used to own", async () => {
+    const home = await tempDir("dsh-search-migrate-");
+    const settings = settingsWith({
+      webSearch: {
+        provider: "tavily",
+        tavily: { apiKey: "tvly-test-key", baseURL: "https://api.tavily.com", maxResults: 6 },
+      },
+    });
+    const logs: string[] = [];
+    await migrateLegacySearchSettings({ dshHome: home, settings, onLog: (line) => logs.push(line) });
+    const seeded = JSON.parse(await readFile(path.join(home, "search-engines.json"), "utf8"));
+    expect(seeded.engines.tavily.enabled).toBe(true);
+    expect(seeded.engines.tavily.maxResults).toBe(6);
+    expect(seeded.order).toEqual(["tavily"]);
+    expect(logs.some((line) => line.includes("迁移"))).toBe(true);
+  });
+
+  it("migrates a saved key even when the old dropdown still pointed at DeepSeek", async () => {
+    const home = await tempDir("dsh-search-keyonly-");
+    const settings = settingsWith({
+      webSearch: {
+        provider: "deepseek-official",
+        tavily: { apiKey: "tvly-test-key", baseURL: "", maxResults: 8 },
+      },
+    });
+    await migrateLegacySearchSettings({ dshHome: home, settings, onLog: () => undefined });
+    const seeded = JSON.parse(await readFile(path.join(home, "search-engines.json"), "utf8"));
+    expect(seeded.engines.tavily.enabled).toBe(true);
+    expect(seeded.engines.tavily.baseURL).toBe("https://api.tavily.com");
+  });
+
+  it("never touches a config the plugin already owns", async () => {
+    const home = await tempDir("dsh-search-keep-");
+    const file = path.join(home, "search-engines.json");
+    await writeFile(file, JSON.stringify({ engines: { serper: { enabled: true } }, order: ["serper"] }));
+    const settings = settingsWith({
+      webSearch: {
+        provider: "tavily",
+        tavily: { apiKey: "tvly-test-key", baseURL: "", maxResults: 8 },
+      },
+    });
+    await migrateLegacySearchSettings({ dshHome: home, settings, onLog: () => undefined });
+    const kept = JSON.parse(await readFile(file, "utf8"));
+    expect(kept.engines.serper.enabled).toBe(true);
+    expect(kept.engines.tavily).toBeUndefined();
+  });
+
+  it("writes nothing when the user never configured Tavily", async () => {
+    const home = await tempDir("dsh-search-none-");
+    const settings = settingsWith({
+      webSearch: {
+        provider: "deepseek-official",
+        tavily: { apiKey: "", baseURL: "https://api.tavily.com", maxResults: 8 },
+      },
+    });
+    await migrateLegacySearchSettings({ dshHome: home, settings, onLog: () => undefined });
+    await expect(readFile(path.join(home, "search-engines.json"), "utf8")).rejects.toThrow();
   });
 });

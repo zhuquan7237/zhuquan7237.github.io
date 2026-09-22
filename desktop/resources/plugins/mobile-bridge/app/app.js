@@ -20,7 +20,7 @@
     view: 'sessions', session: null, sessions: [], search: '', searching: false,
     history: [], live: {}, running: false, doc: null, devices: [],
     ws: null, seq: 0, connected: false, retry: 0, theme: localStorage.getItem('theme') || 'auto',
-    draft: '', busy: false,
+    draft: '', busy: false, thinking: false, openThink: {},
   };
   const el = (id) => document.getElementById(id);
 
@@ -155,14 +155,21 @@
     }
     if (frame.kind !== 'event') return;
     if (state.session && frame.sessionId && frame.sessionId !== state.session.sessionId) return;
-    if (frame.type === 'turn/start') { state.running = true; state.live = {}; renderComposer(); }
-    if (frame.type === 'turn/end') { state.running = false; renderComposer(); }
+    if (frame.type === 'turn/start') { state.running = true; state.live = {}; state.thinking = false; renderComposer(); }
+    if (frame.type === 'turn/end') { state.running = false; state.thinking = false; renderComposer(); }
     if (frame.type === 'assistant/chunk') {
-      const text = chunkText(frame.data);
-      if (text) {
-        const key = `${frame.data && frame.data.turn}:${frame.data && frame.data.step}`;
-        state.live[key] = (state.live[key] || '') + text;
-        renderChat();
+      // An adapter may stream its thinking before the answer; that belongs in
+      // the running line, never pasted into the reply bubble.
+      if (chunkIsReasoning(frame.data)) {
+        if (!state.thinking) { state.thinking = true; renderChat(true); }
+      } else {
+        const text = chunkText(frame.data);
+        if (text) {
+          if (state.thinking) state.thinking = false;
+          const key = `${frame.data && frame.data.turn}:${frame.data && frame.data.step}`;
+          state.live[key] = (state.live[key] || '') + text;
+          renderChat();
+        }
       }
     }
     if (frame.type === 'assistant/message' || frame.type === 'tool/call' || frame.type === 'tool/result' || frame.type === 'user/message') {
@@ -180,6 +187,14 @@
       if (chunk.delta && typeof chunk.delta.text === 'string') return chunk.delta.text;
     }
     return '';
+  }
+
+  /** Is this chunk the model thinking out loud? */
+  function chunkIsReasoning(data) {
+    const chunk = data && data.chunk;
+    if (!chunk || typeof chunk !== 'object') return false;
+    if (chunk.type === 'reasoning') return true;
+    return !!(chunk.delta && typeof chunk.delta === 'object' && chunk.delta.type === 'reasoning');
   }
 
   function connect() {
@@ -245,6 +260,9 @@
       clearTimeout(renderSessions.timer);
       renderSessions.timer = setTimeout(() => { void loadSessions(); }, 320);
     };
+    el('view').querySelectorAll('.row[data-session]').forEach((row) => {
+      row.onclick = () => { void openSession(row.dataset.session); };
+    });
   }
 
   async function openSession(sessionId) {
@@ -269,25 +287,146 @@
     } catch (error) { toast(String(error.message || error)); }
   }
 
+  /**
+   * One row per thing that happened. An assistant turn arrives with three kinds
+   * of block - reasoning, the answer, and tool calls - and the thinking is
+   * folded into its own one-line row instead of being flattened into the reply.
+   */
   function messageRows() {
     const rows = [];
+    const seenCalls = new Set();
+    let stepStart = 0;
     for (const item of state.history) {
       const event = item && item.event ? item.event : item;
       if (!event || typeof event !== 'object') continue;
       const data = event.data || {};
+      const time = Number(event.time) || 0;
+      if (event.type === 'step/start') { stepStart = time; continue; }
       if (event.type === 'user/message') {
         const text = extractText(data);
         if (text) rows.push({ who: 'user', text });
       } else if (event.type === 'assistant/message') {
-        const text = extractText(data.message || data);
-        if (text) rows.push({ who: 'assistant', text });
+        const parts = contentParts(data.message || data);
+        const thinking = parts.filter((part) => part.type === 'reasoning').map((part) => part.text).join('\n\n').trim();
+        const answer = parts.filter((part) => part.type === 'text').map((part) => part.text).join('\n\n').trim();
+        if (thinking) {
+          const seconds = stepStart && time > stepStart ? Math.round((time - stepStart) / 1000) : 0;
+          rows.push({ who: 'think', text: thinking, label: seconds > 0 ? `思考 ${seconds} 秒` : '思考过程' });
+        }
+        if (answer) rows.push({ who: 'assistant', text: answer });
+        for (const call of parts.filter((part) => part.type === 'tool-call')) {
+          const id = call.id || '';
+          if (id && seenCalls.has(id)) continue;
+          if (id) seenCalls.add(id);
+          const args = decodeArgs(call.arguments || '');
+          rows.push({ who: 'tool', text: `调用 ${call.name || '工具'}`, detail: hint(args), raw: args });
+        }
       } else if (event.type === 'tool/call') {
-        rows.push({ who: 'tool', text: `调用工具 ${data.name || ''}` });
+        const id = data.callId || data.id || '';
+        if (id && seenCalls.has(id)) continue;
+        if (id) seenCalls.add(id);
+        const args = decodeArgs(data.arguments || '');
+        rows.push({ who: 'tool', text: `调用 ${data.name || '工具'}`, detail: hint(args), raw: args });
       } else if (event.type === 'tool/result') {
-        rows.push({ who: 'tool', text: `工具返回${data.isError ? '（失败）' : ''}` });
+        const text = extractText(data.message || data);
+        rows.push({ who: 'tool', text: `工具返回${isFailedResult(data) ? '（失败）' : ''}`, detail: hint(text, 100), raw: text });
       }
     }
     return rows;
+  }
+
+  /** Content blocks of a message, tolerating plain-string content. */
+  function contentParts(node) {
+    if (!node || typeof node !== 'object') return [];
+    if (!Array.isArray(node.content)) {
+      const text = extractText(node);
+      return text ? [{ type: 'text', text }] : [];
+    }
+    return node.content.filter((part) => part && typeof part === 'object').map((part) => ({
+      type: String(part.type || ''),
+      text: typeof part.text === 'string' ? part.text : '',
+      id: part.id || part.callId || '',
+      name: part.name || '',
+      arguments: typeof part.arguments === 'string' ? part.arguments : '',
+    }));
+  }
+
+  /** Did the tool fail? The flag rides on the result block, not the event. */
+  function isFailedResult(data) {
+    for (const container of [data, data && data.message]) {
+      if (!container || typeof container !== 'object') continue;
+      if (container.isError === true) return true;
+      if (Array.isArray(container.content)) {
+        for (const part of container.content) if (part && part.isError === true) return true;
+      }
+    }
+    return false;
+  }
+
+  /** Tool arguments arrive as a JSON string of a JSON object. */
+  function decodeArgs(raw) {
+    if (typeof raw !== 'string' || !raw.trim()) return '';
+    let parsed;
+    try { parsed = JSON.parse(raw); } catch { return raw.replace(/\\n/g, '\n').replace(/\\"/g, '"'); }
+    const out = [];
+    const walk = (node) => {
+      if (typeof node === 'string') out.push(node);
+      else if (Array.isArray(node)) node.forEach(walk);
+      else if (node && typeof node === 'object') Object.values(node).forEach(walk);
+    };
+    walk(parsed);
+    return out.join('\n');
+  }
+
+  function hint(text, limit = 80) {
+    const line = String(text == null ? '' : text).split('\n').find((entry) => entry.trim()) || '';
+    const trimmed = line.trim();
+    return trimmed.length > limit ? `${trimmed.slice(0, limit - 1)}…` : trimmed;
+  }
+
+  /** A drawing or page the phone can render itself. */
+  function findArtifact(text) {
+    const value = String(text == null ? '' : text);
+    if (!value) return null;
+    const fence = value.match(/```(svg|html)\s*\n([\s\S]*?)```/i);
+    if (fence) return { kind: fence[1].toLowerCase(), markup: fence[2].trim() };
+    const svg = value.match(/<svg[\s\S]*?<\/svg>/i);
+    if (svg) return { kind: 'svg', markup: svg[0].trim() };
+    const html = value.match(/<!doctype html[\s\S]*?<\/html>|<html[\s\S]*?<\/html>/i);
+    if (html) return { kind: 'html', markup: html[0].trim() };
+    return null;
+  }
+
+  /** Stable key for a folded thinking row, so re-renders keep it open/closed. */
+  function thinkKey(row) {
+    const text = String(row.text || '');
+    return `${text.length}:${text.slice(0, 32)}`;
+  }
+
+  /** SVG needs a page around it before a browser will scale it nicely. */
+  function artifactPage(artifact) {
+    if (artifact.kind !== 'svg') return artifact.markup;
+    return `<!doctype html><html><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />`
+      + '<style>html,body{margin:0;padding:12px;background:#fff}svg{max-width:100%;height:auto;display:block;margin:0 auto}</style></head><body>'
+      + `${artifact.markup}</body></html>`;
+  }
+
+  function openPreview(artifact) {
+    if (!artifact) return;
+    showSheet(
+      `<h2>${artifact.kind === 'svg' ? '图形预览' : '网页预览'}</h2>
+       <div class="preview-frame"><iframe sandbox="allow-scripts" srcdoc="${escapeHtml(artifactPage(artifact))}"></iframe></div>
+       <div class="sheet-actions"><button class="primary" id="preview-copy">复制源码</button><button id="preview-close">关闭</button></div>`,
+      () => {
+        const copy = el('preview-copy');
+        if (copy) copy.onclick = async () => {
+          try { await navigator.clipboard.writeText(artifact.markup); toast('源码已复制'); }
+          catch { toast('复制失败，请长按选择'); }
+        };
+        const close = el('preview-close');
+        if (close) close.onclick = () => hideSheet();
+      },
+    );
   }
 
   function extractText(node) {
@@ -306,9 +445,45 @@
     el('action').hidden = false;
     el('title').textContent = state.session ? sessionTitle(state.session) : '会话';
     renderHeader();
-    const bubbles = messageRows().map((row) => `<div class="msg ${row.who}"><span class="who">${row.who === 'user' ? '我' : row.who === 'tool' ? '工具' : '电脑端'}</span><div class="bubble">${escapeHtml(row.text)}</div></div>`).join('');
+    const chips = {};
+    const bubbles = messageRows().map((row) => {
+      if (row.who === 'think') {
+        const key = thinkKey(row);
+        const open = state.openThink[key] === true;
+        return `<div class="msg think"><button class="think-line${open ? ' open' : ''}" type="button" data-think="${escapeHtml(key)}">`
+          + `<span class="glyph">✦</span><span class="label">${escapeHtml(row.label || '思考过程')}</span><span class="chev">${open ? '⌃' : '⌄'}</span></button>`
+          + `<div class="think-body bubble"${open ? '' : ' hidden'}>${escapeHtml(row.text)}</div></div>`;
+      }
+      const artifact = findArtifact(row.raw) || findArtifact(row.text);
+      let chip = '';
+      if (artifact) {
+        const key = `p${Object.keys(chips).length}`;
+        chips[key] = artifact;
+        chip = `<button class="preview-chip" type="button" data-preview="${key}">预览${artifact.kind === 'svg' ? '图形' : '网页'}</button>`;
+      }
+      const detail = row.detail ? `<span class="detail">${escapeHtml(row.detail)}</span>` : '';
+      return `<div class="msg ${escapeHtml(row.who)}"><span class="who">${row.who === 'user' ? '我' : row.who === 'tool' ? '工具' : '电脑端'}</span>`
+        + `<div class="bubble">${escapeHtml(row.text)}${detail}${chip}</div></div>`;
+    }).join('');
     const live = Object.entries(state.live).map(([key, text]) => `<div class="msg assistant"><span class="who">电脑端 · 正在生成 ${key}</span><div class="bubble">${escapeHtml(text)}</div></div>`).join('');
-    el('view').innerHTML = bubbles + live + '<div style="height:16px"></div><div id="anchor"></div>';
+    const running = state.thinking && !Object.keys(state.live).length
+      ? '<div class="msg think running"><span class="who">电脑端</span><div class="bubble"><span class="dot"></span>正在思考…</div></div>'
+      : '';
+    el('view').innerHTML = bubbles + running + live + '<div style="height:16px"></div><div id="anchor"></div>';
+    el('view').querySelectorAll('.think-line').forEach((button) => {
+      button.onclick = () => {
+        const body = button.nextElementSibling;
+        const open = !(body && !body.hidden);
+        state.openThink[button.dataset.think] = open;
+        if (body) body.hidden = !open;
+        button.classList.toggle('open', open);
+        const chev = button.querySelector('.chev');
+        if (chev) chev.textContent = open ? '⌃' : '⌄';
+      };
+    });
+    el('view').querySelectorAll('.preview-chip').forEach((button) => {
+      button.onclick = () => openPreview(chips[button.dataset.preview]);
+    });
     if (!keepScroll) el('view').scrollTop = el('view').scrollHeight;
     renderComposer();
   }

@@ -347,6 +347,14 @@ function writeSettings(section: SearchEnginesSettings): void {
   renameSync(temporary, file)
 }
 
+/** Whether the launching environment supplies this key (plain or DSH_-prefixed). */
+export function envHasKey(ref: string): boolean {
+  return (
+    (process.env[ref] ?? '').trim() !== '' ||
+    (process.env[`DSH_${ref}`] ?? '').trim() !== ''
+  )
+}
+
 /** Attach a credential reference to every engine that needs one. */
 function keyView(kind: EngineKind, config: EngineConfig): string {
   return (config.apiKeyEnv ?? presetFor(kind)?.keyRef ?? '').trim()
@@ -365,13 +373,21 @@ async function buildState(
     const ref = keyView(preset.kind, config)
     let keyConfigured = false
     let keyWritable = false
-    if (preset.needsKey && ref !== '' && credentials) {
-      try {
-        const described = await credentials.describe(ref)
-        keyConfigured = described?.configured === true
-        keyWritable = described?.writable !== false
-      } catch {
-        keyConfigured = false
+    if (preset.needsKey && ref !== '') {
+      // The request path already falls back to the launching environment
+      // (SERPER_API_KEY, or the shell's DSH_-prefixed injection for the Tavily
+      // key that used to live in the desktop settings window). The status must
+      // use the same chain — showing 未配置 for a key that searches fine is how
+      // a user concludes an update ate their key.
+      keyConfigured = envHasKey(ref)
+      if (credentials) {
+        try {
+          const described = await credentials.describe(ref)
+          keyConfigured = keyConfigured || described?.configured === true
+          keyWritable = described?.writable !== false
+        } catch {
+          // An unreachable credential store leaves the environment answer standing.
+        }
       }
     }
     views.push({
