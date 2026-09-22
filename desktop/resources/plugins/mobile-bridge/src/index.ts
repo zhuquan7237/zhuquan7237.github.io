@@ -634,10 +634,14 @@ document.addEventListener('click', async (event) => {
         const state = localState()
         const code = state.pairCode as string | null
         const link = state.pairUrl as string | null
-        if (code === null || link === null || link === code) {
+        if (code === null || link === null) {
+          // Say which half is missing: "no code yet" and "no public address" are
+          // different fixes, and the old build reported the wrong one whenever
+          // both were missing.
+          const missingBase = publicUrl() === ''
           res.writeHead(404, { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' })
           res.end(
-            link === code
+            missingBase
               ? '还没有配置公网地址，二维码会指向不可达的地址：请在上方填入公网地址后重试。'
               : '当前没有有效配对码：先生成配对码。',
           )

@@ -1422,23 +1422,50 @@ async function openMarket(): Promise<void> {
 }
 
 /**
- * Bring one of the engine's own settings pages up inside the main window. The
- * engine owns that UI and its auth cookie lives in that window, so the shell
- * navigates instead of opening a browser tab or a second, differently styled
- * surface that would drift from the harness design.
+ * Open one of the engine's own settings sections inside the main window.
+ *
+ * The engine's settings is an in-app dialog, not a URL route — loading
+ * `/settings/<id>` answers 404 — so the shell drives the same clicks a person
+ * would: open 设置, then pick the section by its label. The main window already
+ * holds the engine's auth cookie, and the section renders in the engine's own
+ * design language (which is the whole point of moving it there).
  */
-async function openEngineSettingsPage(route: string): Promise<{ ok: boolean; error?: string; url?: string }> {
-  const base = (running?.url ?? "").trim().replace(/\/+$/, "");
-  if (base === "") return { ok: false, error: "引擎还没起来，稍等一下再试。" };
-  const url = `${base}${route.startsWith("/") ? route : `/${route}`}`;
-  if (mainWindow && !mainWindow.isDestroyed()) {
-    await mainWindow.webContents.loadURL(url);
-    if (!mainWindow.isVisible()) mainWindow.show();
+async function openEngineSettings(section: string): Promise<{ ok: boolean; error?: string }> {
+  if (!mainWindow || mainWindow.isDestroyed()) return { ok: false, error: "主窗口不可用。" };
+  const label = JSON.stringify(String(section ?? "").trim());
+  const script = `(async () => {
+    const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+    const find = (text) => [...document.querySelectorAll("*")]
+      .filter((el) => el.children.length === 0 && (el.textContent || "").trim() === text)
+      .pop();
+    const fire = (el) => {
+      const rect = el.getBoundingClientRect();
+      const x = rect.x + rect.width / 2;
+      const y = rect.y + rect.height / 2;
+      for (const type of ["pointerdown", "mousedown", "pointerup", "mouseup", "click"]) {
+        el.dispatchEvent(new MouseEvent(type, { bubbles: true, cancelable: true, view: window, clientX: x, clientY: y, button: 0 }));
+      }
+    };
+    let item = find(${label});
+    if (!item) {
+      const open = find("设置");
+      if (!open) return { ok: false, error: "找不到引擎界面里的设置入口：请先切回主界面再试。" };
+      fire(open);
+      await sleep(800);
+      item = find(${label});
+    }
+    if (!item) return { ok: false, error: "引擎设置里没有「" + ${label} + "」这一项：插件可能没装上，重启一次引擎再试。" };
+    fire(item);
+    return { ok: true };
+  })()`;
+  try {
+    const result = (await mainWindow.webContents.executeJavaScript(script, true)) as { ok: boolean; error?: string } | null;
+    mainWindow.show();
     mainWindow.focus();
-    return { ok: true, url };
+    return result !== null && typeof result === "object" ? result : { ok: false, error: "引擎界面没有回应。" };
+  } catch (error) {
+    return { ok: false, error: `打不开引擎设置：${error instanceof Error ? error.message : String(error)}` };
   }
-  await shell.openExternal(url);
-  return { ok: true, url };
 }
 
 async function openSettings(): Promise<void> {
@@ -1700,10 +1727,10 @@ if (linuxReady) {
         };
       });
       ipcMain.handle("mobile:open-search-settings", async () =>
-        await openEngineSettingsPage("/settings/search-engines"),
+        await openEngineSettings("搜索引擎"),
       );
       ipcMain.handle("mobile:open-pairing-settings", async () =>
-        await openEngineSettingsPage("/settings/mobile-bridge"),
+        await openEngineSettings("手机配对"),
       );
       // Actions that only the hidden native menu offered. They live in the
       // settings window now; every one of them answers with a reason on failure.
@@ -1719,7 +1746,7 @@ if (linuxReady) {
             await shell.openPath(logsDir(userData()));
             return { ok: true };
           case "engine-settings":
-            return await openEngineSettingsPage("/settings");
+            return await openEngineSettings("通用设置");
           default:
             return { ok: false, error: `未知操作：${String(action)}` };
         }
