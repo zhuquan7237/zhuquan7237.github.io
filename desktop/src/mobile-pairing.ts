@@ -40,6 +40,8 @@ interface RawState {
   pairExpiresAt?: unknown;
   pairUrl?: unknown;
   publicUrl?: unknown;
+  /** Bridge-computed phone address (relay / domestic direct) — prefer this one. */
+  phoneUrl?: unknown;
   devices?: unknown;
 }
 
@@ -154,7 +156,13 @@ export async function readPairingSnapshot(options: {
     const code = typeof raw.pairCode === "string" && raw.pairCode !== "" ? raw.pairCode : null;
     const codeExpiresAt = typeof raw.pairExpiresAt === "number" ? raw.pairExpiresAt : null;
     const codeLive = code !== null && (codeExpiresAt === null || codeExpiresAt > Date.now());
-    const base = publicUrl !== "" ? publicUrl : String(raw.publicUrl ?? "").trim();
+    // Prefer the bridge-computed phoneUrl: that is the relay (or domestic direct)
+    // address, so the QR works from any network the phone happens to be on. Only
+    // fall back to publicUrl (older bridges) and then to whatever came back.
+    const base =
+      publicUrl !== ""
+        ? publicUrl
+        : String(raw.phoneUrl ?? raw.publicUrl ?? "").trim();
     const link = codeLive ? pairingLink(base !== "" ? base : "http://127.0.0.1", code) : null;
     return {
       ok: true,

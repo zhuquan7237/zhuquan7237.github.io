@@ -88,6 +88,19 @@ describe("pairing snapshot", () => {
     expect(bridge.calls).toEqual(["GET /mobile-local/state"]);
   });
 
+  it("prefers the bridge phoneUrl (relay / domestic direct) for the QR", async () => {
+    const bridge = await fakeBridge({
+      pairCode: "1a2b3c4d",
+      pairExpiresAt: Date.now() + 60_000,
+      phoneUrl: "https://cn.zhuquan.xyz:8443/m/abcdef",
+      publicUrl: "http://192.168.1.187:17732",
+      devices: [],
+    });
+    const snapshot = await readPairingSnapshot({ bridgeBase: bridge.base, publicUrl: "" });
+    expect(snapshot.pairLink).toBe("https://cn.zhuquan.xyz:8443/m/abcdef/mobile/?pair=1A2B-3C4D");
+    expect(snapshot.qrSvg).toContain("<svg");
+  });
+
   it("turns a live code into a formatted code, link and QR", async () => {
     const bridge = await fakeBridge({
       pairCode: "1a2b3c4d",

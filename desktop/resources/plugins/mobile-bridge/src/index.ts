@@ -537,8 +537,32 @@ export function apply(ctx: Context, config: { publicUrl?: string } = {}): void {
     return configuredPublicUrl() !== '' ? 'config' : ''
   }
 
+  // ---- 手机侧入口地址：中继 > 显式公网地址 > 局域网 ----
+  // relayKey/lanAddress 的值由 apply 末尾的中继与局域网两块赋值；这里只声明引用，
+  // 闭包在请求时才读取，所以顺序无关。
+  let relayKey = ''
+  let relayLink: ReturnType<typeof startRelayLink> | null = null
+  let lanAddress = ''
+  const LAN_PORT = 17732
+
+  /** 中继给手机用的入口（链路不在线就不给，避免把手机指到连不上的路）。 */
+  const relayBase = (): string => {
+    if (relayLink === null || relayKey === '') return ''
+    if (relayLink.status() === 'offline') return ''
+    const line = String(relayLink.current()?.url ?? '')
+    // 自己正走国内直连才给直连入口；走 Cloudflare 就统一给隧道入口（哪都通）
+    return line.includes('cn.')
+      ? `https://cn.zhuquan.xyz:8443/m/${relayKey}`
+      : `https://relay.zhuquan.xyz/m/${relayKey}`
+  }
+
+  const lanBase = (): string => (lanAddress === '' ? '' : `http://${lanAddress}:${LAN_PORT}`)
+
+  /** 配对二维码/链接用的基地址。 */
+  const phoneBase = (): string => relayBase() || publicUrl() || lanBase()
+
   const pairingUrl = (code: string): string => {
-    const base = publicUrl()
+    const base = phoneBase()
     return base === '' ? code : `${base}/mobile/?pair=${encodeURIComponent(code)}`
   }
 
@@ -553,6 +577,12 @@ export function apply(ctx: Context, config: { publicUrl?: string } = {}): void {
       pairExpiresAt: live ? pairing?.expiresAt : null,
       pairUrl: live && pairing !== undefined ? pairingUrl(pairing.code) : null,
       publicUrl: publicUrl(),
+      phoneUrl: phoneBase(),
+      relay: {
+        enabled: relayLink !== null,
+        status: relayLink?.status() ?? 'off',
+        path: relayBase() === '' ? '' : (String(relayLink?.current()?.url ?? '').includes('cn.') ? 'direct' : 'cloudflare'),
+      },
       publicUrlSource: publicUrlSource(),
       publicUrlConfigured: configuredPublicUrl(),
       devices: store.devices.map(deviceView),
@@ -593,7 +623,7 @@ export function apply(ctx: Context, config: { publicUrl?: string } = {}): void {
   a { color: #4176e6; }
 </style></head><body><main>
 <h1>移动端配对</h1>
-<p class="sub">手机端打开 <code>${String(state.publicUrl ?? '（未配置公网地址）')}/mobile/</code> 后输入下面这串码，或直接点链接。</p>
+<p class="sub">${(state.phoneUrl as string) !== '' ? `手机扫码或打开 <code>${String(state.phoneUrl)}/mobile/</code> 即可配对（推荐用下面的二维码，地址自动带入）。` : '（云端中继尚未连上，也没配公网地址：下面这串码需要手机手填电脑地址）'}</p>
 <div class="card">
   ${code !== null ? `<div class="muted">配对码（5 分钟有效）</div><div class="code">${code}</div>` : '<div class="muted">当前没有有效配对码。</div>'}
   ${url !== null ? `<code class="url">${url}</code>` : ''}
@@ -1427,7 +1457,7 @@ document.addEventListener('click', async (event) => {
   // key/secret 存桥接自己的 store，且每进程只生成一次 —— 生成两次会让中继上在线的
   // 是 A 键而配对页里是 B 键（全 502，踩过）。
   const relayStore = readStore() as BridgeStore & { relayKey?: string; relaySecret?: string }
-  let relayKey = typeof relayStore.relayKey === 'string' ? relayStore.relayKey : ''
+  relayKey = typeof relayStore.relayKey === 'string' ? relayStore.relayKey : ''
   let relaySecret = typeof relayStore.relaySecret === 'string' ? relayStore.relaySecret : ''
   if (relayKey === '' || relaySecret === '') {
     relayKey = randomUUID().replace(/-/g, '')
@@ -1457,7 +1487,7 @@ document.addEventListener('click', async (event) => {
   ]
   log(`远程中继：https://cn.zhuquan.xyz:8443/m/${relayKey.slice(0, 8)}…（首选国内直连，连不上自动回退 Cloudflare）`)
   try {
-    startRelayLink({ candidates: relayCandidates, deviceKey: relayKey, secret: relaySecret, localPort, log })
+    relayLink = startRelayLink({ candidates: relayCandidates, deviceKey: relayKey, secret: relaySecret, localPort, log })
   } catch (error) {
     log(`中继启动失败：${error instanceof Error ? error.message : String(error)}`)
   }
@@ -1465,9 +1495,8 @@ document.addEventListener('click', async (event) => {
   // -------------------------------------------------------------- 局域网直连
   // 手机与电脑同一 Wi-Fi 时走 http://<内网IP>:17732/mobile/，不绕公网。
   // 只转发 /mobile*：/mobile-local（配对码、设备管理）与桌面 UI 永不出局域网。
-  const lanPort = 17732
   const lanAllowed = (url: string): boolean => url === PUBLIC_PREFIX || url.startsWith(`${PUBLIC_PREFIX}/`) || url.startsWith(`${PUBLIC_PREFIX}?`)
-  const lanAddress = ((): string => {
+  lanAddress = ((): string => {
     // 范围打分：192.168 > 10 > 172.16；排除 169.254（Tailscale）、100.64（CGNAT）与虚拟网卡。
     let best = ''
     let bestScore = -1
@@ -1535,8 +1564,8 @@ document.addEventListener('click', async (event) => {
       socket.on('error', () => upstream.destroy())
     })
     lanServer.on('error', (error) => log(`局域网直连启动失败：${error instanceof Error ? error.message : String(error)}`))
-    lanServer.listen(lanPort, '0.0.0.0', () => {
-      log(`局域网直连已开启：http://${lanAddress}:${lanPort}${PUBLIC_PREFIX}/ （手机与电脑同一 Wi-Fi 时用它配对）`)
+    lanServer.listen(LAN_PORT, '0.0.0.0', () => {
+      log(`局域网直连已开启：http://${lanAddress}:${LAN_PORT}${PUBLIC_PREFIX}/ （手机与电脑同一 Wi-Fi 时用它配对）`)
     })
   }
 }

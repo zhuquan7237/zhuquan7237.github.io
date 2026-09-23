@@ -5,4 +5,11 @@ export function startRelayLink(options: {
   secret: string
   localPort: number
   log?: (line: string) => void
-}): void
+}): {
+  /** 停掉链路（插件卸载时调用）。 */
+  stop: () => void
+  /** 'online' | 'connecting' | 'offline' */
+  status: () => string
+  /** 当前正在用（或正在尝试）的线路。 */
+  current: () => { url: string; label?: string; name?: string } | undefined
+}
