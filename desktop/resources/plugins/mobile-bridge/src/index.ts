@@ -24,8 +24,8 @@
 
 import type { Context } from '@deepseek-ai/cordis'
 import { randomUUID } from 'node:crypto'
-import { existsSync, readFileSync } from 'node:fs'
-import { dirname, extname, join, normalize } from 'node:path'
+import { existsSync, readFileSync, readdirSync, realpathSync, statSync } from 'node:fs'
+import { basename, dirname, extname, join, normalize, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
   type BridgeStore,
@@ -891,7 +891,7 @@ document.addEventListener('click', async (event) => {
         sendJson(res, 200, { ok: false, code: 'E_BAD_REQUEST', message: '缺少会话 id' })
         return
       }
-      const needs = action === 'history' ? 'read' : 'prompt'
+      const needs = action === 'history' || action === 'files' || action === 'fsticket' ? 'read' : 'prompt'
       const check = requireScope(device, needs)
       if (!check.ok) {
         sendJson(res, 200, { ok: false, code: check.code, message: check.message })
@@ -911,6 +911,29 @@ document.addEventListener('click', async (event) => {
         const page = (await readPage(sessionId, base)) as unknown
         const records = isRecord(page) && Array.isArray(page.records) ? page.records : []
         sendJson(res, 200, { ok: true, items: records, hasMore: isRecord(page) ? page.hasMore === true : false })
+        return
+      }
+      if (action === 'files') {
+        // 最近生成的文件：非递归列会话工作目录，按修改时间倒序（前 40 个）。
+        const cwd = await sessionCwdOf(sessionId)
+        if (cwd === '') {
+          sendJson(res, 200, { ok: true, cwd: '', items: [] })
+          return
+        }
+        sendJson(res, 200, { ok: true, cwd, items: listSessionFiles(cwd) })
+        return
+      }
+      if (action === 'fsticket') {
+        // WebView 的子资源请求带不了 Authorization 头，给文件 URL 发一张短票据
+        // （首次响应再把它写成 cookie，vendor/three.min.js 这类相对请求也能带上）。
+        const ticket = randomUUID().replace(/-/g, '')
+        fileTickets.set(ticket, { sessionId, expires: Date.now() + FILE_TICKET_MS })
+        sendJson(res, 200, {
+          ok: true,
+          ticket,
+          prefix: `${FS_PREFIX}/${encodeURIComponent(sessionId)}`,
+          expiresIn: Math.round(FILE_TICKET_MS / 1000),
+        })
         return
       }
       if (action === 'prompt') {
@@ -1139,13 +1162,173 @@ document.addEventListener('click', async (event) => {
     '.ico': 'image/x-icon',
   }
 
+  // -------------------------------------------------------------- session files
+  // 手机看电脑端生成的文件：会话工作目录为根，`files` 列顶层、`fs` 取单个文件。
+  // 票据（?t= + cookie）是为了 WebView —— HTML 页的相对子资源请求（vendor/x.js）
+  // 带不了 Authorization 头，必须另有一条不需要请求头的授权路径。
+  const FS_PREFIX = `${PUBLIC_PREFIX}/fs`
+  const FILE_TICKET_MS = 30 * 60 * 1000
+  const FS_MAX_BYTES = 128 * 1024 * 1024
+  const fileTickets = new Map<string, { sessionId: string; expires: number }>()
+
+  const FILE_MIME: Record<string, string> = {
+    ...MIME,
+    '.txt': 'text/plain; charset=utf-8',
+    '.md': 'text/plain; charset=utf-8',
+    '.log': 'text/plain; charset=utf-8',
+    '.jsonl': 'text/plain; charset=utf-8',
+    '.csv': 'text/csv; charset=utf-8',
+    '.xml': 'application/xml; charset=utf-8',
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.gif': 'image/gif',
+    '.webp': 'image/webp',
+    '.bmp': 'image/bmp',
+    '.pdf': 'application/pdf',
+    '.mp4': 'video/mp4',
+    '.webm': 'video/webm',
+    '.mp3': 'audio/mpeg',
+    '.wav': 'audio/wav',
+    '.woff2': 'font/woff2',
+    '.ttf': 'font/ttf',
+    '.wasm': 'application/wasm',
+    '.zip': 'application/zip',
+  }
+
+  const sessionCwdOf = async (sessionId: string): Promise<string> => {
+    const listed = (await callEngine(ctx, 'session.list', {})) as unknown
+    const items = isRecord(listed) && Array.isArray(listed.items) ? listed.items : []
+    for (const item of items) {
+      if (isRecord(item) && sessionIdOf(item) === sessionId && typeof item.cwd === 'string' && item.cwd.trim() !== '') {
+        return item.cwd.trim()
+      }
+    }
+    return ''
+  }
+
+  const listSessionFiles = (cwd: string): Array<{ path: string; name: string; size: number; mtime: number }> => {
+    const out: Array<{ path: string; name: string; size: number; mtime: number }> = []
+    try {
+      for (const entry of readdirSync(cwd, { withFileTypes: true })) {
+        if (!entry.isFile() || entry.name.startsWith('.')) continue
+        try {
+          const stat = statSync(join(cwd, entry.name))
+          out.push({ path: entry.name, name: entry.name, size: stat.size, mtime: stat.mtimeMs })
+        } catch {
+          // 单个文件读不到就跳过，别让整个列表失败
+        }
+      }
+    } catch {
+      return []
+    }
+    out.sort((a, b) => b.mtime - a.mtime)
+    return out.slice(0, 40)
+  }
+
+  /** 把相对路径锁进会话工作目录；越界（..、绝对路径、symlink 外逃）一律拒绝。 */
+  const resolveInCwd = (cwd: string, rel: string): string => {
+    if (rel === '' || rel.includes('\0') || rel.startsWith('/') || rel.startsWith('\\') || /^[A-Za-z]:/.test(rel)) return ''
+    const full = resolve(cwd, rel)
+    let root = cwd
+    try {
+      root = realpathSync(cwd)
+    } catch {
+      // 目录缺失时保持原样，由后面的 existsSync 处理成 404
+    }
+    let real = full
+    try {
+      real = realpathSync(full)
+    } catch {
+      // 目标不存在或是坏链接：用未解析路径做前缀比较
+    }
+    const prefix = root.endsWith(sep) ? root : `${root}${sep}`
+    return real === root || real.startsWith(prefix) ? real : ''
+  }
+
+  const ticketFrom = (req: HttpRequest): string => {
+    const url = new URL(String(req.url ?? ''), 'http://localhost')
+    const fromQuery = url.searchParams.get('t') ?? ''
+    if (fromQuery !== '') return fromQuery
+    const cookie = req.headers['cookie']
+    const raw = Array.isArray(cookie) ? cookie.join('; ') : String(cookie ?? '')
+    for (const part of raw.split(';')) {
+      const index = part.indexOf('=')
+      if (index > 0 && part.slice(0, index).trim() === 'dsht') return part.slice(index + 1).trim()
+    }
+    return ''
+  }
+
+  webServer.register({
+    kind: 'prefix',
+    path: FS_PREFIX,
+    handler: (req, res) => {
+      void (async () => {
+        const rest = pathAfter(req.url, FS_PREFIX)
+        const parts = rest.split('/').filter((part) => part !== '')
+        const sessionId = decodeURIComponent(parts[0] ?? '')
+        const rel = parts.slice(1).map((part) => decodeURIComponent(part)).join('/')
+        if (sessionId === '' || rel === '') {
+          sendJson(res, 404, { ok: false, code: 'E_NOT_FOUND', message: '文件路径不完整' })
+          return
+        }
+        const ticket = ticketFrom(req)
+        let allowed = false
+        if (ticket !== '') {
+          const record = fileTickets.get(ticket)
+          if (record !== undefined && record.expires > Date.now() && record.sessionId === sessionId) allowed = true
+        }
+        if (!allowed) {
+          const auth = authenticate(req)
+          if (!('error' in auth) && holdsScope(auth.device, 'read')) allowed = true
+        }
+        if (!allowed) {
+          sendJson(res, 401, { ok: false, code: 'E_UNAUTHORIZED', message: '文件访问未授权（票据无效或已过期）' })
+          return
+        }
+        const cwd = await sessionCwdOf(sessionId)
+        if (cwd === '') {
+          sendJson(res, 404, { ok: false, code: 'E_NOT_FOUND', message: '找不到会话的工作目录' })
+          return
+        }
+        const file = resolveInCwd(cwd, rel)
+        if (file === '' || !existsSync(file)) {
+          sendJson(res, 404, { ok: false, code: 'E_NOT_FOUND', message: '文件不存在' })
+          return
+        }
+        try {
+          const stat = statSync(file)
+          if (!stat.isFile()) {
+            sendJson(res, 404, { ok: false, code: 'E_NOT_FOUND', message: '目标不是文件' })
+            return
+          }
+          if (stat.size > FS_MAX_BYTES) {
+            sendJson(res, 413, { ok: false, code: 'E_TOO_LARGE', message: '文件超过 128 MB，请到电脑端打开' })
+            return
+          }
+          const headers: Record<string, string> = {
+            'content-type': FILE_MIME[extname(file).toLowerCase()] ?? 'application/octet-stream',
+            'cache-control': 'no-cache',
+            'content-disposition': `inline; filename*=UTF-8''${encodeURIComponent(basename(file))}`,
+            'x-content-type-options': 'nosniff',
+          }
+          if (ticket !== '') headers['set-cookie'] = `dsht=${ticket}; Path=/; Max-Age=1800; HttpOnly; SameSite=Lax`
+          res.writeHead(200, headers)
+          res.end(readFileSync(file))
+        } catch (error) {
+          res.writeHead(500, { 'content-type': 'text/plain; charset=utf-8' })
+          res.end(String(error))
+        }
+      })()
+    },
+  })
+
   webServer.register({
     kind: 'prefix',
     path: PUBLIC_PREFIX,
     handler: (req, res) => {
       let rel = pathAfter(req.url, PUBLIC_PREFIX)
       // API paths never fall through to static serving.
-      if (/^\/(pair|meta|sessions|models|credentials|devices|rpc|events)/.test(rel)) {
+      if (/^\/(pair|meta|sessions|models|credentials|devices|rpc|events|fs)/.test(rel)) {
         sendJson(res, 404, { ok: false, code: 'E_NOT_FOUND', message: `没有这个接口：${rel}` })
         return
       }

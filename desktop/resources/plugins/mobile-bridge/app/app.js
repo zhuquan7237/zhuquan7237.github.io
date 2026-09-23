@@ -19,7 +19,7 @@
     token: null, device: null, server: null,
     view: 'sessions', session: null, sessions: [], search: '', searching: false,
     history: [], live: {}, running: false, doc: null, devices: [],
-    ws: null, seq: 0, connected: false, retry: 0, theme: localStorage.getItem('theme') || 'auto',
+    ws: null, seq: 0, connected: false, retry: 0, theme: localStorage.getItem('theme') || 'dark',   // 外壳是固定深色，默认必须深色，否则浅色系统下深色字压深色底
     draft: '', busy: false, thinking: false, openThink: {},
   };
   const el = (id) => document.getElementById(id);
@@ -109,6 +109,7 @@
     el('subtitle').textContent = state.server?.publicUrl ? location.host : '和电脑端建立连接';
     el('view').innerHTML = `
       <div class="card">
+        <img class="whale" src="/mobile/whale_wave.webp" alt="" />
         <h2>第一步：在电脑上打开配对页</h2>
         <p>电脑端设置里的「移动端」页会显示一串配对码（5 分钟内有效）。手机和电脑在同一个网络时也可以直接访问电脑的局域网地址。</p>
         <h2>第二步：把配对码填在这里</h2>
@@ -252,7 +253,7 @@
     }).join('');
     el('view').innerHTML = `
       <div class="search"><input id="q" placeholder="搜索历史会话…" value="${escapeHtml(state.search)}" /></div>
-      ${rows || `<div class="empty">${state.search ? '没有匹配的会话' : '还没有会话。点右下角新建一个，或在下面直接对当前会话说话。'}</div>`}
+      ${rows || `<div class="empty">${state.search ? '没有匹配的会话' : '<img class="whale" src="/mobile/whale_wave.webp" alt="" />还没有会话。点右下角新建一个，或在下面直接对当前会话说话。'}</div>`}
       <div style="height:22px"></div>`;
     const input = el('q');
     input.oninput = () => {
@@ -677,4 +678,24 @@
     if (!state.token && pairFromHash) { renderPairing(''); el('pair-code').value = decodeURIComponent(pairFromHash[1]); return; }
     await boot();
   })();
+})();
+
+/* ---------- iOS：Safari 不会像安卓那样提示安装，自己弹一条 ---------- */
+(function () {
+  var ua = navigator.userAgent || '';
+  var isIOS = /iPad|iPhone|iPod/.test(ua) ||
+    (navigator.platform === 'MacIntel' && (navigator.maxTouchPoints || 0) > 1);
+  var standalone = window.navigator.standalone === true ||
+    (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+  if (!isIOS || standalone) return;
+  var key = 'dsh-ios-a2hs-done';
+  try { if (localStorage.getItem(key)) return; } catch (e) {}
+  var bar = document.createElement('div');
+  bar.id = 'ios-a2hs';
+  bar.innerHTML = '<span>装到主屏更好用：点底部 <b>分享</b><span class="a2hs-icon">\u2934</span> \u2192 <b>添加到主屏幕</b></span><button aria-label="知道了">\u2715</button>';
+  bar.querySelector('button').onclick = function () {
+    try { localStorage.setItem(key, '1'); } catch (e) {}
+    bar.remove();
+  };
+  document.body.appendChild(bar);
 })();
