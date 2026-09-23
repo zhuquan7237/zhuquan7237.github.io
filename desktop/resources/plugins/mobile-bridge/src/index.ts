@@ -24,7 +24,7 @@
 
 import type { Context } from '@deepseek-ai/cordis'
 import { randomUUID } from 'node:crypto'
-import { existsSync, readFileSync, readdirSync, realpathSync, statSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, readdirSync, realpathSync, statSync, writeFileSync } from 'node:fs'
 import { basename, dirname, extname, join, normalize, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
@@ -350,6 +350,154 @@ export function apply(ctx: Context, config: { publicUrl?: string } = {}): void {
   const load = (): BridgeStore => readStore()
   const save = (store: BridgeStore): void => writeStore(store)
 
+  // ------------------------------------------------------- 生成文件按会话归属
+  // 一个工作目录会被很多会话共用（默认 cwd 相同），只按目录列文件会让每个会话都
+  // 显示同一堆文件。这里按「回合时间窗」记账：turn/start→turn/end 之间被改动过的
+  // 顶层文件算这个会话生成的。历史会话第一次访问时还按其自身历史里的回合窗回填。
+  interface FileRec { mtime: number; size: number; at: number }
+  interface SessionFileRec { cwd: string; updated: number; backfilled?: boolean; entries: Record<string, FileRec> }
+  interface FilesState { version: 1; sessions: Record<string, SessionFileRec> }
+  const FILES_STORE = join(dirname(storePath()), 'mobile-bridge-files.json')
+  const ATTRIB_PAD_MS = 5_000
+  let filesState: FilesState | null = null
+  const loadFileState = (): FilesState => {
+    if (filesState !== null) return filesState
+    try {
+      const raw = JSON.parse(readFileSync(FILES_STORE, 'utf8')) as FilesState
+      filesState = isRecord(raw) && raw.version === 1 && isRecord(raw.sessions) ? raw : { version: 1, sessions: {} }
+    } catch {
+      filesState = { version: 1, sessions: {} }
+    }
+    return filesState
+  }
+  let filesSaveTimer: ReturnType<typeof setTimeout> | null = null
+  const saveFileStateSoon = (): void => {
+    if (filesSaveTimer !== null) return
+    filesSaveTimer = setTimeout(() => {
+      filesSaveTimer = null
+      const state = filesState
+      if (state === null) return
+      const ids = Object.keys(state.sessions)
+      if (ids.length > 400) {
+        ids.sort((a, b) => (state.sessions[a]?.updated ?? 0) - (state.sessions[b]?.updated ?? 0))
+        for (const id of ids.slice(0, ids.length - 400)) delete state.sessions[id]
+      }
+      try {
+        mkdirSync(dirname(FILES_STORE), { recursive: true })
+        writeFileSync(FILES_STORE, JSON.stringify(state))
+      } catch (error) {
+        log(`文件归属库写入失败：${error instanceof Error ? error.message : String(error)}`)
+      }
+    }, 600)
+  }
+  /** 顶层文件（带 mtime）——归属与列表共用同一条扫描。 */
+  const topLevelFiles = (cwd: string): Array<{ name: string; size: number; mtime: number }> => {
+    const out: Array<{ name: string; size: number; mtime: number }> = []
+    try {
+      for (const entry of readdirSync(cwd, { withFileTypes: true })) {
+        if (!entry.isFile() || entry.name.startsWith('.')) continue
+        try {
+          const stat = statSync(join(cwd, entry.name))
+          out.push({ name: entry.name, size: stat.size, mtime: stat.mtimeMs })
+        } catch {
+          // 单个文件读不到就跳过，别让整个扫描失败
+        }
+      }
+    } catch {
+      return []
+    }
+    return out
+  }
+  /** 把若干时间窗内改动过的顶层文件记到会话账上；返回新增条数。 */
+  const attributeWindows = (rec: SessionFileRec, cwd: string, windows: Array<[number, number]>): number => {
+    if (windows.length === 0) return 0
+    let added = 0
+    for (const file of topLevelFiles(cwd)) {
+      for (const [start, end] of windows) {
+        if (file.mtime >= start - ATTRIB_PAD_MS && file.mtime <= end + ATTRIB_PAD_MS) {
+          rec.entries[file.name] = { mtime: file.mtime, size: file.size, at: Date.now() }
+          added += 1
+          break
+        }
+      }
+    }
+    rec.updated = Date.now()
+    return added
+  }
+  const sessionRec = (sessionId: string, cwd: string): SessionFileRec => {
+    const state = loadFileState()
+    let rec = state.sessions[sessionId]
+    if (rec === undefined || rec.cwd !== cwd) {
+      // 第一次见，或工作目录换过：旧条目没有意义，重新收集
+      rec = { cwd, updated: Date.now(), entries: {} }
+      state.sessions[sessionId] = rec
+    }
+    return rec
+  }
+  /** 单个回合（turn/end 时调用）。 */
+  const rememberWindow = (sessionId: string, cwd: string, start: number, end: number): number => {
+    const rec = sessionRec(sessionId, cwd)
+    const added = attributeWindows(rec, cwd, [[start, end]])
+    if (added > 0) saveFileStateSoon()
+    return added
+  }
+  /** 运行中的回合：sessionId → 起始时间（毫秒）。 */
+  const liveTurns = new Map<string, number>()
+  /**
+   * 历史会话回填：读它自己的历史页，抽出所有 turn 时间窗，认领目录里现有文件。
+   * 两分钟内做过就跳过（新文件只可能出自新的回合，回合由事件钩子记账）。
+   */
+  const backfillSession = async (sessionId: string, cwd: string): Promise<void> => {
+    const state = loadFileState()
+    const existing = state.sessions[sessionId]
+    if (
+      existing !== undefined &&
+      existing.cwd === cwd &&
+      existing.backfilled === true &&
+      Date.now() - existing.updated < 120_000
+    ) {
+      return
+    }
+    const windows: Array<[number, number]> = []
+    let beforeSeq: number | undefined
+    for (let pageNo = 0; pageNo < 6; pageNo += 1) {
+      const base: Record<string, unknown> = { address: { kind: 'session', sessionId }, maxMessages: 300 }
+      if (beforeSeq !== undefined) base.beforeSeq = beforeSeq
+      let result: unknown
+      try {
+        result = await readPage(sessionId, base)
+      } catch {
+        break
+      }
+      const records = isRecord(result) && Array.isArray(result.records) ? result.records : []
+      if (records.length === 0) break
+      let minSeq = Number.POSITIVE_INFINITY
+      let open: number | null = null
+      for (const raw of records) {
+        const event = isRecord(raw) && isRecord(raw.event) ? raw.event : isRecord(raw) ? raw : {}
+        const type = typeof event.type === 'string' ? event.type : ''
+        const time = typeof event.time === 'number' ? event.time : 0
+        const seq = typeof event.seq === 'number' ? event.seq : isRecord(raw) && typeof raw.seq === 'number' ? raw.seq : 0
+        if (seq > 0 && seq < minSeq) minSeq = seq
+        if (time <= 0) continue
+        if (type === 'turn/start') {
+          open = time
+        } else if (type === 'turn/end' && open !== null) {
+          windows.push([open, time])
+          open = null
+        }
+      }
+      if (open !== null) windows.push([open, Date.now()])
+      const more = isRecord(result) && result.hasMore === true
+      if (!more || !Number.isFinite(minSeq)) break
+      beforeSeq = minSeq
+    }
+    const rec = sessionRec(sessionId, cwd)
+    attributeWindows(rec, cwd, windows)
+    rec.backfilled = true
+    saveFileStateSoon()
+  }
+
   const overlayOf = (store: BridgeStore): ModelOverlay => {
     const raw = (store as unknown as { models?: unknown }).models
     return isRecord(raw)
@@ -415,15 +563,43 @@ export function apply(ctx: Context, config: { publicUrl?: string } = {}): void {
         // The phone needs the turn/step boundary to place a message.
         ...(isRecord(record) && typeof record.seq === 'number' ? { data: { ...(isRecord(record.data) ? record.data : {}), eventSeq: record.seq } } : {}),
       })
+      // 生成文件归属：记住每个回合的时间窗；turn/end 后把窗口内改动过的顶层文件
+      // 记到这个会话账上（旁路记账，任何失败都不许影响事件流本身）。
+      try {
+        if (sessionId !== '') {
+          if (type === 'turn/start') {
+            liveTurns.set(sessionId, typeof record.time === 'number' ? record.time : Date.now())
+          } else if (type === 'turn/end') {
+            const start = liveTurns.get(sessionId)
+            liveTurns.delete(sessionId)
+            const end = typeof record.time === 'number' ? record.time : Date.now()
+            if (start !== undefined) {
+              void (async () => {
+                try {
+                  const cwd = await sessionCwdOf(sessionId)
+                  if (cwd !== '') rememberWindow(sessionId, cwd, start, end)
+                } catch {
+                  // 归属失败不影响任何其它功能
+                }
+              })()
+            }
+          }
+        }
+      } catch {
+        // 同上：旁路记账
+      }
       if (type === 'turn/end') {
-        const reasonRaw = isRecord(record.data) && typeof record.data.reason === 'string' ? record.data.reason : 'ended'
-        const failed = /error|fail/i.test(reasonRaw)
+        const reason = isRecord(record.data) ? record.data.reason : undefined
+        const reasonKind =
+          typeof reason === 'string' ? reason : isRecord(reason) && typeof reason.kind === 'string' ? reason.kind : 'ended'
+        const failed = /error|fail/i.test(reasonKind)
+        const truncated = /max-token/i.test(reasonKind)
         publish({
           kind: 'notify',
           ...(sessionId !== '' ? { sessionId } : {}),
           level: failed ? 'error' : 'info',
-          title: failed ? '回合失败' : '回合完成',
-          body: failed ? `原因：${reasonRaw}` : '电脑端已结束这次回合',
+          title: failed ? '回合失败' : truncated ? '输出被截断' : '回合完成',
+          body: failed ? `原因：${reasonKind}` : truncated ? '达到输出长度上限，这一回合没能写完' : '电脑端已结束这次回合',
         })
       }
     }) as never)
@@ -948,13 +1124,39 @@ document.addEventListener('click', async (event) => {
         return
       }
       if (action === 'files') {
-        // 最近生成的文件：非递归列会话工作目录，按修改时间倒序（前 40 个）。
+        // 生成的文件按会话归属：只有这个会话的回合时间窗里改动过的顶层文件才算。
+        // 历史会话先按它自己的历史窗回填一次；运行中的回合现场合并。
         const cwd = await sessionCwdOf(sessionId)
         if (cwd === '') {
           sendJson(res, 200, { ok: true, cwd: '', items: [] })
           return
         }
-        sendJson(res, 200, { ok: true, cwd, items: listSessionFiles(cwd) })
+        try {
+          await backfillSession(sessionId, cwd)
+        } catch {
+          // 回填失败不阻塞列表（最多暂时少几个文件）
+        }
+        const live = liveTurns.get(sessionId)
+        if (live !== undefined) {
+          try {
+            rememberWindow(sessionId, cwd, live, Date.now())
+          } catch {
+            // 同上
+          }
+        }
+        const rec = loadFileState().sessions[sessionId]
+        const items: Array<{ path: string; name: string; size: number; mtime: number }> = []
+        for (const name of Object.keys(rec?.entries ?? {})) {
+          try {
+            const stat = statSync(join(cwd, name))
+            if (!stat.isFile()) continue
+            items.push({ path: name, name, size: stat.size, mtime: stat.mtimeMs })
+          } catch {
+            // 文件已删除：不展示，也不清账（可能只是暂时挪走）
+          }
+        }
+        items.sort((a, b) => b.mtime - a.mtime)
+        sendJson(res, 200, { ok: true, cwd, items: items.slice(0, 40) })
         return
       }
       if (action === 'fsticket') {
@@ -1240,25 +1442,6 @@ document.addEventListener('click', async (event) => {
     return ''
   }
 
-  const listSessionFiles = (cwd: string): Array<{ path: string; name: string; size: number; mtime: number }> => {
-    const out: Array<{ path: string; name: string; size: number; mtime: number }> = []
-    try {
-      for (const entry of readdirSync(cwd, { withFileTypes: true })) {
-        if (!entry.isFile() || entry.name.startsWith('.')) continue
-        try {
-          const stat = statSync(join(cwd, entry.name))
-          out.push({ path: entry.name, name: entry.name, size: stat.size, mtime: stat.mtimeMs })
-        } catch {
-          // 单个文件读不到就跳过，别让整个列表失败
-        }
-      }
-    } catch {
-      return []
-    }
-    out.sort((a, b) => b.mtime - a.mtime)
-    return out.slice(0, 40)
-  }
-
   /** 把相对路径锁进会话工作目录；越界（..、绝对路径、symlink 外逃）一律拒绝。 */
   const resolveInCwd = (cwd: string, rel: string): string => {
     if (rel === '' || rel.includes('\0') || rel.startsWith('/') || rel.startsWith('\\') || /^[A-Za-z]:/.test(rel)) return ''
@@ -1339,9 +1522,26 @@ document.addEventListener('click', async (event) => {
             sendJson(res, 413, { ok: false, code: 'E_TOO_LARGE', message: '文件超过 128 MB，请到电脑端打开' })
             return
           }
+          // ETag/Last-Modified + 304：预览（尤其 WebView 的 HTML 子资源）重开时
+          // 只做一次廉价校验，不再整包重传 —— 经中继时这就是「打开很卡」的大头。
+          const etag = `"${stat.size.toString(16)}-${Math.floor(stat.mtimeMs).toString(16)}"`
+          const inmRaw = req.headers['if-none-match']
+          const inm = Array.isArray(inmRaw) ? inmRaw.join(', ') : String(inmRaw ?? '')
+          const imsRaw = req.headers['if-modified-since']
+          const ims = Array.isArray(imsRaw) ? String(imsRaw[0] ?? '') : String(imsRaw ?? '')
+          const imsTime = ims === '' ? Number.NaN : Date.parse(ims)
+          const notModified =
+            inm.split(',').some((tag) => tag.trim() === etag) || (!Number.isNaN(imsTime) && imsTime >= Math.floor(stat.mtimeMs))
+          if (notModified) {
+            res.writeHead(304, { etag, 'cache-control': 'private, no-cache' })
+            res.end()
+            return
+          }
           const headers: Record<string, string> = {
             'content-type': FILE_MIME[extname(file).toLowerCase()] ?? 'application/octet-stream',
-            'cache-control': 'no-cache',
+            'cache-control': 'private, no-cache',
+            etag,
+            'last-modified': new Date(Math.floor(stat.mtimeMs)).toUTCString(),
             'content-disposition': `inline; filename*=UTF-8''${encodeURIComponent(basename(file))}`,
             'x-content-type-options': 'nosniff',
           }
