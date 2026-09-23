@@ -1,9 +1,8 @@
 {
-  "version": "0.2.33",
-  "versionCode": 37,
+  "version": "0.2.40",
+  "versionCode": 45,
+  "sha256": "3e3622e71c222b4768aef4fbcfab90bacee7e7e9f2b4b5cfd318f0fb91a65baf",
+  "size": 3278289,
   "apkUrl": "https://m.zhuquan.xyz/mobile/dsh-mobile.apk",
-  "sha256": "8d7515fc4ca656edf8ece38520e933173bdea052272efcd25c47fd811902dd3c",
-  "size": 3261905,
-  "notes": "手机端 0.2.33\n\n- 修：App 不再默认指向作者的服务器地址（别人装了就永远连不上自己的电脑——这正是「扫码连不上」的一半原因）。现在默认留空，扫配对二维码会自动带上电脑地址，也可以手填\n- 修：更新检查跟着「配对的电脑」走（/mobile/app-update.json），自建的用户也能收到自己电脑上的更新；拿不到才回退公共地址\n- 修：更新包也从同一台电脑下载（桌面端安装包里带了一份 APK），不再跑到作者域名去取",
-  "publishedAt": "2026-09-23T10:51:40+08:00"
+  "notes": "会话列表「正在执行」标识；运行中插话/排队；生成文件浏览/预览/下载；预览布局重做"
 }

@@ -1,7 +1,7 @@
 {
   "name": "@dsh-desktop/dsh-mobile-bridge",
   "description": "Mobile companion bridge for DeepSeek Harness: device pairing and scopes, a mobile-shaped session/history/event surface over the engine's own Remote methods, a shared model-configuration document with revisions and reported conflicts, and the 「手机配对」 settings page inside the engine UI",
-  "version": "0.2.12",
+  "version": "0.2.13",
   "private": true,
   "type": "module",
   "main": "lib/index.js",

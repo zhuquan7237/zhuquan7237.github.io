@@ -55,6 +55,10 @@ import {
   overlayFor,
 } from './models.js'
 import { qrSvg } from './qr.js'
+import { startRelayLink } from './relay.js'
+import { createServer as createHttpServer, request as httpRequest } from 'node:http'
+import { connect as netConnect } from 'node:net'
+import { networkInterfaces } from 'node:os'
 import { normalizeSince } from './hello.js'
 import { type WsConnection, acceptUpgrade } from './ws.js'
 
@@ -1417,4 +1421,122 @@ document.addEventListener('click', async (event) => {
   log(`手机端静态资源目录：${APP_DIR}（${existsSync(join(APP_DIR, 'index.html')) ? '已找到 index.html' : '缺少 index.html，静态页面不可用'}）`)
   const effectiveUrl = publicUrl()
   log(`手机端地址：${effectiveUrl === '' ? '（未配置 publicUrl，手机可先用局域网地址）' : effectiveUrl}${PUBLIC_PREFIX}/`)
+
+  // -------------------------------------------------------------- 远程中继
+  // 桌面端主动拨出到中继（国内直连优先、Cloudflare 兜底），手机在任意网络都能回来。
+  // key/secret 存桥接自己的 store，且每进程只生成一次 —— 生成两次会让中继上在线的
+  // 是 A 键而配对页里是 B 键（全 502，踩过）。
+  const relayStore = readStore() as BridgeStore & { relayKey?: string; relaySecret?: string }
+  let relayKey = typeof relayStore.relayKey === 'string' ? relayStore.relayKey : ''
+  let relaySecret = typeof relayStore.relaySecret === 'string' ? relayStore.relaySecret : ''
+  if (relayKey === '' || relaySecret === '') {
+    relayKey = randomUUID().replace(/-/g, '')
+    relaySecret = randomUUID().replace(/-/g, '')
+    relayStore.relayKey = relayKey
+    relayStore.relaySecret = relaySecret
+    try {
+      writeStore(relayStore)
+    } catch (error) {
+      log(`中继密钥写入失败：${error instanceof Error ? error.message : String(error)}`)
+    }
+  }
+  const localPort = ((): number => {
+    try {
+      const server = ctx.get('webServer') as unknown as { port?: number }
+      if (server !== undefined && typeof server.port === 'number' && server.port > 0) return server.port
+    } catch {
+      // 拿不到就用默认端口
+    }
+    return 17731
+  })()
+  // 注意：握手端点是根路径的 /link?key=…（服务端只认这个），候选地址必须是根地址，
+  // 不能再拼 /m/<key>（那样会拼成 /m/<key>/link，服务端不认 → WebSocket 非 101）
+  const relayCandidates = [
+    { url: 'wss://cn.zhuquan.xyz:8443', label: '国内直连' },
+    { url: 'wss://relay.zhuquan.xyz', label: 'Cloudflare' },
+  ]
+  log(`远程中继：https://cn.zhuquan.xyz:8443/m/${relayKey.slice(0, 8)}…（首选国内直连，连不上自动回退 Cloudflare）`)
+  try {
+    startRelayLink({ candidates: relayCandidates, deviceKey: relayKey, secret: relaySecret, localPort, log })
+  } catch (error) {
+    log(`中继启动失败：${error instanceof Error ? error.message : String(error)}`)
+  }
+
+  // -------------------------------------------------------------- 局域网直连
+  // 手机与电脑同一 Wi-Fi 时走 http://<内网IP>:17732/mobile/，不绕公网。
+  // 只转发 /mobile*：/mobile-local（配对码、设备管理）与桌面 UI 永不出局域网。
+  const lanPort = 17732
+  const lanAllowed = (url: string): boolean => url === PUBLIC_PREFIX || url.startsWith(`${PUBLIC_PREFIX}/`) || url.startsWith(`${PUBLIC_PREFIX}?`)
+  const lanAddress = ((): string => {
+    // 范围打分：192.168 > 10 > 172.16；排除 169.254（Tailscale）、100.64（CGNAT）与虚拟网卡。
+    let best = ''
+    let bestScore = -1
+    for (const [name, addrs] of Object.entries(networkInterfaces())) {
+      if (/virtual|vmware|vbox|wsl|tailscale|loopback/i.test(name)) continue
+      for (const addr of addrs ?? []) {
+        if (addr.family !== 'IPv4' || addr.internal) continue
+        const ip = addr.address
+        if (ip.startsWith('169.254.') || ip.startsWith('100.64.')) continue
+        const score = ip.startsWith('192.168.') ? 3 : ip.startsWith('10.') ? 2 : ip.startsWith('172.') ? 1 : 0
+        if (score > bestScore) {
+          bestScore = score
+          best = ip
+        }
+      }
+    }
+    return best
+  })()
+  if (lanAddress !== '') {
+    const lanServer = createHttpServer((req, res) => {
+      const raw = String(req.url ?? '/')
+      if (!lanAllowed(raw.split('?')[0] ?? '/')) {
+        res.writeHead(403, { 'content-type': 'text/plain; charset=utf-8' })
+        res.end('forbidden')
+        return
+      }
+      const headers: Record<string, string | string[]> = {}
+      for (const [key, value] of Object.entries(req.headers)) {
+        if (value !== undefined && !['host', 'connection'].includes(key)) headers[key] = value
+      }
+      headers.host = `127.0.0.1:${localPort}`
+      const upstream = httpRequest({ host: '127.0.0.1', port: localPort, path: raw, method: req.method, headers }, (reply) => {
+        res.writeHead(reply.statusCode ?? 502, reply.headers)
+        reply.pipe(res)
+      })
+      upstream.on('error', () => {
+        try {
+          res.writeHead(502, { 'content-type': 'text/plain; charset=utf-8' })
+          res.end('bridge unavailable')
+        } catch {
+          // 已经回过头就随它去
+        }
+      })
+      req.pipe(upstream)
+    })
+    lanServer.on('upgrade', (req, socket, head) => {
+      const raw = String(req.url ?? '/')
+      if (!lanAllowed(raw.split('?')[0] ?? '/')) {
+        socket.end('HTTP/1.1 403 Forbidden\r\n\r\n')
+        return
+      }
+      const upstream = netConnect(localPort, '127.0.0.1', () => {
+        const lines = [`GET ${raw} HTTP/1.1`]
+        for (const [key, value] of Object.entries(req.headers)) {
+          if (value === undefined) continue
+          lines.push(`${key}: ${Array.isArray(value) ? value.join(', ') : value}`)
+        }
+        lines.push('', '')
+        upstream.write(lines.join('\r\n'))
+        if (head !== undefined && head.length > 0) upstream.write(head)
+        socket.pipe(upstream)
+        upstream.pipe(socket)
+      })
+      upstream.on('error', () => socket.destroy())
+      socket.on('error', () => upstream.destroy())
+    })
+    lanServer.on('error', (error) => log(`局域网直连启动失败：${error instanceof Error ? error.message : String(error)}`))
+    lanServer.listen(lanPort, '0.0.0.0', () => {
+      log(`局域网直连已开启：http://${lanAddress}:${lanPort}${PUBLIC_PREFIX}/ （手机与电脑同一 Wi-Fi 时用它配对）`)
+    })
+  }
 }
