@@ -50,7 +50,7 @@
         <a
           class="button button-small button-primary nav-download"
           data-hero-download
-          href="https://dsh.zhuquan.xyz/dl/DeepSeek-0.2.1-win.exe"
+          href="https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.22-win-x64.exe"
         >下载 Windows 安装包</a>
       </div>
     </header>
@@ -174,5 +174,18 @@
       </nav>
     </footer>
     <script src="./site.js?v=0.2.1"></script>
+      <script>
+      // 下载链接跟着最新清单走，页面不会再挂着旧版本
+      fetch('/dl/latest.json', { cache: 'no-store' })
+        .then(function (r) { return r.json(); })
+        .then(function (j) {
+          var v = j && j.version;
+          if (!v) return;
+          document.querySelectorAll('a[href*="/dl/DeepSeek-"]').forEach(function (a) {
+            a.href = a.href.replace(/DeepSeek-[\d.]+-/, 'DeepSeek-' + v + '-');
+          });
+        })
+        .catch(function () {});
+    </script>
   </body>
 </html>
