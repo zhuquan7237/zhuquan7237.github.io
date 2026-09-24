@@ -1,122 +1,122 @@
 {
-  "version": "0.5.23",
-  "tag": "desktop-v0.5.23",
+  "version": "0.5.25",
+  "tag": "desktop-v0.5.25",
   "htmlUrl": "https://dsh.zhuquan.xyz/dl/",
-  "notes": "请用 0.5.23。不要用更早的版本。",
+  "notes": "请用 0.5.25。不要用更早的版本。",
   "assets": [
     {
-      "name": "DeepSeek-0.5.23-linux-aarch64.rpm",
-      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.23-linux-aarch64.rpm",
-      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.5.23/DeepSeek-0.5.23-linux-aarch64.rpm",
-      "size": 80990717
+      "name": "DeepSeek-0.5.25-linux-aarch64.rpm",
+      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.25-linux-aarch64.rpm",
+      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.5.25/DeepSeek-0.5.25-linux-aarch64.rpm",
+      "size": 81036081
     },
     {
-      "name": "DeepSeek-0.5.23-linux-amd64.deb",
-      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.23-linux-amd64.deb",
-      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.5.23/DeepSeek-0.5.23-linux-amd64.deb",
-      "size": 102687752
+      "name": "DeepSeek-0.5.25-linux-amd64.deb",
+      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.25-linux-amd64.deb",
+      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.5.25/DeepSeek-0.5.25-linux-amd64.deb",
+      "size": 102849976
     },
     {
-      "name": "DeepSeek-0.5.23-linux-arm64-no-fuse.sh",
-      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.23-linux-arm64-no-fuse.sh",
-      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.5.23/DeepSeek-0.5.23-linux-arm64-no-fuse.sh",
+      "name": "DeepSeek-0.5.25-linux-arm64-no-fuse.sh",
+      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.25-linux-arm64-no-fuse.sh",
+      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.5.25/DeepSeek-0.5.25-linux-arm64-no-fuse.sh",
       "size": 683
     },
     {
-      "name": "DeepSeek-0.5.23-linux-arm64.AppImage",
-      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.23-linux-arm64.AppImage",
-      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.5.23/DeepSeek-0.5.23-linux-arm64.AppImage",
-      "size": 125832740
+      "name": "DeepSeek-0.5.25-linux-arm64.AppImage",
+      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.25-linux-arm64.AppImage",
+      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.5.25/DeepSeek-0.5.25-linux-arm64.AppImage",
+      "size": 125922935
     },
     {
-      "name": "DeepSeek-0.5.23-linux-arm64.deb",
-      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.23-linux-arm64.deb",
-      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.5.23/DeepSeek-0.5.23-linux-arm64.deb",
-      "size": 97349240
+      "name": "DeepSeek-0.5.25-linux-arm64.deb",
+      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.25-linux-arm64.deb",
+      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.5.25/DeepSeek-0.5.25-linux-arm64.deb",
+      "size": 97522892
     },
     {
-      "name": "DeepSeek-0.5.23-linux-arm64.tar.gz",
-      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.23-linux-arm64.tar.gz",
-      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.5.23/DeepSeek-0.5.23-linux-arm64.tar.gz",
-      "size": 121837046
+      "name": "DeepSeek-0.5.25-linux-arm64.tar.gz",
+      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.25-linux-arm64.tar.gz",
+      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.5.25/DeepSeek-0.5.25-linux-arm64.tar.gz",
+      "size": 121930796
     },
     {
-      "name": "DeepSeek-0.5.23-linux-x64.tar.gz",
-      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.23-linux-x64.tar.gz",
-      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.5.23/DeepSeek-0.5.23-linux-x64.tar.gz",
-      "size": 121857734
+      "name": "DeepSeek-0.5.25-linux-x64.tar.gz",
+      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.25-linux-x64.tar.gz",
+      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.5.25/DeepSeek-0.5.25-linux-x64.tar.gz",
+      "size": 121951241
     },
     {
-      "name": "DeepSeek-0.5.23-linux-x86_64-no-fuse.sh",
-      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.23-linux-x86_64-no-fuse.sh",
-      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.5.23/DeepSeek-0.5.23-linux-x86_64-no-fuse.sh",
+      "name": "DeepSeek-0.5.25-linux-x86_64-no-fuse.sh",
+      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.25-linux-x86_64-no-fuse.sh",
+      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.5.25/DeepSeek-0.5.25-linux-x86_64-no-fuse.sh",
       "size": 686
     },
     {
-      "name": "DeepSeek-0.5.23-linux-x86_64.AppImage",
-      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.23-linux-x86_64.AppImage",
-      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.5.23/DeepSeek-0.5.23-linux-x86_64.AppImage",
-      "size": 125580419
+      "name": "DeepSeek-0.5.25-linux-x86_64.AppImage",
+      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.25-linux-x86_64.AppImage",
+      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.5.25/DeepSeek-0.5.25-linux-x86_64.AppImage",
+      "size": 125670609
     },
     {
-      "name": "DeepSeek-0.5.23-linux-x86_64.rpm",
-      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.23-linux-x86_64.rpm",
-      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.5.23/DeepSeek-0.5.23-linux-x86_64.rpm",
-      "size": 85983221
+      "name": "DeepSeek-0.5.25-linux-x86_64.rpm",
+      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.25-linux-x86_64.rpm",
+      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.5.25/DeepSeek-0.5.25-linux-x86_64.rpm",
+      "size": 86026713
     },
     {
-      "name": "DeepSeek-0.5.23-mac-arm64.dmg",
-      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.23-mac-arm64.dmg",
-      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.5.23/DeepSeek-0.5.23-mac-arm64.dmg",
-      "size": 119419443
+      "name": "DeepSeek-0.5.25-mac-arm64.dmg",
+      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.25-mac-arm64.dmg",
+      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.5.25/DeepSeek-0.5.25-mac-arm64.dmg",
+      "size": 119516582
     },
     {
-      "name": "DeepSeek-0.5.23-mac-arm64.zip",
-      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.23-mac-arm64.zip",
-      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.5.23/DeepSeek-0.5.23-mac-arm64.zip",
-      "size": 119409182
+      "name": "DeepSeek-0.5.25-mac-arm64.zip",
+      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.25-mac-arm64.zip",
+      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.5.25/DeepSeek-0.5.25-mac-arm64.zip",
+      "size": 119502061
     },
     {
-      "name": "DeepSeek-0.5.23-mac-x64.dmg",
-      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.23-mac-x64.dmg",
-      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.5.23/DeepSeek-0.5.23-mac-x64.dmg",
-      "size": 126865227
+      "name": "DeepSeek-0.5.25-mac-x64.dmg",
+      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.25-mac-x64.dmg",
+      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.5.25/DeepSeek-0.5.25-mac-x64.dmg",
+      "size": 126997280
     },
     {
-      "name": "DeepSeek-0.5.23-mac-x64.zip",
-      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.23-mac-x64.zip",
-      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.5.23/DeepSeek-0.5.23-mac-x64.zip",
-      "size": 126879899
+      "name": "DeepSeek-0.5.25-mac-x64.zip",
+      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.25-mac-x64.zip",
+      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.5.25/DeepSeek-0.5.25-mac-x64.zip",
+      "size": 126972782
     },
     {
-      "name": "DeepSeek-0.5.23-win-arm64.exe",
-      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.23-win-arm64.exe",
-      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.5.23/DeepSeek-0.5.23-win-arm64.exe",
-      "size": 98203979
+      "name": "DeepSeek-0.5.25-win-arm64.exe",
+      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.25-win-arm64.exe",
+      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.5.25/DeepSeek-0.5.25-win-arm64.exe",
+      "size": 98296569
     },
     {
-      "name": "DeepSeek-0.5.23-win-arm64.zip",
-      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.23-win-arm64.zip",
-      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.5.23/DeepSeek-0.5.23-win-arm64.zip",
-      "size": 140559479
+      "name": "DeepSeek-0.5.25-win-arm64.zip",
+      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.25-win-arm64.zip",
+      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.5.25/DeepSeek-0.5.25-win-arm64.zip",
+      "size": 140653357
     },
     {
-      "name": "DeepSeek-0.5.23-win-x64.exe",
-      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.23-win-x64.exe",
-      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.5.23/DeepSeek-0.5.23-win-x64.exe",
-      "size": 103749100
+      "name": "DeepSeek-0.5.25-win-x64.exe",
+      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.25-win-x64.exe",
+      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.5.25/DeepSeek-0.5.25-win-x64.exe",
+      "size": 103841715
     },
     {
-      "name": "DeepSeek-0.5.23-win-x64.zip",
-      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.23-win-x64.zip",
-      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.5.23/DeepSeek-0.5.23-win-x64.zip",
-      "size": 141713639
+      "name": "DeepSeek-0.5.25-win-x64.zip",
+      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.25-win-x64.zip",
+      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.5.25/DeepSeek-0.5.25-win-x64.zip",
+      "size": 141807519
     },
     {
-      "name": "DeepSeek-0.5.23-win.exe",
-      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.23-win.exe",
-      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.5.23/DeepSeek-0.5.23-win.exe",
-      "size": 201585446
+      "name": "DeepSeek-0.5.25-win.exe",
+      "url": "https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.25-win.exe",
+      "github": "https://github.com/zhuquan7237/zhuquan7237.github.io/releases/download/desktop-v0.5.25/DeepSeek-0.5.25-win.exe",
+      "size": 201770658
     }
   ]
 }
