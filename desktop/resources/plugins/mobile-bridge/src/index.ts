@@ -370,6 +370,23 @@ export function apply(ctx: Context, config: { publicUrl?: string } = {}): void {
     }
     return filesState
   }
+  /** 给 session.list / session.search 的结果附上「已生成文件数」——列表页的信息线索。
+   *  只数记账条目、不做 stat；打开会话时 /files 会重新核对存在性。 */
+  const withFileCounts = (payload: unknown): Record<string, unknown> => {
+    const out = (isRecord(payload) ? payload : { items: [] }) as Record<string, unknown>
+    const items = out.items
+    if (!Array.isArray(items)) return out
+    const state = loadFileState()
+    out.items = items.map((item: unknown) => {
+      if (!isRecord(item)) return item
+      const sid = sessionIdOf(item)
+      const rec = sid !== '' ? state.sessions[sid] : undefined
+      if (!rec || !isRecord(rec.entries)) return item
+      const count = Object.keys(rec.entries).length
+      return count > 0 ? { ...item, producedFiles: count } : item
+    })
+    return out
+  }
   let filesSaveTimer: ReturnType<typeof setTimeout> | null = null
   const saveFileStateSoon = (): void => {
     if (filesSaveTimer !== null) return
@@ -1059,11 +1076,11 @@ document.addEventListener('click', async (event) => {
         const query = (url.searchParams.get('query') ?? '').trim()
         if (query !== '') {
           const found = (await callEngine(ctx, 'session.search', { query })) as unknown
-          sendJson(res, 200, { ok: true, search: true, ...(isRecord(found) ? found : { items: [] }) })
+          sendJson(res, 200, { ok: true, search: true, ...withFileCounts(found) })
           return
         }
         const listed = (await callEngine(ctx, 'session.list', {})) as unknown
-        sendJson(res, 200, { ok: true, ...(isRecord(listed) ? listed : { items: [] }) })
+        sendJson(res, 200, { ok: true, ...withFileCounts(listed) })
         return
       }
       // POST: create a session, optionally on a chosen model.
@@ -1297,8 +1314,102 @@ document.addEventListener('click', async (event) => {
       log(`模型配置已保存：${ops.length} 项引擎改动，overlay 修订 ${overlay.revision}`)
       publish({ kind: 'notify', level: 'info', title: '模型配置已更新', body: `${ops.length} 项改动` })
       sendJson(res, 200, { ok: true, doc: await buildModelDoc(load()) })
+      // 手机端的这次保存可能带进全新模型：让能力补齐（上下文/视觉/思考档位）自己跟上
+      // ——不论手机走后端哪个入口（App / PWA），都在这里统一兜住。
+      scheduleVisionSync()
     }, true),
-  }),
+  })
+
+  // ------------------------------------------------- 模型能力同步（model-vision）
+  // model-vision 只会每日刷新能力目录、从不主动写回各 route（桌面端要用户点
+  // 「同步」才 apply）；手机加完提供商/模型后这里替它立刻触发一次。失败只记日志，
+  // 绝不影响保存本身；任何调用方（App 的手动按钮 / 自动触发）共用这一个实现。
+  let visionSyncTimer: ReturnType<typeof setTimeout> | undefined
+  const runVisionSync = (): Promise<{ ok: boolean; applied: number; routes: number; message: string }> =>
+    new Promise((resolve) => {
+      const payload = JSON.stringify({ refresh: false })
+      let settled = false
+      const finish = (result: { ok: boolean; applied: number; routes: number; message: string }): void => {
+        if (!settled) {
+          settled = true
+          resolve(result)
+        }
+      }
+      let outbound: ReturnType<typeof httpRequest>
+      try {
+        outbound = httpRequest(
+          {
+            host: '127.0.0.1',
+            port: localPort,
+            path: '/dsh-model-vision/sync',
+            method: 'POST',
+            headers: { 'content-type': 'application/json', 'content-length': Buffer.byteLength(payload) },
+          },
+          (reply) => {
+            let raw = ''
+            reply.setEncoding('utf8')
+            reply.on('data', (chunk: string) => {
+              raw += chunk
+            })
+            reply.on('end', () => {
+              try {
+                const parsed = JSON.parse(raw) as { results?: Array<{ applied?: number }> }
+                const rows = Array.isArray(parsed.results) ? parsed.results : []
+                const applied = rows.reduce((sum, row) => sum + (typeof row.applied === 'number' ? row.applied : 0), 0)
+                finish({ ok: true, applied, routes: rows.length, message: `补全 ${applied} 项能力（${rows.length} 条路由）` })
+              } catch {
+                finish({ ok: false, applied: 0, routes: 0, message: '同步响应无法解析' })
+              }
+            })
+          },
+        )
+      } catch (error) {
+        finish({ ok: false, applied: 0, routes: 0, message: error instanceof Error ? error.message : String(error) })
+        return
+      }
+      outbound.on('error', (error) => finish({ ok: false, applied: 0, routes: 0, message: error.message }))
+      outbound.setTimeout(90_000, () => {
+        outbound.destroy()
+        finish({ ok: false, applied: 0, routes: 0, message: '同步超时' })
+      })
+      outbound.end(payload)
+    })
+
+  /** 最后一次保存后 1.2 秒内没有新保存，才真正同步一次（防抖，连点开关不会连环触发）。 */
+  const scheduleVisionSync = (): void => {
+    if (visionSyncTimer !== undefined) clearTimeout(visionSyncTimer)
+    visionSyncTimer = setTimeout(() => {
+      visionSyncTimer = undefined
+      void runVisionSync().then((report) => {
+        log(`模型能力自动同步：${report.ok ? report.message : `失败（${report.message}）`}`)
+      })
+    }, 1200)
+  }
+
+  webServer.register({
+    kind: 'exact',
+    path: `${PUBLIC_PREFIX}/models/sync`,
+    handler: guarded(async (_req, res, device) => {
+      const check = requireScope(device, 'config')
+      if (!check.ok) {
+        sendJson(res, 200, { ok: false, code: check.code, message: check.message })
+        return
+      }
+      // 手动请求就不必再等防抖：撤掉排队的自动同步，当场同步一次并回报结果。
+      if (visionSyncTimer !== undefined) {
+        clearTimeout(visionSyncTimer)
+        visionSyncTimer = undefined
+      }
+      const report = await runVisionSync()
+      if (!report.ok) log(`模型能力手动同步失败：${report.message}`)
+      sendJson(res, 200, {
+        ok: report.ok,
+        applied: report.applied,
+        routes: report.routes,
+        message: report.ok ? `已同步：${report.message}` : `同步失败：${report.message}`,
+      })
+    }, true),
+  })
 
   webServer.register({
     kind: 'exact',
