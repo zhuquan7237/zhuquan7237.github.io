@@ -319,3 +319,88 @@ export function applyDiffs(doc, diffs) {
     }
     return { ...doc, items };
 }
+/**
+ * 手机改动并入桌面当前文档——**保住桌面侧的任何改动**。
+ *
+ * 旧实现在手机快照过期（revision 不匹配但无字段级冲突）时会整表用手机的列表覆盖：
+ * 手机没看到过的「桌面新增」会被静默丢掉。2026-09-24 实锤过这种数据丢失
+ * （某提供商的模型列表被回退到旧快照），这里改成：只应用手机**明确改过**的部分。
+ *
+ * 规则：
+ *  - 手机删掉、桌面没再动过 → 删；桌面动过 → 保留桌面版本（宁可保留，不可丢）。
+ *  - 手机新增 → 加进来（桌面已有同 id 则跳过）。
+ *  - 手机改过某字段 → 应用该字段值；桌面没改过的字段天然安全（进入此路径时
+ *    已由 `mergeDocs` 保证没有同字段冲突）。
+ *  - 手机完全没碰的条目 → 一律以桌面当前版本为准。
+ *
+ * @param current - 桌面当前文档条目
+ * @param base - 手机上次看到的版本（它的 baseRevision 对应内容）
+ * @param phone - 手机提交的条目
+ * @returns 合并后的条目列表
+ */
+export function mergePhoneEditsOnto(current, base, phone) {
+    const baseById = new Map(base.map((item) => [item.id, item]));
+    const phoneById = new Map(phone.map((item) => [item.id, item]));
+    const items = current.map((item) => ({ ...item, params: { ...item.params } }));
+    // 1) 手机删除（相对 base）：桌面没再动过才真删
+    const removed = new Set();
+    for (const [id, baseItem] of baseById) {
+        if (phoneById.has(id))
+            continue;
+        const desk = items.find((item) => item.id === id);
+        if (desk === undefined) {
+            removed.add(id);
+            continue;
+        }
+        if (sameFieldValue(itemFields(desk), itemFields(baseItem)))
+            removed.add(id);
+        // 桌面改过 → 保留（保守策略：不因过期快照丢东西）
+    }
+    // 2) 手机新增
+    for (const [id, phoneItem] of phoneById) {
+        if (baseById.has(id))
+            continue;
+        if (!items.some((item) => item.id === id))
+            items.push({ ...phoneItem, params: { ...phoneItem.params } });
+    }
+    // 3) 手机改过的字段（只认手机真改了的；其余字段以桌面为准）
+    for (const [id, phoneItem] of phoneById) {
+        const baseItem = baseById.get(id);
+        if (baseItem === undefined)
+            continue;
+        const desk = items.find((item) => item.id === id);
+        if (desk === undefined)
+            continue;
+        const pf = itemFields(phoneItem);
+        const bf = itemFields(baseItem);
+        for (const field of Object.keys(pf)) {
+            if (sameFieldValue(pf[field], bf[field]))
+                continue;
+            setItemField(desk, field, pf[field]);
+        }
+    }
+    return items.filter((item) => !removed.has(item.id));
+}
+/** 单字段写入（与 `applyDiffs` 同语义；这里给三方合并复用）。 */
+function setItemField(item, field, value) {
+    if (field === 'name')
+        item.name = value === null ? undefined : String(value);
+    else if (field === 'enabled')
+        item.enabled = value === true;
+    else if (field === 'tags')
+        item.tags = Array.isArray(value) ? value.map(String) : [];
+    else if (field === 'order')
+        item.order = Number(value);
+    else if (field === 'modelId')
+        item.modelId = String(value);
+    else if (field === 'provider')
+        item.provider = String(value);
+    else if (field === 'baseURL')
+        item.baseURL = value === null ? undefined : String(value);
+    else if (field === 'apiMode')
+        item.apiMode = value === null ? undefined : String(value);
+    else if (field === 'apiKeyRef')
+        item.apiKeyRef = value === null ? undefined : String(value);
+    else if (field === 'params')
+        item.params = (value ?? {});
+}

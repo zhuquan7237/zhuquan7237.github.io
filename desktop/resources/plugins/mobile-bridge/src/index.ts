@@ -24,7 +24,7 @@
 
 import type { Context } from '@deepseek-ai/cordis'
 import { randomUUID } from 'node:crypto'
-import { existsSync, mkdirSync, readFileSync, readdirSync, realpathSync, statSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, readdirSync, realpathSync, statSync, unlinkSync, writeFileSync } from 'node:fs'
 import { basename, dirname, extname, join, normalize, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
@@ -52,11 +52,13 @@ import {
   buildDoc,
   engineOps,
   mergeDocs,
+  mergePhoneEditsOnto,
   overlayFor,
 } from './models.js'
 import { qrSvg } from './qr.js'
 import { startRelayLink } from './relay.js'
 import { createServer as createHttpServer, request as httpRequest } from 'node:http'
+import { request as httpsRequest } from 'node:https'
 import { connect as netConnect } from 'node:net'
 import { networkInterfaces } from 'node:os'
 import { normalizeSince } from './hello.js'
@@ -343,6 +345,7 @@ export function apply(ctx: Context, config: { publicUrl?: string } = {}): void {
         describe: (ref: string) => Promise<{ configured?: boolean } | undefined>
         set: (ref: string, value: string) => Promise<void>
         unset: (ref: string) => Promise<void>
+        resolve: (ref: string) => Promise<{ value?: string; source?: string } | undefined>
       }
     | undefined
 
@@ -1300,12 +1303,26 @@ document.addEventListener('click', async (event) => {
           })
           return
         }
-        // Different fields: merge silently, as designed.
-        wanted.items = incoming as MobileModelDoc['items']
+        // 带 `base`（新客户端）→ 三方合并：只把手机**明确改过**的部分并入桌面当前
+        // 文档，桌面侧的新增/改动一律保留（旧实现整表覆盖会在手机快照过期时静默丢
+        // 掉桌面新增的模型——2026-09-24 实测过的数据丢失，别再退回去）。
+        // 不带 `base`（老客户端）→ 维持原语义（手机列表整表为准），升级后自动享受合并。
+        if (Array.isArray(body.base)) {
+          wanted.items = mergePhoneEditsOnto(
+            current.items,
+            body.base as MobileModelDoc['items'],
+            incoming as MobileModelDoc['items'],
+          )
+          const kept = wanted.items.length - incoming.length
+          if (kept > 0) log(`模型配置保存（三方合并）：保住桌面侧 ${kept} 个手机未见的模型`)
+        } else {
+          wanted.items = incoming as MobileModelDoc['items']
+        }
       }
 
       const ops = engineOps(current, wanted)
       if (ops.length > 0) {
+        snapshotSettings()
         await callEngine(ctx, 'settings.mutate', { ns: MODEL_NS, ops, expectedRevision: current.revision })
       }
       const overlay = overlayFor(wanted, overlayOf(store))
@@ -1319,6 +1336,32 @@ document.addEventListener('click', async (event) => {
       scheduleVisionSync()
     }, true),
   })
+
+  // ------------------------------------------------- 写前快照（settings.yaml 保险绳）
+  // settings.yaml 是模型配置的唯一真源：任何一次保存前先留一份，写挂了能人工回滚。
+  // 只保留最近 30 份，失败绝不影响保存本身。
+  const snapshotSettings = (): void => {
+    try {
+      const source = join(dirname(storePath()), 'settings.yaml')
+      if (!existsSync(source)) return
+      const dir = join(dirname(source), 'backups')
+      mkdirSync(dir, { recursive: true })
+      const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
+      writeFileSync(join(dir, `settings-${stamp}.yaml`), readFileSync(source))
+      const files = readdirSync(dir)
+        .filter((name) => name.startsWith('settings-') && name.endsWith('.yaml'))
+        .sort()
+      for (const old of files.slice(0, Math.max(0, files.length - 30))) {
+        try {
+          unlinkSync(join(dir, old))
+        } catch {
+          /* 裁剪失败无所谓 */
+        }
+      }
+    } catch (error) {
+      log(`settings 快照失败：${error instanceof Error ? error.message : String(error)}`)
+    }
+  }
 
   // ------------------------------------------------- 模型能力同步（model-vision）
   // model-vision 只会每日刷新能力目录、从不主动写回各 route（桌面端要用户点
@@ -1407,6 +1450,157 @@ document.addEventListener('click', async (event) => {
         applied: report.applied,
         routes: report.routes,
         message: report.ok ? `已同步：${report.message}` : `同步失败：${report.message}`,
+      })
+    }, true),
+  })
+
+  // ------------------------------------------------- 从上游拉取模型清单
+  // 手机端自己拉不了：key 只存在电脑端凭据库。这里 resolve 出密钥，
+  // 请求上游 OpenAI 兼容的 GET {baseURL}/models，把模型 id 列表回给手机。
+  const extractUpstreamModels = (data: unknown): string[] => {
+    const names: string[] = []
+    const pushOne = (entry: unknown): void => {
+      if (typeof entry === 'string') {
+        if (entry.trim() !== '') names.push(entry.trim())
+        return
+      }
+      if (isRecord(entry)) {
+        const id = entry.id ?? entry.model ?? entry.name ?? entry.slug
+        if (typeof id === 'string' && id.trim() !== '') names.push(id.trim())
+      }
+    }
+    if (Array.isArray(data)) for (const entry of data) pushOne(entry)
+    else if (isRecord(data)) {
+      const lists = [data.data, data.models, data.result, data.items]
+      for (const list of lists) {
+        if (Array.isArray(list)) {
+          for (const entry of list) pushOne(entry)
+        } else if (isRecord(list)) {
+          for (const key of ['models', 'data', 'items']) {
+            const inner = (list as Record<string, unknown>)[key]
+            if (Array.isArray(inner)) for (const entry of inner) pushOne(entry)
+          }
+        }
+      }
+    }
+    return [...new Set(names)].sort((a, b) => a.localeCompare(b))
+  }
+
+  const pullUpstreamList = async (
+    providerId: string,
+  ): Promise<{ ok: true; models: string[]; keySource: string } | { ok: false; code: string; message: string }> => {
+    const view = await modelNamespace()
+    const value = isRecord(view?.value) ? (view?.value as Record<string, unknown>) : {}
+    const providers = isRecord(value.providers) ? (value.providers as Record<string, unknown>) : {}
+    const raw = providers[providerId]
+    if (!isRecord(raw)) return { ok: false, code: 'E_NOT_FOUND', message: `电脑端的配置里没有提供商 ${providerId}` }
+    const baseURL = typeof raw.baseURL === 'string' ? raw.baseURL.trim() : ''
+    if (baseURL === '') return { ok: false, code: 'E_NO_URL', message: '这家提供商没有接口地址，无法从上游拉取' }
+    const ref = typeof raw.apiKeyEnv === 'string' ? raw.apiKeyEnv.trim() : ''
+    let key = ''
+    let keySource = 'none'
+    if (ref !== '') {
+      const resolved = await credentials?.resolve?.(ref)
+      key = typeof resolved?.value === 'string' ? resolved.value : ''
+      keySource = typeof resolved?.source === 'string' ? resolved.source : key === '' ? 'none' : 'unknown'
+      if (key === '') {
+        return { ok: false, code: 'E_NO_KEY', message: `凭据 ${ref} 还没配置（或值为空），先写入密钥再同步` }
+      }
+    }
+    let target: URL
+    try {
+      target = new URL(baseURL.replace(/\/+$/, '') + '/models')
+    } catch {
+      return { ok: false, code: 'E_BAD_URL', message: `接口地址无法解析：${baseURL}` }
+    }
+    const lib = target.protocol === 'http:' ? httpRequest : httpsRequest
+    const outcome = await new Promise<{ status: number; body: string } | { error: string }>((finish) => {
+      let settled = false
+      const done = (result: { status: number; body: string } | { error: string }): void => {
+        if (!settled) {
+          settled = true
+          finish(result)
+        }
+      }
+      let outbound: ReturnType<typeof lib>
+      try {
+        outbound = lib(
+          {
+            host: target.hostname,
+            port: target.port !== '' ? Number(target.port) : target.protocol === 'http:' ? 80 : 443,
+            path: target.pathname + target.search,
+            method: 'GET',
+            headers: {
+              accept: 'application/json',
+              ...(key !== '' ? { authorization: `Bearer ${key}` } : {}),
+              'user-agent': 'dsh-mobile-bridge',
+            },
+          },
+          (reply) => {
+            let raw = ''
+            reply.setEncoding('utf8')
+            reply.on('data', (chunk: string) => {
+              raw += chunk
+            })
+            reply.on('end', () => done({ status: reply.statusCode ?? 0, body: raw }))
+          },
+        )
+      } catch (error) {
+        done({ error: error instanceof Error ? error.message : String(error) })
+        return
+      }
+      outbound.on('error', (error) => done({ error: error.message }))
+      outbound.setTimeout(30_000, () => {
+        outbound.destroy()
+        done({ error: '请求上游超时（30 秒）' })
+      })
+      outbound.end()
+    })
+    if ('error' in outcome) {
+      return { ok: false, code: 'E_UPSTREAM', message: `请求上游失败：${outcome.error}` }
+    }
+    if (outcome.status < 200 || outcome.status >= 300) {
+      const slice = outcome.body.replace(/\s+/g, ' ').slice(0, 200)
+      return { ok: false, code: 'E_UPSTREAM', message: `上游返回 ${outcome.status}：${slice}` }
+    }
+    let parsed: unknown
+    try {
+      parsed = JSON.parse(outcome.body)
+    } catch {
+      return { ok: false, code: 'E_UPSTREAM', message: '上游返回的不是 JSON（可能不是 OpenAI 兼容接口）' }
+    }
+    const models = extractUpstreamModels(parsed)
+    if (models.length === 0) return { ok: false, code: 'E_EMPTY', message: '上游返回了空列表' }
+    return { ok: true, models, keySource }
+  }
+
+  webServer.register({
+    kind: 'exact',
+    path: `${PUBLIC_PREFIX}/models/pull`,
+    handler: guarded(async (_req, res, device, body) => {
+      const check = requireScope(device, 'config')
+      if (!check.ok) {
+        sendJson(res, 200, { ok: false, code: check.code, message: check.message })
+        return
+      }
+      const providerId = String(body.provider ?? '').trim()
+      if (providerId === '') {
+        sendJson(res, 200, { ok: false, code: 'E_BAD_REQUEST', message: '缺少 provider 参数' })
+        return
+      }
+      const result = await pullUpstreamList(providerId)
+      if (!result.ok) {
+        log(`从上游拉取模型失败：${providerId} → ${result.message}`)
+        sendJson(res, 200, { ok: false, code: result.code, message: result.message })
+        return
+      }
+      log(`从上游拉取模型：${providerId} → ${result.models.length} 个（key 来源 ${result.keySource}）`)
+      sendJson(res, 200, {
+        ok: true,
+        provider: providerId,
+        count: result.models.length,
+        models: result.models,
+        keySource: result.keySource,
       })
     }, true),
   })
