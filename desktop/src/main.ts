@@ -35,6 +35,7 @@ import { DSH1024_SOURCE, type CatalogSource } from "./market/catalog";
 import { explainFirstRunError } from "./first-run-error";
 import { appIconFile, installUserShortcuts, needsUserShortcuts } from "./desktop-integration";
 import { readPairingSnapshot, rotatePairing, revokePairingDevice } from "./mobile-pairing";
+import { engineNetworkEnv, readBridgeNetwork } from "./network-env";
 import {
   DESKTOP_DOWNLOAD_PAGE,
   downloadDesktopAssetFromMirrors,
@@ -381,6 +382,9 @@ function engineExtraEnv(): NodeJS.ProcessEnv {
     ...harnessLocaleEnv(uiLocale),
     ...pluginSecretsEnv(settings),
     ...desktopPanelEnv(),
+    // 模型网络路由：桥接 store 的 network 配置 → 引擎启动环境（HTTP(S)_PROXY/NO_PROXY）。
+    // dsh-http-proxy 只在引擎启动时解析一次，所以这是唯一注入点，改路由 = 重启引擎。
+    ...engineNetworkEnv(readBridgeNetwork(dshHomeDir())),
     ...(lastInstall?.prefix ? { DSH_ENGINE_ROOT: lastInstall.prefix } : {}),
   };
 }
@@ -675,6 +679,7 @@ async function startEngineSupervised(): Promise<RunningHarness | null> {
       onLog: engineLog,
     });
     superviseRunningHarness(restartEngine);
+    watchNetworkRestart();
     return running;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -711,6 +716,29 @@ async function restartEngine(): Promise<void> {
   } else {
     await createMain(started.url, started.version);
   }
+}
+
+/**
+ * 网络路由的「重启电脑端」请求：桥接把 restartRequestedAt 写进 mobile-bridge.json，
+ * 壳在这里发现后重启引擎（新引擎启动时带上新环境，桥接随后清除标记）。
+ */
+let netRestartHandledAt = 0;
+let netWatchTimer: ReturnType<typeof setInterval> | null = null;
+function watchNetworkRestart(): void {
+  if (netWatchTimer) return;
+  netWatchTimer = setInterval(() => {
+    try {
+      const network = readBridgeNetwork(dshHomeDir());
+      const at = Number(network.restartRequestedAt ?? 0);
+      if (at > netRestartHandledAt) {
+        netRestartHandledAt = at;
+        shellLog("收到「重启电脑端」请求（模型网络路由），正在重启引擎…");
+        void restartEngine().catch(() => undefined);
+      }
+    } catch {
+      /* 读不到 store 就当没有请求 */
+    }
+  }, 3000);
 }
 
 /** Rollback: boot the previous engine version and stop auto-upgrading to the broken one. */
@@ -1588,6 +1616,7 @@ async function boot(forceUpdate: boolean): Promise<void> {
       onLog: engineLog,
     });
     superviseRunningHarness(restartEngine);
+    watchNetworkRestart();
     // New engine versions rewrite profiles/web/node_modules and drop the skin link.
     await syncSkins(shellLog);
     buildMenu();

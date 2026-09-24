@@ -28,6 +28,7 @@ import { fileURLToPath } from 'node:url';
 import { SCOPE_LABELS, SCOPES, consumePairing, deviceForToken, deviceView, issuePairing, newToken, normalizePublicUrl, readStore, scopeAllows, storePath, writeStore, } from './devices.js';
 import { buildDoc, engineOps, mergeDocs, mergePhoneEditsOnto, overlayFor, } from './models.js';
 import { qrSvg } from './qr.js';
+import { directHosts } from './network.js';
 import { startRelayLink } from './relay.js';
 import { createServer as createHttpServer, request as httpRequest } from 'node:http';
 import { request as httpsRequest } from 'node:https';
@@ -271,6 +272,18 @@ export function apply(ctx, config = {}) {
     // ------------------------------------------------------------------ the store
     const load = () => readStore();
     const save = (store) => writeStore(store);
+    // 上一次的「重启电脑端」请求：引擎已经重启过一轮（新进程加载到这里）= 请求已兑现，清掉标记
+    try {
+        const booted = load();
+        if (booted.network?.restartRequestedAt) {
+            booted.network = { ...booted.network, restartRequestedAt: null };
+            save(booted);
+            log('网络路由：重启已完成，清除重启请求标记');
+        }
+    }
+    catch {
+        /* 存档坏了也不能挡住引擎启动 */
+    }
     const FILES_STORE = join(dirname(storePath()), 'mobile-bridge-files.json');
     const ATTRIB_PAD_MS = 5_000;
     let filesState = null;
@@ -647,7 +660,56 @@ export function apply(ctx, config = {}) {
                 keyConfigured[ref] = false;
             }
         }
-        return buildDoc(view, overlayOf(store), keyConfigured);
+        return buildDoc(view, overlayOf(store), keyConfigured, Date.now(), networkOf(store).routes ?? {});
+    };
+    const networkOf = (store) => store.network ?? {};
+    /** provider id → baseURL（从 llm-pi-ai 命名空间视图里读）。 */
+    const providerBaseUrls = async () => {
+        const view = await modelNamespace();
+        const value = isRecord(view?.value) ? view.value : {};
+        const providers = isRecord(value.providers) ? value.providers : {};
+        const out = {};
+        for (const [pid, raw] of Object.entries(providers)) {
+            if (isRecord(raw) && typeof raw.baseURL === 'string')
+                out[pid] = raw.baseURL;
+        }
+        return out;
+    };
+    /**
+     * 当前网络路由快照（含算好的直连主机列表，顺带持久化 noProxyHosts 供桌面壳读取）。
+     */
+    const networkSnapshot = async () => {
+        const store = load();
+        const network = networkOf(store);
+        const baseUrls = await providerBaseUrls();
+        const routes = network.routes ?? {};
+        const hosts = directHosts(baseUrls, routes);
+        if (JSON.stringify(hosts) !== JSON.stringify(network.noProxyHosts ?? [])) {
+            store.network = { ...network, noProxyHosts: hosts };
+            save(store);
+        }
+        const providers = Object.keys(baseUrls)
+            .sort()
+            .map((pid) => ({
+            id: pid,
+            host: (() => {
+                try {
+                    return new URL(baseUrls[pid]).hostname.toLowerCase();
+                }
+                catch {
+                    return '';
+                }
+            })(),
+            route: routes[pid] ?? null,
+        }));
+        return {
+            proxyUrl: String(network.proxyUrl ?? ''),
+            routes,
+            noProxyHosts: hosts,
+            providers,
+            revision: network.revision ?? 0,
+            restartRequestedAt: network.restartRequestedAt ?? null,
+        };
     };
     /** Public URL from the profile config, before the store's own value wins. */
     const configuredPublicUrl = () => (config.publicUrl ?? '').trim().replace(/\/+$/, '');
@@ -742,6 +804,10 @@ export function apply(ctx, config = {}) {
   button { font: inherit; padding: 6px 12px; border-radius: 9px; border: 1px solid rgba(127,127,127,.3); background: transparent; color: inherit; cursor: pointer; }
   button.primary { background: #4176e6; border-color: #4176e6; color: #fff; }
   a { color: #4176e6; }
+  .netrow { display: flex; gap: 10px; align-items: center; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid rgba(127,127,127,.15); flex-wrap: wrap; }
+  .netrow:last-child { border-bottom: 0; }
+  .netrow button { padding: 4px 10px; border-radius: 8px; }
+  .netbtns { display: flex; gap: 6px; }
 </style></head><body><main>
 <h1>移动端配对</h1>
 <p class="sub">${state.phoneUrl !== '' ? `手机扫码或打开 <code>${String(state.phoneUrl)}/mobile/</code> 即可配对（推荐用下面的二维码，地址自动带入）。` : '（云端中继尚未连上，也没配公网地址：下面这串码需要手机手填电脑地址）'}</p>
@@ -754,6 +820,13 @@ export function apply(ctx, config = {}) {
   <div class="muted">已绑定的设备（${devices.length}）</div>
   <ul>${rows === '' ? '<li class="muted">还没有设备绑定</li>' : rows}</ul>
 </div>
+<div class="card">
+  <div class="muted">模型网络 · 每个提供商可选「自动（代理）/ 直连」——有的提供商必须走代理才能用，有的必须直连。改动需重启电脑端后生效。</div>
+  <div id="netRows" class="muted" style="margin-top:6px">加载中…</div>
+  <p class="netrow" style="margin-top:12px"><span>代理地址</span><input id="netProxy" style="flex:1;min-width:200px;padding:6px 10px;border-radius:9px;border:1px solid rgba(127,127,127,.3);background:transparent;color:inherit;font:inherit" placeholder="http://127.0.0.1:7897（留空 = 全部直连）" /></p>
+  <p style="margin:12px 0 0"><button data-netsave="1">保存网络设置</button> <button class="primary" data-netrestart="1">保存并重启电脑端</button></p>
+  <p class="muted" id="netHint"></p>
+</div>
 <script>
 const refresh = () => location.reload();
 document.addEventListener('click', async (event) => {
@@ -765,6 +838,46 @@ document.addEventListener('click', async (event) => {
     refresh();
   }
 });
+</script>
+<script>
+const netRows = document.getElementById('netRows');
+const netHint = document.getElementById('netHint');
+const netProxy = document.getElementById('netProxy');
+let net = null;
+const netRender = () => {
+  if (!net) return;
+  netProxy.value = net.proxyUrl || '';
+  const routes = net.routes || {};
+  netRows.innerHTML = (net.providers || []).map(function (p) {
+    const cur = routes[p.id] || '';
+    const b = function (v, label) { return '<button data-netpick="' + p.id + '" data-route="' + v + '"' + (cur === v ? ' class="primary"' : '') + '>' + label + '</button>'; };
+    return '<div class="netrow"><span>' + p.id + '<span class="muted">' + (p.host ? ' · ' + p.host : '') + '</span></span><span class="netbtns">' + b('', '自动') + b('proxy', '代理') + b('direct', '直连') + '</span></div>';
+  }).join('');
+  netHint.textContent = net.restartRequestedAt ? '已请求重启，电脑端将在数秒内自动重启…' : '"自动" = 默认走代理；直连的提供商会绕过代理（立即生效需重启电脑端）。';
+};
+const netSave = async (restart) => {
+  await fetch('${LOCAL_PREFIX}/network', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ proxyUrl: netProxy.value.trim(), routes: net.routes, restart: !!restart }) });
+  net = (await (await fetch('${LOCAL_PREFIX}/network')).json()).network;
+  netRender();
+  if (restart) netHint.textContent = '已请求重启，电脑端将在数秒内自动重启…';
+  else netHint.textContent = '已保存——重启电脑端后生效。';
+};
+document.addEventListener('click', async (event) => {
+  const t = event.target;
+  if (t && t.dataset && t.dataset.netpick) {
+    net.routes = net.routes || {};
+    if (t.dataset.route) net.routes[t.dataset.netpick] = t.dataset.route;
+    else delete net.routes[t.dataset.netpick];
+    netRender();
+    return;
+  }
+  if (t && t.dataset && t.dataset.netsave) { await netSave(false); return; }
+  if (t && t.dataset && t.dataset.netrestart) { await netSave(true); return; }
+});
+(async () => {
+  try { net = (await (await fetch('${LOCAL_PREFIX}/network')).json()).network; netRender(); }
+  catch (e) { netRows.textContent = '读取失败：' + e; }
+})();
 </script>
 </main></body></html>`;
     };
@@ -871,6 +984,45 @@ document.addEventListener('click', async (event) => {
                         sendJson(res, 200, {
                             ok: false,
                             code: 'E_CONFIG',
+                            message: error instanceof Error ? error.message : String(error),
+                        });
+                    }
+                })();
+                return;
+            }
+            // 模型网络路由（桌面设置页配置 + 外壳读取）。
+            if (path.startsWith('/network')) {
+                void (async () => {
+                    try {
+                        if (req.method === 'POST') {
+                            const body = await readJsonBody(req);
+                            const store = load();
+                            const network = { ...networkOf(store) };
+                            if (typeof body.proxyUrl === 'string') {
+                                network.proxyUrl = String(body.proxyUrl).trim();
+                            }
+                            if (isRecord(body.routes)) {
+                                const routes = { ...(network.routes ?? {}) };
+                                for (const [pid, value] of Object.entries(body.routes)) {
+                                    if (value === 'direct' || value === 'proxy')
+                                        routes[pid] = value;
+                                    else if (value === null)
+                                        delete routes[pid];
+                                }
+                                network.routes = routes;
+                            }
+                            if (body.restart === true)
+                                network.restartRequestedAt = Date.now();
+                            network.revision = (network.revision ?? 0) + 1;
+                            store.network = network;
+                            save(store);
+                        }
+                        sendJson(res, 200, { ok: true, network: await networkSnapshot() });
+                    }
+                    catch (error) {
+                        sendJson(res, 200, {
+                            ok: false,
+                            code: 'E_NETWORK',
                             message: error instanceof Error ? error.message : String(error),
                         });
                     }
@@ -1174,6 +1326,68 @@ document.addEventListener('click', async (event) => {
             }
             sendJson(res, 200, { ok: false, code: 'E_BAD_REQUEST', message: `不认识的会话动作：${action}` });
         }, true),
+    });
+    // ------------------------------------------- 模型网络路由（每个提供商 直连/代理）
+    // 引擎出站代理在进程启动时由桌面壳按这里的配置合成环境变量（dsh-http-proxy
+    // 只认启动环境），所以改动后需要重启电脑端生效；App/设置页会引导「立即重启」。
+    webServer.register({
+        kind: 'exact',
+        path: `${PUBLIC_PREFIX}/network`,
+        handler: guarded(async (req, res, device, body) => {
+            if (req.method === 'GET') {
+                const check = requireScope(device, 'read');
+                if (!check.ok) {
+                    sendJson(res, 200, { ok: false, code: check.code, message: check.message });
+                    return;
+                }
+                sendJson(res, 200, { ok: true, network: await networkSnapshot() });
+                return;
+            }
+            const check = requireScope(device, 'config');
+            if (!check.ok) {
+                sendJson(res, 200, { ok: false, code: check.code, message: check.message });
+                return;
+            }
+            const provider = String(body.provider ?? '').trim();
+            if (provider === '') {
+                sendJson(res, 200, { ok: false, code: 'E_BAD_REQUEST', message: '缺少 provider' });
+                return;
+            }
+            const raw = body.route;
+            const route = raw === 'direct' || raw === 'proxy' ? raw : null;
+            const store = load();
+            const network = { ...networkOf(store) };
+            const routes = { ...(network.routes ?? {}) };
+            if (route === null)
+                delete routes[provider];
+            else
+                routes[provider] = route;
+            network.routes = routes;
+            network.revision = (network.revision ?? 0) + 1;
+            store.network = network;
+            save(store);
+            const snapshot = await networkSnapshot();
+            log(`网络路由：${provider} → ${route ?? '自动（代理）'}（重启电脑端后生效）`);
+            sendJson(res, 200, { ok: true, network: snapshot, restartRequired: true });
+        }, true),
+    });
+    webServer.register({
+        kind: 'exact',
+        path: `${PUBLIC_PREFIX}/network/restart`,
+        handler: guarded(async (_req, res, device) => {
+            const check = requireScope(device, 'config');
+            if (!check.ok) {
+                sendJson(res, 200, { ok: false, code: check.code, message: check.message });
+                return;
+            }
+            const store = load();
+            const network = { ...networkOf(store) };
+            network.restartRequestedAt = Date.now();
+            store.network = network;
+            save(store);
+            log('收到重启请求：桌面壳将在数秒内重启引擎（应用新的网络路由）');
+            sendJson(res, 200, { ok: true, restartRequestedAt: network.restartRequestedAt });
+        }),
     });
     webServer.register({
         kind: 'exact',

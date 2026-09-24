@@ -75,6 +75,19 @@ export interface BridgeStore {
    * reaches the engine's schema-validated namespace.
    */
   models?: Record<string, unknown>
+  /**
+   * 模型提供商的网络路由（桥接自有配置）：每个 provider 可选 direct/proxy，
+   * 未列出的走默认（proxy）。桌面壳在拉起引擎时据此合成 HTTP(S)_PROXY/NO_PROXY
+   * 环境变量（引擎的 dsh-http-proxy 只认启动环境，所以改完要重启电脑端生效）。
+   */
+  network?: {
+    proxyUrl?: string
+    routes?: Record<string, 'direct' | 'proxy'>
+    /** directHosts 的结果缓存（桥接维护，壳直接读）。 */
+    noProxyHosts?: string[]
+    revision?: number
+    restartRequestedAt?: number | null
+  }
 }
 
 /**
@@ -117,6 +130,7 @@ export function readStore(env: NodeJS.ProcessEnv = process.env): BridgeStore {
       devices: Array.isArray(raw.devices) ? (raw.devices as DeviceRecord[]) : [],
       ...(typeof raw.publicUrl === 'string' ? { publicUrl: raw.publicUrl } : {}),
       ...(raw.models !== undefined ? { models: raw.models } : {}),
+      ...(raw.network !== undefined ? { network: raw.network as BridgeStore['network'] } : {}),
       // 中继字段透传（writeStore 全量覆盖写，丢了这几个字段会导致设备密钥被重新生成）
       ...(typeof raw.relayKey === 'string' ? { relayKey: raw.relayKey } : {}),
       ...(typeof raw.relaySecret === 'string' ? { relaySecret: raw.relaySecret } : {}),

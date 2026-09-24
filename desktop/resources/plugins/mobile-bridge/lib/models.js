@@ -59,7 +59,7 @@ export function sameFieldValue(a, b) {
  * @param now - clock, injectable for tests.
  * @returns the shared document.
  */
-export function buildDoc(namespaceView, overlay, keyConfigured = {}, now = Date.now()) {
+export function buildDoc(namespaceView, overlay, keyConfigured = {}, now = Date.now(), network = {}) {
     const value = isRecord(namespaceView?.value) ? namespaceView?.value : {};
     const providers = isRecord(value.providers) ? value.providers : {};
     const disabled = new Set(overlay.disabled ?? []);
@@ -80,6 +80,8 @@ export function buildDoc(namespaceView, overlay, keyConfigured = {}, now = Date.
             ...(apiMode !== undefined ? { apiMode } : {}),
             ...(apiKeyRef !== undefined ? { apiKeyRef } : {}),
             apiKeyConfigured: configured,
+            // 网络路由：direct/proxy；null = 自动（默认走代理）
+            network: network[provider] ?? null,
         });
         const models = Array.isArray(rawProvider.models) ? rawProvider.models : [];
         let index = 0;

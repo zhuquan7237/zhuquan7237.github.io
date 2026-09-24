@@ -74,7 +74,7 @@ export interface MobileModelDoc {
   overlayRevision: number
   updatedAt: string
   /** Provider keys present, for grouping in the phone's UI. */
-  providers: { id: string; name?: string; baseURL?: string; apiMode?: string; apiKeyRef?: string; apiKeyConfigured: boolean }[]
+  providers: { id: string; name?: string; baseURL?: string; apiMode?: string; apiKeyRef?: string; apiKeyConfigured: boolean; network?: 'direct' | 'proxy' | null }[]
   items: MobileModelItem[]
 }
 
@@ -145,6 +145,7 @@ export function buildDoc(
   overlay: ModelOverlay,
   keyConfigured: Record<string, boolean> = {},
   now = Date.now(),
+  network: Record<string, 'direct' | 'proxy'> = {},
 ): MobileModelDoc {
   const value = isRecord(namespaceView?.value) ? (namespaceView?.value as Record<string, unknown>) : {}
   const providers = isRecord(value.providers) ? (value.providers as Record<string, unknown>) : {}
@@ -166,6 +167,8 @@ export function buildDoc(
       ...(apiMode !== undefined ? { apiMode } : {}),
       ...(apiKeyRef !== undefined ? { apiKeyRef } : {}),
       apiKeyConfigured: configured,
+      // 网络路由：direct/proxy；null = 自动（默认走代理）
+      network: network[provider] ?? null,
     })
     const models = Array.isArray(rawProvider.models) ? rawProvider.models : []
     let index = 0

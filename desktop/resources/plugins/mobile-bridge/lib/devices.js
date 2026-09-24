@@ -58,6 +58,7 @@ export function readStore(env = process.env) {
             devices: Array.isArray(raw.devices) ? raw.devices : [],
             ...(typeof raw.publicUrl === 'string' ? { publicUrl: raw.publicUrl } : {}),
             ...(raw.models !== undefined ? { models: raw.models } : {}),
+            ...(raw.network !== undefined ? { network: raw.network } : {}),
             // 中继字段透传（writeStore 全量覆盖写，丢了这几个字段会导致设备密钥被重新生成）
             ...(typeof raw.relayKey === 'string' ? { relayKey: raw.relayKey } : {}),
             ...(typeof raw.relaySecret === 'string' ? { relaySecret: raw.relaySecret } : {}),
