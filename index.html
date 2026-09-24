@@ -1,362 +1,1232 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="zh-CN">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>DeepSeek Harness Desktop 0.5.25｜Windows、Linux、macOS</title>
-    <meta
-      name="description"
-      content="朱泉制作的社区 Electron 桌面端：把官方 DeepSeek Harness 装进桌面窗口。Windows、Linux、macOS 直接下载，默认内置「深海女仆工坊」。"
-    />
-    <meta property="og:title" content="DeepSeek Harness Desktop 0.5.25" />
-    <meta
-      property="og:description"
-      content="社区 Electron 桌面端。引擎来自 npm @deepseek-ai/dsh，不整仓拷贝。"
-    />
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://dsh.zhuquan.xyz/" />
-    <meta property="og:image" content="https://dsh.zhuquan.xyz/assets/desktop-preview.png" />
-    <link rel="canonical" href="https://dsh.zhuquan.xyz/" />
-    <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml" />
-    <link rel="apple-touch-icon" href="./assets/deepseek-whale.png" />
-    <link rel="stylesheet" href="./site.css?v=0.5.25" />
-    <style>
-      html,
-      body {
-        overflow-x: hidden;
-        max-width: 100%;
-      }
-    </style>
-  </head>
-  <body>
-    <header class="topbar">
-      <div class="nav-shell">
-        <a class="brand" href="./" aria-label="DeepSeek Harness Desktop 首页">
-          <span class="brand-mark"><img src="./assets/favicon.svg" alt="" /></span>
-          <span>Harness Desktop</span>
-        </a>
-        <button
-          class="nav-toggle"
-          type="button"
-          aria-expanded="false"
-          aria-controls="site-nav"
-          aria-label="打开导航"
-        >
-          <span></span><span></span><span></span>
-        </button>
-        <nav id="site-nav" class="nav-links" aria-label="主导航">
-          <a class="active" href="./">产品</a>
-          <a href="#skin">皮肤</a>
-          <a href="#downloads">全部下载</a>
-          <a href="./compare.html">项目对照</a>
-          <a href="./mac.html">macOS 帮助</a>
-          <a href="./me.html">朱泉</a>
-        </nav>
-        <a
-          class="button button-small button-primary nav-download"
-          data-hero-download
-          href="https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.25-win.exe"
-        >下载 Windows 安装包</a>
-      </div>
-    </header>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>DeepSeek Harness — 把电脑上的 AI Agent，装进你的手机</title>
+<meta name="description" content="DeepSeek Harness：跑在你电脑上的 AI Agent 引擎 + 安卓手机遥控端。手机配对后远程指挥电脑干活，数据全部留在本机。国内直连下载，开源免费。" />
+<meta property="og:title" content="DeepSeek Harness — 把电脑上的 AI Agent，装进你的手机" />
+<meta property="og:description" content="桌面引擎 × 手机遥控。会话、模型和干活都在电脑上，手机是随身的控制器。" />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://dsh.zhuquan.xyz/" />
+<meta name="theme-color" content="#11130f" />
+<script>document.documentElement.className += " js";</script>
+<link rel="icon" href="./assets/favicon-seal.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="./assets/whale_wave.webp" />
+<style>
+:root{
+  --bg:#11130f; --surface:#191c16; --surface-2:#20231c; --line:rgba(238,233,220,.14); --line-2:rgba(238,233,220,.3);
+  --text:#eee9dc; --muted:#a5a79b; --dim:#a5a79b; --faint:#74796b;
+  --blue:#ca5040; --blue-2:#d9705f; --blue-soft:rgba(202,80,64,.12);
+  --red:#ca5040; --paper:#eee9dc;
+  --gold:#b08d57; --gold-2:#d9b879;
+  --max:1180px; --radius:14px;
+  --shadow:0 30px 90px rgba(0,0,0,.55);
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --serif:"Songti SC","STSong","Source Han Serif SC","Noto Serif CJK SC","SimSun",serif;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+  --ease:cubic-bezier(.22,.68,0,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+section[id]{scroll-margin-top:80px}
+body{
+  background:var(--bg); color:var(--text); font-family:var(--font);
+  font-size:16px; line-height:1.7; -webkit-font-smoothing:antialiased; overflow-x:hidden;
+}
+a{color:inherit;text-decoration:none}
+img{display:block;max-width:100%}
+.wrap{max-width:var(--max);margin:0 auto;padding:0 24px}
 
-    <main>
-      <section class="hero">
-        <div class="hero-grid">
-          <div class="hero-copy">
-            <p class="overline">COMMUNITY DESKTOP · 0.5.25</p>
-            <h1>DeepSeek Harness，<br />现在是一个桌面窗口。</h1>
-            <p class="hero-lead">
-              <strong>DeepSeek Harness Desktop</strong> 是朱泉制作的社区
-              <strong>Electron 桌面端</strong>，不是聊天网站，也不是 DeepSeek 公司发布的软件。
-              下载、打开，官方 Harness 就在独立窗口里运行。
-            </p>
-            <div class="hero-actions">
-              <a
-                class="button button-primary"
-                data-hero-download
-                href="https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.25-win.exe"
-              >下载 Windows 安装包</a>
-              <a class="button button-quiet" href="#downloads">查看全部安装包</a>
-            </div>
-            <p class="hero-detect" data-os-status>可按你的电脑系统切换安装包。</p>
-            <div class="os-picker" role="group" aria-label="选择下载系统">
-              <span>安装到</span>
-              <button type="button" data-os-choice="win" aria-pressed="false">Windows</button>
-              <button type="button" data-os-choice="linux" aria-pressed="false">Linux</button>
-              <button type="button" data-os-choice="mac-arm" aria-pressed="false">Mac M 系列</button>
-              <button type="button" data-os-choice="mac-intel" aria-pressed="false">Intel Mac</button>
-            </div>
-            <p class="hero-note">首次启动需联网准备 Node 和官方引擎，通常 1–3 分钟。</p>
-          </div>
+/* ── 顶部公告条 ───────────────────────── */
+.announce{
+  display:flex;justify-content:center;align-items:center;gap:10px;flex-wrap:wrap;
+  padding:9px 16px;font-size:13.5px;color:var(--muted);
+  background:linear-gradient(90deg,rgba(77,107,254,.16),rgba(201,169,107,.12));
+  border-bottom:1px solid var(--line);
+}
+.announce b{color:var(--text);font-weight:600}
+.announce a{color:var(--blue-2);font-weight:600}
+.announce a:hover{text-decoration:underline}
 
-          <figure class="product-shot" data-lightbox tabindex="0" role="button" aria-label="放大产品窗口截图">
-            <img
-              src="./assets/desktop-preview.png"
-              alt="DeepSeek Harness Desktop 0.5.25 的桌面窗口，显示深海女仆工坊皮肤"
-              width="1426"
-              height="834"
-            />
-            <figcaption><span>真实桌面窗口 · 0.5.25</span><span>点击放大</span></figcaption>
-          </figure>
-        </div>
-      </section>
+/* ── 导航 ─────────────────────────────── */
+.nav{position:sticky;top:0;z-index:50;background:rgba(7,9,13,.82);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.nav-in{display:flex;align-items:center;gap:26px;height:64px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.2px;white-space:nowrap}
+.brand img{width:30px;height:30px;border-radius:9px}
+.brand small{display:block;font-size:11.5px;color:#8a94a8;font-weight:500;letter-spacing:.4px}
+.nav-burger{display:none;align-items:center;justify-content:center;width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:transparent;color:var(--muted);cursor:pointer}
+.nav-burger:hover{color:var(--text);border-color:var(--line-2)}
+.nav-links{display:flex;gap:22px;margin-left:8px;font-size:14.5px;color:var(--dim)}
+.nav-links a:hover{color:var(--text)}
+.nav-right{margin-left:auto;display:flex;align-items:center;gap:14px}
+.gh-link{display:flex;align-items:center;gap:7px;font-size:14px;color:var(--dim);padding:7px 12px;border:1px solid var(--line);border-radius:12px}
+.gh-link:hover{color:var(--text);border-color:var(--line-2)}
+.gh-link svg{width:16px;height:16px;fill:currentColor}
+.gh-star{color:var(--gold);font-weight:600;font-size:13px}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:11px 20px;border-radius:14px;font-size:14.5px;font-weight:600;cursor:pointer;
+  border:1px solid transparent;transition:.18s;white-space:nowrap;
+}
+.btn-primary{background:var(--blue);color:#fff;box-shadow:0 10px 30px rgba(77,107,254,.35)}
+.btn-primary:hover{background:#5e79ff;transform:translateY(-1px)}
+.btn-quiet{background:transparent;color:var(--muted);border-color:var(--line-2)}
+.btn-quiet:hover{color:var(--text);border-color:rgba(255,255,255,.3)}
+.nav .btn{padding:9px 16px;border-radius:12px}
+.nav .nav-cta.on{background:var(--blue);color:#fff;border-color:transparent;box-shadow:0 10px 30px rgba(77,107,254,.35)}
 
-      <section class="proof-band" aria-label="产品差异">
-        <div class="proof-grid">
-          <article>
-            <span class="proof-number">01</span>
-            <div><h2>官方 npm 引擎</h2><p>运行时安装 <code>@deepseek-ai/dsh</code>，Harness 功能仍来自官方包。</p></div>
-          </article>
-          <article>
-            <span class="proof-number">02</span>
-            <div><h2>不整仓拷贝</h2><p>不做官方 monorepo 的镜像或 fork；更新引擎不必等桌面版重发。</p></div>
-          </article>
-          <article>
-            <span class="proof-number">03</span>
-            <div><h2>三大桌面系统</h2><p>Windows、Linux、Apple Silicon 与 Intel Mac 都有 0.5.25 安装包。</p></div>
-          </article>
-          <article>
-            <span class="proof-number">04</span>
-            <div><h2>皮肤与旧配置</h2><p>默认皮肤已内置；升级时会尽量接回旧目录里的 API Key。</p></div>
-          </article>
-        </div>
-        <a class="text-link" href="./compare.html">查看完整项目对照 →</a>
-      </section>
+/* ── 首屏 ─────────────────────────────── */
+.hero{position:relative;padding:84px 0 40px;overflow:hidden}
+.hero::before{
+  content:"";position:absolute;inset:-20% -10% auto;height:120%;
+  background:
+    radial-gradient(48% 42% at 78% 10%,rgba(77,107,254,.16),transparent 70%),
+    radial-gradient(40% 36% at 12% 30%,rgba(201,169,107,.08),transparent 70%);
+  pointer-events:none;
+}
+.hero-in{position:relative;display:grid;grid-template-columns:1.02fr .98fr;gap:48px;align-items:center}
+.overline{font-size:13px;letter-spacing:2.5px;color:var(--blue-2);font-weight:600;margin-bottom:18px}
+.overline.gold{color:var(--gold)}
+.hero h1{font-size:clamp(31px,4vw,47px);line-height:1.22;letter-spacing:.2px;font-weight:800}
+.hero h1 em{font-style:normal;color:var(--blue-2)}
+.hero .lead{margin-top:20px;font-size:17px;color:var(--muted);max-width:34em}
+.hero .lead b{color:var(--text);font-weight:600}
+.cta-row{display:flex;gap:14px;margin-top:30px;flex-wrap:wrap}
+.btn-lg{padding:14px 26px;border-radius:16px;font-size:15.5px}
+.detect-badge{margin-top:16px;font-size:13.5px;color:var(--blue-2);min-height:20px}
+.hero-punch{margin-top:18px;font-size:15.5px;font-weight:700;letter-spacing:.4px;color:var(--gold-2)}
+.meta-sub{margin-top:8px;font-size:13px;color:var(--faint)}
 
-      <section class="proof-band" aria-label="0.3.0 至 0.5.25 新增能力" id="whatsnew">
-        <div class="section-heading">
-          <div>
-            <p class="overline gold-overline">WHAT'S NEW · 0.3.0 → 0.5.25</p>
-            <h2>这段时间补上的六件事</h2>
-          </div>
-        </div>
-        <div class="proof-grid">
-          <article>
-            <span class="proof-number">01</span>
-            <div><h2>插件市场</h2><p>浏览 1024Store 的 13000+ 插件条目与自定义源，一键安装、启停、卸载。安装只走官方 CLI，不会执行第三方给的命令。</p></div>
-          </article>
-          <article>
-            <span class="proof-number">02</span>
-            <div><h2>桌面面板插件</h2><p>用官方插件机制把「桌面端」页注入设置：外壳与引擎状态、日志尾巴、诊断导出、插件开关都在里面，不是 fork 也不是改引擎源码。另一个内置插件做「模型能力自动识别」——填完 URL 和 key，模型收不收图片、上下文多长、输出上限多少都由软件自己判断并标出来源。</p></div>
-          </article>
-          <article>
-            <span class="proof-number">03</span>
-            <div><h2>关窗口不再杀引擎</h2><p>常驻系统托盘，托盘菜单可直接打开界面、插件市场、诊断和退出；想「关窗口就退出」可在设置里改。</p></div>
-          </article>
-          <article>
-            <span class="proof-number">04</span>
-            <div><h2>引擎看护与恢复</h2><p>引擎异常退出会按 1s / 2s / 4s 退避自动重启；短时间内连续失败则进入恢复界面，可重启、回退到上一个可用引擎、重装或导出诊断。</p></div>
-          </article>
-          <article>
-            <span class="proof-number">05</span>
-            <div><h2>一键诊断包</h2><p>日志、设置、引擎版本、系统信息打包成 zip，密钥自动打码；界面打不开时也能用 <code>DeepSeek --export-diagnostics</code> 导出。</p></div>
-          </article>
-          <article>
-            <span class="proof-number">06</span>
-            <div><h2>界面多语言</h2><p>跟随系统语言：中文系统中文，其他一律英文。此前界面是写死的中文。</p></div>
-          </article>
-        </div>
-      </section>
+/* 首屏设备组合 */
+.stage{position:relative;height:520px}
+.shot-desktop{
+  position:absolute;right:0;top:0;width:100%;max-width:600px;
+  border:1px solid var(--line-2);border-radius:16px;overflow:hidden;
+  box-shadow:0 40px 110px rgba(0,0,0,.62);transform:rotate(.5deg);
+  background:#0b0f17;
+}
+.shot-desktop .win-bar{
+  display:flex;align-items:center;gap:7px;height:34px;padding:0 13px;
+  background:linear-gradient(180deg,#141b29,#0c1119);border-bottom:1px solid rgba(255,255,255,.07);
+}
+.shot-desktop .win-bar i{width:10px;height:10px;border-radius:50%;background:#2a3549}
+.shot-desktop .win-bar i:nth-child(1){background:#3b4a66}
+.shot-desktop .win-bar span{margin-left:8px;font-size:11.5px;color:#7d8aa3;letter-spacing:.3px}
+.shot-desktop img{width:100%;filter:brightness(.94) saturate(.98)}
+.shot-phone{
+  position:absolute;right:-6px;bottom:-30px;width:216px;
+  border:6px solid #1b2233;border-radius:30px;overflow:hidden;
+  box-shadow:var(--shadow);background:#000;
+}
+.shot-phone img{width:100%;aspect-ratio:9/20;object-fit:cover;object-position:top}
+.whale-hero{
+  position:absolute;left:-2px;bottom:-14px;width:136px;cursor:pointer;z-index:5;
+  filter:saturate(.88) sepia(.04) drop-shadow(0 14px 30px rgba(217,184,121,.2));
+  animation:bob 5s ease-in-out infinite;
+}
+.whale-hero::after{
+  content:"";position:absolute;left:10%;right:8%;bottom:0;height:26px;z-index:-1;
+  background:radial-gradient(50% 60% at 50% 50%,rgba(96,118,255,.4),transparent 72%);
+  filter:blur(10px);
+}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+.whale-hero .bubble{
+  position:absolute;left:78%;top:-14px;transform:translateX(0) scale(.86);opacity:0;
+  background:var(--surface-2);border:1px solid var(--line-2);border-radius:14px 14px 14px 4px;
+  padding:8px 12px;font-size:13px;color:var(--text);white-space:nowrap;transition:.22s;pointer-events:none;
+}
+.whale-hero.talk .bubble{opacity:1;transform:translateX(0) scale(1)}
 
-      <section id="skin" class="skin-section">
-        <div class="section-heading">
-          <div>
-            <p class="overline gold-overline">BUNDLED SKIN</p>
-            <h2>深海女仆工坊</h2>
-          </div>
-          <div class="segmented skin-toggle" role="group" aria-label="切换皮肤日夜预览">
-            <button type="button" class="is-active" data-skin-set="dark" aria-pressed="true">夜间</button>
-            <button type="button" data-skin-set="light" aria-pressed="false">日间</button>
-          </div>
-        </div>
-        <div class="skin-grid">
-          <div
-            class="skin-frame"
-            data-skin-frame
-            data-lightbox
-            tabindex="0"
-            role="button"
-            aria-label="放大当前皮肤预览"
-          >
-            <img
-              class="skin-image is-visible"
-              src="./assets/skin-preview-dark.webp"
-              data-skin="dark"
-              alt="深海女仆工坊夜间大厅"
-            />
-            <img
-              class="skin-image"
-              src="./assets/skin-preview-light.webp"
-              data-skin="light"
-              alt="深海女仆工坊日间大厅"
-            />
-            <span class="skin-caption">内置成品 · 无需另去 GitHub 下载</span>
-          </div>
-          <div class="skin-copy">
-            <p>
-              这套画面不是桌面端作者绘制。安装包只内置皮肤成品，并保留完整署名。
-              可在应用内关闭皮肤中心或导入其他皮肤。
-            </p>
-            <ol class="credit-chain">
-              <li><a href="https://www.pixiv.net/users/62155430">一创 · 上善</a><span>鲸鱼娘角色形象原作</span></li>
-              <li><a href="https://www.pixiv.net/users/18604994">二创 · ZipZipPipe</a><span>女仆鲸鱼娘二次设计</span></li>
-              <li><a href="https://github.com/Small-tailqwq/dsh-deep-whale">三创 · Small-tailqwq/dsh-deep-whale</a><span>制作 Harness 皮肤</span></li>
-            </ol>
-            <p class="license">
-              <strong>CC BY-NC-SA 4.0 · 禁止商用</strong><br />
-              衍生作品需署名并以相同方式共享。脚手架：
-              <a href="https://github.com/zhu1090093659/dsh-web-ui">dsh-web-ui</a>。
-            </p>
-          </div>
-        </div>
-      </section>
+/* ── 信任条 ───────────────────────────── */
+.strip{border-block:1px solid var(--line);background:var(--surface);margin-top:56px}
+.strip-in{display:flex;gap:12px 40px;flex-wrap:wrap;justify-content:center;padding:18px 24px;font-size:14px;color:var(--dim)}
+.strip b{color:var(--muted);font-weight:600}
+.strip .dot{color:var(--blue-2)}
+.strip-note{padding:0 24px 14px;font-size:12.5px;color:#8a94a8}
 
-      <section id="downloads" class="content-section downloads-section">
-        <div class="section-heading">
-          <div>
-            <p class="overline">DOWNLOADS · 0.5.25</p>
-            <h2>全部安装包</h2>
-          </div>
-          <p class="section-intro">蓝框是为这台设备推荐的选择，其他系统仍可直接下载。</p>
-        </div>
-        <div class="download-grid">
-          <article class="download-card" data-os-card="win">
-            <div class="card-title"><span class="platform-icon">W</span><div><h3>Windows</h3><p>x64 · exe</p></div></div>
-            <span class="recommendation" hidden>为这台设备推荐</span>
-            <p>安装后创建桌面和开始菜单快捷方式。便携版快捷方式指向 exe 本身，关掉后仍然有效。SmartScreen 提示时选「更多信息 → 仍要运行」。</p>
-            <a
-              class="download-link"
-              href="https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.25-win.exe"
-            >下载 .exe <span>↘</span></a>
-          </article>
-          <article class="download-card" data-os-card="linux">
-            <div class="card-title"><span class="platform-icon">L</span><div><h3>Linux</h3><p>x64 · tar.gz / deb / rpm</p></div></div>
-            <span class="recommendation" hidden>为这台设备推荐</span>
-            <p>便携使用选 tar.gz；Debian / Ubuntu 可选 deb，Fedora / openSUSE 可选 rpm。优先这三种格式。AppImage 需要 libfuse2，Ubuntu 24.04 请不要双击它。</p>
-            <div class="download-links">
-              <a
-                class="download-link"
-                href="https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.25-linux-x64.tar.gz"
-              >下载 tar.gz <span>↘</span></a>
-              <a
-                class="sub-link"
-                href="https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.25-linux-amd64.deb"
-              >下载 deb（Ubuntu / Debian）</a>
-              <a
-                class="sub-link"
-                href="https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.25-linux-x86_64.rpm"
-              >下载 rpm（Fedora / openSUSE）</a>
-              <a
-                class="sub-link"
-                href="https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.25-linux-arm64.tar.gz"
-              >arm64 tar.gz</a>
-              <a
-                class="sub-link"
-                href="https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.25-linux-arm64.rpm"
-              >arm64 rpm</a>
-              <a
-                class="sub-link"
-                href="https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.25-linux-x86_64.AppImage"
-              >AppImage（需 FUSE）</a>
-            </div>
-          </article>
-          <article class="download-card" data-os-card="mac">
-            <div class="card-title"><span class="platform-icon">M</span><div><h3>macOS</h3><p>Apple Silicon / Intel</p></div></div>
-            <span class="recommendation" hidden>为这台设备推荐</span>
-            <p>把 App 拖进「应用程序」。未公证版本若被隔离，请看 Gatekeeper 说明。</p>
-            <div class="download-links">
-              <a
-                class="download-link"
-                data-mac-download="arm"
-                href="https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.25-mac-arm64.dmg"
-              >M 系列 dmg <span>↘</span></a>
-              <a
-                class="sub-link"
-                data-mac-download="intel"
-                href="https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.25-mac-x64.dmg"
-              >Intel dmg</a>
-            </div>
-            <a class="help-link" href="./mac.html">macOS 提示「已损坏」？</a>
-          </article>
-        </div>
-      </section>
+/* ── 通用分区 ─────────────────────────── */
+.sec{padding:104px 0 0}
+.sec-head{max-width:760px;margin-bottom:44px}
+.sec-head h2{font-size:clamp(26px,3vw,36px);font-weight:800;line-height:1.28;letter-spacing:.2px}
+.sec-head p{margin-top:14px;color:var(--dim);font-size:16px}
+.sec-head.center{margin:0 auto 48px;text-align:center}
 
-      <section class="content-section faq">
-        <div class="section-heading">
-          <div><p class="overline">FAQ</p><h2>常见问题</h2></div>
-        </div>
-        <div class="faq-list">
-          <details>
-            <summary>这是 DeepSeek 官方软件吗？</summary>
-            <p>不是。它是作者朱泉制作的社区 Electron 桌面端；底层 Harness 引擎来自官方 npm 包 <code>@deepseek-ai/dsh</code>，项目与 DeepSeek Inc. 无隶属关系。</p>
-          </details>
-          <details>
-            <summary>为什么第一次打开要等一会？</summary>
-            <p>桌面壳会准备 Node，并从 npm 安装官方引擎，通常需要 1–3 分钟和可用网络。没网过不去。0.2.0 失败后可点「重试」，并清掉半成品。之后可在菜单里单独检查 Harness 更新。</p>
-          </details>
-          <details>
-            <summary>macOS 为什么提示「已损坏」？</summary>
-            <p>当前安装包没有 Apple 公证，会被 Gatekeeper 隔离。拖进「应用程序」后运行 <code>xattr -cr /Applications/DeepSeek.app</code>；<a href="./mac.html">查看逐步说明</a>。</p>
-          </details>
-          <details>
-            <summary>升级后 API Key 会消失吗？皮肤还要联网下载吗？</summary>
-            <p>0.2.0 会尽量从旧 Electron 目录和 <code>~/.dsh</code> 迁移密钥，不覆盖当前已有配置。「深海女仆工坊」已打进安装包。0.1.13 升级后若皮肤消失、只能从 GitHub 再拉，请改用 0.2.0，不必再去 GitHub 下载。</p>
-          </details>
-          <details>
-            <summary>软件里「检查更新」进度一直是 0%？</summary>
-            <p>0.1.13 / 0.1.14 的进度按 10% 一跳，188 MB 的 Windows 安装包会长时间停在 0%；主进程下载还不走 Windows 系统代理，所以能弹出「发现新版本」也不代表安装包下得下来。请用浏览器打开本页或 <a href="./dl/">dsh.zhuquan.xyz/dl/</a> 下载 0.5.25。从 0.1.15 起会按 1% / 1 MB 刷新；0.1.16 起安装包走本域名，卡住会提示打开本页。</p>
-          </details>
-          <details>
-            <summary>Linux 双击没窗口，或启动页报 xz / make 错误？</summary>
-            <p>请用 tar.gz 或 deb，不要用 AppImage（Ubuntu 24.04 常缺 libfuse2，双击没有窗口）。0.2.0 不再依赖系统 xz；失败会清掉半成品并可以重试。若日志出现 node-gyp / make / g++，先安装 <code>sudo apt install build-essential python3</code>。macOS 对应 <code>xcode-select --install</code>，Windows 需要 Visual Studio Build Tools。</p>
-          </details>
-          <details>
-            <summary>安装包为什么不放在 GitHub 仓库里？</summary>
-            <p>Windows 安装包大约 180 MB，超过 GitHub Pages 单文件 100 MB 限制，不能提交进网站仓库。文件仍发布在 GitHub Release，再通过 <code>https://dsh.zhuquan.xyz/dl/</code> 用本域名分发，软件内更新也优先走这条地址。</p>
-          </details>
-          <details>
-            <summary>默认皮肤是谁做的？能商用吗？</summary>
-            <p>署名链是上善 → ZipZipPipe → Small-tailqwq。皮肤采用 CC BY-NC-SA 4.0，禁止商用；完整链接和说明见本页皮肤区。</p>
-          </details>
-        </div>
-      </section>
-    </main>
+/* 三卡 */
+.cards3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:26px}
+.step{display:flex;gap:13px;align-items:flex-start;background:rgba(255,255,255,.025);border:1px solid var(--line);border-radius:16px;padding:16px 18px}
+.step .n{flex:0 0 26px;height:26px;border-radius:50%;background:var(--blue-soft);color:var(--blue-2);font-weight:700;font-size:13.5px;display:flex;align-items:center;justify-content:center;margin-top:2px}
+.step b{font-size:14.5px}
+.step p{font-size:13px;color:var(--faint);margin-top:2px}
+.steps-note{margin-top:12px;font-size:12.5px;color:var(--faint)}
+@media (max-width:980px){.steps{grid-template-columns:1fr}}
+.card{
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+  padding:26px 24px;transition:.22s;
+}
+.card:hover{border-color:var(--line-2);transform:translateY(-3px)}
+.card .ico{width:40px;height:40px;border-radius:12px;background:var(--blue-soft);display:flex;align-items:center;justify-content:center;margin-bottom:16px}
+.card .ico svg{width:20px;height:20px;stroke:var(--blue-2);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.card h3{font-size:17.5px;font-weight:700;margin-bottom:8px}
+.card p{font-size:14.5px;color:var(--dim)}
 
-    <footer class="footer">
-      <div>
-        <a class="brand footer-brand" href="./">
-          <span class="brand-mark"><img src="./assets/favicon.svg" alt="" /></span>
-          <span>DeepSeek Harness Desktop</span>
-        </a>
-        <p>0.2.0 · 社区项目 · 作者朱泉，广东海洋大学 · 页面 0.5.25</p>
-      </div>
-      <nav aria-label="页脚导航">
-        <a href="https://dsh.zhuquan.xyz">dsh.zhuquan.xyz</a>
-        <a href="https://github.com/zhuquan7237/deepseek-harness-desktop">GitHub</a>
-        <a href="./compare.html">项目对照</a>
-        <a href="./mac.html">macOS 帮助</a>
-        <a href="./me.html">关于作者</a>
-      </nav>
-    </footer>
+/* 图文交替 */
+.feature .feat-in{display:grid;grid-template-columns:1.02fr .98fr;gap:56px;align-items:center}
+.feature.flip .feat-in>.feat-visual{order:-1}
+.feat-copy h2{font-size:clamp(25px,2.8vw,33px);font-weight:800;line-height:1.3}
+.feat-copy .lead{margin-top:16px;color:var(--muted);font-size:16px}
+.feat-list{margin-top:22px;display:flex;flex-direction:column;gap:14px}
+.feat-list li{list-style:none;display:flex;gap:12px;font-size:15px;color:var(--muted)}
+.feat-list .tick{flex:0 0 20px;margin-top:4px;width:20px;height:20px;border-radius:50%;background:var(--blue-soft);display:flex;align-items:center;justify-content:center}
+.feat-list .tick svg{width:11px;height:11px;stroke:var(--blue-2);stroke-width:2.6;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.route-ex{margin-top:20px;border:1px solid var(--line);border-radius:14px;padding:6px 16px;background:rgba(255,255,255,.02)}
+.rt{display:flex;justify-content:space-between;gap:16px;padding:9px 0;border-bottom:1px solid var(--line);font-size:13.5px;font-family:var(--mono)}
+.rt:last-of-type{border-bottom:0}
+.rt b{font-weight:600}
+.rt .proxy{color:var(--gold-2)}
+.rt .direct{color:#7fd6a4}
+.route-ex p{padding:2px 0 10px;font-size:12px;color:var(--faint)}
+.feat-visual{position:relative;display:flex;justify-content:center}
+.feat-visual .glow{position:absolute;inset:8% 6%;background:radial-gradient(60% 60% at 50% 40%,rgba(77,107,254,.16),transparent 70%);filter:blur(8px)}
+.shot{position:relative;border:1px solid var(--line-2);border-radius:22px;overflow:hidden;box-shadow:var(--shadow)}
+.shot.phone{width:256px;border-radius:30px;border-width:6px;border-color:#1b2233;background:#000}
+.shot.wide{width:100%;max-width:560px}
+.shot img{width:100%;filter:brightness(.97)}
 
-    <div class="lightbox" role="dialog" aria-modal="true" aria-label="图片预览" aria-hidden="true">
-      <button type="button" class="lightbox-close" aria-label="关闭预览">×</button>
-      <img alt="" />
+/* 鲸鱼娘专区 */
+.whale-sec{position:relative}
+.whale-sec::before{content:"";position:absolute;inset:0 -20%;background:radial-gradient(42% 44% at 72% 30%,rgba(140,120,255,.14),transparent 70%);pointer-events:none}
+.whale-stage{position:relative;display:flex;flex-direction:column;align-items:center;gap:26px}
+.whale-big{width:min(320px,70vw);cursor:pointer;animation:bob 5s ease-in-out infinite;filter:drop-shadow(0 26px 60px rgba(120,110,255,.35));position:relative}
+.whale-big .bubble{
+  position:absolute;left:50%;top:-10px;transform:translate(-50%,6px) scale(.9);opacity:0;transition:.22s;
+  background:var(--surface-2);border:1px solid var(--line-2);border-radius:16px;padding:9px 14px;font-size:13.5px;white-space:nowrap;
+}
+.whale-big.talk .bubble{opacity:1;transform:translate(-50%,0) scale(1)}
+.whale-faces{
+  display:flex;justify-content:center;padding:14px 18px;
+  background:linear-gradient(180deg,rgba(120,140,255,.07),rgba(255,255,255,.02));
+  border:1px solid rgba(140,160,255,.22);border-radius:24px;
+  box-shadow:0 14px 44px rgba(96,118,255,.14),inset 0 1px 0 rgba(255,255,255,.06);
+}
+.faces{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
+.face{display:flex;flex-direction:column;align-items:center;gap:6px;width:96px;cursor:pointer;opacity:.66;transition:.2s;background:none;border:0;color:inherit;font:inherit;padding:0}
+.demo-chip{margin-top:2px;padding:9px 16px;border-radius:999px;border:1px solid rgba(140,160,255,.3);background:rgba(120,140,255,.08);color:var(--blue-2);font-size:13.5px;font-weight:600;cursor:pointer;transition:.18s}
+.demo-chip:hover{background:rgba(120,140,255,.16)}
+.whale-hero:focus-visible,.whale-big:focus-visible,.face:focus-visible,.demo-chip:focus-visible{outline:2px solid var(--blue-2);outline-offset:3px;border-radius:14px}
+.face:hover,.face.on{opacity:1}
+.face img{width:72px;height:72px;border-radius:20px;background:var(--surface);border:1px solid var(--line)}
+.face span{font-size:12.5px;color:var(--dim)}
+.face.on span{color:var(--gold)}
+.whale-quote{margin-top:6px;font-size:14px;color:var(--dim);text-align:center}
+
+/* 对比表 */
+.cmp{width:100%;border-collapse:separate;border-spacing:0;font-size:14.5px;overflow:hidden;border:1px solid var(--line);border-radius:var(--radius)}
+.cmp th,.cmp td{padding:15px 18px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+.cmp tr:last-child td,.cmp tr:last-child th{border-bottom:0}
+.cmp thead th{background:var(--surface);font-size:13.5px;color:var(--dim);font-weight:600;letter-spacing:.4px}
+.cmp td:first-child{color:var(--dim);width:22%}
+.cmp .them{color:var(--faint)}
+.cmp .us{color:var(--text);background:rgba(77,107,254,.07);font-weight:500}
+.cmp .us b{color:var(--blue-2)}
+
+/* 下载区 */
+.dl-head{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin:26px 0 16px}
+.dl-head h3{font-size:19px;font-weight:700}
+.dl-head .ver{font-size:13.5px;color:var(--faint);font-family:var(--mono)}
+.dl-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.dl-card{
+  position:relative;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:18px 18px 16px;
+  display:flex;flex-direction:column;gap:10px;transition:.2s;
+}
+.dl-card:hover{border-color:var(--line-2)}
+.dl-card .os{display:flex;align-items:center;gap:9px;font-weight:700;font-size:15.5px}
+.dl-card .os svg{width:19px;height:19px;stroke:var(--muted);fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.dl-card .sub{font-size:12.5px;color:var(--faint);font-family:var(--mono)}
+.dl-card .go{margin-top:auto;display:flex;gap:8px;align-items:center}
+.dl-card .go a{
+  flex:1;text-align:center;padding:9px 10px;border-radius:11px;font-size:13.5px;font-weight:600;
+  background:rgba(255,255,255,.05);border:1px solid var(--line);color:var(--muted);transition:.18s;
+}
+.dl-card .go a:hover{color:var(--text);border-color:var(--line-2);background:rgba(255,255,255,.08)}
+.dl-card .alt{font-size:12px;color:var(--faint)}
+.dl-card .alt a{color:var(--dim);text-decoration:underline}
+.dl-card.is-recommended{
+  border-color:rgba(77,107,254,.65);background:linear-gradient(180deg,rgba(77,107,254,.12),rgba(77,107,254,.03));
+  box-shadow:0 16px 44px rgba(77,107,254,.18);
+}
+.dl-card.is-recommended::after{
+  content:"已为这台设备选好";position:absolute;top:-11px;right:14px;font-size:11.5px;font-weight:700;
+  background:var(--blue);color:#fff;padding:3px 10px;border-radius:999px;
+}
+.dl-note{margin-top:16px;font-size:13px;color:var(--faint)}
+.dl-mobile{margin-top:8px}
+
+/* 更新 */
+.updates{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.upd{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:24px}
+.upd .tagline{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.upd .pill{font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px;background:var(--blue-soft);color:var(--blue-2)}
+.upd .pill.gold{background:rgba(201,169,107,.14);color:var(--gold-2)}
+.upd h3{font-size:16.5px;font-weight:700}
+.upd ul{margin-top:6px;display:flex;flex-direction:column;gap:8px}
+.upd li{list-style:none;font-size:14px;color:var(--dim);padding-left:16px;position:relative}
+.upd li::before{content:"";position:absolute;left:0;top:9px;width:6px;height:6px;border-radius:2px;background:var(--blue-2);opacity:.7}
+
+/* 反馈 */
+.fb-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.fb{display:block;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:26px 24px;transition:.2s}
+.fb:hover{border-color:var(--line-2);transform:translateY(-3px)}
+.fb .ico{width:40px;height:40px;border-radius:12px;background:rgba(201,169,107,.12);display:flex;align-items:center;justify-content:center;margin-bottom:14px}
+.fb .ico svg{width:20px;height:20px;stroke:var(--gold);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.fb h3{font-size:16.5px;font-weight:700}
+.fb p{margin-top:6px;font-size:14px;color:var(--dim)}
+.fb .arrow{margin-top:12px;font-size:13.5px;color:var(--blue-2);font-weight:600}
+.fb-note{margin-top:18px;font-size:13.5px;color:var(--faint)}
+.fb-note b{color:var(--muted)}
+
+/* FAQ */
+.faq-list{display:flex;flex-direction:column;gap:12px;max-width:820px}
+details{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:0 22px;transition:.2s}
+details:hover{border-color:var(--line-2)}
+details[open]{border-color:var(--line-2)}
+summary{list-style:none;cursor:pointer;padding:18px 0;font-size:15.5px;font-weight:600;display:flex;justify-content:space-between;align-items:center;gap:16px}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";color:var(--faint);font-size:19px;font-weight:400;transition:.2s}
+details[open] summary::after{transform:rotate(45deg);color:var(--blue-2)}
+details .ans{padding:0 0 20px;font-size:14.5px;color:var(--dim)}
+details .ans b{color:var(--muted)}
+
+/* 终屏 */
+.final{padding:120px 0 90px;text-align:center;position:relative}
+.final::before{content:"";position:absolute;inset:0;background:radial-gradient(46% 50% at 50% 30%,rgba(77,107,254,.14),transparent 70%);pointer-events:none}
+.final .whale{width:190px;margin:0 auto 22px;position:relative;animation:bob 5s ease-in-out infinite;filter:drop-shadow(0 20px 50px rgba(77,107,254,.4))}
+.final h2{font-size:clamp(26px,3.2vw,38px);font-weight:800}
+.final p{margin-top:14px;color:var(--dim)}
+.final .cta-row{justify-content:center}
+
+/* 页脚 */
+footer{border-top:1px solid var(--line);background:var(--surface);padding:52px 0 40px;font-size:14px}
+.foot-grid{display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;gap:36px}
+.foot-brand p{margin-top:12px;color:var(--faint);font-size:13px;max-width:30em}
+.foot-col h4{font-size:13px;color:var(--faint);letter-spacing:1.2px;font-weight:600;margin-bottom:14px}
+.foot-col a{display:block;color:var(--dim);padding:4px 0;font-size:14px}
+.foot-col a:hover{color:var(--text)}
+.foot-note{margin-top:40px;padding-top:22px;border-top:1px solid var(--line);color:var(--faint);font-size:12.5px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+
+/* 滚动浮现 */
+.js .rv{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .7s ease}
+.js .rv.in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+  .js .rv{opacity:1;transform:none}
+  html{scroll-behavior:auto}
+}
+
+/* 响应式 */
+@media (max-width:980px){
+  .nav-burger{display:flex}
+  .nav-links{
+    display:none;position:absolute;top:64px;left:0;right:0;z-index:60;
+    flex-direction:column;gap:4px;margin:0;padding:12px 24px 16px;
+    background:rgba(7,9,13,.97);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);
+  }
+  .nav-links a{padding:11px 4px;font-size:15.5px;color:var(--muted)}
+  .nav-open .nav-links{display:flex}
+  .hero-in,.feature .feat-in{grid-template-columns:1fr;gap:40px}
+  .stage{height:440px;margin-top:8px}
+  .shot-desktop{width:100%;max-width:none;right:auto}
+  .shot-phone{width:180px;right:4px;bottom:-22px}
+  .whale-hero{width:132px;left:2px;bottom:-14px}
+  .cards3,.fb-grid,.dl-grid{grid-template-columns:1fr 1fr}
+  .updates{grid-template-columns:1fr}
+  .foot-grid{grid-template-columns:1fr 1fr}
+  .brand small{display:none}
+}
+@media (max-width:620px){
+  .sec{padding-top:72px}
+  .cards3,.fb-grid,.dl-grid{grid-template-columns:1fr}
+  .stage{height:380px}
+  .cmp{font-size:13.5px}
+  .cmp th,.cmp td{padding:12px}
+  .hero{padding-top:56px}
+}
+/* ═════════ 墨色禅定 主题层（v3） ═════════ */
+/* 显示字体：宋体当主角 */
+.hero h1,.sec-head h2,.feat-copy h2,.final h2,.brand span{font-family:var(--serif)}
+.hero h1{font-size:clamp(33px,4.4vw,52px);line-height:1.24;letter-spacing:.015em;font-weight:700}
+.hero h1 .p{color:var(--red)}
+.sec-head h2,.feat-copy h2,.final h2{letter-spacing:.01em;font-weight:700}
+
+/* 眉题：朱砂短线 + 安静文字 */
+.overline{display:flex;align-items:center;gap:12px;color:var(--muted)}
+.overline::before{content:"";display:inline-block;width:26px;height:2px;background:var(--red);flex:0 0 auto}
+.overline.gold{color:var(--muted)}
+.overline.gold::before{background:var(--gold)}
+
+/* 章节索引（壹 / 差异 —— NOT ANOTHER CHAT CLIENT） */
+.section-index{display:flex;justify-content:space-between;align-items:center;gap:20px;color:var(--faint);font-family:var(--mono);font-size:11px;letter-spacing:.14em;padding-bottom:13px;border-bottom:1px solid var(--line);margin-bottom:40px}
+.section-index .chapter{display:flex;gap:14px;align-items:center;color:var(--muted)}
+.section-index .chapter::before{content:"";width:5px;height:5px;background:var(--red);flex:0 0 auto}
+@media (max-width:620px){.section-index>span:last-child{display:none}.section-index{margin-bottom:28px}}
+
+/* 首屏：安静书房侧光（替换原蓝紫晕） */
+.hero::before{background:
+  radial-gradient(46% 40% at 80% 6%,rgba(205,89,71,.07),transparent 70%),
+  radial-gradient(42% 38% at 10% 34%,rgba(217,184,121,.06),transparent 70%)}
+
+/* 禅环 + 竖排字 + 印章 */
+.hero-art{position:absolute;right:-17%;top:-84px;width:126%;aspect-ratio:1;z-index:0;pointer-events:none}
+.hero-art .enso{width:100%;height:100%;color:var(--paper);overflow:visible;animation:ink-arrive 1.8s var(--ease) both}
+@keyframes ink-arrive{from{opacity:0;transform:scale(1.055);filter:blur(5px)}to{opacity:1;transform:scale(1);filter:blur(0)}}
+.orbit-label{position:absolute;right:7%;top:21%;writing-mode:vertical-rl;letter-spacing:.42em;font-family:var(--serif);font-size:13px;color:var(--muted);opacity:.92}
+.hero-seal{position:absolute;right:6.2%;top:63%;width:46px;height:56px;border:1.5px solid var(--red);color:var(--red);font-family:var(--serif);font-size:15px;line-height:1.35;display:grid;place-items:center;transform:rotate(-5deg);animation:seal-in .7s var(--ease) 1.1s both;background:rgba(205,89,71,.06)}
+@keyframes seal-in{from{opacity:0;transform:rotate(-5deg) scale(1.7)}to{opacity:1;transform:rotate(-5deg) scale(1)}}
+.hero-art-caption{position:absolute;right:2%;bottom:7%;color:var(--faint);font:9px/1.7 var(--mono);letter-spacing:.14em;text-align:right}
+
+/* 按钮：朱砂主力 + 纸白描边 */
+.btn{border-radius:10px}
+.btn-lg{border-radius:12px}
+.btn-primary{background:var(--red);color:#f6efe2;box-shadow:0 10px 30px rgba(202,80,64,.3)}
+.btn-primary:hover{background:#d96a56}
+.btn-quiet:hover{border-color:rgba(238,233,220,.5)}
+.nav .nav-cta.on{background:var(--red);box-shadow:0 10px 30px rgba(205,89,71,.3)}
+.gh-link{border-radius:10px}
+
+/* 顶栏与公告 */
+.announce{background:linear-gradient(90deg,rgba(205,89,71,.1),rgba(217,184,121,.07))}
+.nav{background:rgba(17,19,15,.85)}
+.nav-links a:hover{color:var(--paper)}
+
+/* 卡片：宣纸面 */
+.card,.upd,.fb,.dl-card,details{background:linear-gradient(180deg,rgba(238,233,220,.028),rgba(238,233,220,.006)),var(--surface)}
+.card:hover,.fb:hover{transform:translateY(-2px)}
+.step{background:rgba(238,233,220,.03)}
+.step .n{border-radius:4px}
+
+/* 设备：暖墨机身 */
+.shot-desktop{background:#15170f;box-shadow:0 40px 110px rgba(0,0,0,.66)}
+.shot-desktop .win-bar{background:linear-gradient(180deg,#22251c,#171910);border-bottom-color:rgba(238,233,220,.08)}
+.shot-desktop .win-bar i{background:#3a3d31}
+.shot-desktop .win-bar i:nth-child(1){background:#4b4e3f}
+.shot-desktop .win-bar span{color:#8a8d7c}
+.shot-desktop img,.shot img{filter:brightness(.96) saturate(.96)}
+.shot-desktop img{filter:sepia(.16) saturate(.88) brightness(.93) contrast(1.03)}
+.shot-desktop{border-color:rgba(238,233,220,.22)}
+.shot.phone{border-color:#2a2d24}
+.shot-phone{border-color:#2a2d24}
+
+/* 鲸鱼娘：暖灯下 */
+.whale-hero{filter:drop-shadow(0 16px 34px rgba(217,184,121,.22))}
+.whale-hero::after{background:radial-gradient(50% 60% at 50% 50%,rgba(217,184,121,.3),transparent 72%)}
+.whale-sec::before{background:radial-gradient(42% 44% at 72% 30%,rgba(217,184,121,.08),transparent 70%)}
+.whale-big{filter:drop-shadow(0 26px 60px rgba(217,184,121,.28))}
+.whale-faces{background:linear-gradient(180deg,rgba(238,233,220,.035),rgba(238,233,220,.008));border-color:rgba(238,233,220,.16);box-shadow:0 14px 44px rgba(0,0,0,.3),inset 0 1px 0 rgba(238,233,220,.05)}
+.face img{border-radius:14px}
+.face.on span{color:var(--gold)}
+.demo-chip{border-color:rgba(205,89,71,.4);background:rgba(205,89,71,.08);color:#e0a08f}
+.demo-chip:hover{background:rgba(205,89,71,.15)}
+
+/* 对比表 */
+.cmp .us{background:rgba(205,89,71,.055)}
+.cmp .us b{color:#e0a08f}
+
+/* 下载推荐卡：朱砂落款 */
+.dl-card.is-recommended{border-color:rgba(205,89,71,.6);background:linear-gradient(180deg,rgba(205,89,71,.1),rgba(205,89,71,.025));box-shadow:0 16px 44px rgba(205,89,71,.14)}
+.dl-card .go a{border-radius:9px}
+.upd .pill{background:rgba(205,89,71,.12);color:#e0a08f}
+.fb .ico{background:rgba(217,184,121,.12)}
+.fb .arrow{color:#e0a08f}
+
+/* FAQ：宋体提问 */
+summary{font-family:var(--serif);font-size:16px}
+details[open] summary::after{color:var(--red)}
+
+/* 终屏 */
+.final::before{background:radial-gradient(46% 50% at 50% 30%,rgba(205,89,71,.06),transparent 70%)}
+.final .whale{filter:drop-shadow(0 20px 50px rgba(217,184,121,.3))}
+
+/* 页脚 */
+footer{background:linear-gradient(180deg,rgba(238,233,220,.012),transparent),var(--surface)}
+
+/* 滚动浮现微调：更静 */
+.js .rv{transform:translateY(14px);transition:opacity .6s ease,transform .6s var(--ease)}
+
+/* 移动端 */
+@media (max-width:980px){
+  .hero-art{width:126%;right:-26%;top:-40px;opacity:.7}
+  .orbit-label,.hero-art-caption{display:none}
+}
+@media (max-width:620px){
+  .hero-seal{right:8%;bottom:8%}
+  .nav-in{gap:10px}
+  .gh-link{display:none}
+  .brand{font-size:14.5px}
+  .brand img{width:26px;height:26px}
+  .nav .btn{padding:8px 14px;font-size:13.5px}
+  .nav-burger{width:36px;height:36px}
+}
+
+</style>
+</head>
+<body>
+
+<div class="announce">
+  <span>🐳 <b>桌面端 v0.5.28</b> · <b>手机端 v0.2.52</b> 已发布</span>
+  <a href="#updates">看看更新了什么 →</a>
+</div>
+
+<header class="nav">
+  <div class="wrap nav-in">
+    <a class="brand" href="./">
+      <img src="./assets/whale_wave.webp" alt="" />
+      <span>DeepSeek Harness<small>桌面引擎 × 手机遥控</small></span>
+    </a>
+    <button class="nav-burger" aria-expanded="false" aria-label="打开菜单">
+      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg>
+    </button>
+    <nav class="nav-links" id="navLinks">
+      <a href="#why">为什么</a>
+      <a href="#remote">手机遥控</a>
+      <a href="#whale">鲸鱼娘</a>
+      <a href="#models">模型</a>
+      <a href="#downloads">下载</a>
+      <a href="#feedback">反馈</a>
+    </nav>
+    <div class="nav-right">
+      <a class="gh-link" href="https://github.com/zhuquan7237/zhuquan7237.github.io" target="_blank" rel="noopener">
+        <svg viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.4 7.4 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+        GitHub
+        <span class="gh-star" data-gh-star hidden></span>
+      </a>
+      <a class="btn btn-quiet nav-cta" href="#downloads">下载</a>
     </div>
-    <script src="./site.js?v=0.5.25"></script>
-      <script>
-      // 下载链接跟着最新清单走，页面不会再挂着旧版本
-      fetch('/dl/latest.json', { cache: 'no-store' })
-        .then(function (r) { return r.json(); })
-        .then(function (j) {
-          var v = j && j.version;
-          if (!v) return;
-          document.querySelectorAll('a[href*="/dl/DeepSeek-"]').forEach(function (a) {
-            a.href = a.href.replace(/DeepSeek-[\d.]+-/, 'DeepSeek-' + v + '-');
-          });
+  </div>
+</header>
+
+<main>
+  <!-- ═══ 首屏 ═══ -->
+  <section class="hero">
+    <div class="wrap hero-in">
+      <div class="hero-copy">
+        <p class="overline">桌面引擎 × 手机遥控 · 开源免费</p>
+        <h1>身在远处<span class="p">，</span><br />事在掌中<span class="p">。</span></h1>
+        <p class="lead">
+          <b>把电脑上的 AI Agent，装进你的手机。</b><br />
+          DeepSeek Harness 是跑在你电脑上的 AI 干活引擎：文件、终端、浏览器都归它管；
+          手机配对后，人在外面也能指挥它——发任务、看进度、取文件。
+        </p>
+        <p class="hero-punch">任务在电脑执行 · 会话与密钥留在本机</p>
+        <div class="cta-row">
+          <a class="btn btn-primary btn-lg" data-dl-primary href="#downloads">选择下载版本</a>
+          <a class="btn btn-quiet btn-lg" data-dl-secondary href="https://m.zhuquan.xyz/mobile/dsh-mobile.apk">下载安卓 APK</a>
+        </div>
+        <p class="detect-badge" data-detect-badge>正在识别你的系统…</p>
+        <p class="meta-sub">Windows 10+ · Android 8+ · 国内直连下载 · 免费开源<br />朱泉制作的社区项目 · 非 DeepSeek 官方产品</p>
+      </div>
+      <div class="stage">
+        <div class="hero-art" aria-hidden="true">
+          <svg class="enso" viewBox="0 0 640 640">
+          <defs>
+            <radialGradient id="ink-wash">
+              <stop offset="0" stop-color="#eee9dc" stop-opacity=".055"/>
+              <stop offset=".8" stop-color="#eee9dc" stop-opacity=".018"/>
+              <stop offset="1" stop-color="#eee9dc" stop-opacity="0"/>
+            </radialGradient>
+          </defs>
+          <circle cx="329" cy="310" r="259" fill="url(#ink-wash)"/>
+          <path d="M418 91C300 38 164 92 106 198 51 298 79 427 175 507c84 69 208 78 299 9 89-66 126-171 99-268C550 163 486 112 405 95" fill="none" stroke="currentColor" stroke-width="18" stroke-linecap="round" opacity=".64"/>
+          <path d="M423 87C295 43 170 91 109 193 46 296 76 431 169 505c101 79 229 77 323 0 75-62 107-157 82-250-19-73-81-134-156-151" fill="none" stroke="currentColor" stroke-width="2" opacity=".35"/>
+          <path d="M396 79C284 55 170 104 112 208 65 293 77 400 145 477" fill="none" stroke="currentColor" stroke-width="4" opacity=".27"/>
+          <path d="M157 493c95 82 224 93 324 12 74-60 101-147 82-233" fill="none" stroke="currentColor" stroke-width="8" opacity=".18"/>
+          <path d="M392 94c37 4 66 19 90 42M409 90c30 3 62 16 81 30" fill="none" stroke="var(--ink)" stroke-width="4" opacity=".85"/>
+          <path d="M513 161c23 25 40 53 50 84M100 264c-8 35-7 76 0 108M282 548c47 8 96 2 138-12" fill="none" stroke="var(--ink)" stroke-width="3" opacity=".7"/>
+          <path d="M138 444c-5-11-8-19-9-27m-2-196 6-13" fill="none" stroke="currentColor" stroke-width="1" opacity=".7"/>
+          <circle cx="518" cy="167" r="2" fill="currentColor" opacity=".4"/>
+          <circle cx="90" cy="293" r="1.4" fill="currentColor" opacity=".45"/>
+          <path d="M195 399h233" stroke="currentColor" stroke-width=".6" opacity=".08"/>
+        </svg>
+          <div class="orbit-label">一方天地 · 尽在掌中</div>
+          <div class="hero-seal">掌中<br>有鲸</div>
+        </div>
+        <figure class="shot-desktop">
+          <div class="win-bar"><i></i><i></i><i></i><span>DeepSeek Harness — 桌面端</span></div>
+          <img src="./assets/desktop-v3.png" alt="DeepSeek Harness 桌面端界面" loading="lazy" />
+        </figure>
+        <figure class="shot-phone">
+          <img src="./assets/chat-pad-bottom.png" alt="手机端聊天界面" loading="lazy" />
+        </figure>
+        <div class="whale-hero" id="whaleHero" role="button" tabindex="0" aria-label="摸摸鲸鱼娘的头" title="摸摸头">
+          <div class="bubble" id="whaleBubble" aria-live="polite">你好呀～</div>
+          <img src="./assets/whale_wave.webp" alt="鲸鱼娘" />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="strip">
+    <div class="wrap strip-in">
+      <span><span class="dot">◆</span> 会话、文件与密钥 <b>保存在你自己的电脑</b></span>
+      <span><span class="dot">◆</span> 配对码直连 · <b>无需公网 IP</b></span>
+      <span><span class="dot">◆</span> <b>国内直连下载</b>，不用代理</span>
+      <span><span class="dot">◆</span> 喜欢的话，去 <a href="https://github.com/zhuquan7237/zhuquan7237.github.io" target="_blank" rel="noopener" style="text-decoration:underline">GitHub 点个 Star</a></span>
+    </div>
+    <div class="wrap strip-note">* 调用在线模型时，会向所选服务商发送完成任务所需的内容；异地连接会经过中继转发。存储与传输是两件事，这里都说清楚。</div>
+  </div>
+
+  <!-- ═══ 为什么不一样 ═══ -->
+  <section class="sec" id="why">
+    <div class="wrap">
+      <div class="section-index rv"><span class="chapter">壹 / 差异</span><span>NOT ANOTHER CHAT CLIENT</span></div>
+      <div class="sec-head center rv">
+        <h2>它不是「又一个聊天客户端」</h2>
+        <p>聊天客户端让你和模型说话；DeepSeek Harness 让你把活交出去——</p>
+      </div>
+      <div class="cards3">
+        <div class="card rv">
+          <div class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg></div>
+          <h3>干活在你电脑上</h3>
+          <p>文件、终端、浏览器都在本机执行。它真的会动手干活，不是嘴上说说。</p>
+        </div>
+        <div class="card rv">
+          <div class="ico"><svg viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/></svg></div>
+          <h3>手机是遥控器</h3>
+          <p>配对码 10 秒连上。发任务、看进度、收文件——人不在电脑前，活照常干。</p>
+        </div>
+        <div class="card rv">
+          <div class="ico"><svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></div>
+          <h3>数据留在本机</h3>
+          <p>不用注册云账号。手机与电脑直接配对通信，会话、文件与密钥保存在你自己的电脑上。</p>
+        </div>
+      </div>
+      <div class="steps rv">
+        <div class="step"><span class="n">1</span><div><b>电脑安装桌面端</b><p>下载安装，配好你的模型</p></div></div>
+        <div class="step"><span class="n">2</span><div><b>手机扫码或输配对码</b><p>十秒内连上自己的电脑</p></div></div>
+        <div class="step"><span class="n">3</span><div><b>手机发任务，电脑执行</b><p>结果回到手机上</p></div></div>
+      </div>
+      <p class="steps-note rv">遥控时需要已配对的电脑保持运行并可连接；断线后会自动重连。</p>
+    </div>
+  </section>
+
+  <!-- ═══ 手机遥控 ═══ -->
+  <section class="sec feature" id="remote">
+    <div class="wrap feat-in">
+      <div class="feat-copy rv">
+        <div class="section-index rv"><span class="chapter">贰 / 遥控</span><span>THE CONTROLLER IN YOUR POCKET</span></div>
+        <h2>人在外面，<br />任务在家里跑</h2>
+        <p class="lead">她是配套的控制器：配对一次，随时回来接着用。</p>
+        <ul class="feat-list">
+          <li><span class="tick"><svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg></span>配对码或扫码连接；同一 Wi-Fi 直连，异地自动走中继</li>
+          <li><span class="tick"><svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg></span>顶栏实时三态：已连接 / 正在连接 / 未连接，心里有数</li>
+          <li><span class="tick"><svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg></span>任务进度、思考过程、生成的文件，手机上全程可见</li>
+          <li><span class="tick"><svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg></span>不在电脑前也能批准、插话、叫停</li>
+        </ul>
+      </div>
+      <div class="feat-visual rv">
+        <div class="glow"></div>
+        <figure class="shot phone"><img src="./assets/chat-pad-bottom.png" alt="手机端对话界面" loading="lazy" /></figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ 鲸鱼娘 ═══ -->
+  <section class="sec" id="whale">
+    <div class="wrap">
+      <div class="section-index rv"><span class="chapter">叁 / 鲸鱼娘</span><span>A COMPANION, NOT A DECORATION</span></div>
+      <div class="sec-head center rv">
+        <h2>她叫鲸鱼娘，<br />是会陪你干活的看板娘</h2>
+        <p>这是手机端花心思最多的部分——她不是装饰，她有自己的小情绪。</p>
+      </div>
+      <div class="whale-stage">
+        <div class="rv">
+        <div class="whale-big" id="whaleBig" role="button" tabindex="0" aria-label="摸摸鲸鱼娘的头" title="摸摸头">
+          <div class="bubble" id="whaleBigBubble" aria-live="polite">你好呀～我是鲸鱼娘</div>
+          <img src="./assets/whale_wave.webp" alt="鲸鱼娘" />
+        </div>
+        </div>
+        <button type="button" class="demo-chip" id="whaleDemo">▶ 模拟一次「任务完成」</button>
+        <div class="whale-faces rv"><div class="faces">
+          <button type="button" class="face" data-face="normal" data-line="平时就是这样，安安静静" aria-pressed="false">
+            <img src="./assets/whale_face_normal.webp" alt="" /><span>平常</span>
+          </button>
+          <button type="button" class="face" data-face="happy" data-line="任务干完了！开心！" aria-pressed="false">
+            <img src="./assets/whale_face_happy.webp" alt="" /><span>开心</span>
+          </button>
+          <button type="button" class="face" data-face="shy" data-line="别摸啦…会害羞的" aria-pressed="false">
+            <img src="./assets/whale_face_shy.webp" alt="" /><span>害羞</span>
+          </button>
+          <button type="button" class="face" data-face="sleepy" data-line="呼…好困，我先眯一会儿" aria-pressed="false">
+            <img src="./assets/whale_face_sleepy.webp" alt="" /><span>困了</span>
+          </button>
+        </div></div>
+        <p class="whale-quote">网页互动演示 · 点她试试——App 里她真的会跟着任务变情绪，悬浮球双击还能摸头。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ 模型 ═══ -->
+  <section class="sec feature flip" id="models">
+    <div class="wrap feat-in">
+      <div class="feat-visual rv">
+        <div class="glow"></div>
+        <figure class="shot phone"><img src="./assets/net-11-picker.png" alt="模型管理界面" loading="lazy" /></figure>
+      </div>
+      <div class="feat-copy rv">
+        <div class="section-index rv"><span class="chapter">肆 / 模型</span><span>EVERY PROVIDER, ITS OWN ROUTE</span></div>
+        <h2>不同服务商，<br />各走各的网络。</h2>
+        <p class="lead">聊天页、模型页、网络路由，手机上一站式管理（作用于桌面端引擎的模型请求）。</p>
+        <ul class="feat-list">
+          <li><span class="tick"><svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg></span>支持兼容接口的服务商：DeepSeek、Claude、GPT、国内中转……（能力取决于服务与模型）</li>
+          <li><span class="tick"><svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg></span>「代理 / 直连」按服务商单独设——必须走代理的、必须直连的，互不打架</li>
+          <li><span class="tick"><svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg></span>上游清单有更新？一键同步服务商提供的模型清单</li>
+        </ul>
+        <div class="route-ex">
+          <div class="rt"><span>api.x.ai</span><b class="proxy">代理</b></div>
+          <div class="rt"><span>国内中转服务</span><b class="direct">直连</b></div>
+          <div class="rt"><span>默认路由</span><b>跟随系统</b></div>
+          <p>配置示例，以你的网络环境为准</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ 成果看得见 ═══ -->
+  <section class="sec feature" id="files">
+    <div class="wrap feat-in">
+      <div class="feat-copy rv">
+        <div class="section-index rv"><span class="chapter">伍 / 成果</span><span>RESULTS, BACK IN YOUR HAND</span></div>
+        <h2>它画的东西，<br />手机上就能看</h2>
+        <p class="lead">干活过程与成果都在两端无缝流转。</p>
+        <ul class="feat-list">
+          <li><span class="tick"><svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg></span>图形 / 网页预览，居中呈现；代码可复制、可存成文件</li>
+          <li><span class="tick"><svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg></span>会话生成的文件按会话归属，点开即看</li>
+          <li><span class="tick"><svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg></span>桌面端是完整工作台：插件市场、皮肤、多会话并行</li>
+        </ul>
+      </div>
+      <div class="feat-visual rv">
+        <div class="glow"></div>
+        <figure class="shot phone"><img src="./assets/prev-final2.png" alt="图形预览" loading="lazy" /></figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ 对比 ═══ -->
+  <section class="sec" id="compare">
+    <div class="wrap">
+      <div class="section-index rv"><span class="chapter">陆 / 对照</span><span>DIFFERENT BY MECHANISM</span></div>
+      <div class="sec-head rv">
+        <h2>和你用过的那些，不太一样</h2>
+        <p>不做贬低式对比，只讲机制差异；「普通聊天客户端」指典型形态，不代表每一家都如此。</p>
+      </div>
+      <table class="cmp rv">
+        <thead>
+          <tr><th></th><th>普通聊天客户端</th><th>DeepSeek Harness</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>任务在哪执行</td><td class="them">在云端运行，接触不到你本机的文件</td><td class="us">你自己的电脑：文件、终端、浏览器<b>全能动</b></td></tr>
+          <tr><td>手机的角色</td><td class="them">另一个独立客户端，与桌面互不相通</td><td class="us">配套<b>遥控器</b>，指挥同一台电脑</td></tr>
+          <tr><td>账号体系</td><td class="them">通常需要账号登录与云同步</td><td class="us"><b>不用注册</b>，配对码直连</td></tr>
+          <tr><td>国内下载</td><td class="them">视网络情况，有时需要代理</td><td class="us"><b>国内直连</b>，点开就下</td></tr>
+          <tr><td>角色化交互</td><td class="them">少见此类设计</td><td class="us">鲸鱼娘：情绪、悬浮球、<b>摸头彩蛋</b>（本产品特色）</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ═══ 下载 ═══ -->
+  <section class="sec" id="downloads">
+    <div class="wrap">
+      <div class="sec-head rv">
+        <div class="section-index rv"><span class="chapter">柒 / 下载</span><span>TAKE IT HOME</span></div>
+        <h2>选你的版本，开始干活</h2>
+        <p>自动识别当前设备并高亮推荐；全部安装包也可以在 <a href="https://dsh.zhuquan.xyz/dl/" style="color:var(--blue-2);text-decoration:underline">下载页</a> 里找到。</p>
+      </div>
+
+      <div class="dl-head rv">
+        <h3>电脑端</h3>
+        <span class="ver" data-desktop-ver>v0.5.28</span>
+      </div>
+      <div class="dl-grid">
+        <div class="dl-card rv" data-dl-key="windows-x64">
+          <div class="os"><svg viewBox="0 0 24 24"><path d="M3 5.5 10.5 4.4v7.1H3zM12 4.2 21 3v8.5h-9zM3 12.5h7.5v7.1L3 18.5zM12 12.5h9V21l-9-1.2z"/></svg>Windows 安装版</div>
+          <div class="sub" data-sub>win.exe · 约 193 MB</div>
+          <div class="go"><a data-dl-asset="-win.exe" href="https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.28-win.exe">下载</a></div>
+          <div class="alt">快捷方式、开始菜单项一步到位；还有 <a data-dl-asset="-win-x64.exe" href="https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.28-win-x64.exe">便携版</a></div>
+        </div>
+        <div class="dl-card rv" data-dl-key="windows-arm64">
+          <div class="os"><svg viewBox="0 0 24 24"><path d="M3 5.5 10.5 4.4v7.1H3zM12 4.2 21 3v8.5h-9zM3 12.5h7.5v7.1L3 18.5zM12 12.5h9V21l-9-1.2z"/></svg>Windows ARM64</div>
+          <div class="sub" data-sub>win-arm64.exe · 约 94 MB</div>
+          <div class="go"><a data-dl-asset="-win-arm64.exe" href="https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.28-win-arm64.exe">下载</a></div>
+          <div class="alt">骁龙 X 等 ARM 处理器的笔记本</div>
+        </div>
+        <div class="dl-card rv" data-dl-key="macos-arm64">
+          <div class="os"><svg viewBox="0 0 24 24"><path d="M16.5 12.7c0-2.4 2-3.6 2.1-3.7-1.1-1.7-2.9-1.9-3.5-1.9-1.5-.2-2.9.9-3.7.9-.7 0-1.9-.9-3.2-.9C6.6 7.1 5 8.2 4.2 9.8c-1.8 3-.5 7.5 1.3 10 .8 1.2 1.8 2.6 3.1 2.5 1.3 0 1.7-.8 3.2-.8s1.9.8 3.2.8c1.4 0 2.3-1.2 3.1-2.4.9-1.4 1.3-2.7 1.3-2.8 0 0-2.5-1-2.6-3.9zM14.2 5.3c.7-.9 1.2-2 1.1-3.3-1 0-2.3.7-3 1.6-.7.8-1.3 2-1.1 3.2 1.1.1 2.3-.6 3-1.5z"/></svg>macOS · Apple 芯片</div>
+          <div class="sub" data-sub>mac-arm64.dmg · 约 114 MB</div>
+          <div class="go"><a data-dl-asset="-mac-arm64.dmg" href="https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.28-mac-arm64.dmg">下载 .dmg</a></div>
+          <div class="alt">M1 / M2 / M3 / M4 芯片</div>
+        </div>
+        <div class="dl-card rv" data-dl-key="macos-x64">
+          <div class="os"><svg viewBox="0 0 24 24"><path d="M16.5 12.7c0-2.4 2-3.6 2.1-3.7-1.1-1.7-2.9-1.9-3.5-1.9-1.5-.2-2.9.9-3.7.9-.7 0-1.9-.9-3.2-.9C6.6 7.1 5 8.2 4.2 9.8c-1.8 3-.5 7.5 1.3 10 .8 1.2 1.8 2.6 3.1 2.5 1.3 0 1.7-.8 3.2-.8s1.9.8 3.2.8c1.4 0 2.3-1.2 3.1-2.4.9-1.4 1.3-2.7 1.3-2.8 0 0-2.5-1-2.6-3.9zM14.2 5.3c.7-.9 1.2-2 1.1-3.3-1 0-2.3.7-3 1.6-.7.8-1.3 2-1.1 3.2 1.1.1 2.3-.6 3-1.5z"/></svg>macOS · Intel</div>
+          <div class="sub" data-sub>mac-x64.dmg · 约 121 MB</div>
+          <div class="go"><a data-dl-asset="-mac-x64.dmg" href="https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.28-mac-x64.dmg">下载 .dmg</a></div>
+          <div class="alt">2020 年前的 Intel Mac</div>
+        </div>
+        <div class="dl-card rv" data-dl-key="linux-x64">
+          <div class="os"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18"/></svg>Linux x64</div>
+          <div class="sub" data-sub>linux-x64.tar.gz · 约 116 MB</div>
+          <div class="go"><a data-dl-asset="-linux-x64.tar.gz" href="https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.28-linux-x64.tar.gz">下载</a></div>
+          <div class="alt">也有 <a data-dl-asset="-linux-x86_64.AppImage" href="https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.28-linux-x86_64.AppImage">AppImage</a> / <a data-dl-asset="-linux-amd64.deb" href="https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.28-linux-amd64.deb">deb</a> / <a data-dl-asset="-linux-x86_64.rpm" href="https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.28-linux-x86_64.rpm">rpm</a></div>
+        </div>
+        <div class="dl-card rv" data-dl-key="linux-arm64">
+          <div class="os"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18"/></svg>Linux arm64</div>
+          <div class="sub" data-sub>linux-arm64.tar.gz · 约 116 MB</div>
+          <div class="go"><a data-dl-asset="-linux-arm64.tar.gz" href="https://dsh.zhuquan.xyz/dl/DeepSeek-0.5.28-linux-arm64.tar.gz">下载</a></div>
+          <div class="alt">树莓派 / ARM 服务器</div>
+        </div>
+      </div>
+
+      <div class="dl-head dl-mobile rv">
+        <h3>手机端</h3>
+        <span class="ver" data-app-ver>v0.2.52</span>
+      </div>
+      <div class="dl-grid">
+        <div class="dl-card rv" data-dl-key="android-any">
+          <div class="os"><svg viewBox="0 0 24 24"><path d="M6 9h12v8a2 2 0 0 1-2 2h-1v3h-2v-3h-2v3H9v-3H8a2 2 0 0 1-2-2zM4.5 9.5a1.5 1.5 0 0 1 3 0V15a1.5 1.5 0 0 1-3 0zM16.5 9.5a1.5 1.5 0 0 1 3 0V15a1.5 1.5 0 0 1-3 0zM7 4.5 6.2 3M17 4.5l.8-1.5M7 7a6.5 3 0 0 1 10 0z"/></svg>安卓 APK</div>
+          <div class="sub" data-sub>dsh-mobile.apk · 约 3.2 MB</div>
+          <div class="go">
+            <a href="https://m.zhuquan.xyz/mobile/dsh-mobile.apk">直接下载</a>
+            <a href="https://cn.zhuquan.xyz:8443/dl/dsh-mobile.apk" title="国内直连加速（非标端口，公司/校园网被拦时用默认链接）">直连加速</a>
+          </div>
+          <div class="alt">Android 8.0+ · 与电脑端配对使用</div>
+        </div>
+        <div class="dl-card rv">
+          <div class="os"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 20h14"/></svg>手机端源码</div>
+          <div class="sub">deepseek-harness-mobile</div>
+          <div class="go"><a href="https://github.com/zhuquan7237/deepseek-harness-mobile" target="_blank" rel="noopener">去 GitHub</a></div>
+          <div class="alt">Kotlin · Compose · 欢迎参与</div>
+        </div>
+        <div class="dl-card rv">
+          <div class="os"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 20h14"/></svg>电脑端源码</div>
+          <div class="sub">zhuquan7237.github.io</div>
+          <div class="go"><a href="https://github.com/zhuquan7237/zhuquan7237.github.io" target="_blank" rel="noopener">去 GitHub</a></div>
+          <div class="alt">安装包发布也在这里 · 欢迎 Star</div>
+        </div>
+      </div>
+      <p class="dl-note" data-dl-note>下载不动？试试「直连加速」链接，或挂上代理走 GitHub Releases。每个版本都附更新日志与哈希校验。</p>
+    </div>
+  </section>
+
+  <!-- ═══ 更新 ═══ -->
+  <section class="sec" id="updates">
+    <div class="wrap">
+      <div class="sec-head rv">
+        <div class="section-index rv"><span class="chapter">捌 / 更新</span><span>STILL GROWING</span></div>
+        <h2>最近两个版本，更新了这些</h2>
+      </div>
+      <div class="updates">
+        <div class="upd rv">
+          <div class="tagline"><span class="pill">桌面端 0.5.28</span><h3>模型网络路由</h3></div>
+          <ul>
+            <li>每家提供商单独配「代理 / 直连」——必须走代理的和必须直连的，各走各的路</li>
+            <li>改动一键生效：保存后电脑端自动重启引擎，约 10 秒</li>
+            <li>配对页新增「模型网络」卡片，手机上也能改</li>
+          </ul>
+        </div>
+        <div class="upd rv">
+          <div class="tagline"><span class="pill gold">手机端 0.2.52</span><h3>预览体验打磨</h3></div>
+          <ul>
+            <li>图形预览内容两轴居中，不再贴顶留一片空</li>
+            <li>打开预览自动收起键盘；对话两侧留白加大</li>
+            <li>预览页在 WebView 里的渲染兼容性修复</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ 反馈 ═══ -->
+  <section class="sec" id="feedback">
+    <div class="wrap">
+      <div class="sec-head rv">
+        <div class="section-index rv"><span class="chapter">玖 / 反馈</span><span>WRITE BACK TO US</span></div>
+        <h2>你的每一句吐槽，<br />都会变成下一个版本</h2>
+        <p>这个项目由一个人开发维护，每一条反馈作者都会看。</p>
+      </div>
+      <div class="fb-grid">
+        <a class="fb rv" href="https://github.com/zhuquan7237/zhuquan7237.github.io/issues/new" target="_blank" rel="noopener">
+          <div class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg></div>
+          <h3>报告问题</h3>
+          <p>崩溃、卡住、下载不动？把版本和现象发过来。</p>
+          <div class="arrow">去 GitHub Issues →</div>
+        </a>
+        <a class="fb rv" href="https://github.com/zhuquan7237/zhuquan7237.github.io/issues/new" target="_blank" rel="noopener">
+          <div class="ico"><svg viewBox="0 0 24 24"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg></div>
+          <h3>功能建议</h3>
+          <p>想让它多会点什么？说说你的使用场景。</p>
+          <div class="arrow">去 GitHub Issues →</div>
+        </a>
+        <a class="fb rv" href="https://github.com/zhuquan7237/zhuquan7237.github.io/discussions" target="_blank" rel="noopener">
+          <div class="ico"><svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-8 8H4l2-3a8 8 0 1 1 15-5z"/></svg></div>
+          <h3>讨论交流</h3>
+          <p>不会用、想看看别人怎么玩，来讨论区坐坐。</p>
+          <div class="arrow">去 GitHub Discussions →</div>
+        </a>
+      </div>
+      <p class="fb-note">📮 站点评论区（基于 GitHub Discussions）正在接入；暂时先用上面的入口，作者都会看到。</p>
+    </div>
+  </section>
+
+  <!-- ═══ FAQ ═══ -->
+  <section class="sec" id="faq">
+    <div class="wrap">
+      <div class="section-index rv"><span class="chapter">拾 / 问答</span><span>BEFORE YOU BEGIN</span></div>
+      <div class="sec-head rv">
+        <h2>常见问题</h2>
+      </div>
+      <div class="faq-list">
+        <details class="rv">
+          <summary>这是 DeepSeek 官方软件吗？</summary>
+          <div class="ans">不是。这是社区项目，由个人开发者制作。核心引擎使用官方 npm 包 <b>@deepseek-ai/dsh</b>，桌面端与手机端是围绕它做的配套客户端；与 DeepSeek 公司没有隶属关系。</div>
+        </details>
+        <details class="rv">
+          <summary>免费吗？开源吗？</summary>
+          <div class="ans">客户端免费。桌面端与手机端源码都在 <a href="https://github.com/zhuquan7237/zhuquan7237.github.io" target="_blank" rel="noopener" style="color:var(--blue-2);text-decoration:underline">GitHub</a> 上公开；模型费用由你使用的服务商收取（用自己的 API Key）。</div>
+        </details>
+        <details class="rv">
+          <summary>我的数据存在哪里？</summary>
+          <div class="ans">全部在你自己的电脑上：会话、生成的文件、密钥都在本机。没有云账号，手机只是通过配对的加密通道遥控电脑，<b>不经过我们的任何服务器存储</b>。</div>
+        </details>
+        <details class="rv">
+          <summary>手机和电脑怎么连？需要公网 IP 吗？</summary>
+          <div class="ans">不需要。同一 Wi-Fi 下直接局域网连接；不在同一网络时自动走中继（含国内直连节点）。配对码或扫码即可完成。</div>
+        </details>
+        <details class="rv">
+          <summary>支持哪些模型？</summary>
+          <div class="ans">任何兼容 OpenAI / Anthropic 接口的服务商都可以接进来：DeepSeek 官方、Claude、GPT、以及国内各家 API 中转。每家公司还能单独设「代理 / 直连」路由。</div>
+        </details>
+        <details class="rv">
+          <summary>它和 Cherry Studio、Chatbox 这类客户端有什么不同？</summary>
+          <div class="ans">那些是「聊天客户端」——你和模型对话。DeepSeek Harness 是「干活引擎 + 遥控器」——任务在你电脑上真实执行（能碰文件、能跑命令），你用手机在外面指挥它、看进度、取结果。两者可以共存，但解决的问题不一样。</div>
+        </details>
+        <details class="rv">
+          <summary>怎么更新？</summary>
+          <div class="ans">桌面端启动时自动检查新版本；手机端在「设置 → 检查更新」里升级；官网提供当前最新版本。更新过程中你的数据与配置都会保留。</div>
+        </details>
+        <details class="rv">
+          <summary>遇到问题找谁？</summary>
+          <div class="ans">上面反馈区的三个入口作者都会看。报告问题时附上：系统版本、软件版本、复现步骤，有截图更好。</div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ 终屏 ═══ -->
+  <section class="final">
+    <div class="wrap">
+      <img class="whale" src="./assets/whale_wave.webp" alt="鲸鱼娘" />
+      <h2>现在，把鲸鱼娘带回家</h2>
+      <p>电脑端和手机端是配套的，两个都装上才是完整体验。</p>
+      <div class="cta-row">
+        <a class="btn btn-primary btn-lg" data-dl-primary href="#downloads">选择下载版本</a>
+        <a class="btn btn-quiet btn-lg" data-dl-secondary href="https://m.zhuquan.xyz/mobile/dsh-mobile.apk">下载安卓 APK</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div class="foot-brand">
+        <div class="brand">
+          <img src="./assets/whale_wave.webp" alt="" />
+          <span>DeepSeek Harness<small>桌面引擎 × 手机遥控</small></span>
+        </div>
+        <p>跑在你自己电脑上的 AI Agent 引擎，配一只随时待命的手机遥控器和一位会撒娇的鲸鱼娘。</p>
+      </div>
+      <div class="foot-col">
+        <h4>产品</h4>
+        <a href="#downloads">下载</a>
+        <a href="#updates">更新日志</a>
+        <a href="#compare">对比</a>
+        <a href="https://dsh.zhuquan.xyz/dl/">全部安装包</a>
+      </div>
+      <div class="foot-col">
+        <h4>社区</h4>
+        <a href="https://github.com/zhuquan7237/zhuquan7237.github.io" target="_blank" rel="noopener">桌面端 GitHub</a>
+        <a href="https://github.com/zhuquan7237/deepseek-harness-mobile" target="_blank" rel="noopener">手机端 GitHub</a>
+        <a href="https://github.com/zhuquan7237/zhuquan7237.github.io/issues" target="_blank" rel="noopener">问题反馈</a>
+      </div>
+      <div class="foot-col">
+        <h4>关于</h4>
+        <a href="#faq">常见问题</a>
+        <a href="https://dsh.zhuquan.xyz/compare.html">项目对照</a>
+        <a href="https://dsh.zhuquan.xyz/me.html">作者</a>
+      </div>
+    </div>
+    <div class="foot-note">
+      <span>© 2026 zhuquan · 社区项目，非 DeepSeek 官方软件 · 引擎版权归 DeepSeek 所有</span>
+      <span>dsh.zhuquan.xyz</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  "use strict";
+  /* ── 1. 系统检测（UA-CH 优先，UA 兜底；只做高亮推荐，不隐藏其他平台） ── */
+  function archOf(arch, bitness){
+    var a = String(arch||"").toLowerCase();
+    if(a==="intel"||a==="x86"||a==="x86_64"||a==="amd64"||a==="x64"||a==="ia32") a="x86";
+    else if(a.indexOf("arm")===0||a==="aarch64") a="arm";
+    else return "";
+    var b = String(bitness||"");
+    if(a==="x86") return b==="32" ? "x86" : "x64";
+    return b==="32" ? "arm32" : "arm64";
+  }
+  function fromUA(ua){
+    ua = ua||"";
+    if(/android/i.test(ua)) return {os:"android",arch:"arm64",mobile:true};
+    if(/iphone|ipad|ipod/i.test(ua)) return {os:"ios",arch:"arm64",mobile:true};
+    if(/windows nt/i.test(ua)){
+      var arch = /arm64/i.test(ua) ? "arm64" : "x64";
+      return {os:"windows",arch:arch,mobile:false};
+    }
+    if(/mac os x|macintosh/i.test(ua)) return {os:"macos",arch:"unknown",mobile:false};
+    if(/linux|x11/i.test(ua)) return {os:"linux",arch:/aarch64|arm64/i.test(ua)?"arm64":"x64",mobile:false};
+    return {os:"unknown",arch:"unknown",mobile:false};
+  }
+  function detect(){
+    var nav = navigator, uaData = nav.userAgentData;
+    if(uaData && uaData.getHighEntropyValues){
+      return uaData.getHighEntropyValues(["architecture","bitness","platform","platformVersion","formFactors"])
+        .then(function(h){
+          var p = String(h.platform||uaData.platform||"").toLowerCase();
+          var os = p==="windows"?"windows":p==="macos"?"macos":p==="linux"?"linux":p==="android"?"android":p==="chrome os"?"chromeos":"unknown";
+          var arch = archOf(h.architecture,h.bitness) || fromUA(nav.userAgent).arch;
+          var ff = h.formFactors||[];
+          var mobile = ff.length ? (ff.indexOf("Mobile")>-1||ff.indexOf("Tablet")>-1) : !!uaData.mobile;
+          var osName = os;
+          if(os==="windows"){
+            var major = parseInt(String(h.platformVersion||"").split(".")[0],10);
+            osName = "Windows " + (major>=13 ? "11" : major>=10 ? "10" : "");
+          }
+          return {os:os,arch:arch||"unknown",osName:osName.trim(),mobile:mobile};
         })
-        .catch(function () {});
-    </script>
-  </body>
+        .catch(function(){ return fromUA(nav.userAgent); });
+    }
+    return Promise.resolve(fromUA(nav.userAgent));
+  }
+  /* ── 2. 推荐映射 ── */
+  var WECHAT = /micromessenger/i.test(navigator.userAgent);
+  function key(p){
+    if(p.mobile){
+      if(p.os==="android") return "android-any";
+      if(p.os==="ios") return "";            /* iOS 暂未上架，不推荐安装包 */
+      return "";
+    }
+    if(p.os==="windows") return p.arch==="arm64" ? "windows-arm64" : "windows-x64";
+    if(p.os==="macos")  return p.arch==="arm64" ? "macos-arm64" : p.arch==="x64" ? "macos-x64" : "macos-any";
+    if(p.os==="linux")  return p.arch==="arm64" ? "linux-arm64" : "linux-x64";
+    return "";
+  }
+  var LABEL = {
+    "windows-x64":"Windows 安装版","windows-arm64":"Windows ARM64",
+    "macos-arm64":"macOS（Apple 芯片）","macos-x64":"macOS（Intel）",
+    "linux-x64":"Linux x64","linux-arm64":"Linux arm64","android-any":"安卓 APK"
+  };
+  function apply(p){
+    var badge = document.querySelector("[data-detect-badge]");
+    var k = key(p);
+    if(WECHAT){
+      if(badge) badge.innerHTML = "检测到微信内置浏览器：下载可能被拦截，请点右上角「…」选择<b>用浏览器打开</b>";
+      return;
+    }
+    if(!k){
+      if(badge) badge.textContent = "没有识别出你的系统？在下面手动选择即可。";
+      return;
+    }
+    var card = document.querySelector('[data-dl-key="'+k+'"]');
+    if(card && k!=="macos-any"){
+      card.classList.add("is-recommended");
+      if(badge) badge.textContent = "已按这台设备选好：" + (LABEL[k]||k);
+    }else{
+      if(badge) badge.textContent = p.os==="macos" ? "检测到 macOS：下载时请确认芯片类型（Apple 芯片 / Intel）" : "按需选择下面的版本。";
+    }
+    if(k==="android-any" && badge) badge.textContent = "检测到安卓设备：直接下载 APK 安装即可";
+    var primary = document.querySelector("[data-dl-primary]");
+    var secondary = document.querySelector("[data-dl-secondary]");
+    var APK = "https://m.zhuquan.xyz/mobile/dsh-mobile.apk";
+    var BTN = {
+      "windows-x64":"下载 Windows 版","windows-arm64":"下载 Windows ARM64 版",
+      "macos-arm64":"下载 macOS 版","macos-x64":"下载 macOS Intel 版",
+      "linux-x64":"下载 Linux 版","linux-arm64":"下载 Linux ARM64 版","android-any":"下载安卓 APK"
+    };
+    /* 次按钮：安卓设备时让位（主按钮已是 APK），其余一直指向 APK */
+    if(secondary){
+      if(k==="android-any"){ secondary.textContent = "选择其他版本"; secondary.href = "#downloads"; }
+      else{ secondary.textContent = "下载安卓 APK"; secondary.href = APK; }
+    }
+    if(primary && BTN[k]){
+      if(k==="android-any"){ primary.href = APK; }
+      else if(card){
+        var a = card.querySelector("a[data-dl-asset]");
+        if(a) primary.href = a.getAttribute("href");
+      }
+      primary.textContent = BTN[k];
+    }
+    /* 记录检测结果，清单加载完成后可重放 */
+    window.__pf = p;
+  }
+  /* ── 3. 版本清单：从 /dl/latest.json 读取，替换所有下载链接与版本号 ── */
+  function fmtSize(n){ return n ? "约 " + Math.round(n/1048576) + " MB" : ""; }
+  function loadManifest(){
+    function safeUrl(u){
+      try{ var h = new URL(u).host; return /(^|\.)zhuquan\.xyz$/.test(h) ? u : null; }catch(e){ return null; }
+    }
+    fetch("/dl/latest.json",{cache:"no-store"})
+      .then(function(r){ if(!r.ok) throw new Error("http " + r.status); return r.json(); })
+      .then(function(j){
+      if(!j || !j.version || !/^\d+(\.\d+){1,3}$/.test(String(j.version))) return;
+      document.querySelectorAll("[data-desktop-ver]").forEach(function(el){ el.textContent = "v" + j.version; });
+      var ver = j.version;
+      /* 卡片主链接与体积 */
+      document.querySelectorAll(".dl-card[data-dl-key]").forEach(function(card){
+        var a = card.querySelector("a[data-dl-asset]");
+        if(!a) return;
+        var suffix = a.getAttribute("data-dl-asset");
+        var hit = (j.assets||[]).filter(function(x){ return x.name.endsWith(suffix); })[0];
+        if(!hit) return;
+        var uu = safeUrl(hit.url); if(uu) a.href = uu;
+        var sub = card.querySelector("[data-sub]");
+        if(sub && hit.size) sub.textContent = hit.name.replace("DeepSeek-"+ver+"-","") + " · " + fmtSize(hit.size);
+      });
+      /* 全部 data-dl-asset 链接同步 */
+      (j.assets||[]).forEach(function(asset){
+        var nodes = document.querySelectorAll('[data-dl-asset="' + asset.name.replace(/^DeepSeek-[0-9.]+/,"") + '"]');
+        nodes.forEach(function(a){ var uu = safeUrl(asset.url); if(uu) a.href = uu; });
+      });
+      /* 清单就绪后重放平台推荐，保证按钮与最新链接一致 */
+      if(window.__pf) apply(window.__pf);
+    }).catch(function(){/* 本地预览/离线时保持静态回退 */});
+  }
+  /* ── 4. GitHub 星标（有缓存；星太少就不展示数字，只留入口） ── */
+  function stars(){
+    var el = document.querySelector("[data-gh-star]");
+    if(!el) return;
+    var KEY="dsh_stars_v1", now=Date.now();
+    try{
+      var c = JSON.parse(localStorage.getItem(KEY)||"null");
+      if(c && now-c.t < 3600e3){ paint(c.n); return; }
+    }catch(e){}
+    fetch("https://api.github.com/repos/zhuquan7237/zhuquan7237.github.io")
+      .then(function(r){ if(!r.ok) return null; return r.json(); })
+      .then(function(j){
+        if(!j) return;
+        var n = j.stargazers_count || 0;
+        try{ localStorage.setItem(KEY, JSON.stringify({n:n,t:now})); }catch(e){}
+        paint(n);
+      }).catch(function(){});
+    function paint(n){ if(n>=10){ el.textContent = "★ " + (n>=1000 ? (n/1000).toFixed(1)+"k" : n); el.hidden = false; } }
+  }
+  /* ── 5. 鲸鱼娘：统一状态机（选中情绪持久；摸头彩蛋临时；单计时器防互相覆盖） ── */
+  function whaleController(){
+    var big = document.getElementById("whaleBig"), hero = document.getElementById("whaleHero");
+    if(!big && !hero) return;
+    var bubbles = [];
+    [big, hero].forEach(function(r){
+      if(!r) return;
+      var b = r.querySelector(".bubble");
+      if(b) bubbles.push({ root: r, el: b });
+      r.addEventListener("click", function(){ pat(); });
+      r.addEventListener("keydown", function(ev){
+        if(ev.key === "Enter" || ev.key === " "){ ev.preventDefault(); pat(); }
+      });
+    });
+    function file(f){ return f === "wave" ? "./assets/whale_wave.webp" : "./assets/whale_face_" + f + ".webp"; }
+    var S = { sel: null, t: null, talkT: null };
+    function paint(f){ [big, hero].forEach(function(r){ if(r){ var im = r.querySelector("img"); if(im) im.src = file(f); } }); }
+    function say(line, ms){
+      bubbles.forEach(function(o){ o.el.textContent = line; o.root.classList.add("talk"); });
+      clearTimeout(S.talkT);
+      S.talkT = setTimeout(function(){
+        bubbles.forEach(function(o){ o.root.classList.remove("talk"); });
+        S.talkT = null;
+      }, ms || 2800);
+    }
+    function setSel(f){ S.sel = f; paint(f || "wave"); }
+    var eggs = [
+      ["happy","任务干完了！开心！"],
+      ["shy","别摸啦…会害羞的"],
+      ["sleepy","呼…好困，我先眯一会儿"],
+      ["normal","我在呢，随时待命～"]
+    ];
+    var ei = 0;
+    function pat(){
+      var e = eggs[ei % eggs.length]; ei++;
+      clearTimeout(S.t);
+      paint(e[0]); say(e[1], 2600);
+      S.t = setTimeout(function(){ S.t = null; paint(S.sel || "wave"); }, 2600);
+    }
+    document.querySelectorAll(".face").forEach(function(f){
+      f.addEventListener("click", function(){
+        var mood = f.getAttribute("data-face");
+        var next = (S.sel === mood) ? null : mood;
+        setSel(next);
+        clearTimeout(S.t); S.t = null;
+        document.querySelectorAll(".face").forEach(function(o){
+          var on = (o === f) && !!next;
+          o.classList.toggle("on", on);
+          o.setAttribute("aria-pressed", on ? "true" : "false");
+        });
+        if(next){ say(f.getAttribute("data-line") || "嗨～", 2600); }
+        else{ say("好，我回到平常的样子～", 2200); }
+      });
+    });
+    var chip = document.getElementById("whaleDemo");
+    if(chip) chip.addEventListener("click", function(){
+      clearTimeout(S.t);
+      paint("happy"); say("任务完成啦！（App 里她会这样来叫你）", 3400);
+      S.t = setTimeout(function(){ S.t = null; paint(S.sel || "wave"); }, 3400);
+    });
+  }
+  /* ── 7. 滚动浮现 ── */
+  function reveal(){
+    var els = document.querySelectorAll(".rv");
+    if(!("IntersectionObserver" in window)){ els.forEach(function(e){ e.classList.add("in"); }); return; }
+    var io = new IntersectionObserver(function(list){
+      list.forEach(function(x){ if(x.isIntersecting){ x.target.classList.add("in"); io.unobserve(x.target); } });
+    },{rootMargin:"0px 0px -8% 0px", threshold:.08});
+    els.forEach(function(e){ io.observe(e); });
+  }
+  /* ── 启动 ── */
+  function nav() {
+    var cta = document.querySelector(".nav-cta");
+    if(cta){
+      var on = function(){ cta.classList.toggle("on", window.scrollY > 560); };
+      window.addEventListener("scroll", on, {passive:true}); on();
+    }
+    var burger = document.querySelector(".nav-burger"), head = document.querySelector(".nav");
+    if(burger && head){
+      burger.addEventListener("click", function(){
+        var open = head.classList.toggle("nav-open");
+        burger.setAttribute("aria-expanded", open ? "true" : "false");
+        burger.setAttribute("aria-label", open ? "关闭菜单" : "打开菜单");
+      });
+      document.querySelectorAll("#navLinks a").forEach(function(a){
+        a.addEventListener("click", function(){
+          head.classList.remove("nav-open");
+          burger.setAttribute("aria-expanded", "false");
+        });
+      });
+    }
+  }
+  document.addEventListener("DOMContentLoaded", function(){
+    reveal(); stars(); loadManifest(); whaleController(); nav();
+    detect().then(function(p){ apply(p); }).catch(function(){});
+  });
+})();
+</script>
+</body>
 </html>
