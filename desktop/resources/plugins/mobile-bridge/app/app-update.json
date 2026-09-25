@@ -1,9 +1,9 @@
 {
-  "version": "0.2.71",
-  "versionCode": 79,
+  "version": "0.2.72",
+  "versionCode": 80,
   "apkUrl": "https://m.zhuquan.xyz/mobile/dsh-mobile.apk",
-  "sha256": "b5daaa20ce532022d1ed51665d58e10342e06106a9da7f31957ae5bf3f2dd2fa",
+  "sha256": "2aa69a1804a0c338c972f89fb7c830116287f89fae0d9ac021771acbef3faa9e",
   "size": 3757971,
-  "notes": "数学公式，手机上也是公式：对话里的 LaTeX 在手机本地渲染成排版数学——积分号、分式、根号、上下标全部正常显示；行内公式与文字同基线，深浅色主题都合适（和电脑端同款渲染引擎）。",
-  "publishedAt": "2026-09-25T22:04:16+08:00"
+  "notes": "更快更细腻：会话列表同步明显提速；新建对话秒开（默认模型后台生效）；数学公式笔画更细更清晰，修复个别宽公式右侧被截断的问题。",
+  "publishedAt": "2026-09-25T22:52:46+08:00"
 }

@@ -797,6 +797,8 @@ export function apply(ctx: Context, config: { publicUrl?: string } = {}): void {
       if (sessionId !== '' && sessionSeq > 0) {
         headSeqs.set(sessionId, Math.max(headSeqs.get(sessionId) ?? 0, sessionSeq))
       }
+      // 列表缓存失效：回合起止会改标题/时间/运行态，下一次拉列表要拿到新数据
+      if (type === 'turn/start' || type === 'turn/end') dropSessionsCache()
       // 图片生成引用：助手消息带出 dsh-img-*.png 时把它记到会话账上（手机端
       // 据此在聊天里显示图片卡、并在「生成的文件」里预览/下载）。旁路记账，
       // 任何失败都不许影响事件流本身。
@@ -1494,6 +1496,35 @@ document.addEventListener('click', async (event) => {
     }),
   })
 
+  // 会话列表：引擎的 session.list 在会话多时要 ~300ms，而且全量载荷带一整套
+  // projections（手机列表只用得到标题/模型两样，却要背 300KB）。这里做两件事：
+  //  1) `?view=lite` 只回手机需要的字段（载荷约缩到 1/7）；
+  //  2) 2s TTL 内存缓存 + 关键事件（turn 起止、新建、改名）失效 ——
+  //     手机反复刷新列表时不再每次打到引擎。
+  let sessionsListCache: { at: number; full: Record<string, unknown>; lite: Record<string, unknown> } | null = null
+  const SESSIONS_CACHE_MS = 2000
+  const slimSession = (item: unknown): unknown => {
+    if (!isRecord(item)) return item
+    const projections = isRecord(item.projections) ? item.projections : {}
+    const values = isRecord(projections.values) ? projections.values : {}
+    const slimValues: Record<string, unknown> = {}
+    if (values.title !== undefined) slimValues.title = values.title
+    if (isRecord(values.modelSelection)) slimValues.modelSelection = values.modelSelection
+    const out: Record<string, unknown> = {
+      sessionId: item.sessionId,
+      updatedAt: item.updatedAt,
+      running: item.running,
+      blank: item.blank,
+      cwd: item.cwd,
+      projections: { values: slimValues },
+    }
+    if (item.producedFiles !== undefined) out.producedFiles = item.producedFiles
+    return out
+  }
+  const dropSessionsCache = (): void => {
+    sessionsListCache = null
+  }
+
   webServer.register({
     kind: 'exact',
     path: `${PUBLIC_PREFIX}/sessions`,
@@ -1511,8 +1542,18 @@ document.addEventListener('click', async (event) => {
           sendJson(res, 200, { ok: true, search: true, ...withFileCounts(found) })
           return
         }
+        const lite = url.searchParams.get('view') === 'lite'
+        const now = Date.now()
+        if (sessionsListCache !== null && now - sessionsListCache.at < SESSIONS_CACHE_MS) {
+          sendJson(res, 200, lite ? sessionsListCache.lite : sessionsListCache.full)
+          return
+        }
         const listed = (await callEngine(ctx, 'session.list', {})) as unknown
-        sendJson(res, 200, { ok: true, ...withFileCounts(listed) })
+        const full = { ok: true, ...withFileCounts(listed) } as Record<string, unknown>
+        const rawItems = Array.isArray(full.items) ? (full.items as unknown[]) : []
+        const litePayload: Record<string, unknown> = { ok: true, items: rawItems.map(slimSession) }
+        sessionsListCache = { at: now, full, lite: litePayload }
+        sendJson(res, 200, lite ? litePayload : full)
         return
       }
       // POST: create a session, optionally on a chosen model.
@@ -1526,6 +1567,7 @@ document.addEventListener('click', async (event) => {
       if (typeof body.agentPreset === 'string' && body.agentPreset.trim() !== '') payload.agentPreset = body.agentPreset.trim()
       const created = (await callEngine(ctx, 'session.create', payload)) as unknown
       const sessionId = isRecord(created) && typeof created.sessionId === 'string' ? created.sessionId : ''
+      dropSessionsCache()
       if (sessionId !== '' && isRecord(body.model) && typeof body.model.provider === 'string' && typeof body.model.model === 'string') {
         await callEngine(ctx, 'session.selectModel', {
           sessionId,
@@ -1737,6 +1779,7 @@ document.addEventListener('click', async (event) => {
       }
       if (action === 'rename') {
         const result = (await callEngine(ctx, 'session.rename', { sessionId, title: String(body.title ?? '') })) as unknown
+        dropSessionsCache()
         sendJson(res, 200, { ok: true, ...(isRecord(result) ? result : {}) })
         return
       }
