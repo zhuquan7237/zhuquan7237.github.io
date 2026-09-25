@@ -473,7 +473,7 @@ footer{background:linear-gradient(180deg,rgba(238,233,220,.012),transparent),var
 <body>
 
 <div class="announce">
-  <span>🐳 <b>桌面端 v0.5.31</b> · <b>手机端 v0.2.73</b> 已发布</span>
+  <span>🐳 <b>桌面端 v0.5.31</b> · <b>手机端 v0.2.74</b> 已发布</span>
   <a href="#updates">看看更新了什么 →</a>
 </div>
 
@@ -788,7 +788,7 @@ footer{background:linear-gradient(180deg,rgba(238,233,220,.012),transparent),var
 
       <div class="dl-head dl-mobile rv">
         <h3>手机端</h3>
-        <span class="ver" data-app-ver>v0.2.73</span>
+        <span class="ver" data-app-ver>v0.2.74</span>
       </div>
       <div class="dl-grid">
         <div class="dl-card rv" data-dl-key="android-any">
@@ -834,12 +834,12 @@ footer{background:linear-gradient(180deg,rgba(238,233,220,.012),transparent),var
           </ul>
         </div>
         <div class="upd rv">
-          <div class="tagline"><span class="pill gold">手机端 0.2.73</span><h3>扫码配对，修好了</h3></div>
+          <div class="tagline"><span class="pill gold">手机端 0.2.74</span><h3>更新看得见，弱网也能连</h3></div>
           <ul>
-            <li>修复部分用户「扫码连不上」：新用户扫码配对时会正确带上电脑的中继路径，不再打错地址</li>
-            <li>手机到中继的两条线路（国内直连 / Cloudflare）互为备份，一条被当地网络阻断时自动换另一条</li>
-            <li>配对失败的原因写得明明白白：区分「电脑没开远程访问」「配对码不对」「网络连不上」</li>
-            <li>0.2.72 的提速与公式优化一并生效；建议所有新老用户更新</li>
+            <li>修复弱网 / 特殊网络下「收不到更新」的问题（服务器版本清单路由）；两条线路都能取到最新版本</li>
+            <li>每次打开 App 自动检查更新；发现新版本时，配对页和首页都会出现醒目的「立即更新」横幅</li>
+            <li>还没配对也能进设置、手动检查更新（之前停在配对页就进不去）</li>
+            <li>配对失败会一次收全诊断信息（网络环境 / 扫码原文 / 每次尝试 / DNS），问题定位更快</li>
           </ul>
         </div>
       </div>
