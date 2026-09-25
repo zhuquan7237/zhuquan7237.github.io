@@ -21,7 +21,7 @@
  *
  * @module @dsh-desktop/dsh-mobile-bridge
  */
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, readdirSync, realpathSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
 import { basename, dirname, extname, join, normalize, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -343,6 +343,170 @@ export function apply(ctx, config = {}) {
             }
         }, 600);
     };
+    const APPROVALS_STORE = join(dirname(storePath()), 'mobile-bridge-approvals.json');
+    let approvalsState = null;
+    const loadApprovals = () => {
+        if (approvalsState !== null)
+            return approvalsState;
+        try {
+            const raw = JSON.parse(readFileSync(APPROVALS_STORE, 'utf8'));
+            approvalsState = isRecord(raw) && raw.version === 1 && isRecord(raw.pending) && Array.isArray(raw.recent)
+                ? raw
+                : { version: 1, pending: {}, recent: [] };
+        }
+        catch {
+            approvalsState = { version: 1, pending: {}, recent: [] };
+        }
+        return approvalsState;
+    };
+    let approvalsSaveTimer = null;
+    const saveApprovalsSoon = () => {
+        if (approvalsSaveTimer !== null)
+            return;
+        approvalsSaveTimer = setTimeout(() => {
+            approvalsSaveTimer = null;
+            const state = approvalsState;
+            if (state === null)
+                return;
+            if (state.recent.length > 50)
+                state.recent.length = 50;
+            try {
+                mkdirSync(dirname(APPROVALS_STORE), { recursive: true });
+                writeFileSync(APPROVALS_STORE, JSON.stringify(state));
+            }
+            catch (error) {
+                log(`审批库写入失败：${error instanceof Error ? error.message : String(error)}`);
+            }
+        }, 600);
+    };
+    /** 概括文案：只暴露「要审批什么类型」，不携带任何参数原文。 */
+    const approvalKindOf = (toolName) => {
+        const name = toolName.toLowerCase();
+        if (name === 'pwsh' || name === 'bash' || name.includes('shell') || name.includes('terminal'))
+            return { kind: 'command', title: '执行命令需要审批' };
+        if (name.includes('fs') || name.includes('file') || name.includes('editor') || name.includes('write'))
+            return { kind: 'file', title: '修改文件需要审批' };
+        if (name.includes('web') || name.includes('fetch') || name.includes('http'))
+            return { kind: 'network', title: '联网访问需要审批' };
+        return { kind: 'other', title: '执行操作需要审批' };
+    };
+    /** 返回新加入的审批标题；重复事件返回空串。 */
+    const applyApprovalAsked = (state, sessionId, data, at) => {
+        const id = typeof data.id === 'string' ? data.id.trim() : '';
+        if (id === '' || state.pending[id] !== undefined)
+            return '';
+        const toolName = typeof data.toolName === 'string' ? data.toolName : '';
+        const { kind, title } = approvalKindOf(toolName);
+        state.pending[id] = { approvalId: id, sessionId, kind, title, toolName, status: 'pending', resolution: null, openedAt: at, closedAt: null };
+        return title;
+    };
+    const applyApprovalDecided = (state, sessionId, data, at) => {
+        const id = typeof data.id === 'string' ? data.id.trim() : '';
+        if (id === '')
+            return false;
+        const outcome = typeof data.outcome === 'string' ? data.outcome : 'unavailable';
+        const rec = state.pending[id];
+        if (rec !== undefined) {
+            delete state.pending[id];
+            rec.status = 'closed';
+            rec.resolution = outcome;
+            rec.closedAt = at;
+            state.recent.unshift(rec);
+        }
+        else if (!state.recent.some((item) => item.approvalId === id)) {
+            state.recent.unshift({ approvalId: id, sessionId, kind: 'other', title: '执行操作需要审批', toolName: '', status: 'closed', resolution: outcome, openedAt: at, closedAt: at });
+        }
+        else {
+            return false;
+        }
+        if (state.recent.length > 50)
+            state.recent.length = 50;
+        return true;
+    };
+    const noteApprovalAsked = (sessionId, data, at = Date.now()) => {
+        const state = loadApprovals();
+        const title = applyApprovalAsked(state, sessionId, data, at);
+        if (title !== '')
+            saveApprovalsSoon();
+        return title;
+    };
+    const noteApprovalDecided = (sessionId, data, at = Date.now()) => {
+        const state = loadApprovals();
+        if (applyApprovalDecided(state, sessionId, data, at))
+            saveApprovalsSoon();
+    };
+    const PROMPTS_STORE = join(dirname(storePath()), 'mobile-bridge-prompts.json');
+    let promptsState = null;
+    const loadPrompts = () => {
+        if (promptsState !== null)
+            return promptsState;
+        try {
+            const raw = JSON.parse(readFileSync(PROMPTS_STORE, 'utf8'));
+            promptsState = isRecord(raw) && raw.version === 1 && isRecord(raw.receipts) ? raw : { version: 1, receipts: {} };
+        }
+        catch {
+            promptsState = { version: 1, receipts: {} };
+        }
+        // 惰性清理：24h TTL + 上限 400
+        const now = Date.now();
+        const keep = {};
+        for (const key of Object.keys(promptsState.receipts)) {
+            const rec = promptsState.receipts[key];
+            if (rec !== undefined && now - rec.at < 24 * 60 * 60 * 1000)
+                keep[key] = rec;
+        }
+        const keys = Object.keys(keep);
+        if (keys.length > 400) {
+            keys.sort((a, b) => (keep[a]?.at ?? 0) - (keep[b]?.at ?? 0));
+            for (const key of keys.slice(0, keys.length - 400))
+                delete keep[key];
+        }
+        promptsState = { version: 1, receipts: keep };
+        return promptsState;
+    };
+    const savePrompts = () => {
+        const state = promptsState;
+        if (state === null)
+            return;
+        try {
+            mkdirSync(dirname(PROMPTS_STORE), { recursive: true });
+            writeFileSync(PROMPTS_STORE, JSON.stringify(state));
+        }
+        catch (error) {
+            log(`去重库写入失败：${error instanceof Error ? error.message : String(error)}`);
+        }
+    };
+    const acceptPrompt = async (device, requestId, sessionId, mode, textBasis, dispatch) => {
+        if (requestId === '')
+            return { reused: false, result: await dispatch() };
+        const key = `${device.id}:${requestId}`;
+        const textSha = createHash('sha256').update(textBasis, 'utf8').digest('hex');
+        const state = loadPrompts();
+        const seen = state.receipts[key];
+        if (seen !== undefined) {
+            if (seen.textSha !== textSha || seen.sessionId !== sessionId || seen.mode !== mode) {
+                const error = new Error('同一个 requestId 被用于了不同的消息内容');
+                error.code = 'E_ID_REUSE';
+                throw error;
+            }
+            return { reused: true, ...(seen.status === 'dispatching' ? { pending: true } : {}) };
+        }
+        state.receipts[key] = { sessionId, mode, textSha, status: 'dispatching', at: Date.now() };
+        savePrompts();
+        try {
+            const result = await dispatch();
+            const rec = state.receipts[key];
+            if (rec !== undefined)
+                rec.status = 'accepted';
+            savePrompts();
+            return { reused: false, result };
+        }
+        catch (error) {
+            delete state.receipts[key];
+            savePrompts();
+            throw error;
+        }
+    };
     /** 顶层文件（带 mtime）——归属与列表共用同一条扫描。 */
     const topLevelFiles = (cwd) => {
         const out = [];
@@ -481,7 +645,7 @@ export function apply(ctx, config = {}) {
     const headSeqs = new Map();
     const publish = (frame) => {
         seq += 1;
-        const full = { seq, time: Date.now(), ...frame };
+        const full = { seq, epoch, time: Date.now(), ...frame };
         frames.push(full);
         if (frames.length > EVENT_BUFFER)
             frames.splice(0, frames.length - EVENT_BUFFER);
@@ -550,6 +714,24 @@ export function apply(ctx, config = {}) {
                             })();
                         }
                     }
+                }
+            }
+            catch {
+                // 同上：旁路记账
+            }
+            // 审批只读（K2-A）：把 approval/asked、approval/decided 累积成手机可查的脱敏
+            // 记录；任何失败都不许影响事件流本身。
+            try {
+                if (type === 'approval/asked' && isRecord(record.data)) {
+                    const at = typeof record.time === 'number' ? record.time : Date.now();
+                    const title = noteApprovalAsked(sessionId, record.data, at);
+                    if (title !== '') {
+                        publish({ kind: 'notify', ...(sessionId !== '' ? { sessionId } : {}), level: 'info', title: '有操作等待电脑端审批', body: `${title} · 请在电脑上处理（手机端仅支持查看）` });
+                    }
+                }
+                else if (type === 'approval/decided' && isRecord(record.data)) {
+                    const at = typeof record.time === 'number' ? record.time : Date.now();
+                    noteApprovalDecided(sessionId, record.data, at);
                 }
             }
             catch {
@@ -630,6 +812,47 @@ export function apply(ctx, config = {}) {
             }
         }
         throw new Error('无法确定会话游标');
+    };
+    /** 审批回填：待审批只可能出现在「运行中」的会话里；逐个扫描其最近一页历史，
+     *  与内存记录合并。全部读取成功才认为集合完整（N2 §4.1 的一致性口径）。 */
+    const backfillApprovals = async () => {
+        try {
+            const listed = (await callEngine(ctx, 'session.list', {}));
+            const items = isRecord(listed) && Array.isArray(listed.items) ? listed.items : [];
+            let complete = true;
+            const state = loadApprovals();
+            for (const item of items) {
+                if (!isRecord(item) || item.running !== true)
+                    continue;
+                const sid = sessionIdOf(item);
+                if (sid === '')
+                    continue;
+                try {
+                    const page = (await readPage(sid, { address: { kind: 'session', sessionId: sid }, maxMessages: 160 }));
+                    const records = isRecord(page) && Array.isArray(page.records) ? page.records : [];
+                    for (const record of records) {
+                        if (!isRecord(record))
+                            continue;
+                        const ev = isRecord(record.event) ? record.event : record;
+                        const type = typeof ev.type === 'string' ? ev.type : '';
+                        const data = isRecord(ev.data) ? ev.data : {};
+                        const at = typeof ev.time === 'number' ? ev.time : Date.now();
+                        if (type === 'approval/asked')
+                            applyApprovalAsked(state, sid, data, at);
+                        else if (type === 'approval/decided')
+                            applyApprovalDecided(state, sid, data, at);
+                    }
+                }
+                catch {
+                    complete = false;
+                }
+            }
+            saveApprovalsSoon();
+            return complete;
+        }
+        catch {
+            return false;
+        }
     };
     /** The settings namespace view for the model document. */
     const modelNamespace = async () => {
@@ -1282,17 +1505,38 @@ document.addEventListener('click', async (event) => {
                     sendJson(res, 200, { ok: false, code: 'E_BAD_REQUEST', message: '消息内容为空' });
                     return;
                 }
-                const payload = {
-                    sessionId,
-                    mode,
-                    content: [{ type: 'text', text }],
-                    requestId: randomUUID(),
-                    clientTimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                // 客户端提供的 requestId 优先：同一条消息的网络重试 / 草稿恢复复用同一 id，
+                // 桥接按 (设备, requestId) 去重，避免一次消息被下发两次；老客户端没带就现生成。
+                const clientId = (value) => (typeof value === 'string' && value.trim() !== '' ? value.trim() : '');
+                const requestId = clientId(body.requestId) !== '' ? clientId(body.requestId) : clientId(extra.requestId);
+                const dispatch = async () => {
+                    const payload = {
+                        sessionId,
+                        mode,
+                        content: [{ type: 'text', text }],
+                        requestId: requestId !== '' ? requestId : randomUUID(),
+                        clientTimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                    };
+                    return await callEngine(ctx, 'session.prompt', payload);
                 };
-                const result = await callEngine(ctx, 'session.prompt', payload);
-                log(`已发送消息到 ${sessionId}（${mode}，${text.length} 字）`);
-                sendJson(res, 200, { ok: true, ...(isRecord(result) ? result : {}) });
-                return;
+                try {
+                    const outcome = await acceptPrompt(device, requestId, sessionId, mode, text, dispatch);
+                    if (outcome.reused) {
+                        log(`prompt 去重命中：${sessionId}（${requestId.slice(0, 8)}…）`);
+                        sendJson(res, 200, { ok: true, accepted: true, deduplicated: true, ...(outcome.pending === true ? { pending: true } : {}) });
+                        return;
+                    }
+                    log(`已发送消息到 ${sessionId}（${mode}，${text.length} 字）`);
+                    sendJson(res, 200, { ok: true, ...(isRecord(outcome.result) ? outcome.result : {}) });
+                    return;
+                }
+                catch (error) {
+                    if (isRecord(error) && error.code === 'E_ID_REUSE') {
+                        sendJson(res, 200, { ok: false, code: 'E_ID_REUSE', message: '这次重试与第一次发送的内容不一致，请作为新消息发送' });
+                        return;
+                    }
+                    throw error;
+                }
             }
             if (action === 'cancel') {
                 await callEngine(ctx, 'session.cancel', { sessionId, ...(body.payload ?? {}) });
@@ -1813,6 +2057,24 @@ document.addEventListener('click', async (event) => {
     // which is how features arrive before a wrapper exists for them.
     webServer.register({
         kind: 'exact',
+        path: `${PUBLIC_PREFIX}/approvals`,
+        handler: guarded(async (_req, res, device) => {
+            const check = requireScope(device, 'read');
+            if (!check.ok) {
+                sendJson(res, 200, { ok: false, code: check.code, message: check.message });
+                return;
+            }
+            // 回填保证「运行中的待审批」不因桥接重启丢失；读不全就如实标 complete:false，
+            // 客户端据此显示「状态待核实」，不把未知当空集（N2 §4.1）。
+            const complete = await backfillApprovals();
+            const state = loadApprovals();
+            const pending = Object.values(state.pending).sort((a, b) => a.openedAt - b.openedAt);
+            // sendJson 统一带 cache-control: no-store（N2 §4.3 要求）
+            sendJson(res, 200, { ok: true, complete, pending, recent: state.recent.slice(0, 20), serverTime: Date.now() });
+        }),
+    });
+    webServer.register({
+        kind: 'exact',
         path: `${PUBLIC_PREFIX}/rpc`,
         handler: guarded(async (req, res, device, body) => {
             const method = String(body.method ?? '');
@@ -1825,7 +2087,32 @@ document.addEventListener('click', async (event) => {
                 sendJson(res, 200, { ok: false, code: 'E_FORBIDDEN', message: `这台设备不能调用 ${method}` });
                 return;
             }
-            const value = await callEngine(ctx, method, body.payload ?? {});
+            const payload = body.payload ?? {};
+            if (method === 'session.prompt' && isRecord(payload)) {
+                const requestId = typeof payload.requestId === 'string' && payload.requestId.trim() !== '' ? payload.requestId.trim() : '';
+                if (requestId !== '') {
+                    const sid = typeof payload.sessionId === 'string' ? payload.sessionId : '';
+                    const mode = typeof payload.mode === 'string' ? payload.mode : '';
+                    try {
+                        const outcome = await acceptPrompt(device, requestId, sid, mode, JSON.stringify(payload.content ?? ''), async () => await callEngine(ctx, method, payload));
+                        if (outcome.reused) {
+                            log(`prompt 去重命中（rpc）：${sid}（${requestId.slice(0, 8)}…）`);
+                            sendJson(res, 200, { ok: true, value: { accepted: true, deduplicated: true, ...(outcome.pending === true ? { pending: true } : {}) } });
+                            return;
+                        }
+                        sendJson(res, 200, { ok: true, value: outcome.result });
+                        return;
+                    }
+                    catch (error) {
+                        if (isRecord(error) && error.code === 'E_ID_REUSE') {
+                            sendJson(res, 200, { ok: false, code: 'E_ID_REUSE', message: '这次重试与第一次发送的内容不一致，请作为新消息发送' });
+                            return;
+                        }
+                        throw error;
+                    }
+                }
+            }
+            const value = await callEngine(ctx, method, payload);
             sendJson(res, 200, { ok: true, value });
         }, true),
     });
