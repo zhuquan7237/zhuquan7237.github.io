@@ -1,9 +1,9 @@
 {
-  "version": "0.2.52",
-  "versionCode": 59,
+  "version": "0.2.66",
+  "versionCode": 74,
   "apkUrl": "https://m.zhuquan.xyz/mobile/dsh-mobile.apk",
-  "sha256": "a0d1b529bd11c2404775f9fa72c9e9f566c5e771af9416ddb0e74debbe3dfda2",
-  "size": 3360209,
-  "notes": "0.2.52\n- 图形预览里的内容现在垂直+水平居中显示（以前贴在顶上、下面一大片空白）\n- 打开图形预览时自动收起键盘（不再被输入法挡住窗口）\n- 对话消息两侧留白加大（16 → 24），排版更有呼吸感\n- 预览页在 WebView 里的渲染兼容性调整（换掉了会引起白屏的居中写法）",
-  "publishedAt": "2026-09-24T19:42:34+08:00"
+  "sha256": "7e676e885e569013a83057513b5bfe088bdb2a86e109dc6ce20fcb1e18c65dd4",
+  "size": 3376593,
+  "notes": "0.2.66 热修\n- 修复「放大查看」点不了：预览 WebView 吞掉触摸 → 顶层加透明点击层，整个预览区可点\n- 修复 SVG 保存成 .svg.txt：按扩展名给正确 MIME\n- 模拟器实测：点击打开全屏预览 ✓ 保存为 dsh-….svg ✓",
+  "publishedAt": "2026-09-25T12:19:09+08:00"
 }
