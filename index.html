@@ -473,7 +473,7 @@ footer{background:linear-gradient(180deg,rgba(238,233,220,.012),transparent),var
 <body>
 
 <div class="announce">
-  <span>🐳 <b>桌面端 v0.5.31</b> · <b>手机端 v0.2.72</b> 已发布</span>
+  <span>🐳 <b>桌面端 v0.5.31</b> · <b>手机端 v0.2.73</b> 已发布</span>
   <a href="#updates">看看更新了什么 →</a>
 </div>
 
@@ -788,7 +788,7 @@ footer{background:linear-gradient(180deg,rgba(238,233,220,.012),transparent),var
 
       <div class="dl-head dl-mobile rv">
         <h3>手机端</h3>
-        <span class="ver" data-app-ver>v0.2.72</span>
+        <span class="ver" data-app-ver>v0.2.73</span>
       </div>
       <div class="dl-grid">
         <div class="dl-card rv" data-dl-key="android-any">
@@ -834,12 +834,12 @@ footer{background:linear-gradient(180deg,rgba(238,233,220,.012),transparent),var
           </ul>
         </div>
         <div class="upd rv">
-          <div class="tagline"><span class="pill gold">手机端 0.2.72</span><h3>联机更快，公式更细腻</h3></div>
+          <div class="tagline"><span class="pill gold">手机端 0.2.73</span><h3>扫码配对，修好了</h3></div>
           <ul>
-            <li>会话列表同步提速：手机只取要用的字段（数据量降到约 1/4），电脑端再加一层缓存，翻列表不再等</li>
-            <li>新建对话秒开：默认模型在后台生效，不再挡着开门</li>
-            <li>数学公式继续打磨：2 倍超采样笔画更细，修复个别宽公式右侧被截断的问题</li>
-            <li>配合电脑端 0.5.31（自动更新）一起生效</li>
+            <li>修复部分用户「扫码连不上」：新用户扫码配对时会正确带上电脑的中继路径，不再打错地址</li>
+            <li>手机到中继的两条线路（国内直连 / Cloudflare）互为备份，一条被当地网络阻断时自动换另一条</li>
+            <li>配对失败的原因写得明明白白：区分「电脑没开远程访问」「配对码不对」「网络连不上」</li>
+            <li>0.2.72 的提速与公式优化一并生效；建议所有新老用户更新</li>
           </ul>
         </div>
       </div>
