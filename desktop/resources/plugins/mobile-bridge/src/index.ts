@@ -372,9 +372,13 @@ export function apply(ctx: Context, config: { publicUrl?: string } = {}): void {
   // 显示同一堆文件。这里按「回合时间窗」记账：turn/start→turn/end 之间被改动过的
   // 顶层文件算这个会话生成的。历史会话第一次访问时还按其自身历史里的回合窗回填。
   interface FileRec { mtime: number; size: number; at: number }
-  interface SessionFileRec { cwd: string; updated: number; backfilled?: boolean; entries: Record<string, FileRec> }
+  interface SessionFileRec { cwd: string; updated: number; backfilled?: boolean; entries: Record<string, FileRec>; generated?: Record<string, FileRec>; genScanned?: boolean }
   interface FilesState { version: 1; sessions: Record<string, SessionFileRec> }
   const FILES_STORE = join(dirname(storePath()), 'mobile-bridge-files.json')
+  /** 引擎「图片生成」的落盘目录（与 harness 约定：$DSH_HOME/generated）。 */
+  const GENERATED_DIR = join(dirname(storePath()), 'generated')
+  const GENERATED_FILE_RE = /^dsh-img-[A-Za-z0-9-]+\.(?:png|jpe?g|webp|gif)$/
+  const GENERATED_FIND_RE = /dsh-img-[A-Za-z0-9-]+\.(?:png|jpe?g|webp|gif)/g
   const ATTRIB_PAD_MS = 5_000
   let filesState: FilesState | null = null
   const loadFileState = (): FilesState => {
@@ -399,7 +403,7 @@ export function apply(ctx: Context, config: { publicUrl?: string } = {}): void {
       const sid = sessionIdOf(item)
       const rec = sid !== '' ? state.sessions[sid] : undefined
       if (!rec || !isRecord(rec.entries)) return item
-      const count = Object.keys(rec.entries).length
+      const count = Object.keys(rec.entries).length + Object.keys(rec.generated ?? {}).length
       return count > 0 ? { ...item, producedFiles: count } : item
     })
     return out
@@ -630,10 +634,18 @@ export function apply(ctx: Context, config: { publicUrl?: string } = {}): void {
   }
   const sessionRec = (sessionId: string, cwd: string): SessionFileRec => {
     const state = loadFileState()
-    let rec = state.sessions[sessionId]
+    const old = state.sessions[sessionId]
+    let rec = old
     if (rec === undefined || rec.cwd !== cwd) {
-      // 第一次见，或工作目录换过：旧条目没有意义，重新收集
-      rec = { cwd, updated: Date.now(), entries: {} }
+      // 第一次见，或工作目录换过：工作区旧条目没有意义，重新收集；
+      // 但「图片生成」的产物不在工作区里、只跟着会话走，要跟过来。
+      rec = {
+        cwd,
+        updated: Date.now(),
+        entries: {},
+        ...(old?.generated !== undefined ? { generated: old.generated } : {}),
+        ...(old?.genScanned === true ? { genScanned: true } : {}),
+      }
       state.sessions[sessionId] = rec
     }
     return rec
@@ -643,6 +655,32 @@ export function apply(ctx: Context, config: { publicUrl?: string } = {}): void {
     const rec = sessionRec(sessionId, cwd)
     const added = attributeWindows(rec, cwd, [[start, end]])
     if (added > 0) saveFileStateSoon()
+    return added
+  }
+  /**
+   * 「图片生成」的产物记账：模型调内置绘图工具时，产物存在 dsh-home/generated
+   * 而不是会话工作区——桥接在事件/历史里看到 dsh-img-*.png 引用就把它记到
+   * 会话账上，手机端就能像普通生成文件一样预览/下载。
+   */
+  const rememberGenerated = (sessionId: string, cwd: string, names: Iterable<string>): number => {
+    let added = 0
+    const rec = sessionRec(sessionId, cwd)
+    const gen = (rec.generated ??= {})
+    for (const name of names) {
+      if (!GENERATED_FILE_RE.test(name) || gen[name] !== undefined) continue
+      try {
+        const stat = statSync(join(GENERATED_DIR, name))
+        if (!stat.isFile()) continue
+        gen[name] = { mtime: stat.mtimeMs, size: stat.size, at: Date.now() }
+        added += 1
+      } catch {
+        // 文件还没落盘或已被清理：跳过（下次扫描再试）
+      }
+    }
+    if (added > 0) {
+      rec.updated = Date.now()
+      saveFileStateSoon()
+    }
     return added
   }
   /** 运行中的回合：sessionId → 起始时间（毫秒）。 */
@@ -758,6 +796,26 @@ export function apply(ctx: Context, config: { publicUrl?: string } = {}): void {
       const sessionSeq = typeof record.seq === 'number' ? record.seq : 0
       if (sessionId !== '' && sessionSeq > 0) {
         headSeqs.set(sessionId, Math.max(headSeqs.get(sessionId) ?? 0, sessionSeq))
+      }
+      // 图片生成引用：助手消息带出 dsh-img-*.png 时把它记到会话账上（手机端
+      // 据此在聊天里显示图片卡、并在「生成的文件」里预览/下载）。旁路记账，
+      // 任何失败都不许影响事件流本身。
+      try {
+        if (sessionId !== '' && type === 'assistant/message') {
+          const hits = JSON.stringify(record.data ?? '').match(GENERATED_FIND_RE)
+          if (hits !== null && hits.length > 0) {
+            void (async () => {
+              try {
+                const cwd = await sessionCwdOf(sessionId)
+                if (cwd !== '') rememberGenerated(sessionId, cwd, hits)
+              } catch {
+                // 同上：旁路记账
+              }
+            })()
+          }
+        }
+      } catch {
+        // 同上
       }
       publish({
         kind: 'event',
@@ -1535,6 +1593,43 @@ document.addEventListener('click', async (event) => {
             // 同上
           }
         }
+        // 图片生成回填：本版桥接之前的会话扫一遍历史，把 dsh-img-*.png 引用找回来
+        // （只扫一次；此后新回合由事件钩子现场记账）。
+        const scanned = loadFileState().sessions[sessionId]
+        if (scanned === undefined || scanned.genScanned !== true) {
+          try {
+            const found = new Set<string>()
+            let beforeSeq: number | undefined
+            for (let pageNo = 0; pageNo < 6; pageNo += 1) {
+              const base: Record<string, unknown> = { address: { kind: 'session', sessionId }, maxMessages: 300 }
+              if (beforeSeq !== undefined) base.beforeSeq = beforeSeq
+              let result: unknown
+              try {
+                result = await readPage(sessionId, base)
+              } catch {
+                break
+              }
+              const records = isRecord(result) && Array.isArray(result.records) ? result.records : []
+              if (records.length === 0) break
+              const hits = JSON.stringify(records).match(GENERATED_FIND_RE)
+              if (hits !== null) for (const hit of hits) found.add(hit)
+              let minSeq = Number.POSITIVE_INFINITY
+              for (const raw of records) {
+                const event = isRecord(raw) && isRecord(raw.event) ? raw.event : isRecord(raw) ? raw : {}
+                const seq = typeof event.seq === 'number' ? event.seq : isRecord(raw) && typeof raw.seq === 'number' ? raw.seq : 0
+                if (seq > 0 && seq < minSeq) minSeq = seq
+              }
+              const more = isRecord(result) && result.hasMore === true
+              if (!more || !Number.isFinite(minSeq)) break
+              beforeSeq = minSeq
+            }
+            if (found.size > 0) rememberGenerated(sessionId, cwd, found)
+            sessionRec(sessionId, cwd).genScanned = true
+            saveFileStateSoon()
+          } catch {
+            // 回填失败不阻塞列表（最多暂时少几张图）
+          }
+        }
         const rec = loadFileState().sessions[sessionId]
         const items: Array<{ path: string; name: string; size: number; mtime: number }> = []
         for (const name of Object.keys(rec?.entries ?? {})) {
@@ -1544,6 +1639,15 @@ document.addEventListener('click', async (event) => {
             items.push({ path: name, name, size: stat.size, mtime: stat.mtimeMs })
           } catch {
             // 文件已删除：不展示，也不清账（可能只是暂时挪走）
+          }
+        }
+        for (const name of Object.keys(rec?.generated ?? {})) {
+          try {
+            const stat = statSync(join(GENERATED_DIR, name))
+            if (!stat.isFile()) continue
+            items.push({ path: `@generated/${name}`, name, size: stat.size, mtime: stat.mtimeMs })
+          } catch {
+            // 产物已被清理：不展示
           }
         }
         items.sort((a, b) => b.mtime - a.mtime)
@@ -2301,12 +2405,19 @@ document.addEventListener('click', async (event) => {
           sendJson(res, 401, { ok: false, code: 'E_UNAUTHORIZED', message: '文件访问未授权（票据无效或已过期）' })
           return
         }
-        const cwd = await sessionCwdOf(sessionId)
-        if (cwd === '') {
-          sendJson(res, 404, { ok: false, code: 'E_NOT_FOUND', message: '找不到会话的工作目录' })
-          return
+        // @generated/ 前缀指向「图片生成」的产物（不在工作区里）：目录固定 + 文件名白名单。
+        let file = ''
+        if (rel.startsWith('@generated/')) {
+          const name = rel.slice('@generated/'.length)
+          if (GENERATED_FILE_RE.test(name)) file = join(GENERATED_DIR, name)
+        } else {
+          const cwd = await sessionCwdOf(sessionId)
+          if (cwd === '') {
+            sendJson(res, 404, { ok: false, code: 'E_NOT_FOUND', message: '找不到会话的工作目录' })
+            return
+          }
+          file = resolveInCwd(cwd, rel)
         }
-        const file = resolveInCwd(cwd, rel)
         if (file === '' || !existsSync(file)) {
           sendJson(res, 404, { ok: false, code: 'E_NOT_FOUND', message: '文件不存在' })
           return
