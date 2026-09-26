@@ -23,6 +23,7 @@
  */
 import { createHash, randomUUID } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, readdirSync, realpathSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
+import { hostname } from 'node:os';
 import { basename, dirname, extname, join, normalize, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { SCOPE_LABELS, SCOPES, consumePairing, deviceForToken, deviceView, issuePairing, newToken, normalizePublicUrl, readStore, scopeAllows, storePath, writeStore, } from './devices.js';
@@ -1418,6 +1419,8 @@ document.addEventListener('click', async (event) => {
             sendJson(res, 200, {
                 ok: true,
                 server: { product: 'DeepSeek Harness', bridge: 'dsh-mobile-bridge', version: 1 },
+                // 手机端顶栏要能显示"正在连的是哪台电脑"：这里带上宿主机的名字与平台。
+                host: { name: hostname(), platform: process.platform },
                 device: deviceView(device),
                 capabilities: {
                     scopes: device.scopes,
