@@ -1525,6 +1525,44 @@ document.addEventListener('click', async (event) => {
     sessionsListCache = null
   }
 
+  /** 列表全量载荷（含 projections，2s 缓存）——列表接口与搜索补全共用。 */
+  const loadSessionsBundle = async (): Promise<{ full: Record<string, unknown>; lite: Record<string, unknown> }> => {
+    const now = Date.now()
+    if (sessionsListCache !== null && now - sessionsListCache.at < SESSIONS_CACHE_MS) {
+      return sessionsListCache
+    }
+    const listed = (await callEngine(ctx, 'session.list', {})) as unknown
+    const full = { ok: true, ...withFileCounts(listed) } as Record<string, unknown>
+    const rawItems = Array.isArray(full.items) ? (full.items as unknown[]) : []
+    const lite: Record<string, unknown> = { ok: true, items: rawItems.map(slimSession) }
+    const entry = { at: now, full, lite }
+    sessionsListCache = entry
+    return entry
+  }
+
+  /** session.search 的命中只带 sessionId/snippet：用列表行补全标题/时间/模型，保持相关性顺序。 */
+  const enrichSearchHits = async (found: unknown): Promise<Record<string, unknown>> => {
+    const out = (isRecord(found) ? found : { items: [] }) as Record<string, unknown>
+    const items = out.items
+    if (!Array.isArray(items) || items.length === 0) return out
+    const bundle = await loadSessionsBundle()
+    const rows = Array.isArray(bundle.full.items) ? (bundle.full.items as unknown[]) : []
+    const byId = new Map<string, Record<string, unknown>>()
+    for (const row of rows) {
+      if (!isRecord(row)) continue
+      const sid = sessionIdOf(row)
+      if (sid !== '') byId.set(sid, row)
+    }
+    out.items = items.map((hit: unknown) => {
+      if (!isRecord(hit)) return hit
+      const sid = sessionIdOf(hit)
+      const row = sid !== '' ? byId.get(sid) : undefined
+      if (row === undefined) return hit
+      return typeof hit.snippet === 'string' ? { ...row, snippet: hit.snippet } : row
+    })
+    return out
+  }
+
   webServer.register({
     kind: 'exact',
     path: `${PUBLIC_PREFIX}/sessions`,
@@ -1539,21 +1577,15 @@ document.addEventListener('click', async (event) => {
         const query = (url.searchParams.get('query') ?? '').trim()
         if (query !== '') {
           const found = (await callEngine(ctx, 'session.search', { query })) as unknown
-          sendJson(res, 200, { ok: true, search: true, ...withFileCounts(found) })
+          // 命中条目只带 sessionId/snippet；补全成列表行形状（标题/时间/模型），
+          // 手机端搜索结果与列表走同一套解析，不出现满屏「新对话」。
+          const enriched = await enrichSearchHits(found)
+          sendJson(res, 200, { ok: true, search: true, ...withFileCounts(enriched) })
           return
         }
         const lite = url.searchParams.get('view') === 'lite'
-        const now = Date.now()
-        if (sessionsListCache !== null && now - sessionsListCache.at < SESSIONS_CACHE_MS) {
-          sendJson(res, 200, lite ? sessionsListCache.lite : sessionsListCache.full)
-          return
-        }
-        const listed = (await callEngine(ctx, 'session.list', {})) as unknown
-        const full = { ok: true, ...withFileCounts(listed) } as Record<string, unknown>
-        const rawItems = Array.isArray(full.items) ? (full.items as unknown[]) : []
-        const litePayload: Record<string, unknown> = { ok: true, items: rawItems.map(slimSession) }
-        sessionsListCache = { at: now, full, lite: litePayload }
-        sendJson(res, 200, lite ? litePayload : full)
+        const bundle = await loadSessionsBundle()
+        sendJson(res, 200, lite ? bundle.lite : bundle.full)
         return
       }
       // POST: create a session, optionally on a chosen model.
