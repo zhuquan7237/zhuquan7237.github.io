@@ -473,7 +473,7 @@ footer{background:linear-gradient(180deg,rgba(238,233,220,.012),transparent),var
 <body>
 
 <div class="announce">
-  <span>🐳 <b>桌面端 v0.6.0</b> · <b>手机端 v0.3.9</b> 已发布</span>
+  <span>🐳 <b>桌面端 v0.6.0</b> · <b>手机端 v0.4.0</b> 已发布</span>
   <a href="#updates">看看更新了什么 →</a>
 </div>
 
@@ -834,11 +834,12 @@ footer{background:linear-gradient(180deg,rgba(238,233,220,.012),transparent),var
           </ul>
         </div>
         <div class="upd rv">
-          <div class="tagline"><span class="pill gold">手机端 0.3.9</span><h3>流式输出，丝滑不闪</h3></div>
+          <div class="tagline"><span class="pill gold">手机端 0.4.0</span><h3>隔空传输，文件互传</h3></div>
           <ul>
-            <li>修掉「每输出一小段屏幕就闪一下」：改为节流渲染——内容先缓冲、每 200ms 批量上屏一次，重绘频率降一个量级</li>
-            <li>肉眼看仍是连续流出；回合结束前自动补刷不足一个间隔的内容，一条都不少</li>
-            <li>0.3.8 的「滑到底不被弹回」与更早的修复一并保留</li>
+            <li>会话列表右上角新增「文件传输」：和电脑互传文件，像文件传输助手一样——两端都能看、能存、能删</li>
+            <li>手机可发文件 / 图片（单个最大 64MB，直传不受旧版限制）；电脑放进「设置 → 文件传输」的文件，手机几秒内可见</li>
+            <li>图片可全屏预览、一键保存到「下载」；删除会同步清掉电脑上的记录与文件</li>
+            <li>流式输出改为节流渲染（200 ms 批量上屏），不再闪屏</li>
           </ul>
         </div>
       </div>
