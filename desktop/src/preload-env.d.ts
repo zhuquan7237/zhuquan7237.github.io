@@ -23,6 +23,10 @@ declare global {
       mobileRevoke: (id: string) => Promise<{ ok: boolean; error?: string }>;
       mobileOpenSearchSettings: () => Promise<{ ok: boolean; error?: string; url?: string }>;
       mobileOpenPairingSettings: () => Promise<{ ok: boolean; error?: string; url?: string }>;
+      transferList: () => Promise<{ ok: boolean; error?: string; dir?: string; items?: unknown[] }>;
+      transferAdd: () => Promise<{ ok: boolean; error?: string; added?: unknown[]; refused?: unknown[]; canceled?: boolean }>;
+      transferDelete: (id: string) => Promise<{ ok: boolean; error?: string }>;
+      transferOpenFolder: (dir: string) => Promise<{ ok: boolean; error?: string }>;
       desktopAction: (action: string) => Promise<{ ok: boolean; error?: string }>;
     };
   }

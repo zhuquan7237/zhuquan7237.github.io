@@ -331,6 +331,10 @@
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
           常规与更新
         </button>
+        <button class="nav-tab" data-tab="transfer">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>
+          文件传输
+        </button>
         <button class="nav-tab" data-tab="advanced">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
           高级设置
@@ -528,7 +532,39 @@
           </div>
         </div>
 
-        <!-- 4. Advanced Panel -->
+        <!-- 4. 文件传输：手机 ⇄ 电脑 隔空传输 -->
+        <div class="tab-panel" id="tab-transfer">
+          <div class="card">
+            <span class="card-title">隔空传输</span>
+            <span class="card-desc">在手机和电脑之间传文件，像文件传输助手一样。手机端入口在会话列表右上角；这里放入的文件，手机端打开「文件传输」就能看到。</span>
+            <div class="row-flex" style="margin-top: 10px;">
+              <button class="btn btn-primary" id="btnTransferAdd" type="button">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                选择文件发送到手机
+              </button>
+              <button class="btn btn-outline" id="btnTransferFolder" type="button">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                打开文件夹
+              </button>
+              <button class="btn btn-outline" id="btnTransferRefresh" type="button">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                刷新
+              </button>
+            </div>
+            <div id="transferFeedbackBox" style="display: none;" class="status-box success"></div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">传输记录</span>
+              <span class="badge" id="transferListBadge">—</span>
+            </div>
+            <div id="transferList" style="display: flex; flex-direction: column; gap: 8px;">
+              <span class="card-desc">正在读取…</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. Advanced Panel -->
         <div class="tab-panel" id="tab-advanced">
           <!-- npm Registry -->
           <div class="card">
@@ -864,7 +900,136 @@
         if (result && result.ok === false) window.alert(result.error || "打不开引擎界面");
       };
 
+      // ---- 隔空传输（文件互传）-------------------------------------------
+      // 电脑端只做三件事：把本地文件放入传输目录、列出两边内容、删除。
+      // 数据由 mobile-bridge 插件持有（/mobile-local/transfer 回环路由），
+      // 这里绝不自己写文件，保持插件是唯一写入方。
+      let transferDir = "";
+      function formatBytes(n) {
+        if (!Number.isFinite(n) || n < 0) return "";
+        if (n < 1024) return `${n} B`;
+        if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+        if (n < 1024 * 1024 * 1024) return `${(n / 1024 / 1024).toFixed(1)} MB`;
+        return `${(n / 1024 / 1024 / 1024).toFixed(2)} GB`;
+      }
+      function transferTime(at) {
+        const d = new Date(at);
+        if (Number.isNaN(d.getTime())) return "";
+        const pad = (x) => String(x).padStart(2, "0");
+        return `${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+      }
+      function transferFeedback(ok, text) {
+        const fb = $("transferFeedbackBox");
+        fb.className = ok ? "status-box success" : "status-box error";
+        fb.textContent = text;
+        fb.style.display = "flex";
+      }
+      function renderTransferList(items) {
+        const box = $("transferList");
+        box.innerHTML = "";
+        $("transferListBadge").textContent = `${items.length} 个文件`;
+        if (items.length === 0) {
+          const empty = document.createElement("span");
+          empty.className = "card-desc";
+          empty.textContent = "还没有传输记录。手机发来的文件会出现在这里；点上面的按钮也可以把电脑文件发给手机。";
+          box.appendChild(empty);
+          return;
+        }
+        items.forEach((it) => {
+          const row = document.createElement("div");
+          row.className = "provider-item";
+          const info = document.createElement("div");
+          info.className = "provider-item-info";
+          const name = document.createElement("div");
+          name.className = "provider-item-name";
+          name.textContent = it.name || "未命名文件";
+          const meta = document.createElement("span");
+          meta.className = "provider-item-url";
+          const from = it.direction === "desktop" ? "发给手机" : "来自手机";
+          meta.textContent = `${from} · ${formatBytes(it.size)} · ${transferTime(it.at)}`;
+          info.appendChild(name);
+          info.appendChild(meta);
+          const del = document.createElement("button");
+          del.className = "btn btn-outline btn-sm";
+          del.type = "button";
+          del.textContent = "删除";
+          del.onclick = async () => {
+            del.disabled = true;
+            const res = await window.desktop.transferDelete(it.id);
+            if (res && res.ok === false) {
+              del.disabled = false;
+              transferFeedback(false, res.error || "删除失败");
+              return;
+            }
+            void loadTransfer();
+          };
+          row.appendChild(info);
+          row.appendChild(del);
+          box.appendChild(row);
+        });
+      }
+      async function loadTransfer() {
+        if (!(window.desktop && window.desktop.transferList)) {
+          const box = $("transferList");
+          if (box) box.innerHTML = "";
+          return;
+        }
+        try {
+          const data = await window.desktop.transferList();
+          if (data && data.ok === false) {
+            renderTransferList([]);
+            transferFeedback(false, data.error || "读取失败");
+            return;
+          }
+          transferDir = (data && data.dir) || "";
+          renderTransferList((data && data.items) || []);
+        } catch (e) {
+          renderTransferList([]);
+        }
+      }
+      $("btnTransferAdd").onclick = async () => {
+        if (!(window.desktop && window.desktop.transferAdd)) {
+          transferFeedback(false, "仅桌面应用内可用。");
+          return;
+        }
+        const btn = $("btnTransferAdd");
+        btn.disabled = true;
+        try {
+          const res = await window.desktop.transferAdd();
+          if (res && res.canceled) return;
+          if (res && res.ok === false) {
+            transferFeedback(false, res.error || "发送失败");
+            return;
+          }
+          const added = (res && res.added) || [];
+          const refused = (res && res.refused) || [];
+          if (added.length > 0) {
+            transferFeedback(true, `已放入 ${added.length} 个文件，手机端打开「文件传输」即可收取。`);
+          }
+          if (refused.length > 0) {
+            transferFeedback(false, `${refused.length} 个文件被跳过（超过 64MB 或不可读）。`);
+          }
+          await loadTransfer();
+        } finally {
+          btn.disabled = false;
+        }
+      };
+      $("btnTransferFolder").onclick = async () => {
+        if (!transferDir) await loadTransfer();
+        if (!transferDir) {
+          transferFeedback(false, "还没拿到传输目录，稍后重试。");
+          return;
+        }
+        const res = await window.desktop.transferOpenFolder(transferDir);
+        if (res && res.ok === false) transferFeedback(false, res.error || "打不开文件夹");
+      };
+      $("btnTransferRefresh").onclick = () => { void loadTransfer(); };
+      // 设置窗开着时轻量轮询：手机上刚发来的文件几秒内就会出现在列表里。
+      setInterval(() => {
+        if (document.visibilityState === "visible") void loadTransfer();
+      }, 4000);
 
+      void loadTransfer();
       initData();
     </script>
   </body>

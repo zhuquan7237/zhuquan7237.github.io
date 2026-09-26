@@ -55,6 +55,19 @@ describe("settings page keeps what the user already had", () => {
     expect(html).toContain("window.desktop.mobileOpenSearchSettings()");
   });
 
+  it("wires the transfer tab to the main process instead of touching the filesystem itself", async () => {
+    const html = await readFile(path.join(__dirname, "..", "resources", "settings.html"), "utf8");
+    // 文件传输页签：数据全部走主进程的 IPC（主进程再打桥接回环路由），
+    // 设置页本身不读写文件系统——保持 mobile-bridge 是传输目录的唯一写入方。
+    expect(html).toContain('data-tab="transfer"');
+    expect(html).toContain('id="tab-transfer"');
+    expect(html).toContain("window.desktop.transferList()");
+    expect(html).toContain("window.desktop.transferAdd()");
+    expect(html).toContain("window.desktop.transferDelete(");
+    expect(html).toContain("window.desktop.transferOpenFolder(");
+    expect(html).toContain("还没有传输记录");
+  });
+
   it("matches the harness light palette and animates only cheap properties", async () => {
     const html = await readFile(path.join(__dirname, "..", "resources", "settings.html"), "utf8");
     // Values measured off the engine's own settings dialog on 2026-09-22 (see

@@ -1766,6 +1766,58 @@ if (linuxReady) {
       ipcMain.handle("mobile:open-pairing-settings", async () =>
         await openEngineSettings("手机配对"),
       );
+      // 隔空传输（文件互传）：列表 / 选文件放入 / 删除 / 打开文件夹。
+      // 所有操作都走桥接的回环路由，插件保持传输目录的唯一写入方。
+      ipcMain.handle("transfer:list", async () => {
+        const base = bridgeBaseUrl();
+        if (base === "") return { ok: false, error: "引擎还没起来，稍等一下再试。", items: [], dir: "" };
+        try {
+          const res = await fetch(`${base}/mobile-local/transfer/list`);
+          return await res.json();
+        } catch (error) {
+          return { ok: false, error: error instanceof Error ? error.message : String(error), items: [], dir: "" };
+        }
+      });
+      ipcMain.handle("transfer:add", async () => {
+        const picked = await dialog.showOpenDialog({ properties: ["openFile", "multiSelections"] });
+        if (picked.canceled || picked.filePaths.length === 0) {
+          return { ok: true, added: [], refused: [], canceled: true };
+        }
+        const base = bridgeBaseUrl();
+        if (base === "") return { ok: false, error: "引擎还没起来，稍等一下再试。", added: [], refused: [] };
+        try {
+          const res = await fetch(`${base}/mobile-local/transfer/add`, {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ paths: picked.filePaths }),
+          });
+          return await res.json();
+        } catch (error) {
+          return { ok: false, error: error instanceof Error ? error.message : String(error), added: [], refused: [] };
+        }
+      });
+      ipcMain.handle("transfer:delete", async (_event, id: string) => {
+        const base = bridgeBaseUrl();
+        if (base === "") return { ok: false, error: "引擎还没起来，稍等一下再试。" };
+        try {
+          const res = await fetch(`${base}/mobile-local/transfer/delete`, {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ id: String(id ?? "") }),
+          });
+          return await res.json();
+        } catch (error) {
+          return { ok: false, error: error instanceof Error ? error.message : String(error) };
+        }
+      });
+      ipcMain.handle("transfer:open-folder", async (_event, dir: string) => {
+        // 只允许打开数据目录内的路径，防止渲染层拿这个口子开任意位置。
+        const target = String(dir ?? "");
+        const home = dshHomeDir();
+        if (target === "" || !target.startsWith(home)) return { ok: false, error: "路径不在数据目录内" };
+        const message = await shell.openPath(target);
+        return message === "" ? { ok: true } : { ok: false, error: message };
+      });
       // Actions that only the hidden native menu offered. They live in the
       // settings window now; every one of them answers with a reason on failure.
       ipcMain.handle("desktop:action", async (_event, action: string) => {

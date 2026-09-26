@@ -34,6 +34,15 @@ contextBridge.exposeInMainWorld("desktop", {
     ipcRenderer.invoke("mobile:open-search-settings"),
   mobileOpenPairingSettings: (): Promise<{ ok: boolean; error?: string; url?: string }> =>
     ipcRenderer.invoke("mobile:open-pairing-settings"),
+  /** 隔空传输：列表 / 选文件放入 / 删除 / 打开文件夹（数据目录内）。 */
+  transferList: (): Promise<{ ok: boolean; error?: string; dir?: string; items?: unknown[] }> =>
+    ipcRenderer.invoke("transfer:list"),
+  transferAdd: (): Promise<{ ok: boolean; error?: string; added?: unknown[]; refused?: unknown[]; canceled?: boolean }> =>
+    ipcRenderer.invoke("transfer:add"),
+  transferDelete: (id: string): Promise<{ ok: boolean; error?: string }> =>
+    ipcRenderer.invoke("transfer:delete", id),
+  transferOpenFolder: (dir: string): Promise<{ ok: boolean; error?: string }> =>
+    ipcRenderer.invoke("transfer:open-folder", dir),
   desktopAction: (action: string): Promise<{ ok: boolean; error?: string }> =>
     ipcRenderer.invoke("desktop:action", action),
   syncModels: (): Promise<any> => ipcRenderer.invoke("models:sync"),

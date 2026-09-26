@@ -24,7 +24,7 @@
 
 import type { Context } from '@deepseek-ai/cordis'
 import { createHash, randomUUID } from 'node:crypto'
-import { existsSync, mkdirSync, readFileSync, readdirSync, realpathSync, statSync, unlinkSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, readdirSync, realpathSync, statSync, unlinkSync, writeFileSync, copyFileSync } from 'node:fs'
 import { hostname } from 'node:os'
 import { basename, dirname, extname, join, normalize, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -154,6 +154,30 @@ async function readJsonBody(req: HttpRequest, limit = MAX_BODY): Promise<Record<
   }
   const raw = Buffer.concat(chunks).toString('utf8').trim()
   return raw === '' ? {} : (JSON.parse(raw) as Record<string, unknown>)
+}
+
+/**
+ * 原始字节体（文件上传用）：与 readJsonBody 同样的收集方式，但保留原始字节，
+ * 并返回 { ok } 结果而不是抛错——调用方要把可展示的原因原样递给手机。
+ */
+async function readRawBody(
+  req: HttpRequest,
+  limit: number,
+): Promise<{ ok: true; buffer: Buffer } | { ok: false; code: string; message: string }> {
+  const chunks: Buffer[] = []
+  let size = 0
+  const iterator = (req as unknown as AsyncIterable<Buffer | string>)[Symbol.asyncIterator]
+  if (iterator === undefined) return { ok: false, code: 'E_EMPTY', message: '文件内容为空' }
+  for await (const chunk of req as unknown as AsyncIterable<Buffer | string>) {
+    const buffer = typeof chunk === 'string' ? Buffer.from(chunk, 'utf8') : chunk
+    size += buffer.length
+    if (size > limit) {
+      return { ok: false, code: 'E_TOO_LARGE', message: `文件超过 ${Math.round(limit / 1024 / 1024)}MB 上限` }
+    }
+    chunks.push(buffer)
+  }
+  if (size === 0) return { ok: false, code: 'E_EMPTY', message: '文件内容为空' }
+  return { ok: true, buffer: Buffer.concat(chunks) }
 }
 
 /**
@@ -1464,6 +1488,75 @@ document.addEventListener('click', async (event) => {
         })()
         return
       }
+      // —— 隔空传输 · 本机设置页专用（回环可达）：列表 / 放入文件 / 删除 ——
+      // 设置页的「文件传输」标签用它完成电脑端操作；手机端走 /mobile/transfer/*。
+      if (path.startsWith('/transfer')) {
+        const sub = path.slice('/transfer'.length).replace(/^\//, '').split('?')[0] ?? ''
+        void (async () => {
+          try {
+            if (sub === 'list') {
+              const { items } = loadTransfer()
+              items.sort((a, b) => b.at - a.at)
+              sendJson(res, 200, { ok: true, dir: transferFilesDir(), items: items.map(({ stored: _stored, ...rest2 }) => rest2) })
+              return
+            }
+            if (sub === 'add') {
+              const body = await readJsonBody(req)
+              const paths = Array.isArray(body.paths) ? (body.paths as unknown[]).map((p) => String(p)) : []
+              const store = loadTransfer()
+              const added: Array<{ id: string; name: string; size: number }> = []
+              const refused: string[] = []
+              for (const p of paths.slice(0, 32)) {
+                try {
+                  const st = statSync(p)
+                  if (!st.isFile()) {
+                    refused.push(basename(p))
+                    continue
+                  }
+                  if (st.size > TRANSFER_MAX_BYTES) {
+                    refused.push(basename(p))
+                    continue
+                  }
+                  mkdirSync(transferFilesDir(), { recursive: true })
+                  const name = sanitizeTransferName(basename(p)) || '未命名文件'
+                  const id = `${Date.now().toString(36)}-${randomUUID().slice(0, 8)}`
+                  const stored = `${id}--${name.slice(0, 80)}`
+                  copyFileSync(p, join(transferFilesDir(), stored))
+                  store.items.push({ id, name, size: st.size, mime: mimeForTransfer(name), direction: 'desktop', at: Date.now(), stored })
+                  added.push({ id, name, size: st.size })
+                } catch {
+                  refused.push(basename(String(p)))
+                }
+              }
+              saveTransfer(store)
+              if (added.length > 0) log(`隔空传输：已放入 ${added.length} 个文件，等待手机收取`)
+              sendJson(res, 200, { ok: true, added, refused })
+              return
+            }
+            if (sub === 'delete') {
+              const body = await readJsonBody(req)
+              const id = String(body.id ?? '')
+              const store = loadTransfer()
+              const hit = store.items.find((x) => x.id === id)
+              if (hit) {
+                try {
+                  unlinkSync(join(transferFilesDir(), hit.stored))
+                } catch {
+                  // 实体可能已不在：索引删除照做
+                }
+                store.items = store.items.filter((x) => x.id !== id)
+                saveTransfer(store)
+              }
+              sendJson(res, 200, { ok: true })
+              return
+            }
+            sendJson(res, 200, { ok: false, code: 'E_UNKNOWN', message: `未知操作：${sub}` })
+          } catch (error) {
+            sendJson(res, 200, { ok: false, code: 'E_TRANSFER', message: error instanceof Error ? error.message : String(error) })
+          }
+        })()
+        return
+      }
       const revoke = path.match(/^\/devices\/([^/?]+)/)
       if (revoke !== null) {
         const store = load()
@@ -1597,6 +1690,176 @@ document.addEventListener('click', async (event) => {
       } catch {
         sendJson(res, 200, { ok: false, code: 'E_READ', message: '附件读取失败' })
       }
+    }),
+  })
+
+  // ═══ 隔空传输：手机 ↔ 电脑文件互传（微信「文件传输助手」式）═══
+  // 存储：<dsh-home>/transfer/index.json（条目）+ transfer/files/（实体文件）。
+  // 手机端走 /mobile/transfer/*；电脑端（settings 页）直接读写同一目录。
+  interface TransferItem {
+    id: string
+    name: string
+    size: number
+    mime: string
+    direction: 'phone' | 'desktop'
+    at: number
+    stored: string
+  }
+  const TRANSFER_MAX_BYTES = 64 * 1024 * 1024
+  const transferDir = () => join(dirname(storePath()), 'transfer')
+  const transferFilesDir = () => join(transferDir(), 'files')
+  const transferIndexPath = () => join(transferDir(), 'index.json')
+  const sanitizeTransferName = (raw: string): string => {
+    const base = basename(raw.replace(/[\\/]+/g, '/')).replace(/[<>:"|?*\u0000-\u001f]/g, '').trim()
+    return base.slice(0, 128)
+  }
+  const TRANSFER_MIME: Record<string, string> = {
+    jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', gif: 'image/gif', webp: 'image/webp', heic: 'image/heic', bmp: 'image/bmp',
+    pdf: 'application/pdf', txt: 'text/plain', md: 'text/markdown', json: 'application/json', csv: 'text/csv', log: 'text/plain',
+    zip: 'application/zip', rar: 'application/vnd.rar', '7z': 'application/x-7z-compressed', tar: 'application/x-tar', gz: 'application/gzip',
+    doc: 'application/msword', docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    xls: 'application/vnd.ms-excel', xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    ppt: 'application/vnd.ms-powerpoint', pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    mp4: 'video/mp4', mov: 'video/quicktime', mkv: 'video/x-matroska', webm: 'video/webm',
+    mp3: 'audio/mpeg', wav: 'audio/wav', m4a: 'audio/mp4', flac: 'audio/flac', ogg: 'audio/ogg',
+    apk: 'application/vnd.android.package-archive', svg: 'image/svg+xml', html: 'text/html',
+  }
+  const mimeForTransfer = (name: string): string =>
+    TRANSFER_MIME[extname(name).replace('.', '').toLowerCase()] ?? 'application/octet-stream'
+  const loadTransfer = (): { items: TransferItem[] } => {
+    try {
+      const raw = JSON.parse(readFileSync(transferIndexPath(), 'utf8'))
+      const items = Array.isArray(raw?.items) ? raw.items : []
+      return { items: items.filter((x: unknown) => isRecord(x) && typeof (x as unknown as TransferItem).id === 'string') as TransferItem[] }
+    } catch {
+      return { items: [] }
+    }
+  }
+  const saveTransfer = (data: { items: TransferItem[] }) => {
+    try {
+      mkdirSync(transferFilesDir(), { recursive: true })
+      writeFileSync(transferIndexPath(), JSON.stringify(data, null, 2), 'utf8')
+    } catch (error) {
+      log(`传输索引写入失败：${error instanceof Error ? error.message : String(error)}`)
+    }
+  }
+
+  webServer.register({
+    kind: 'prefix',
+    path: `${PUBLIC_PREFIX}/transfer`,
+    handler: guarded(async (req, res, device) => {
+      const rest = pathAfter(req.url, `${PUBLIC_PREFIX}/transfer`)
+      const seg = rest.split('/').filter((p) => p !== '')
+      const op = seg[0] ?? ''
+
+      // GET /mobile/transfer/list —— 双方共用的传输记录
+      if (op === 'list') {
+        const check = requireScope(device, 'read')
+        if (!check.ok) {
+          sendJson(res, 200, { ok: false, code: check.code, message: check.message })
+          return
+        }
+        const { items } = loadTransfer()
+        items.sort((a, b) => b.at - a.at)
+        sendJson(res, 200, { ok: true, items: items.map(({ stored: _stored, ...rest2 }) => rest2) })
+        return
+      }
+
+      // POST /mobile/transfer/send?name=&mime= —— 原始字节上传（手机 → 电脑）。
+      // 走原始 body 而不是 JSON/base64：readJsonBody 的 512KB 上限与 base64 的
+      // 33% 膨胀都撑不起照片/文档，这里按流收集、上限 64MB。
+      if (op === 'send') {
+        const check = requireScope(device, 'prompt')
+        if (!check.ok) {
+          sendJson(res, 200, { ok: false, code: check.code, message: check.message })
+          return
+        }
+        if (req.method !== 'POST') {
+          sendJson(res, 200, { ok: false, code: 'E_METHOD', message: '请用 POST 上传' })
+          return
+        }
+        try {
+          const query = new URL(String(req.url ?? '/'), 'http://bridge.local').searchParams
+          const name = sanitizeTransferName(String(query.get('name') ?? '').trim()) || '未命名文件'
+          const mime = String(query.get('mime') ?? 'application/octet-stream').slice(0, 120) || 'application/octet-stream'
+          const body = await readRawBody(req, TRANSFER_MAX_BYTES)
+          if (!body.ok) {
+            sendJson(res, 200, { ok: false, code: body.code, message: body.message })
+            return
+          }
+          mkdirSync(transferFilesDir(), { recursive: true })
+          const id = `${Date.now().toString(36)}-${randomUUID().slice(0, 8)}`
+          const stored = `${id}--${name.slice(0, 80)}`
+          writeFileSync(join(transferFilesDir(), stored), body.buffer)
+          const store = loadTransfer()
+          store.items.push({ id, name, size: body.buffer.length, mime, direction: 'phone', at: Date.now(), stored })
+          saveTransfer(store)
+          log(`隔空传输：收到手机文件 ${name}（${body.buffer.length} 字节）`)
+          sendJson(res, 200, { ok: true, id, size: body.buffer.length })
+        } catch (error) {
+          sendJson(res, 200, { ok: false, code: 'E_BAD_REQUEST', message: `上传失败：${error instanceof Error ? error.message : String(error)}` })
+        }
+        return
+      }
+
+      // GET /mobile/transfer/get/<id> —— 下载文件字节
+      if (op === 'get') {
+        const check = requireScope(device, 'read')
+        if (!check.ok) {
+          sendJson(res, 200, { ok: false, code: check.code, message: check.message })
+          return
+        }
+        const id = seg[1] ?? ''
+        const { items } = loadTransfer()
+        const hit = items.find((x) => x.id === id)
+        if (!hit) {
+          sendJson(res, 200, { ok: false, code: 'E_NOT_FOUND', message: '文件不存在（可能已删除）' })
+          return
+        }
+        const file = join(transferFilesDir(), hit.stored)
+        if (!existsSync(file)) {
+          sendJson(res, 200, { ok: false, code: 'E_NOT_FOUND', message: '文件实体已丢失' })
+          return
+        }
+        try {
+          const buf = readFileSync(file)
+          res.writeHead(200, {
+            'content-type': hit.mime || 'application/octet-stream',
+            'content-length': String(buf.length),
+            'content-disposition': `attachment; filename*=UTF-8''${encodeURIComponent(hit.name)}`,
+            'cache-control': 'private, max-age=3600',
+          })
+          res.end(buf)
+        } catch {
+          sendJson(res, 200, { ok: false, code: 'E_READ', message: '读取失败' })
+        }
+        return
+      }
+
+      // POST /mobile/transfer/delete/<id> —— 删除（索引 + 实体）
+      if (op === 'delete') {
+        const check = requireScope(device, 'prompt')
+        if (!check.ok) {
+          sendJson(res, 200, { ok: false, code: check.code, message: check.message })
+          return
+        }
+        const id = seg[1] ?? ''
+        const store = loadTransfer()
+        const hit = store.items.find((x) => x.id === id)
+        if (hit) {
+          try {
+            unlinkSync(join(transferFilesDir(), hit.stored))
+          } catch {
+            // 实体可能已不在：索引删除照做
+          }
+          store.items = store.items.filter((x) => x.id !== id)
+          saveTransfer(store)
+        }
+        sendJson(res, 200, { ok: true })
+        return
+      }
+
+      sendJson(res, 200, { ok: false, code: 'E_UNKNOWN', message: `未知操作：${op}` })
     }),
   })
 
