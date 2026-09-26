@@ -102,7 +102,24 @@ jobs:
         with:
           path: installers
           merge-multiple: true
+      # GitHub 平台对「更新已存在的 release」（update-a-release 端点）用 GITHUB_TOKEN
+      # 会 403 Resource not accessible by integration（2025-01 起多个仓库复现的已知问题；
+      # 新建 release 不受影响）。因此同版本重复推送时不再尝试重新发布——直接跳过，
+      # 需要刷新资产就手动：gh release upload desktop-vX.Y.Z <file> --clobber
+      - name: Skip publish when this version is already released
+        id: released
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          V: ${{ steps.version.outputs.version }}
+        run: |
+          if gh release view "desktop-v$V" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "desktop-v$V 已发布过——本次仅构建检验，跳过发布"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
       - name: Publish public GitHub Release
+        if: steps.released.outputs.skip != 'true'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: desktop-v${{ steps.version.outputs.version }}
@@ -196,7 +213,7 @@ jobs:
       # cannot race half-uploaded assets the way a separate "release published"
       # workflow did (0.1.18 shipped a latest.json with 7 of 17 assets, size 0).
       - name: Write dl/latest.json from the published release
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' && steps.released.outputs.skip != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VERSION: ${{ steps.version.outputs.version }}
@@ -234,7 +251,7 @@ jobs:
           print(version, len(assets), "assets")
           PY
       - name: Commit dl/latest.json
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' && steps.released.outputs.skip != 'true'
         env:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
