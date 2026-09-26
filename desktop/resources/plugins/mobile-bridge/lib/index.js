@@ -1431,6 +1431,43 @@ document.addEventListener('click', async (event) => {
             });
         }),
     });
+    // 聊天里的图片（用户发过的照片）：引擎的附件库是 sha256 内容寻址，直接按 id 读。
+    // id 收两种写法：`sha256:<hex>` 或裸 `<hex>`；只允许 hex，路径永远出不了 objects 目录。
+    webServer.register({
+        kind: 'prefix',
+        path: `${PUBLIC_PREFIX}/attachments`,
+        handler: guarded(async (req, res, device) => {
+            const check = requireScope(device, 'read');
+            if (!check.ok) {
+                sendJson(res, 200, { ok: false, code: check.code, message: check.message });
+                return;
+            }
+            const rest = pathAfter(req.url, `${PUBLIC_PREFIX}/attachments`);
+            const raw = decodeURIComponent(rest.split('/').filter((part) => part !== '')[0] ?? '');
+            const hex = raw.startsWith('sha256:') ? raw.slice('sha256:'.length) : raw;
+            if (!/^[0-9a-f]{64}$/.test(hex)) {
+                sendJson(res, 200, { ok: false, code: 'E_BAD_REQUEST', message: '附件 id 不合法' });
+                return;
+            }
+            const file = join(dirname(storePath()), 'attachments', 'v1', 'objects', hex.slice(0, 2), hex);
+            if (!existsSync(file)) {
+                sendJson(res, 200, { ok: false, code: 'E_NOT_FOUND', message: '附件不存在（可能已被清理）' });
+                return;
+            }
+            try {
+                const buf = readFileSync(file);
+                res.writeHead(200, {
+                    'content-type': 'application/octet-stream',
+                    'content-length': String(buf.length),
+                    'cache-control': 'private, max-age=86400',
+                });
+                res.end(buf);
+            }
+            catch {
+                sendJson(res, 200, { ok: false, code: 'E_READ', message: '附件读取失败' });
+            }
+        }),
+    });
     // 会话列表：引擎的 session.list 在会话多时要 ~300ms，而且全量载荷带一整套
     // projections（手机列表只用得到标题/模型两样，却要背 300KB）。这里做两件事：
     //  1) `?view=lite` 只回手机需要的字段（载荷约缩到 1/7）；
