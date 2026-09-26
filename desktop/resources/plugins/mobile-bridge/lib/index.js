@@ -823,6 +823,75 @@ export function apply(ctx, config = {}) {
     catch (error) {
         log(`订阅会话事件失败：${error instanceof Error ? error.message : String(error)}`);
     }
+    // 实时流式：助手正在生成的文本/推理增量直发手机（App 端渲染逐字气泡），
+    // 不再等整个回合落库。桌面端走 transient 帧；这里订阅引擎同一发点
+    // agent/assistant-stream，只挑 text-delta / reasoning-delta 两种增量转发。
+    // ⚠️ 必须 { global: true }：该事件带 agent 作用域过滤，普通注册的监听器
+    // 会被 cordis 的 context filter 排除（session-controller 官方也是这么订的）。
+    let assistantStreamAnnounced = false;
+    /** attemptId → 该次尝试的 turn/step（start 帧带、chunk 帧不带，查表补齐）。 */
+    const assistantAttempts = new Map();
+    try {
+        ctx.on('agent/assistant-stream', ((...args) => {
+            const payload = args.find((arg) => isRecord(arg) && isRecord(arg.frame));
+            if (payload === undefined)
+                return;
+            const frame = payload.frame;
+            const attemptId = typeof frame.attemptId === 'string' ? frame.attemptId : '';
+            if (frame.type === 'start' || frame.type === 'end') {
+                if (attemptId !== '') {
+                    if (frame.type === 'start') {
+                        assistantAttempts.set(attemptId, { turn: Number(frame.turn ?? 0), step: Number(frame.step ?? 0) });
+                        if (assistantAttempts.size > 256) {
+                            const oldest = assistantAttempts.keys().next().value;
+                            if (oldest !== undefined)
+                                assistantAttempts.delete(oldest);
+                        }
+                    }
+                    else {
+                        assistantAttempts.delete(attemptId);
+                    }
+                }
+                return;
+            }
+            if (frame.type !== 'chunk' || !isRecord(frame.chunk))
+                return;
+            const chunk = frame.chunk;
+            const kind = chunk.type === 'text-delta' ? 'text' : chunk.type === 'reasoning-delta' ? 'reasoning' : '';
+            if (kind === '' || typeof chunk.text !== 'string' || chunk.text === '')
+                return;
+            const agentRecord = isRecord(payload.agent) ? payload.agent : undefined;
+            let sessionId = sessionIdOf(agentRecord?.session ?? agentRecord);
+            if (sessionId === '' && attemptId !== '') {
+                const cut = attemptId.lastIndexOf(':');
+                if (cut > 0)
+                    sessionId = attemptId.slice(0, cut);
+            }
+            if (sessionId === '')
+                return;
+            const pair = assistantAttempts.get(attemptId);
+            if (!assistantStreamAnnounced) {
+                assistantStreamAnnounced = true;
+                log(`实时流已接通：首条增量 ${sessionId} turn=${String(pair?.turn ?? '?')} step=${String(pair?.step ?? '?')}`);
+            }
+            publish({
+                kind: 'event',
+                sessionId,
+                type: 'assistant/chunk',
+                data: {
+                    turn: pair?.turn ?? 0,
+                    step: pair?.step ?? 0,
+                    index: frame.index ?? 0,
+                    attemptId,
+                    chunk: { type: kind, text: chunk.text },
+                },
+            });
+        }), { global: true });
+        log('实时流订阅已就绪：agent/assistant-stream（global）');
+    }
+    catch (error) {
+        log(`订阅助手流式事件失败：${error instanceof Error ? error.message : String(error)}`);
+    }
     // ------------------------------------------------------------------- helpers
     const authenticate = (req) => {
         const token = tokenOf(req);
