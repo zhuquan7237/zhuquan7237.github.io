@@ -1,9 +1,9 @@
 {
-  "version": "0.4.1",
-  "versionCode": 97,
+  "version": "0.4.2",
+  "versionCode": 98,
   "apkUrl": "https://m.zhuquan.xyz/mobile/dsh-mobile.apk",
-  "sha256": "44ab153deddbf26f34606e86ac9ca315dd9f3f44d7dd5be2340577b967465106",
+  "sha256": "e69b23bc0aef1b4fe623df080a33b1454cc54689e35cf357568464934dcd8db0",
   "size": 3808059,
-  "notes": "对话页右上角新增「新建对话」：不用退回会话列表，随手一键开新会话。",
-  "publishedAt": "2026-09-27T00:03:34+08:00"
+  "notes": "任务进行时，一眼看清：运行中实时显示「模型正在思考/输出 · 已 N 字」计数与上游断线重试状态；任务页整改（状态收敛到一条任务栏、任务反馈贴住原消息、更轻的停止键、排队输入提示）；「新建对话」换铅笔图标。",
+  "publishedAt": "2026-09-27T02:07:09+08:00"
 }
