@@ -473,7 +473,7 @@ footer{background:linear-gradient(180deg,rgba(238,233,220,.012),transparent),var
 <body>
 
 <div class="announce">
-  <span>🐳 <b>桌面端 v0.6.2</b> · <b>手机端 v0.4.0</b> 已发布</span>
+  <span>🐳 <b>桌面端 v0.6.3</b> · <b>手机端 v0.4.0</b> 已发布</span>
   <a href="#updates">看看更新了什么 →</a>
 </div>
 
@@ -826,11 +826,10 @@ footer{background:linear-gradient(180deg,rgba(238,233,220,.012),transparent),var
       </div>
       <div class="updates">
         <div class="upd rv">
-          <div class="tagline"><span class="pill">桌面端 0.6.2</span><h3>设置里多了一个「文件传输」</h3></div>
+          <div class="tagline"><span class="pill">桌面端 0.6.3</span><h3>更稳的显示节奏</h3></div>
           <ul>
-            <li>隔空传输（桥接 0.2.29）：设置 →「文件传输」与手机互传文件——选文件放入、打开所在文件夹、删除，手机上（0.4.0）在会话列表右上角收发</li>
-            <li>「正在生成」递给手机（0.6.0，桥接 0.2.28）：电脑上助手正在写的正文逐字转发到手机；图片直通（支持视觉的模型直接读原图）</li>
-            <li>修复（0.6.1→0.6.2）：设置里的「文件传输」与手机配对卡片加载不出来（引擎地址解析带了 token 尾巴，环回接口请求落到「未认证的根路径」）</li>
+            <li>手机端「实时逐字输出」回退下线：逐字增量会造成屏幕闪烁——恢复为「生成完成后一次性显示」，生成期间照常显示进度与工具执行记录，回复完成一次性呈现；含旧版 App 在内的所有客户端自动回到旧行为</li>
+            <li>隔空传输（0.6.1 起）：设置 →「文件传输」与手机互传文件；修复（0.6.2）：文件传输页与手机配对卡片在部分情况下加载不出来</li>
           </ul>
         </div>
         <div class="upd rv">
