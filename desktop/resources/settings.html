@@ -982,6 +982,9 @@
             return;
           }
           transferDir = (data && data.dir) || "";
+          // 成功加载就把上一轮的错误条收掉（例如引擎刚起来时的一次瞬时失败）。
+          const fb = $("transferFeedbackBox");
+          if (fb && fb.classList.contains("error")) fb.style.display = "none";
           renderTransferList((data && data.items) || []);
         } catch (e) {
           renderTransferList([]);

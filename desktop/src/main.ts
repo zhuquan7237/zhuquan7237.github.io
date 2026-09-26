@@ -70,6 +70,7 @@ import {
   DEFAULT_SETTINGS,
   DSH_PACKAGE,
   NPM_REGISTRY,
+  bridgeOrigin,
   chromiumAcceptLang,
   compareVersions,
   harnessLocaleEnv,
@@ -1702,8 +1703,11 @@ if (linuxReady) {
       shellLog(
         uiText("log.shellLocale", { locale: shellLocale, source: settings.locale ? "setting" : "system" }),
       );
-      /** Loopback base of the running engine: the bridge shares its port. */
-      const bridgeBaseUrl = (): string => (running?.url ?? "").trim().replace(/\/+$/, "");
+      /** Loopback base of the running engine; origin only — query/token must not leak in. */
+      // 环回 REST 的基地址：必须去 token/query/尾斜杠（用 origin）——running.url
+      // 来自 `dsh web: http://127.0.0.1:<port>/?token=…`，原样拼接会让请求落到
+      // 「未认证的根路径」上（纯文本响应），设置页的 transfer/配对卡片全挂。
+      const bridgeBaseUrl = (): string => bridgeOrigin(running?.url ?? "");
       ipcMain.handle("app:version", () => app.getVersion());
       ipcMain.handle("settings:get", () => settings);
       ipcMain.handle("settings:save", async (_event, next: DesktopSettings) => {

@@ -149,6 +149,24 @@ export function parseDshWebUrl(output: string): string | null {
   return local?.[0] ?? null;
 }
 
+/**
+ * 桥接回环调用的基地址：只取 origin（去 query / 尾斜杠）。
+ *
+ * `parseDshWebUrl` 抓到的地址会带 `/?token=...`（主窗口加载需要它），但环回 REST
+ * （`/mobile-local/*`）拼接时必须去掉——带尾巴的 URL 会被引擎当成「未认证的根路径」，
+ * 返回一段纯文本（`dsh web authentication required…`），页面上就是一条 JSON 解析红条，
+ * 列表永远加载不出来。2026-09-26 实测：桌面设置页的「文件传输」与配对卡片都因此中招。
+ */
+export function bridgeOrigin(url: string): string {
+  const raw = (url ?? "").trim();
+  if (raw === "") return "";
+  try {
+    return new URL(raw).origin;
+  } catch {
+    return raw.replace(/\/+$/, "");
+  }
+}
+
 /** Compare npm versions, including prerelease tags like 0.1.0-rc.6. */
 export function compareVersions(a: string, b: string): number {
   const pa = splitVersion(a);

@@ -2,6 +2,7 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   applyRegistryPreference,
+  bridgeOrigin,
   chromiumAcceptLang,
   chromeSandboxIsConfigured,
   clampWindowBounds,
@@ -52,6 +53,22 @@ describe("parseDshWebUrl", () => {
 
   it("returns null when missing", () => {
     expect(parseDshWebUrl("still starting")).toBeNull();
+  });
+});
+
+describe("bridgeOrigin", () => {
+  it("strips the token query today's engine banner carries", () => {
+    // 实测：rc.3 的 "dsh web:" 行带 /?token=…；原样拼 /mobile-local/* 会落到
+    // 未认证的根路径（纯文本 "dsh web authentication required…"），JSON 全炸。
+    expect(bridgeOrigin("http://127.0.0.1:17731/?token=abc/mobile-local/state")).toBe("http://127.0.0.1:17731");
+  });
+
+  it("keeps plain origins and tolerates leftovers", () => {
+    expect(bridgeOrigin("http://127.0.0.1:3080")).toBe("http://127.0.0.1:3080");
+    expect(bridgeOrigin("http://127.0.0.1:3080/")).toBe("http://127.0.0.1:3080");
+    expect(bridgeOrigin("  http://127.0.0.1:3080/x/y?z=1  ")).toBe("http://127.0.0.1:3080");
+    expect(bridgeOrigin("")).toBe("");
+    expect(bridgeOrigin("not a url")).toBe("not a url");
   });
 });
 

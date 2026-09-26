@@ -8,6 +8,7 @@
  * what a phone actually sees.
  */
 import qrcode from "qrcode-generator";
+import { bridgeOrigin } from "./util";
 
 /** How long a pairing code answers. Mirrors PAIR_CODE_TTL_MS in the bridge. */
 export const PAIR_TTL_MS = 5 * 60 * 1000;
@@ -74,7 +75,7 @@ async function bridgeFetch(
   init: { method?: string } = {},
   timeoutMs = 4000,
 ): Promise<{ ok: boolean; status: number; payload: unknown }> {
-  const base = bridgeBase.trim().replace(/\/+$/, "");
+  const base = bridgeOrigin(bridgeBase);
   // An empty base would turn into a relative URL and fail with a parser error
   // that says nothing to the person reading the settings window.
   if (base === "") throw new Error("引擎地址为空：引擎可能还没起来。");
