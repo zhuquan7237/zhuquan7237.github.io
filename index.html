@@ -473,7 +473,7 @@ footer{background:linear-gradient(180deg,rgba(238,233,220,.012),transparent),var
 <body>
 
 <div class="announce">
-  <span>🐳 <b>桌面端 v0.6.0</b> · <b>手机端 v0.3.6</b> 已发布</span>
+  <span>🐳 <b>桌面端 v0.6.0</b> · <b>手机端 v0.3.7</b> 已发布</span>
   <a href="#updates">看看更新了什么 →</a>
 </div>
 
@@ -834,11 +834,11 @@ footer{background:linear-gradient(180deg,rgba(238,233,220,.012),transparent),var
           </ul>
         </div>
         <div class="upd rv">
-          <div class="tagline"><span class="pill gold">手机端 0.3.6</span><h3>实时输出，不闪了</h3></div>
+          <div class="tagline"><span class="pill gold">手机端 0.3.7</span><h3>翻看内容，不再被弹回去</h3></div>
           <ul>
-            <li>修掉实时输出的「闪光灯」闪烁：正文逐字流出后不再整段闪回重放</li>
-            <li>流式气泡与正式消息原子切换：不再有「文字先消失、历史后到」的空窗闪</li>
-            <li>打字机异常中断时立即显示全文（不再停在半截）；停止/失败后已生成的部分保留在屏幕上</li>
+            <li>修掉「流式输出时翻看内容会被弹回顶部」：消息列表的内部标识不再依赖位置，滚动锚点不再失效</li>
+            <li>滚动目标改用最新列表；新增保险丝——没有你的操作却突然跳回顶部时，自动恢复回原位</li>
+            <li>上一版 0.3.6 的「实时输出不闪」修复一并保留</li>
           </ul>
         </div>
       </div>
