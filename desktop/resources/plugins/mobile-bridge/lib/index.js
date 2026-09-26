@@ -1455,6 +1455,21 @@ document.addEventListener('click', async (event) => {
         };
         if (item.producedFiles !== undefined)
             out.producedFiles = item.producedFiles;
+        // 列表第二行的预览：取自 turnOutline 的最后一条（落定回复优先、其次该轮用户提示词）。
+        // 引擎侧已做归一化（回复 ≤120 字符、提示词 ≤50 字符，且排除注入上下文与工具结果），
+        // 这里只挑字段，绝不自己拼内容。
+        const outline = values.turnOutline;
+        if (Array.isArray(outline) && outline.length > 0) {
+            const last = outline[outline.length - 1];
+            if (isRecord(last)) {
+                const preview = String(last.response || last.prompt || '').trim();
+                if (preview !== '')
+                    out.preview = preview.slice(0, 120);
+            }
+        }
+        // 「跑完但还没打开」——列表上点一个小圆点（引擎在打开/再次开跑时自动清除）
+        if (item.completed === true)
+            out.completed = true;
         return out;
     };
     const dropSessionsCache = () => {
