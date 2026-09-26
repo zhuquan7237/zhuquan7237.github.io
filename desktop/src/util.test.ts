@@ -7,7 +7,6 @@ import {
   clampWindowBounds,
   compareVersions,
   formatByteProgress,
-  publicVersion,
   resolveDownloadTotal,
   shouldLogDownloadProgress,
   harnessLocaleEnv,
@@ -333,18 +332,5 @@ describe("typical-user defaults", () => {
     ).toBe("/home/me/桌面");
     expect(isSystemInstalledApp("/usr/bin/DeepSeek")).toBe(true);
     expect(isSystemInstalledApp("/home/me/DeepSeek-0.1.3-linux-x64/DeepSeek")).toBe(false);
-  });
-});
-
-describe("publicVersion / 一位小数版本", () => {
-  it("去掉且只去掉尾段 .0", () => {
-    expect(publicVersion("0.6.0")).toBe("0.6");
-    expect(publicVersion("0.10.0")).toBe("0.10");
-    expect(publicVersion("0.5.32")).toBe("0.5.32");
-  });
-  it("一位小数与旧三段版本可正确比较", () => {
-    expect(compareVersions("0.6", "0.5.32")).toBeGreaterThan(0);
-    expect(compareVersions("0.6.0", "0.6")).toBe(0);
-    expect(compareVersions("0.5.32", "0.6")).toBeLessThan(0);
   });
 });

@@ -20,7 +20,6 @@ import {
   pickDesktopAsset,
   scoreDesktopAsset,
   shouldPromptDesktopUpdate,
-  INSTALLER_NAME_RE,
 } from "./desktop-update";
 
 const releaseAssets = [
@@ -248,14 +247,5 @@ describe("GitHub latest release", () => {
     expect(response.ok).toBe(true);
     expect(Number(response.headers.get("content-length") || 0)).toBeGreaterThan(10_000_000);
     expect(response.headers.get("content-disposition") || "").toContain("DeepSeek-0.1.15-win.exe");
-  });
-});
-
-describe("INSTALLER_NAME_RE 兼容一位小数", () => {
-  it("接受 0.6 与 0.6.0 两种命名", () => {
-    expect(INSTALLER_NAME_RE.test("DeepSeek-0.6-win.exe")).toBe(true);
-    expect(INSTALLER_NAME_RE.test("DeepSeek-0.6.0-win.exe")).toBe(true);
-    expect(INSTALLER_NAME_RE.test("DeepSeek-0.6-linux-x64.tar.gz")).toBe(true);
-    expect(INSTALLER_NAME_RE.test("Other-0.6-win.exe")).toBe(false);
   });
 });

@@ -78,7 +78,6 @@ import {
   normalizeWebPort,
   parseOsLocaleAssignments,
   parseOsTimeZone,
-  publicVersion,
   resolveTimeZone,
   resolveUiLocale,
   resolveWorkspaceDir,
@@ -528,7 +527,7 @@ async function diagnosticsInput(): Promise<DiagnosticsInput> {
   const current = settings ?? DEFAULT_SETTINGS;
   return {
     appName: APP_DISPLAY_NAME,
-    appVersion: publicVersion(app.getVersion()),
+    appVersion: app.getVersion(),
     electron: process.versions.electron ?? "",
     chrome: process.versions.chrome ?? "",
     node: process.versions.node ?? "",
@@ -1161,7 +1160,7 @@ function buildMenu(): void {
             void nativeBox({
               type: "info",
               title: uiText("menu.help.about"),
-              message: uiText("about.message", { version: publicVersion(app.getVersion()) }),
+              message: uiText("about.message", { version: app.getVersion() }),
               detail: uiText("about.detail", {
                 engine: running?.version || settings?.lastHarnessVersion || "未启动",
                 workspace: settings?.workspaceDir || path.join(homedir(), "DeepSeek"),
@@ -1302,21 +1301,20 @@ async function checkDesktopUpdates(interactive: boolean): Promise<void> {
     const latest = await fetchLatestDesktopRelease(desktopFetcher);
     const current = app.getVersion();
     if (!shouldPromptDesktopUpdate(current, latest.version, interactive ? "" : settings.skippedDesktopVersion)) {
-      // 版本等价用 compareVersions 判断：内部 0.6.0 与对外 0.6 是同一个版本
-      if (interactive && compareVersions(current, latest.version) === 0) {
+      if (interactive && current === latest.version) {
         await nativeBox({
           type: "info",
           title: "桌面版更新",
           message: "DeepSeek Desktop 已是最新版本",
-          detail: `当前桌面版：${publicVersion(current)}\n来源：GitHub Releases（不用 git pull）`,
+          detail: `当前桌面版：${current}\n来源：GitHub Releases（不用 git pull）`,
           buttons: ["确定"],
         });
-      } else if (interactive) {
+      } else if (interactive && current !== latest.version) {
         await nativeBox({
           type: "info",
           title: "桌面版更新",
           message: "没有需要安装的新版本",
-          detail: `当前：${publicVersion(current)}\n仓库最新：${latest.version}`,
+          detail: `当前：${current}\n仓库最新：${latest.version}`,
           buttons: ["确定"],
         });
       }
@@ -1328,7 +1326,7 @@ async function checkDesktopUpdates(interactive: boolean): Promise<void> {
       title: "发现新的桌面版",
       message: `仓库已发布 ${latest.version}`,
       detail: [
-        `当前版本：${publicVersion(current)}`,
+        `当前版本：${current}`,
         asset ? `将下载：${asset.name}` : "打不开对应系统的安装包，将打开发布页。",
         "这是桌面壳更新，不用 git pull，也不会重新克隆 Harness。",
       ].join("\n"),
@@ -1681,7 +1679,7 @@ if (linuxReady) {
         if (!img.isEmpty()) app.dock?.setIcon(img);
         app.setAboutPanelOptions({
           applicationName: APP_DISPLAY_NAME,
-          applicationVersion: publicVersion(app.getVersion()),
+          applicationVersion: app.getVersion(),
         });
       }
       lastMigration = await migrateLegacyDesktopData({
@@ -1706,7 +1704,7 @@ if (linuxReady) {
       );
       /** Loopback base of the running engine: the bridge shares its port. */
       const bridgeBaseUrl = (): string => (running?.url ?? "").trim().replace(/\/+$/, "");
-      ipcMain.handle("app:version", () => publicVersion(app.getVersion()));
+      ipcMain.handle("app:version", () => app.getVersion());
       ipcMain.handle("settings:get", () => settings);
       ipcMain.handle("settings:save", async (_event, next: DesktopSettings) => {
         settings = { ...settings, ...next };

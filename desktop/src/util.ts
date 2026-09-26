@@ -149,11 +149,6 @@ export function parseDshWebUrl(output: string): string | null {
   return local?.[0] ?? null;
 }
 
-/** 对外展示版本：去掉语义化尾段 .0（0.6.0 → 0.6）。内部版本保持完整不动。 */
-export function publicVersion(version: string): string {
-  return version.replace(/\.0$/, "");
-}
-
 /** Compare npm versions, including prerelease tags like 0.1.0-rc.6. */
 export function compareVersions(a: string, b: string): number {
   const pa = splitVersion(a);
