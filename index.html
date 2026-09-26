@@ -473,7 +473,7 @@ footer{background:linear-gradient(180deg,rgba(238,233,220,.012),transparent),var
 <body>
 
 <div class="announce">
-  <span>🐳 <b>桌面端 v0.5.32</b> · <b>手机端 v0.3.4</b> 已发布</span>
+  <span>🐳 <b>桌面端 v0.6.0</b> · <b>手机端 v0.3.5</b> 已发布</span>
   <a href="#updates">看看更新了什么 →</a>
 </div>
 
@@ -826,21 +826,20 @@ footer{background:linear-gradient(180deg,rgba(238,233,220,.012),transparent),var
       </div>
       <div class="updates">
         <div class="upd rv">
-          <div class="tagline"><span class="pill">桌面端 0.5.28</span><h3>模型网络路由</h3></div>
+          <div class="tagline"><span class="pill">桌面端 0.6.0</span><h3>把「正在生成」递给手机</h3></div>
           <ul>
-            <li>每家提供商单独配「代理 / 直连」——必须走代理的和必须直连的，各走各的路</li>
-            <li>改动一键生效：保存后电脑端自动重启引擎，约 10 秒</li>
-            <li>配对页新增「模型网络」卡片，手机上也能改</li>
+            <li>手机端实时同步（桥接 0.2.28）：电脑上助手正在写的正文逐字转发到手机——写到哪、手机就看到哪</li>
+            <li>图片直通：支持视觉的模型现在直接读原图；顺手修掉「图片转文字」辅助通道指向失效网关的问题</li>
+            <li>随包手机端更新至 0.3.5</li>
           </ul>
         </div>
         <div class="upd rv">
-          <div class="tagline"><span class="pill gold">手机端 0.3.4</span><h3>照片，看得见也发得出</h3></div>
+          <div class="tagline"><span class="pill gold">手机端 0.3.5</span><h3>对话实时同步</h3></div>
           <ul>
-            <li>聊天里的图片修好了：发过的照片直接显示在对话里，重开可回放、点开看大图</li>
-            <li>修掉「发图静默失败」：个别设备的时区名会被电脑端拒绝，现在已消毒；失败时聊天里会留一条明文原因，不再一闪而过</li>
-            <li>输入框照 ChatGPT 重做：输入区在上、工具行常显在下（＋ / 模型 / 发送），26dp 大圆角 + 轻投影</li>
-            <li>模型名带提供商前缀（如 nexavlinks/gpt-6-astra），一眼看出在走哪家通道</li>
-            <li>顶栏「电脑名 + 状态」、会话列表摘要、任务入口卡等 0.3.3 功能一并可用</li>
+            <li>电脑端生成到哪里，手机就看到哪里：助手的回复逐字流到你眼前，不用再等整段写完</li>
+            <li>发消息后列表自动跟到最新（以前要手动点「回到最新」）</li>
+            <li>修掉两处状态提示：回合失败不再误报「任务已完成」；流式文字落库后不再短暂显示两份</li>
+            <li>照片直接显示、ChatGPT 式输入框、模型提供商前缀等 0.3.4 功能一并保留</li>
           </ul>
         </div>
       </div>
