@@ -473,7 +473,7 @@ footer{background:linear-gradient(180deg,rgba(238,233,220,.012),transparent),var
 <body>
 
 <div class="announce">
-  <span>🐳 <b>桌面端 v0.6.0</b> · <b>手机端 v0.3.7</b> 已发布</span>
+  <span>🐳 <b>桌面端 v0.6.0</b> · <b>手机端 v0.3.8</b> 已发布</span>
   <a href="#updates">看看更新了什么 →</a>
 </div>
 
@@ -834,11 +834,11 @@ footer{background:linear-gradient(180deg,rgba(238,233,220,.012),transparent),var
           </ul>
         </div>
         <div class="upd rv">
-          <div class="tagline"><span class="pill gold">手机端 0.3.7</span><h3>翻看内容，不再被弹回去</h3></div>
+          <div class="tagline"><span class="pill gold">手机端 0.3.8</span><h3>滑到底，就真的到底</h3></div>
           <ul>
-            <li>修掉「流式输出时翻看内容会被弹回顶部」：消息列表的内部标识不再依赖位置，滚动锚点不再失效</li>
-            <li>滚动目标改用最新列表；新增保险丝——没有你的操作却突然跳回顶部时，自动恢复回原位</li>
-            <li>上一版 0.3.6 的「实时输出不闪」修复一并保留</li>
+            <li>修掉「流式输出时滑到最底部、手指一松就被弹回当前回复开头」：跟随滚动原来做的是「把最后一项置顶」，回复比一屏长时「置顶」恰恰＝跳回它开头；现在真正滚到列表的绝对底部</li>
+            <li>跟随范围涵盖流式气泡、状态行、生成文件卡等全部尾部内容</li>
+            <li>上一版的翻看保护与「实时输出不闪」修复一并保留</li>
           </ul>
         </div>
       </div>
