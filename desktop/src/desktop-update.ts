@@ -8,7 +8,8 @@ export const DESKTOP_DOWNLOAD_PAGE = "https://dsh.zhuquan.xyz/";
 export const DESKTOP_DOWNLOAD_ORIGIN = "https://dsh.zhuquan.xyz";
 export const DESKTOP_LATEST_MANIFEST = `${DESKTOP_DOWNLOAD_ORIGIN}/dl/latest.json`;
 export const DOWNLOAD_IDLE_MS = 45_000;
-export const INSTALLER_NAME_RE = /^DeepSeek-(\d+\.\d+\.\d+)-.+\.(exe|dmg|deb|rpm|zip|AppImage|tar\.gz)$/;
+// 版本段兼容一位小数（0.6）与三段（0.6.0）——现行约定对外一位小数（2026-09-26 起）。
+export const INSTALLER_NAME_RE = /^DeepSeek-(\d+(?:\.\d+){1,3})-.+\.(exe|dmg|deb|rpm|zip|AppImage|tar\.gz)$/;
 
 export type HttpFetcher = (
   url: string,
