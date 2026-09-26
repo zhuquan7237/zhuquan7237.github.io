@@ -845,11 +845,79 @@ export function apply(ctx, config = {}) {
     catch (error) {
         log(`订阅会话事件失败：${error instanceof Error ? error.message : String(error)}`);
     }
-    // 实时流式（0.2.28 引入的 agent/assistant-stream 订阅）已于 0.2.30 下线：
-    // 逐字增量在手机端会造成持续闪屏——多轮渲染修复（节流/原子切换）后用户实测
-    // 仍不接受，决定恢复「生成完成后一次性显示」的旧行为。实现代码在 git 历史
-    // 0.2.28/0.3.5 中；若将来重新启用，先解决渲染体验问题再放量。
-    // （App 端 0.3.5+ 的 assistant/chunk 渲染路径保留但无源可收，等效休眠。）
+    // 进度脉冲（0.2.31）：只转发「计数」不转发内容。手机端据此显示
+    // 「正在思考 · 已 N 字 / 正在输出 · 已 N 字」——回答「它真在思考还是卡死了」。
+    // ⚠️ 内容逐字渲染已于 0.2.30 因闪烁整体下线，这里只累计字符数、按 ≥3.5s
+    // 节流发一帧计数（不含任何文本），把「还活着」的证明和「文字闪烁」彻底解耦。
+    const progressBySession = new Map();
+    const PROGRESS_MIN_GAP_MS = 3500;
+    const emitProgress = (sessionId, entry, force = false) => {
+        const now = Date.now();
+        if (!force && now - entry.lastEmit < PROGRESS_MIN_GAP_MS)
+            return;
+        entry.lastEmit = now;
+        publish({
+            kind: 'event',
+            sessionId,
+            type: 'assistant/progress',
+            data: { turn: entry.turn, step: entry.step, textChars: entry.text, reasoningChars: entry.reason, at: now },
+        });
+    };
+    try {
+        ctx.on('agent/assistant-stream', ((...args) => {
+            const payload = args.find((arg) => isRecord(arg) && isRecord(arg.frame));
+            if (payload === undefined)
+                return;
+            const frame = payload.frame;
+            const attemptId = typeof frame.attemptId === 'string' ? frame.attemptId : '';
+            if (attemptId === '')
+                return;
+            const cut = attemptId.lastIndexOf(':');
+            const sessionId = cut > 0 ? attemptId.slice(0, cut) : '';
+            if (sessionId === '')
+                return;
+            if (frame.type === 'start') {
+                // 新尝试开始：计数归零，给手机一个「这次尝试开始了」的信号
+                const entry = { turn: Number(frame.turn ?? 0), step: Number(frame.step ?? 0), text: 0, reason: 0, lastEmit: 0 };
+                progressBySession.set(sessionId, entry);
+                if (progressBySession.size > 64) {
+                    const oldest = progressBySession.keys().next().value;
+                    if (oldest !== undefined && oldest !== sessionId)
+                        progressBySession.delete(oldest);
+                }
+                emitProgress(sessionId, entry, true);
+                return;
+            }
+            if (frame.type === 'end') {
+                const entry = progressBySession.get(sessionId);
+                if (entry !== undefined) {
+                    emitProgress(sessionId, entry, true);
+                    progressBySession.delete(sessionId);
+                }
+                return;
+            }
+            if (frame.type !== 'chunk' || !isRecord(frame.chunk))
+                return;
+            const chunk = frame.chunk;
+            const kind = chunk.type === 'text-delta' ? 'text' : chunk.type === 'reasoning-delta' ? 'reason' : '';
+            if (kind === '' || typeof chunk.text !== 'string' || chunk.text === '')
+                return;
+            let entry = progressBySession.get(sessionId);
+            if (entry === undefined) {
+                entry = { turn: 0, step: 0, text: 0, reason: 0, lastEmit: 0 };
+                progressBySession.set(sessionId, entry);
+            }
+            if (kind === 'text')
+                entry.text += chunk.text.length;
+            else
+                entry.reason += chunk.text.length;
+            emitProgress(sessionId, entry);
+        }), { global: true });
+        log('进度脉冲订阅已就绪：agent/assistant-stream（仅计数，不带内容）');
+    }
+    catch (error) {
+        log(`订阅进度脉冲失败：${error instanceof Error ? error.message : String(error)}`);
+    }
     // ------------------------------------------------------------------- helpers
     const authenticate = (req) => {
         const token = tokenOf(req);
