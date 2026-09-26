@@ -134,78 +134,18 @@ jobs:
           body: |
             请用 ${{ steps.version.outputs.version }}。不要用更早的版本。
 
+            **0.6.0 → 0.6.1**
+            - **隔空传输 · 文件互传（桥接 0.2.29）**：设置里新增「文件传输」——像文件传输助手一样与手机互传文件；手机端入口在会话列表右上角，两端都能查看 / 下载 / 保存。
+            - 电脑 → 手机：设置 →「文件传输」里选文件放入传输目录，手机端几秒内就能看到并收取（图片/文档/压缩包等，≤64MB）。
+            - 手机 → 电脑：手机端「发送文件 / 发图片」直传原文件到电脑（绕过旧版 512KB 限制），电脑端在设置里可打开所在文件夹直接使用。
+            - 随包手机端更新至 **0.4.0**：新增文件传输页（发送、预览、保存到「下载」、双向删除）；修复流式输出时的屏幕闪烁（节流渲染，200ms 批量上屏，眼睛看着仍是连续流出）。
+            - 兼容性：文件传输需桥接 0.2.29（本包内置）+ App ≥ 0.4.0；旧版 App 不受影响。
+
             **0.5.32 → 0.6.0**
             - **手机端实时同步（桥接 0.2.28）**：电脑端助手正在生成的内容会逐字直发手机——写到哪、手机就看到哪，不再等整段写完才出现；工具执行记录同步已是既有行为，这次补齐正文流。
             - **图片直通**：支持视觉的模型（如 api888/gpt-6-astra）现在直接读原图，不再走「转文字」旁路；本次同时修掉了视觉辅助通道指向 opencode.ai 网关返回 400 的问题（改走本机 CPA / gemini-3.8-flash-high 兜底）。
             - 随包手机端更新至 **0.3.5**：发送/收到回复后列表自动跟到最新（以前要手动点「回到最新」）；回合失败不再误报「任务已完成」；流式文字落库后不再短暂显示两份。
             - 兼容性：实时流需桥接 0.2.28（本包内置）+ App ≥ 0.3.4；旧版 App 不受影响（看不到流式，其它功能照旧）。
-
-            **0.5.31 → 0.5.32**
-            - **桥接 0.2.24：手机端会话搜索结果补全**。命中条目现在带上会话的真实标题、时间与模型（此前只有内部 id），手机上搜索不再显示一屏「新对话」
-            - 随包手机端更新至 0.2.77：「电脑端未开启全文搜索」时搜索自动降级为按标题筛选（不再弹英文报错），新增搜索稳定性探针测试
-            - 备注：引擎的「会话全文搜索」默认关闭；部署方可在 dsh-home/cordis.patch.yml 覆盖 session-query-sqlite 的 openAt 为 first-search 开启（开启后手机搜索为内容级全文命中）
-            - 兼容性：纯桥接与随包更新，旧版 App 不受影响
-
-            **0.5.30 → 0.5.31**
-            - **桥接 0.2.23：手机同步提速**。会话列表支持精简视图（手机只取要用的字段，数据量降到约 1/4，全场 200+ 会话时尤其明显）；电脑端对列表加一层 2 秒内存缓存，并在回合起止 / 新建 / 改名时即时失效——和手机端 0.2.72 配合，列表刷新从「每次都打引擎」变成「点开就有」
-            - 兼容性：纯桥接内部优化，旧版 App 不受影响；手机端 0.2.72 起自动使用精简通道
-
-            **0.5.29 → 0.5.30**
-            - **图片生成 → 手机端直接预览 / 保存**：模型调用内置绘图工具生成的图片（保存在电脑 dsh-home/generated）现在会在手机聊天里出现缩略图卡片，点开可全屏预览、一键保存到手机；「生成的文件」列表与列表页的「N 个文件」也把它们算了进来（配套手机端 0.2.69）
-            - **桥接新增图片产物通道**：@generated/ 前缀 + 文件名白名单（仅 dsh-img-*.png/jpg/webp/gif，防目录穿透）；旧会话首次打开自动从历史回填，产物删除即时消失
-            - 兼容性：手机端功能需 App ≥ 0.2.69；旧版 App 不受影响
-
-            **0.5.28 → 0.5.29**
-            - **手机端「审批」只读**：电脑上有操作等待审批时，手机「设置 → 审批」里能看到「等待你在电脑上审批」与最近处理结果；当前版本只支持查看，批准 / 拒绝仍在电脑上操作
-            - **消息去重**：同一条消息的网络重试 / 草稿恢复复用同一身份，不会在电脑上被执行两次
-            - **重连更稳**：事件帧携带电脑端「进程世代」（epoch），重连对账不再靠猜
-            - 兼容性：手机端功能需 App ≥ 0.2.68；旧版 App 不受影响
-
-            **0.5.26 → 0.5.28**
-            - **模型网络路由：每个提供商可选「代理 / 直连」**。有的提供商必须走代理才能用、有的必须直连——现在在电脑端「设置 → 手机配对」页的「模型网络」卡片里逐家选择「自动（走代理）/ 代理 / 直连」，然后点「保存并重启电脑端」生效（引擎的出站代理只认启动环境，所以改动通过自动重启生效）
-            - 引擎启动环境自动注入：桌面壳按上述配置合成 HTTP(S)_PROXY / NO_PROXY（代理地址默认 http://127.0.0.1:7897，可改）；loopback 永远直连
-            - 收到重启请求后电脑端自动重启引擎（数秒），手机端稍等自动重连
-            - 桌面端版本 0.5.28；桥接插件 0.2.20
-
-            **0.5.25 → 0.5.26**
-            - **手机端新增「从上游同步模型」**：模型提供方上游的清单会变——现在在手机端每家提供商里点一下就能拉回最新清单，新增的模型勾选即加（加完自动补能力）。配套手机端 0.2.46
-            - **修复：手机端保存模型时可能丢掉电脑端新加的模型**。当手机端的快照过期（电脑端又改过配置）时，旧实现会用手机列表整表覆盖。现在改为三方合并：只并入手机明确改过的部分，电脑端的新增与改动一律保留；并且每次写配置前自动留一份 settings.yaml 快照（dsh-home/backups，存最近 30 份，可人工回滚）
-            - **手机端错误日志分级整理**：对话失败（上游模型问题）不再进日志；剩下的日志按天分组、通俗标题（技术细节点开看）、可多选删除或一键清空
-            - 桌面端版本 0.5.26；桥接插件 0.2.19
-
-            **0.5.22 → 0.5.23**
-            - **生成的文件按会话归属**：同一个工作目录被很多会话共用时，以前每个会话都显示同一堆文件（新写的也会串进老会话）。现在按「回合时间窗」记账——只有这个会话的回合里改动过的文件才算它生成的；历史会话首次查看时按其自身历史回填。手机端只会看到本会话的文件，没生成过文件的会话不再显示入口（配套手机端 0.2.41）
-            - **文件预览更流畅**：文件响应带 ETag / Last-Modified，重开只做一次 304 校验、不再整包重传；WebView 的子资源（如 three.min.js）第二次打开走校验缓存——经云端中继时差别最明显
-            - **回合因输出上限被截断时不再「像卡死」**：桥接通知与手机端都会说明「输出达到长度上限、这一回合没能写完」，并给出「继续」的出路；此前这种回合只是安静地结束，在手机上看起来和卡死一模一样（皮卡丘那次就是：模型思考 150 秒撞上上限，一个字都没写出来）
-            - 桌面端版本 0.5.23；桥接插件 0.2.15
-
-            **直接下载（不用登录）**
-            - Windows 安装包：https://dsh.zhuquan.xyz/dl/DeepSeek-${{ steps.version.outputs.version }}-win.exe
-            - Linux x64（推荐 tar.gz）：https://dsh.zhuquan.xyz/dl/DeepSeek-${{ steps.version.outputs.version }}-linux-x64.tar.gz
-            - Linux x64 deb：https://dsh.zhuquan.xyz/dl/DeepSeek-${{ steps.version.outputs.version }}-linux-amd64.deb
-            - Linux x64 rpm：https://dsh.zhuquan.xyz/dl/DeepSeek-${{ steps.version.outputs.version }}-linux-x86_64.rpm
-            - Linux arm64 tar.gz：https://dsh.zhuquan.xyz/dl/DeepSeek-${{ steps.version.outputs.version }}-linux-arm64.tar.gz
-            - Linux arm64 deb：https://dsh.zhuquan.xyz/dl/DeepSeek-${{ steps.version.outputs.version }}-linux-arm64.deb
-            - Linux arm64 rpm：https://dsh.zhuquan.xyz/dl/DeepSeek-${{ steps.version.outputs.version }}-linux-aarch64.rpm
-            - macOS Apple Silicon：https://dsh.zhuquan.xyz/dl/DeepSeek-${{ steps.version.outputs.version }}-mac-arm64.dmg
-            - macOS Intel：https://dsh.zhuquan.xyz/dl/DeepSeek-${{ steps.version.outputs.version }}-mac-x64.dmg
-
-            首次启动需要联网 1–3 分钟（下载 Node 和官方 dsh）。默认皮肤已内置。之后菜单可检查桌面版和 Harness 更新。
-
-            **Linux:** 优先 `.tar.gz` 或 `.deb`。AppImage 在 Ubuntu 24.04 常缺 libfuse2。
-            **Windows:** 安装包会创建桌面和开始菜单快捷方式。便携版快捷方式指向该 exe 本身，关掉后仍然有效。未签名时 SmartScreen 选「更多信息 → 仍要运行」。
-            **macOS:** 把 App 拖到「应用程序」。若提示已损坏，终端运行 `xattr -cr /Applications/DeepSeek.app`。DMG 里有 `Read-Me-First.txt` 和 `Open-DeepSeek.command`。说明：https://dsh.zhuquan.xyz/mac.html
-
-            | File | Platform |
-            | --- | --- |
-            | `DeepSeek-${{ steps.version.outputs.version }}-win.exe` | Windows portable（自解压运行，免安装；软件内更新用的就是它） |
-            | `DeepSeek-${{ steps.version.outputs.version }}-win-x64.exe` / `*-win-arm64.exe` | Windows installer（NSIS 安装器，支持静默 `/S`） |
-            | `DeepSeek-${{ steps.version.outputs.version }}-mac-arm64.dmg` | macOS Apple Silicon |
-            | `DeepSeek-${{ steps.version.outputs.version }}-mac-x64.dmg` | macOS Intel |
-            | `DeepSeek-${{ steps.version.outputs.version }}-linux-x64.tar.gz` / `*-linux-amd64.deb` / `*-linux-x86_64.rpm` | Linux x64 |
-            | `DeepSeek-${{ steps.version.outputs.version }}-linux-arm64.tar.gz` / `*-linux-arm64.deb` / `*-linux-aarch64.rpm` | Linux arm64 |
-            | `DeepSeek-${{ steps.version.outputs.version }}-linux-*.AppImage` / `*-no-fuse.sh` | AppImage（需 libfuse2，或用脚本） |
-
           files: |
             installers/*.exe
             installers/*.dmg
