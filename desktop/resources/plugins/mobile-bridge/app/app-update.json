@@ -1,9 +1,9 @@
 {
-  "version": "0.4.6",
-  "versionCode": 102,
+  "version": "0.4.7",
+  "versionCode": 103,
   "apkUrl": "https://m.zhuquan.xyz/mobile/dsh-mobile.apk",
-  "sha256": "494856a8bfa91fd091c49b1bfc549cdc0022dfa7935b879e28aae9bd5b15401a",
-  "size": 3824903,
-  "notes": "1. SVG 交付物在手机端可直接预览（消息内卡片 + Markdown 链接均可点开，支持缩放与全屏）\\n2. 修复切换模型后手机 UI 滞留「正在重试」的显示异常，新模型有输出时重试状态即刻清除",
-  "publishedAt": "2026-09-27T22:11:38+08:00"
+  "sha256": "66b0a349383619a8d8b2c92fca1be20be8873847ecb29bdd7f5766b169379861",
+  "size": 3824899,
+  "notes": "修复互动型 SVG 手机端预览空白（防住 SVG 自带样式劫持预览布局）；SVG 预览开启脚本——动画与声音按钮直接在手机上玩；预览顶栏不再显示「0 B」",
+  "publishedAt": "2026-09-28T00:25:14+08:00"
 }

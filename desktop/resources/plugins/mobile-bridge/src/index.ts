@@ -396,7 +396,8 @@ export function apply(ctx: Context, config: { publicUrl?: string } = {}): void {
   // ------------------------------------------------------- 生成文件按会话归属
   // 一个工作目录会被很多会话共用（默认 cwd 相同），只按目录列文件会让每个会话都
   // 显示同一堆文件。这里按「回合时间窗」记账：turn/start→turn/end 之间被改动过的
-  // 顶层文件算这个会话生成的。历史会话第一次访问时还按其自身历史里的回合窗回填。
+  // 顶层文件与 outputs/ 一级子目录文件（模型放交付物的常用落点）算这个会话生成的。
+  // 历史会话第一次访问时还按其自身历史里的回合窗回填。
   interface FileRec { mtime: number; size: number; at: number }
   interface SessionFileRec { cwd: string; updated: number; backfilled?: boolean; entries: Record<string, FileRec>; generated?: Record<string, FileRec>; genScanned?: boolean }
   interface FilesState { version: 1; sessions: Record<string, SessionFileRec> }
@@ -624,32 +625,41 @@ export function apply(ctx: Context, config: { publicUrl?: string } = {}): void {
     }
   }
 
-  /** 顶层文件（带 mtime）——归属与列表共用同一条扫描。 */
-  const topLevelFiles = (cwd: string): Array<{ name: string; size: number; mtime: number }> => {
-    const out: Array<{ name: string; size: number; mtime: number }> = []
-    try {
-      for (const entry of readdirSync(cwd, { withFileTypes: true })) {
-        if (!entry.isFile() || entry.name.startsWith('.')) continue
-        try {
-          const stat = statSync(join(cwd, entry.name))
-          out.push({ name: entry.name, size: stat.size, mtime: stat.mtimeMs })
-        } catch {
-          // 单个文件读不到就跳过，别让整个扫描失败
+  /**
+   * 会话工作区里参与「生成文件」归属的扫描范围：cwd 顶层 + outputs/ 一级子目录。
+   * outputs/ 是模型放交付物的常用目录（2026-09-28 实案：coastal-cycling.svg 只扫
+   * 顶层时永远进不了列表）。条目 key = 相对 cwd 的路径（「outputs/x.svg」），/files
+   * 与 /fs 都按这个相对路径取文件。
+   */
+  const SESSION_SCAN_DIRS = ['', 'outputs'] as const
+  const scanWorkspaceFiles = (cwd: string): Array<{ rel: string; size: number; mtime: number }> => {
+    const out: Array<{ rel: string; size: number; mtime: number }> = []
+    for (const sub of SESSION_SCAN_DIRS) {
+      const dir = sub === '' ? cwd : join(cwd, sub)
+      try {
+        for (const entry of readdirSync(dir, { withFileTypes: true })) {
+          if (!entry.isFile() || entry.name.startsWith('.')) continue
+          try {
+            const stat = statSync(join(dir, entry.name))
+            out.push({ rel: sub === '' ? entry.name : `${sub}/${entry.name}`, size: stat.size, mtime: stat.mtimeMs })
+          } catch {
+            // 单个文件读不到就跳过，别让整个扫描失败
+          }
         }
+      } catch {
+        // 目录不存在（比如还没建 outputs/）就跳过
       }
-    } catch {
-      return []
     }
     return out
   }
-  /** 把若干时间窗内改动过的顶层文件记到会话账上；返回新增条数。 */
+  /** 把若干时间窗内改动过的文件（顶层 + outputs/）记到会话账上；返回新增条数。 */
   const attributeWindows = (rec: SessionFileRec, cwd: string, windows: Array<[number, number]>): number => {
     if (windows.length === 0) return 0
     let added = 0
-    for (const file of topLevelFiles(cwd)) {
+    for (const file of scanWorkspaceFiles(cwd)) {
       for (const [start, end] of windows) {
         if (file.mtime >= start - ATTRIB_PAD_MS && file.mtime <= end + ATTRIB_PAD_MS) {
-          rec.entries[file.name] = { mtime: file.mtime, size: file.size, at: Date.now() }
+          rec.entries[file.rel] = { mtime: file.mtime, size: file.size, at: Date.now() }
           added += 1
           break
         }
@@ -2224,8 +2234,9 @@ document.addEventListener('click', async (event) => {
         return
       }
       if (action === 'files') {
-        // 生成的文件按会话归属：只有这个会话的回合时间窗里改动过的顶层文件才算。
-        // 历史会话先按它自己的历史窗回填一次；运行中的回合现场合并。
+        // 生成的文件按会话归属：只有这个会话的回合时间窗里改动过的文件才算
+        // （顶层 + outputs/ 一级子目录）。历史会话先按它自己的历史窗回填一次；
+        // 运行中的回合现场合并。
         const cwd = await sessionCwdOf(sessionId)
         if (cwd === '') {
           sendJson(res, 200, { ok: true, cwd: '', items: [] })
@@ -2283,11 +2294,12 @@ document.addEventListener('click', async (event) => {
         }
         const rec = loadFileState().sessions[sessionId]
         const items: Array<{ path: string; name: string; size: number; mtime: number }> = []
-        for (const name of Object.keys(rec?.entries ?? {})) {
+        for (const rel of Object.keys(rec?.entries ?? {})) {
           try {
-            const stat = statSync(join(cwd, name))
+            const stat = statSync(join(cwd, rel))
             if (!stat.isFile()) continue
-            items.push({ path: name, name, size: stat.size, mtime: stat.mtimeMs })
+            // path = 相对 cwd 的完整路径（/fs 按它取文件）；name 只给显示用（取末段）
+            items.push({ path: rel, name: rel.split('/').pop() ?? rel, size: stat.size, mtime: stat.mtimeMs })
           } catch {
             // 文件已删除：不展示，也不清账（可能只是暂时挪走）
           }
