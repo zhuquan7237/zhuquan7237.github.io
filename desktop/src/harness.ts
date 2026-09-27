@@ -306,22 +306,27 @@ export async function startHarnessWeb(options: {
   }
 
   let buffer = "";
+  let settled = false;
   const url = await new Promise<string>((resolve, reject) => {
     const timer = setTimeout(() => {
       reject(new Error("等待 Harness 界面超时。请检查网络后重试，或查看下方日志。"));
     }, 120_000);
+    // 持续转发引擎输出（修复：旧实现拿到就绪 URL 后就 off("data")，
+    // 之后的日志全部丢失、子进程 stdout 缓冲还会越积越多）。就绪与否
+    // 只影响 promise 是否已解析，不再影响日志订阅。
     const onData = (chunk: Buffer) => {
       const text = chunk.toString("utf8");
-      buffer += text;
+      if (!settled) buffer += text;
       for (const line of text.split(/\r?\n/)) {
         if (line.trim()) options.onLog(line.trim());
       }
-      const found = parseDshWebUrl(buffer);
-      if (found) {
-        clearTimeout(timer);
-        child.stdout?.off("data", onData);
-        child.stderr?.off("data", onData);
-        resolve(found);
+      if (!settled) {
+        const found = parseDshWebUrl(buffer);
+        if (found) {
+          settled = true;
+          clearTimeout(timer);
+          resolve(found);
+        }
       }
     };
     child.stdout?.on("data", onData);

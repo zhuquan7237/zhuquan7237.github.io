@@ -1,9 +1,9 @@
 {
-  "version": "0.4.2",
-  "versionCode": 98,
+  "version": "0.4.3",
+  "versionCode": 99,
   "apkUrl": "https://m.zhuquan.xyz/mobile/dsh-mobile.apk",
-  "sha256": "e69b23bc0aef1b4fe623df080a33b1454cc54689e35cf357568464934dcd8db0",
-  "size": 3808059,
-  "notes": "任务进行时，一眼看清：运行中实时显示「模型正在思考/输出 · 已 N 字」计数与上游断线重试状态；任务页整改（状态收敛到一条任务栏、任务反馈贴住原消息、更轻的停止键、排队输入提示）；「新建对话」换铅笔图标。",
-  "publishedAt": "2026-09-27T02:07:09+08:00"
+  "sha256": "e1589bfdbd10ce13e9f6d7e14bcccc76b38beea41750b3bc07a3143fac1cbf4d",
+  "size": 3824899,
+  "notes": "手机端可直接回答模型提问：模型用 ask_user_question 提问时，聊天里出现问答卡，点选即可作答（单选点一下、多选/多问题勾选后提交，支持自定义回答）；电脑端与手机同时可见，先答的生效。",
+  "publishedAt": "2026-09-27T14:41:13+08:00"
 }

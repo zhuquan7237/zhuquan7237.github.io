@@ -59,6 +59,7 @@ import {
 import { qrSvg } from './qr.js'
 import { directHosts, type NetworkConfig, type NetworkRoute } from './network.js'
 import { startRelayLink } from './relay.js'
+import { QuestionsMuxClient } from './mux-client.js'
 import { createServer as createHttpServer, request as httpRequest } from 'node:http'
 import { request as httpsRequest } from 'node:https'
 import { connect as netConnect } from 'node:net'
@@ -76,7 +77,7 @@ export * from './ws.js'
 export const name = 'dsh-mobile-bridge'
 
 /** Services the host half needs. */
-export const inject = ['webServer', 'credentials']
+export const inject = ['webServer', 'connection', 'credentials']
 
 /** Public prefix the tunnel forwards. */
 export const PUBLIC_PREFIX = '/mobile'
@@ -976,6 +977,166 @@ export function apply(ctx: Context, config: { publicUrl?: string } = {}): void {
     log('进度脉冲订阅已就绪：agent/assistant-stream（仅计数，不带内容）')
   } catch (error) {
     log(`订阅进度脉冲失败：${error instanceof Error ? error.message : String(error)}`)
+  }
+
+  // ------------------------------------------------------------ 模型提问（问用户）
+  // 引擎把 `ask_user_question` 的提问通过 Remote 事件扇出给每个已连接的客户端；
+  // 桥接作为常驻 Remote 客户端接住提问、推给手机，再把手机的答案回传。
+  // 桌面端网页与手机会同时看到同一条提问——先答的生效，其余客户端收到引擎的 cancel。
+  interface BridgeQuestion {
+    eventId: string
+    sessionId: string
+    questions: unknown[]
+    createdAt: number
+  }
+  const questionsPending = new Map<string, BridgeQuestion>()
+  const questionsRecent: Array<BridgeQuestion & { status: 'answered' | 'cancelled'; resolvedAt: number }> = []
+
+  const settleQuestion = (record: BridgeQuestion, status: 'answered' | 'cancelled'): void => {
+    if (!questionsPending.delete(record.eventId)) return
+    questionsRecent.unshift({ ...record, status, resolvedAt: Date.now() })
+    if (questionsRecent.length > 20) questionsRecent.length = 20
+    publish({ kind: 'event', sessionId: record.sessionId, type: 'question/resolved', data: { eventId: record.eventId, status } })
+  }
+
+  const applyMuxFrame = (frame: Record<string, unknown>): void => {
+    const type = typeof frame.type === 'string' ? frame.type : ''
+    if (type === 'waterfall' && frame.event === 'user-questions/request') {
+      const eventId = typeof frame.eventId === 'string' ? frame.eventId : ''
+      const sessionId = typeof frame.agentId === 'string' ? frame.agentId : ''
+      const request = isRecord(frame.request) ? frame.request : {}
+      const questions = Array.isArray(request.questions) ? (request.questions as unknown[]) : []
+      if (eventId === '' || sessionId === '' || questions.length === 0 || questionsPending.has(eventId)) return
+      const record: BridgeQuestion = { eventId, sessionId, questions, createdAt: Date.now() }
+      questionsPending.set(eventId, record)
+      const first = isRecord(questions[0]) && typeof questions[0].question === 'string' ? questions[0].question : '模型有一个问题需要你回答'
+      log(`收到模型提问：${sessionId.slice(-12)} · ${questions.length} 个问题`)
+      publish({ kind: 'notify', level: 'info', sessionId, title: '模型在等你回答', body: first.slice(0, 80) })
+      publish({ kind: 'event', sessionId, type: 'question/asked', data: { eventId, questions, createdAt: record.createdAt } })
+      return
+    }
+    if (type === 'cancel') {
+      const eventId = typeof frame.eventId === 'string' ? frame.eventId : ''
+      const record = questionsPending.get(eventId)
+      if (record === undefined) return
+      log(`模型提问已由其他终端处理：${record.sessionId.slice(-12)}`)
+      settleQuestion(record, 'cancelled')
+    }
+    // 其余转发帧（审批、会话状态等）由既有通道承担，这里不重复消费。
+  }
+
+  const answerQuestion = async (eventId: string, answers: unknown): Promise<{ ok: boolean; code?: string; message?: string }> => {
+    const record = questionsPending.get(eventId)
+    if (record === undefined) return { ok: false, code: 'E_GONE', message: '这条提问已经结束（可能已在电脑端回答）' }
+    const valid = Array.isArray(answers) && answers.every((item) =>
+      isRecord(item)
+      && typeof item.id === 'string'
+      && Array.isArray(item.selected)
+      && item.selected.every((label) => typeof label === 'string')
+      && (item.custom === undefined || typeof item.custom === 'string'))
+    if (!valid) return { ok: false, code: 'E_BAD_REQUEST', message: '答案格式不正确' }
+    if (questionsMux === null || !questionsMux.ready) return { ok: false, code: 'E_OFFLINE', message: '与引擎的提问通道尚未连接，请稍后重试' }
+    const result = await questionsMux.submitResult({
+      clientId: questionsMux.generation,
+      eventId,
+      outcome: { kind: 'result', value: { answers } },
+    })
+    if (!result.ok) return { ok: false, code: 'E_ENGINE', message: result.error?.message ?? '引擎没有接受这次回答' }
+    log(`手机答案已回传：${record.sessionId.slice(-12)}`)
+    settleQuestion(record, 'answered')
+    return { ok: true }
+  }
+
+  const currentPort = (): number => {
+    try {
+      const server = ctx.get('webServer') as unknown as { port?: number }
+      if (server !== undefined && typeof server.port === 'number' && server.port > 0) return server.port
+    } catch {
+      // 拿不到就用默认端口
+    }
+    return 17731
+  }
+
+  // 登录：引擎的 launch token 只在进程内可见，从自己的连接服务取「带 token 的
+  // 地址」，换一次签名 cookie。引擎重启后 cookie 依旧有效（签名密钥持久化）；
+  // 被引擎拒绝（401/403）时强制重换。
+  // 连接服务经可选注入捕获（cordis 隔离：不声明 inject 就拿不到别的插件服务）。
+  let connectionService: { authenticatedUrl?: (base: string) => string } | undefined
+  ctx.inject(['connection'], (connectionCtx) => {
+    connectionService = (connectionCtx as unknown as { connection?: { authenticatedUrl?: (base: string) => string } }).connection
+  })
+  let engineAuthCookie: string | null = null
+  let engineAuthExpiry = 0
+  const engineCookie = async (refresh = false): Promise<string> => {
+    if (refresh) {
+      engineAuthCookie = null
+      engineAuthExpiry = 0
+    }
+    if (engineAuthCookie !== null && Date.now() < engineAuthExpiry) return engineAuthCookie
+    const connection = connectionService ?? (ctx.get('connection') as unknown as { authenticatedUrl?: (base: string) => string } | undefined)
+    const authed = typeof connection?.authenticatedUrl === 'function' ? connection.authenticatedUrl(`http://127.0.0.1:${currentPort()}`) : ''
+    const token = ((): string => {
+      try {
+        const url = new URL(authed)
+        for (const value of url.searchParams.values()) return value
+      } catch {
+        // fallthrough
+      }
+      return ''
+    })()
+    if (token === '') throw new Error('连接服务未提供登录令牌')
+    const cookie = await new Promise<string>((resolve, reject) => {
+      const request = httpRequest(
+        { host: '127.0.0.1', port: currentPort(), path: `/?token=${encodeURIComponent(token)}` },
+        (response) => {
+          response.resume()
+          const header = response.headers['set-cookie']
+          const first = Array.isArray(header) ? header[0] : header
+          if (typeof first !== 'string' || first === '') {
+            reject(new Error(`登录换取 cookie 失败：HTTP ${response.statusCode ?? 0}`))
+            return
+          }
+          const pair = first.split(';')[0] ?? ''
+          const maxAge = ((): number => {
+            const match = /max-age=(\d+)/i.exec(first)
+            return match === null ? 1800 : Number(match[1])
+          })()
+          engineAuthExpiry = Date.now() + Math.max(60, maxAge - 120) * 1000
+          resolve(pair)
+        },
+      )
+      request.setTimeout(10000, () => {
+        request.destroy(new Error('登录请求超时'))
+      })
+      request.on('error', (error: Error) => reject(error))
+      request.end()
+    })
+    engineAuthCookie = cookie
+    return cookie
+  }
+
+  let questionsMux: QuestionsMuxClient | null = null
+  let questionsMuxLogAt = 0
+  const startQuestionsMux = (): void => {
+    if (questionsMux !== null) return
+    const client = new QuestionsMuxClient({
+      port: currentPort,
+      cookie: engineCookie,
+      retryDelayMs: 3000,
+      handlers: {
+        onReady: (id) => log(`用户提问通道已接入引擎（Remote 客户端 ${id.slice(0, 8)}…）：手机可以直接回答模型提问`),
+        onFrame: applyMuxFrame,
+        onDown: (reason) => {
+          const now = Date.now()
+          if (now - questionsMuxLogAt > 60000) {
+            questionsMuxLogAt = now
+            log(`用户提问通道断开：${reason}（稍后自动重连）`)
+          }
+        },
+      },
+    })
+    questionsMux = client
+    client.start()
   }
 
   // ------------------------------------------------------------------- helpers
@@ -2683,6 +2844,44 @@ document.addEventListener('click', async (event) => {
     }),
   })
 
+  // 模型提问：手机端查看待回答清单，并把选择的答案回传给引擎。
+  // 桌面端与手机端会同时收到同一条提问——先答的生效，另一侧自动收起卡片。
+  webServer.register({
+    kind: 'exact',
+    path: `${PUBLIC_PREFIX}/questions`,
+    handler: guarded(async (_req, res, device) => {
+      const check = requireScope(device, 'read')
+      if (!check.ok) {
+        sendJson(res, 200, { ok: false, code: check.code, message: check.message })
+        return
+      }
+      sendJson(res, 200, {
+        ok: true,
+        pending: [...questionsPending.values()].sort((a, b) => a.createdAt - b.createdAt),
+        recent: questionsRecent.slice(0, 10),
+        serverTime: Date.now(),
+      })
+    }),
+  })
+  webServer.register({
+    kind: 'exact',
+    path: `${PUBLIC_PREFIX}/questions/answer`,
+    handler: guarded(async (_req, res, device, body) => {
+      const check = requireScope(device, 'prompt')
+      if (!check.ok) {
+        sendJson(res, 200, { ok: false, code: check.code, message: check.message })
+        return
+      }
+      const eventId = typeof body.eventId === 'string' ? body.eventId : ''
+      if (eventId === '') {
+        sendJson(res, 200, { ok: false, code: 'E_BAD_REQUEST', message: '缺少 eventId' })
+        return
+      }
+      const outcome = await answerQuestion(eventId, body.answers)
+      sendJson(res, 200, outcome)
+    }, true),
+  })
+
   // Generic passthrough: the phone can call any method the scope table allows,
   // which is how features arrive before a wrapper exists for them.
   webServer.register({
@@ -3057,6 +3256,13 @@ document.addEventListener('click', async (event) => {
     relayLink = startRelayLink({ candidates: relayCandidates, deviceKey: relayKey, secret: relaySecret, localPort, log })
   } catch (error) {
     log(`中继启动失败：${error instanceof Error ? error.message : String(error)}`)
+  }
+
+  // 模型提问通道：作为常驻 Remote 客户端接入引擎；起不来不影响其余功能。
+  try {
+    startQuestionsMux()
+  } catch (error) {
+    log(`用户提问通道启动失败：${error instanceof Error ? error.message : String(error)}`)
   }
 
   // -------------------------------------------------------------- 局域网直连
