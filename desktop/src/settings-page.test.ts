@@ -93,3 +93,14 @@ describe("settings page keeps what the user already had", () => {
     expect(html).not.toContain("box-shadow 0.15s");
   });
 });
+
+describe("settings page exposes the custom data directory", () => {
+  it("round-trips dshHome and offers a folder picker", async () => {
+    const html = await readFile(path.join(__dirname, "..", "resources", "settings.html"), "utf8");
+    // 数据目录：引擎全部用户数据（会话/设置/配对）的存放位置，留空=默认。
+    expect(html).toContain('id="dataHome"');
+    expect(html).toContain('id="pickDataHome"');
+    expect(html).toContain('$("dataHome").value = s.dshHome || ""');
+    expect(html).toContain('dshHome: $("dataHome").value.trim()');
+  });
+});

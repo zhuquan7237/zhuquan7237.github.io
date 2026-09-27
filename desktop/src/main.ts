@@ -314,7 +314,11 @@ async function createMain(url: string, version: string): Promise<void> {
 }
 
 function dshHomeDir(): string {
-  return path.join(userData(), "dsh-home");
+  // A custom data directory keeps engine user data (sessions, settings,
+  // pairings) out of the default userData/dsh-home; "" restores the default.
+  // `settings` is still undefined on very early calls — fall back until then.
+  const custom = settings?.dshHome?.trim() ?? "";
+  return custom !== "" ? custom : path.join(userData(), "dsh-home");
 }
 
 async function syncSkins(onLog: (line: string) => void = shellLog): Promise<InstalledSkin[]> {
@@ -1694,6 +1698,7 @@ if (linuxReady) {
         timeZone,
       );
       settings.workspaceDir = resolveWorkspaceDir(settings.workspaceDir, homedir());
+      settings.dshHome = (settings.dshHome || "").trim();
       settings.webPort = normalizeWebPort(settings.webPort);
       await saveSettings(userData(), settings);
       logger = new FileLogger(userData(), "app.log");

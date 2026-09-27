@@ -57,6 +57,12 @@ export interface DesktopSettings {
   /** If set, boot this already-built harness checkout instead of npm. */
   localHarnessDir: string;
   workspaceDir: string;
+  /**
+   * Custom engine data directory (sessions, settings, mobile pairings).
+   * "" keeps the default <userData>/dsh-home. Takes effect after a restart;
+   * changing it does NOT move existing files — the user migrates manually.
+   */
+  dshHome: string;
   lastHarnessVersion: string;
   /** Startup prompt will not ask again until npm publishes a newer version. */
   skippedHarnessVersion: string;
@@ -90,6 +96,7 @@ export const DEFAULT_SETTINGS: DesktopSettings = {
   registrySource: "auto",
   localHarnessDir: "",
   workspaceDir: "",
+  dshHome: "",
   lastHarnessVersion: "",
   skippedHarnessVersion: "",
   skippedDesktopVersion: "",

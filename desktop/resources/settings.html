@@ -458,6 +458,16 @@
             <span class="card-desc">会话存储、本地任务及运行产物的根工作目录。</span>
           </div>
 
+          <!-- Data Directory -->
+          <div class="card">
+            <span class="card-title">数据目录</span>
+            <div class="row-flex">
+              <input class="input-text" id="dataHome" placeholder="留空 = 默认（应用数据目录下的 dsh-home）" style="font-family:monospace;" />
+              <button class="btn btn-secondary" id="pickDataHome" type="button">浏览</button>
+            </div>
+            <span class="card-desc">引擎全部用户数据（所有会话记录、设置、手机配对）的存放位置。修改后：先把旧目录内容迁移到新目录，再重启桌面端生效；留空恢复默认。</span>
+          </div>
+
           <!-- Window, tray and language -->
           <div class="card">
             <span class="card-title">窗口、托盘与语言</span>
@@ -638,6 +648,7 @@
         registry: "https://registry.npmmirror.com",
         localHarnessDir: "",
         workspaceDir: "C:\\Users\\zhuquan\\DeepSeek",
+        dshHome: "",
         visionAux: { enabled: true, baseURL: "https://opencode.ai/zen/go/v1", apiKey: "", model: "minimax-m3", timeoutMs: 60000, skipWhenUnknown: false },
         webSearch: { provider: "deepseek-official", tavily: { apiKey: "", baseURL: "https://api.tavily.com", maxResults: 8 } },
         mobile: { publicUrl: "" },
@@ -683,6 +694,7 @@
         $("registry").value = s.registry || CHINA;
         $("local").value = s.localHarnessDir || "";
         $("workspace").value = s.workspaceDir || "C:\\Users\\zhuquan\\DeepSeek";
+        $("dataHome").value = s.dshHome || "";
 
         $("closeToTray").checked = s.closeToTray !== false;
         $("locale").value = s.locale || "";
@@ -809,6 +821,12 @@
           if (dir) $("local").value = dir;
         }
       };
+      $("pickDataHome").onclick = async () => {
+        if (window.desktop && window.desktop.pickDir) {
+          const dir = await window.desktop.pickDir();
+          if (dir) $("dataHome").value = dir;
+        }
+      };
 
       // Cancel
       $("btnCancel").onclick = () => {
@@ -840,6 +858,7 @@
           registry,
           registrySource: registry === current.registry ? current.registrySource : "user",
           localHarnessDir: $("local").value.trim(),
+          dshHome: $("dataHome").value.trim(),
           closeToTray: $("closeToTray").checked,
           locale: $("locale").value,
           webPort: Math.max(0, Math.min(65535, Math.trunc(Number($("webPort").value) || 0))),
