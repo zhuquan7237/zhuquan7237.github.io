@@ -2558,16 +2558,20 @@ document.addEventListener('click', async (event) => {
     }, true),
   })
 
-  // ------------------------------------------------- 写前快照（settings.yaml 保险绳）
-  // settings.yaml 是模型配置的唯一真源：任何一次保存前先留一份，写挂了能人工回滚。
-  // 只保留最近 30 份，失败绝不影响保存本身。
+  // ------------------------------------------------- 写前快照（settings 保险绳）
+  // 模型配置的真源随引擎代际搬家：≤0.1.5 是 dsh-home/settings.yaml，≥0.1.7
+  // 引擎把它导入 profile 用户层（profiles/web/cordis.patch.yml）。两代都留一份。
+  // 任何一次保存前先留一份，写挂了能人工回滚；只保留最近 30 份，失败绝不影响保存本身。
   const snapshotSettings = (): void => {
     try {
-      const source = join(dirname(storePath()), 'settings.yaml')
-      if (!existsSync(source)) return
-      const dir = join(dirname(source), 'backups')
+      const home = dirname(storePath())
+      const source = [join(home, 'settings.yaml'), join(home, 'profiles', 'web', 'cordis.patch.yml')].find(
+        (candidate) => existsSync(candidate),
+      )
+      if (source === undefined) return
+      const dir = join(home, 'backups')
       mkdirSync(dir, { recursive: true })
-      const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
+      const stamp = new Date().toISOString().replace(/[-:]/g, '').replace('T', '-').slice(0, 15)
       writeFileSync(join(dir, `settings-${stamp}.yaml`), readFileSync(source))
       const files = readdirSync(dir)
         .filter((name) => name.startsWith('settings-') && name.endsWith('.yaml'))

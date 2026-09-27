@@ -81,10 +81,17 @@ export const ROUTE_SEAT = '/dsh-model-vision/seat'
 export { MODALITIES, normalizeModelId, sourceLabel }
 export type { Catalogue, Modality, RoutePlan }
 
-/** Structural slice of `settings` this plugin uses. */
+/**
+ * Structural slice of `settings` this plugin uses. Engines ≥0.1.7 replaced the
+ * `get`/`section` read pair with `describe()` — one descriptor per namespace
+ * (`value` = live resolved view, `user` = raw user layer, `revision` = CAS
+ * token); older engines expose both shapes, so reads prefer `describe` and
+ * fall back to the legacy accessors. Writes use `mutate` on every era.
+ */
 export interface SettingsLike {
-  section(ns: string): unknown
-  get(ns: string): unknown
+  describe?(options?: { redactSecrets?: boolean }): unknown
+  section?(ns: string): unknown
+  get?(ns: string): unknown
   mutate(ns: string, ops: unknown, expectedRevision?: number): Promise<unknown>
 }
 
@@ -248,15 +255,42 @@ export function apply(ctx: Context): void {
   }
 
   // ------------------------------------------------------------------- routes
+
+  /**
+   * One namespace's descriptor on either engine era. ≥0.1.7 serves settings
+   * reads through `describe()` (`get`/`section` were removed there); if a
+   * future engine reshapes it again this returns undefined and callers fall
+   * through to the legacy accessors — an unreadable namespace reads as empty,
+   * never a crash at activation time.
+   */
+  const descriptorFor = (ns: string): { user?: unknown; value?: unknown; revision?: number } | undefined => {
+    if (typeof settings.describe !== 'function') return undefined
+    try {
+      const described = settings.describe({})
+      const rows = Array.isArray(described)
+        ? described
+        : isRecord(described) && Array.isArray(described.namespaces)
+          ? (described.namespaces as unknown[])
+          : []
+      const row = rows.find((candidate) => isRecord(candidate) && candidate.ns === ns)
+      return row === undefined ? undefined : (row as { user?: unknown; value?: unknown; revision?: number })
+    } catch (error) {
+      log(`settings.describe 读取失败：${error instanceof Error ? error.message : String(error)}`)
+      return undefined
+    }
+  }
+
   const storedRoutes = (): Record<string, Record<string, unknown>> => {
-    const resolved = settings.get(SETTINGS_NS)
+    const row = descriptorFor(SETTINGS_NS)
+    const resolved = row?.value ?? row?.user ?? (typeof settings.get === 'function' ? settings.get(SETTINGS_NS) : undefined)
     return isRecord(resolved) && isRecord(resolved.providers)
       ? (resolved.providers as Record<string, Record<string, unknown>>)
       : {}
   }
 
   const storedModels = (route: string): Record<string, unknown>[] => {
-    const section = settings.section(SETTINGS_NS)
+    const row = descriptorFor(SETTINGS_NS)
+    const section = row?.user ?? row?.value ?? (typeof settings.section === 'function' ? settings.section(SETTINGS_NS) : undefined)
     const providers = isRecord(section) && isRecord(section.providers) ? section.providers : {}
     const entry = isRecord(providers[route]) ? (providers[route] as Record<string, unknown>) : undefined
     return entry && Array.isArray(entry.models) ? (entry.models as Record<string, unknown>[]) : []

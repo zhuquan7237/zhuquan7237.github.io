@@ -202,14 +202,41 @@ export function apply(ctx) {
         }
     };
     // ------------------------------------------------------------------- routes
+    /**
+     * One namespace's descriptor on either engine era. ≥0.1.7 serves settings
+     * reads through `describe()` (`get`/`section` were removed there); if a
+     * future engine reshapes it again this returns undefined and callers fall
+     * through to the legacy accessors — an unreadable namespace reads as empty,
+     * never a crash at activation time.
+     */
+    const descriptorFor = (ns) => {
+        if (typeof settings.describe !== 'function')
+            return undefined;
+        try {
+            const described = settings.describe({});
+            const rows = Array.isArray(described)
+                ? described
+                : isRecord(described) && Array.isArray(described.namespaces)
+                    ? described.namespaces
+                    : [];
+            const row = rows.find((candidate) => isRecord(candidate) && candidate.ns === ns);
+            return row === undefined ? undefined : row;
+        }
+        catch (error) {
+            log(`settings.describe 读取失败：${error instanceof Error ? error.message : String(error)}`);
+            return undefined;
+        }
+    };
     const storedRoutes = () => {
-        const resolved = settings.get(SETTINGS_NS);
+        const row = descriptorFor(SETTINGS_NS);
+        const resolved = row?.value ?? row?.user ?? (typeof settings.get === 'function' ? settings.get(SETTINGS_NS) : undefined);
         return isRecord(resolved) && isRecord(resolved.providers)
             ? resolved.providers
             : {};
     };
     const storedModels = (route) => {
-        const section = settings.section(SETTINGS_NS);
+        const row = descriptorFor(SETTINGS_NS);
+        const section = row?.user ?? row?.value ?? (typeof settings.section === 'function' ? settings.section(SETTINGS_NS) : undefined);
         const providers = isRecord(section) && isRecord(section.providers) ? section.providers : {};
         const entry = isRecord(providers[route]) ? providers[route] : undefined;
         return entry && Array.isArray(entry.models) ? entry.models : [];
