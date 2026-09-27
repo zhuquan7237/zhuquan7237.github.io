@@ -157,7 +157,11 @@ export function startRelayLink({ candidates, deviceKey, secret, localPort, log =
             reply(frame, { status: 400, headers: { 'content-type': 'text/plain' }, body: '' });
             return;
         }
-        if (!target.pathname.startsWith('/mobile') && !target.pathname.startsWith('/mobile-local')) {
+        // 只转发手机面：/mobile 与其子路径严格匹配。`/mobile-local`（本机配对页/设备
+        // 管理/网络配置）永不出公网——它以前被 startsWith('/mobile') 顺带放行，等于把
+        // 实时配对码与设备清单挂上了公网，外人可取码自配 admin。
+        const allowedPath = target.pathname === '/mobile' || target.pathname.startsWith('/mobile/');
+        if (!allowedPath) {
             reply(frame, { status: 403, headers: { 'content-type': 'text/plain' }, body: Buffer.from('只转发手机端接口').toString('base64') });
             return;
         }
@@ -191,6 +195,19 @@ export function startRelayLink({ candidates, deviceKey, secret, localPort, log =
     };
 
     const handleUpgrade = (frame) => {
+        // 升级同样只放行 /mobile 面：以前 upgrade 分支完全不过滤路径。
+        let upgradePath = '';
+        try {
+            upgradePath = new URL(String(frame.url ?? '/'), `http://127.0.0.1:${localPort}`).pathname;
+        }
+        catch {
+            // 解析失败按拒绝处理
+        }
+        if (!(upgradePath === '/mobile' || upgradePath.startsWith('/mobile/'))) {
+            if (socket?.readyState === 1)
+                socket.send(JSON.stringify({ t: 'up', id: frame.id, ok: false }));
+            return;
+        }
         let ws;
         try {
             ws = new WebSocket(`ws://127.0.0.1:${localPort}${frame.url ?? '/'}`);

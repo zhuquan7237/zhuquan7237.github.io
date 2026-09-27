@@ -801,6 +801,27 @@ export function apply(ctx: Context, config: { publicUrl?: string } = {}): void {
     }
   }
 
+  /**
+   * 撤销设备时立刻掐掉它挂着的所有事件流。只删令牌是不够的：已建立的 WebSocket
+   * 不受逐请求鉴权复查，会一直收到全部会话事件直到自然掉线（安全审计 2026-09-27）。
+   * 返回关掉的连接数。
+   */
+  const closeDeviceStreams = (deviceId: string): number => {
+    let closed = 0
+    for (const [connection, state] of clients) {
+      if (state.deviceId === deviceId) {
+        try {
+          connection.close(1000)
+        } catch {
+          // 已经断了
+        }
+        closed += 1
+      }
+    }
+    if (closed > 0) log(`已断开被撤销设备的事件流（${closed} 条连接）`)
+    return closed
+  }
+
   const sessionIdOf = (session: unknown): string => {
     if (isRecord(session)) {
       for (const field of ['id', 'sessionId']) {
@@ -1722,10 +1743,18 @@ document.addEventListener('click', async (event) => {
       }
       const revoke = path.match(/^\/devices\/([^/?]+)/)
       if (revoke !== null) {
+        if (req.method !== 'DELETE') {
+          sendJson(res, 200, { ok: false, code: 'E_BAD_REQUEST', message: '用 DELETE /mobile-local/devices/:id 解除绑定' })
+          return
+        }
+        const target = decodeURIComponent(revoke[1] as string)
         const store = load()
         const before = store.devices.length
-        store.devices = store.devices.filter((device) => device.id !== decodeURIComponent(revoke[1] as string))
+        store.devices = store.devices.filter((device) => device.id !== target)
         save(store)
+        const removed = before !== store.devices.length
+        // 撤销即刻生效：删令牌 + 掐断它已经挂着的事件流（见 closeDeviceStreams）。
+        if (removed) closeDeviceStreams(target)
         log(`已解除绑定：${before - store.devices.length} 台设备`)
         sendJson(res, 200, { ok: true, devices: store.devices.map(deviceView) })
         return
@@ -1803,6 +1832,11 @@ document.addEventListener('click', async (event) => {
     kind: 'exact',
     path: `${PUBLIC_PREFIX}/meta`,
     handler: guarded(async (req, res, device) => {
+      const check = requireScope(device, 'read')
+      if (!check.ok) {
+        sendJson(res, 200, { ok: false, code: check.code, message: check.message })
+        return
+      }
       sendJson(res, 200, {
         ok: true,
         server: { product: 'DeepSeek Harness', bridge: 'dsh-mobile-bridge', version: 1 },
@@ -2328,9 +2362,10 @@ document.addEventListener('click', async (event) => {
         }
       }
       if (action === 'cancel') {
-        await callEngine(ctx, 'session.cancel', { sessionId, ...((body.payload ?? {}) as Record<string, unknown>) })
+        const result = await callEngine(ctx, 'session.cancel', { sessionId, ...((body.payload ?? {}) as Record<string, unknown>) })
         log(`已请求停止：${sessionId}`)
-        sendJson(res, 200, { ok: true })
+        // 引擎返回值原样透传（手机端将来可据此区分"在跑/不在跑"）；以前丢弃恒回 ok:true。
+        sendJson(res, 200, { ok: true, result: result ?? null })
         return
       }
       if (action === 'model') {
@@ -2833,12 +2868,19 @@ document.addEventListener('click', async (event) => {
         sendJson(res, 200, { ok: false, code: check.code, message: check.message })
         return
       }
+      // 解绑只接受 DELETE：以前任意方法都会执行解绑，一次 GET「看一眼」就可能把设备删掉。
+      if (req.method !== 'DELETE') {
+        sendJson(res, 200, { ok: false, code: 'E_BAD_REQUEST', message: '用 DELETE /mobile/devices/:id 解除绑定' })
+        return
+      }
       const target = decodeURIComponent(pathAfter(req.url, `${PUBLIC_PREFIX}/devices`).replace(/^\//, '').split('?')[0] ?? '')
       const store = load()
       const before = store.devices.length
       store.devices = store.devices.filter((entry) => entry.id !== target)
       save(store)
       const removed = before !== store.devices.length
+      // 撤销必须"立即失效"，包括已经建立的事件流（见 closeDeviceStreams）。
+      if (removed) closeDeviceStreams(target)
       log(`设备解除绑定：${target}${removed ? '' : '（未找到）'}`)
       sendJson(res, 200, { ok: removed, devices: store.devices.map(deviceView), message: removed ? '已解除绑定' : '没有这台设备' })
     }),

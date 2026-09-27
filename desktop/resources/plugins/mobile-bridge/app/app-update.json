@@ -1,9 +1,9 @@
 {
-  "version": "0.4.3",
-  "versionCode": 99,
+  "version": "0.4.4",
+  "versionCode": 100,
   "apkUrl": "https://m.zhuquan.xyz/mobile/dsh-mobile.apk",
-  "sha256": "e1589bfdbd10ce13e9f6d7e14bcccc76b38beea41750b3bc07a3143fac1cbf4d",
+  "sha256": "69fca12a9e9d603be6404ad888730f2db737daa0afcd68fff75aafb56741993e",
   "size": 3824899,
-  "notes": "手机端可直接回答模型提问：模型用 ask_user_question 提问时，聊天里出现问答卡，点选即可作答（单选点一下、多选/多问题勾选后提交，支持自定义回答）；电脑端与手机同时可见，先答的生效。",
-  "publishedAt": "2026-09-27T14:41:13+08:00"
+  "notes": "安全止血版：发送有回执（回执前显示「发送中…」）；停止如实（你按的停止才显示已停止，不再当成功）；重连先补齐再亮「已连接」；审批只读说明更清楚；问题卡小屏大字全可达；配对三步指南与能力边界说明。配合桌面端 0.6.7（桥接 0.2.33）使用。",
+  "publishedAt": "2026-09-27T18:51:07+08:00"
 }
