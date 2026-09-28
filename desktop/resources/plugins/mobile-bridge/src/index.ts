@@ -944,12 +944,12 @@ export function apply(ctx: Context, config: { publicUrl?: string } = {}): void {
     log(`订阅会话事件失败：${error instanceof Error ? error.message : String(error)}`)
   }
 
-  // 进度脉冲（0.2.31）：只转发「计数」不转发内容。手机端据此显示
-  // 「正在思考 · 已 N 字 / 正在输出 · 已 N 字」——回答「它真在思考还是卡死了」。
-  // ⚠️ 内容逐字渲染已于 0.2.30 因闪烁整体下线，这里只累计字符数、按 ≥3.5s
+  // 进度脉冲（0.2.31，0.2.36 提速到 1s）：只转发「计数」不转发内容。手机端据此显示
+  // 「模型正在输出…」+「已用时 · 输出 N 字」——回答「它真在思考还是卡死了」。
+  // ⚠️ 内容逐字渲染已于 0.2.30 因闪烁整体下线，这里只累计字符数、按 ≥1s
   // 节流发一帧计数（不含任何文本），把「还活着」的证明和「文字闪烁」彻底解耦。
   const progressBySession = new Map<string, { turn: number; step: number; text: number; reason: number; lastEmit: number }>()
-  const PROGRESS_MIN_GAP_MS = 3500
+  const PROGRESS_MIN_GAP_MS = 1000
   const emitProgress = (sessionId: string, entry: { turn: number; step: number; text: number; reason: number; lastEmit: number }, force = false): void => {
     const now = Date.now()
     if (!force && now - entry.lastEmit < PROGRESS_MIN_GAP_MS) return
