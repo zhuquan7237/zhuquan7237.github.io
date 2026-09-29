@@ -1,9 +1,9 @@
 {
-  "version": "0.5.0",
-  "versionCode": 106,
+  "version": "0.5.1",
+  "versionCode": 107,
   "apkUrl": "https://m.zhuquan.xyz/mobile/dsh-mobile.apk",
-  "sha256": "0b0ef5c11aac532b8d9114768f245a3e50393410fcfebf0dea9167df9d81c775",
+  "sha256": "71f6b34b00e70bb812dd098a0d628dbc0ab7adbad7ca5ad412ea0470ba2fab5f",
   "size": 3857667,
-  "notes": "模型配置：提供商支持随时编辑（显示名/接口地址/协议/凭据变量名）——接口可在 Responses 与 Chat Completions 之间自由切换，另支持 Anthropic；提供商行显示当前协议。",
-  "publishedAt": "2026-09-29T11:04:41+08:00"
+  "notes": "连接体验修复：扫码成为唯一主入口，扫完即连；连接失效时提示扫码即可恢复，不再出现需要填服务器地址的界面。配对页文案精简（两步说明）。",
+  "publishedAt": "2026-09-29T16:18:57+08:00"
 }
