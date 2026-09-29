@@ -1899,11 +1899,13 @@ if (linuxReady) {
       });
       ipcMain.handle(
         "market:browse",
-        async (_event, input: { sourceId?: string; query?: string; category?: string }) => {
+        async (_event, input: { sourceId?: string; query?: string; category?: string; sort?: string; page?: number }) => {
           const page = await market().browse({
             sourceId: String(input?.sourceId ?? DSH1024_SOURCE.id),
             query: String(input?.query ?? ""),
             category: String(input?.category ?? ""),
+            sort: String(input?.sort ?? "hot"),
+            page: Number(input?.page ?? 1) || 1,
           });
           shellLog(`插件目录：${page.entries.length} 条（共 ${page.catalogTotal} 条，源 ${String(input?.sourceId ?? DSH1024_SOURCE.id)}）`);
           return page;
@@ -1948,6 +1950,52 @@ if (linuxReady) {
       ipcMain.handle("market:restart", async () => {
         await restartEngine();
         if (marketWindow && !marketWindow.isDestroyed()) marketWindow.webContents.send("log", "已重启引擎\n");
+      });
+      ipcMain.handle("market:recommend", async (_event, input: { sourceId?: string; need?: string }) => {
+        const result = await market().recommend({
+          sourceId: String(input?.sourceId ?? ""),
+          need: String(input?.need ?? ""),
+        });
+        shellLog(`AI 推荐：${result.picks.length} 条（${result.took}ms，${result.model ?? "?"}）`);
+        return result;
+      });
+      ipcMain.handle("market:daily", async (_event, input: { sourceId?: string }) =>
+        await market().daily({ sourceId: String(input?.sourceId ?? "") }),
+      );
+      ipcMain.handle(
+        "market:interact",
+        async (_event, input: { sourceId?: string; id?: string; action?: string }) => {
+          const action = input?.action === "like" || input?.action === "favorite" ? input.action : "install";
+          return await market().interact({
+            sourceId: String(input?.sourceId ?? ""),
+            id: String(input?.id ?? ""),
+            action,
+          });
+        },
+      );
+      ipcMain.handle("market:updates", async () => {
+        const result = await market().updates();
+        shellLog(`插件更新检查：检查 ${result.checked} 个，发现 ${result.updates.length} 个可更新`);
+        return result;
+      });
+      ipcMain.handle("market:export-pack", async () => await market().exportPack());
+      ipcMain.handle("market:import-pack", async () => {
+        const picked = await dialog.showOpenDialog({
+          title: "选择插件迁移包",
+          filters: [{ name: "DSH 插件迁移包", extensions: ["json"] }],
+          properties: ["openFile"],
+        });
+        if (picked.canceled || picked.filePaths.length === 0) {
+          return { ok: false, message: "已取消", results: [] };
+        }
+        try {
+          const raw = JSON.parse(readFileSync(picked.filePaths[0], "utf8")) as unknown;
+          const result = await market().importPack({ pack: raw as never });
+          shellLog(`插件迁移：${result.message}`);
+          return result;
+        } catch (error) {
+          return { ok: false, message: `读取迁移包失败：${error instanceof Error ? error.message : String(error)}`, results: [] };
+        }
       });
       buildMenu();
       createTray();

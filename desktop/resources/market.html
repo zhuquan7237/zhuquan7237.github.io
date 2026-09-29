@@ -5,102 +5,179 @@
     <title>插件市场</title>
     <style>
       :root {
-        --bg: #0c0e14;
-        --panel: #14161f;
-        --panel-2: #191c27;
-        --line: #232733;
-        --text: #e7e9ee;
-        --muted: #8b93a7;
-        --accent: #4f8cff;
-        --accent-soft: rgba(79, 140, 255, 0.14);
-        --ok: #3fbf7f;
+        --bg: #0b0d12;
+        --panel: #12141c;
+        --panel-2: #171a24;
+        --line: #21242f;
+        --line-soft: #1a1d27;
+        --text: #e8eaf0;
+        --muted: #8d95a9;
+        --faint: #5d6478;
+        --accent: #5b8dff;
+        --accent-soft: rgba(91, 141, 255, 0.13);
+        --gold: #e8b45a;
+        --ok: #45c584;
         --warn: #e0a44a;
         --bad: #e2635f;
+        --radius: 12px;
       }
       * { box-sizing: border-box; }
+      [hidden] { display: none !important; }
+      ::-webkit-scrollbar { width: 10px; height: 10px; }
+      ::-webkit-scrollbar-thumb { background: #262a37; border-radius: 6px; border: 2px solid var(--bg); }
+      ::-webkit-scrollbar-track { background: transparent; }
       body {
         margin: 0;
         background: var(--bg);
         color: var(--text);
-        font: 13px/1.5 -apple-system, "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+        font: 13px/1.55 -apple-system, "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
         -webkit-user-select: none;
         user-select: none;
       }
+
+      /* ---------------- 头部 ---------------- */
       header {
         display: flex;
         gap: 10px;
         align-items: center;
-        padding: 12px 16px;
-        border-bottom: 1px solid var(--line);
-        background: linear-gradient(180deg, #171a24, #12141c);
+        padding: 14px 20px 0;
       }
-      h1 { font-size: 15px; margin: 0; font-weight: 600; letter-spacing: 0.2px; }
+      .brand { display: flex; align-items: baseline; gap: 9px; }
+      h1 { font-size: 15.5px; margin: 0; font-weight: 650; letter-spacing: 0.2px; }
+      .brand small { color: var(--faint); font-size: 11.5px; }
       .grow { flex: 1; }
       select, input, button, textarea {
         font: inherit;
         color: var(--text);
         background: var(--panel-2);
         border: 1px solid var(--line);
-        border-radius: 8px;
-        padding: 7px 10px;
+        border-radius: 9px;
+        padding: 7px 11px;
         outline: none;
+        transition: border-color 0.15s, background 0.15s;
       }
-      input:focus, select:focus, textarea:focus { border-color: var(--accent); }
-      input[type="search"] { min-width: 220px; }
+      input:focus, select:focus, textarea:focus { border-color: #35507f; }
       button { cursor: pointer; }
       button:hover { border-color: #39405a; background: #1d2130; }
       button.primary { background: var(--accent-soft); border-color: #35507f; color: #cfe0ff; }
+      button.primary:hover { background: rgba(91, 141, 255, 0.2); }
+      button.gold { background: rgba(232, 180, 90, 0.1); border-color: #5f4d2d; color: #f3dcb4; }
+      button.gold:hover { background: rgba(232, 180, 90, 0.18); }
       button.danger { color: #ffc9c7; border-color: #5a3330; background: #241a1a; }
       button.ghost { background: transparent; }
+      button.tiny { padding: 4px 10px; font-size: 12px; border-radius: 7px; }
       button[disabled] { opacity: 0.45; cursor: not-allowed; }
-      nav { display: flex; gap: 4px; padding: 8px 16px 0; }
+
+      /* ---------------- 搜索区 ---------------- */
+      .searchbar { display: flex; gap: 8px; padding: 14px 20px 0; align-items: center; }
+      .searchbar .box {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 11px;
+        padding: 2px 6px 2px 13px;
+        transition: border-color 0.15s;
+      }
+      .searchbar .box:focus-within { border-color: #35507f; }
+      .searchbar .box svg { flex: none; opacity: 0.55; }
+      .searchbar input { flex: 1; background: transparent; border: none; padding: 8px 0; }
+      .searchbar input::placeholder { color: var(--faint); }
+      .searchbar .box button { border: none; }
+
+      /* ---------------- 导航 ---------------- */
+      nav { display: flex; gap: 2px; padding: 14px 20px 0; border-bottom: 1px solid var(--line); }
       nav button {
-        border: 1px solid transparent;
-        border-bottom: none;
+        border: none;
+        border-bottom: 2px solid transparent;
         background: transparent;
         color: var(--muted);
-        border-radius: 8px 8px 0 0;
-        padding: 7px 14px;
+        border-radius: 0;
+        padding: 8px 15px 10px;
+        font-size: 13.5px;
       }
-      nav button.active { color: var(--text); background: var(--panel); border-color: var(--line); }
-      main { padding: 12px 16px 20px; }
-      .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+      nav button:hover { color: var(--text); background: transparent; border-color: transparent; }
+      nav button.active { color: var(--text); border-bottom-color: var(--accent); font-weight: 600; }
+      nav button .count {
+        display: inline-block;
+        min-width: 17px;
+        padding: 0 5px;
+        margin-left: 5px;
+        border-radius: 999px;
+        background: var(--accent-soft);
+        color: #9db9ff;
+        font-size: 11px;
+        line-height: 17px;
+        text-align: center;
+        font-weight: 400;
+      }
+      nav button .count.gold { background: rgba(232, 180, 90, 0.14); color: var(--gold); }
+
+      main { padding: 16px 20px 28px; }
+
+      /* ---------------- 筛选行 ---------------- */
+      .filterrow { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; align-items: center; }
+      .toolrow { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; align-items: center; }
+      .toolrow .hint { margin-left: auto; }
       .chip {
         font-size: 12px;
-        padding: 4px 10px;
+        padding: 4.5px 11px;
         border-radius: 999px;
         border: 1px solid var(--line);
         background: var(--panel);
         color: var(--muted);
         cursor: pointer;
+        transition: all 0.15s;
       }
+      .chip:hover { color: var(--text); border-color: #333a4d; }
       .chip.active { color: #cfe0ff; border-color: #35507f; background: var(--accent-soft); }
-      .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 10px; }
+      .chip .n { color: var(--faint); margin-left: 4px; font-size: 11px; }
+      .chip.active .n { color: #8aa6d9; }
+      .sortrow { display: flex; gap: 6px; margin-left: auto; }
+      .sortrow button { font-size: 12px; padding: 4px 10px; border-radius: 8px; color: var(--muted); background: transparent; border-color: transparent; }
+      .sortrow button.active { color: var(--text); background: var(--panel-2); border-color: var(--line); }
+
+      /* ---------------- 卡片网格 ---------------- */
+      .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 10px; }
       .card {
         border: 1px solid var(--line);
-        border-radius: 12px;
+        border-radius: var(--radius);
         background: var(--panel);
-        padding: 12px;
+        padding: 13px 14px 11px;
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: 7px;
+        transition: border-color 0.15s, transform 0.15s;
       }
-      .card h3 { margin: 0; font-size: 13.5px; display: flex; align-items: center; gap: 8px; }
-      .card h3 span.owner { color: var(--muted); font-weight: 400; font-size: 12px; }
-      .desc { color: #b9c0d0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; min-height: 40px; }
-      .meta { display: flex; flex-wrap: wrap; gap: 8px; color: var(--muted); font-size: 11.5px; }
+      .card:hover { border-color: #333a4d; transform: translateY(-1px); }
+      .card h3 { margin: 0; font-size: 13.5px; font-weight: 600; display: flex; align-items: center; gap: 8px; min-width: 0; }
+      .card h3 .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .card h3 .owner { color: var(--faint); font-weight: 400; font-size: 11.5px; flex: none; }
+      .card h3 .star { margin-left: auto; flex: none; color: var(--gold); font-size: 11.5px; font-weight: 400; }
+      .desc { color: #b6bdcd; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 36px; font-size: 12.5px; }
+      .meta { display: flex; flex-wrap: wrap; gap: 7px; color: var(--faint); font-size: 11.5px; align-items: center; }
+      .meta .dot { color: #2c3140; }
       .row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
-      .badge { font-size: 11px; padding: 2px 7px; border-radius: 6px; border: 1px solid var(--line); color: var(--muted); }
+      .card .row { margin-top: 1px; }
+      .push { margin-left: auto; }
+
+      .badge { font-size: 11px; padding: 2px 8px; border-radius: 6px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
       .badge.ok { color: #b6f0d3; border-color: #2d5f45; background: #14251c; }
       .badge.bad { color: #ffc9c7; border-color: #5a3330; background: #241a1a; }
       .badge.warn { color: #f3dcb4; border-color: #5f4d2d; background: #241f14; }
-      .empty { color: var(--muted); padding: 28px 4px; text-align: center; }
+      .badge.acc { color: #cfe0ff; border-color: #35507f; background: var(--accent-soft); }
+      .badge.plain { color: var(--faint); }
+
+      .empty { color: var(--muted); padding: 34px 4px; text-align: center; }
+      .empty .sub { color: var(--faint); font-size: 12px; margin-top: 6px; }
       .banner {
         border: 1px solid var(--line);
         border-left: 3px solid var(--accent);
         background: var(--panel-2);
-        border-radius: 8px;
-        padding: 9px 12px;
+        border-radius: 9px;
+        padding: 9px 13px;
         margin-bottom: 12px;
         display: flex;
         gap: 10px;
@@ -108,64 +185,136 @@
       }
       .banner.ok { border-left-color: var(--ok); }
       .banner.bad { border-left-color: var(--bad); }
+      .banner.gold { border-left-color: var(--gold); }
+      .banner .grow { flex: 1; }
       pre.log {
-        margin: 0;
+        margin: 10px 0 0;
         max-height: 200px;
         overflow: auto;
-        background: #0a0b10;
+        background: #090a0e;
         border: 1px solid var(--line);
-        border-radius: 8px;
-        padding: 10px;
+        border-radius: 9px;
+        padding: 10px 12px;
         color: #a9b2c6;
-        font: 11.5px/1.45 ui-monospace, Consolas, monospace;
+        font: 11.5px/1.5 ui-monospace, Consolas, monospace;
         white-space: pre-wrap;
         -webkit-user-select: text;
         user-select: text;
       }
+
+      /* ---------------- 分页 ---------------- */
+      .pager { display: flex; gap: 8px; align-items: center; justify-content: center; padding: 18px 0 4px; color: var(--muted); font-size: 12.5px; }
+      .pager button { padding: 5px 12px; font-size: 12.5px; }
+
+      /* ---------------- 日报 ---------------- */
+      .digest { display: flex; flex-direction: column; gap: 14px; }
+      .digest .hero {
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: linear-gradient(180deg, #151827, #12141c);
+        padding: 18px 20px;
+      }
+      .digest .hero h2 { margin: 0 0 6px; font-size: 17px; font-weight: 650; }
+      .digest .hero .note { color: #b6bdcd; font-size: 13px; line-height: 1.7; white-space: pre-wrap; }
+      .digest .hero .date { color: var(--faint); font-size: 12px; margin-bottom: 8px; }
+      .stats { display: flex; gap: 10px; flex-wrap: wrap; }
+      .stat {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--panel);
+        padding: 10px 16px;
+        min-width: 110px;
+        flex: 1 1 120px;
+      }
+      .stat b { display: block; font-size: 18px; font-weight: 650; }
+      .stat span { color: var(--faint); font-size: 11.5px; }
+      .digcol { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 12px; }
+      .digsec { border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); padding: 13px 15px; }
+      .digsec h3 { margin: 0 0 10px; font-size: 13.5px; display: flex; align-items: center; gap: 8px; }
+      .digsec .item { padding: 7px 0; border-bottom: 1px solid var(--line-soft); display: flex; gap: 9px; align-items: baseline; }
+      .digsec .item:last-child { border-bottom: none; }
+      .digsec .item .nm { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 46%; }
+      .digsec .item .tx { color: var(--muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+      /* ---------------- 已安装 ---------------- */
+      .instlist { display: flex; flex-direction: column; gap: 8px; }
+      .instrow {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--panel);
+        padding: 10px 14px;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+      .instrow .nm { font-weight: 550; }
+      .instrow .ver { color: var(--faint); font-size: 12px; }
+      .instrow.disabled { opacity: 0.6; }
+      .instrow .grow { min-width: 0; }
+
+      /* ---------------- 对话框 ---------------- */
       dialog {
         border: 1px solid var(--line);
         background: var(--panel);
         color: var(--text);
         border-radius: 14px;
-        width: min(760px, 92vw);
-        max-height: 84vh;
+        width: min(780px, 92vw);
+        max-height: 86vh;
         padding: 0;
       }
       dialog::backdrop { background: rgba(4, 5, 9, 0.72); }
-      .dlg-head { display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-bottom: 1px solid var(--line); }
-      .dlg-body { padding: 14px 16px; overflow: auto; max-height: 62vh; -webkit-user-select: text; user-select: text; }
-      .dlg-foot { display: flex; gap: 8px; justify-content: flex-end; padding: 12px 16px; border-top: 1px solid var(--line); }
-      code, .mono { font: 11.5px ui-monospace, Consolas, monospace; background: #0a0b10; border: 1px solid var(--line); border-radius: 6px; padding: 2px 6px; display: inline-block; word-break: break-all; }
-      .src-row { display: flex; gap: 8px; align-items: center; border: 1px solid var(--line); border-radius: 10px; padding: 10px; margin-bottom: 8px; background: var(--panel-2); }
-      .pill { font-size: 11px; color: var(--muted); }
+      .dlg-head { display: flex; align-items: center; gap: 10px; padding: 14px 18px; border-bottom: 1px solid var(--line); }
+      .dlg-head strong { font-size: 14.5px; }
+      .dlg-body { padding: 16px 18px; overflow: auto; max-height: 62vh; -webkit-user-select: text; user-select: text; display: flex; flex-direction: column; gap: 11px; }
+      .dlg-body h4 { margin: 8px 0 0; font-size: 13px; color: var(--muted); }
+      .dlg-body ul { margin: 4px 0; padding-left: 20px; color: #b6bdcd; font-size: 12.5px; }
+      .dlg-foot { display: flex; gap: 8px; justify-content: flex-end; padding: 12px 18px; border-top: 1px solid var(--line); align-items: center; }
+      code, .mono { font: 11.5px ui-monospace, Consolas, monospace; background: #090a0e; border: 1px solid var(--line); border-radius: 7px; padding: 3px 8px; display: inline-block; word-break: break-all; }
+      a { color: #8fb6ff; }
+      .hint { color: var(--faint); font-size: 11.5px; }
       label.inline { display: flex; gap: 8px; align-items: center; color: var(--muted); }
       .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
-      .hint { color: var(--muted); font-size: 11.5px; }
-      a { color: #8fb6ff; }
+      .src-row { display: flex; gap: 10px; align-items: center; border: 1px solid var(--line); border-radius: 10px; padding: 11px 13px; margin-bottom: 8px; background: var(--panel); }
+      .src-row.selected { border-color: #35507f; background: var(--accent-soft); }
+      .spin { display: inline-block; width: 12px; height: 12px; border: 2px solid #353c50; border-top-color: #9db9ff; border-radius: 50%; animation: sp 0.8s linear infinite; vertical-align: -1px; margin-right: 6px; }
+      @keyframes sp { to { transform: rotate(360deg); } }
+      .airec { border: 1px solid #35507f; border-radius: var(--radius); background: rgba(91, 141, 255, 0.06); padding: 13px 15px; margin-bottom: 14px; grid-column: 1 / -1; }
+      .airec h3 { margin: 0 0 4px; font-size: 13.5px; display: flex; align-items: center; gap: 8px; }
+      .airec .why { color: #9fb4dd; font-size: 12px; }
+      .airec .grid { margin-top: 10px; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); }
     </style>
   </head>
   <body>
     <header>
-      <h1 id="title">插件市场</h1>
-      <select id="source" title="数据源"></select>
-      <input id="query" type="search" placeholder="搜索插件（回车）" />
-      <button id="searchBtn" class="primary">搜索</button>
-      <button id="browseBtn" class="ghost">全部</button>
+      <div class="brand"><h1 id="title">DSH 插件市场</h1><small id="subtitle">dsh desk · plugin market</small></div>
       <span class="grow"></span>
+      <select id="source" title="数据源"></select>
       <button id="refreshBtn" class="ghost">刷新</button>
     </header>
 
+    <div class="searchbar">
+      <div class="box">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="query" type="search" placeholder="描述你的需求，或搜插件名…" />
+      </div>
+      <button id="searchBtn" class="primary">搜索</button>
+      <button id="aiBtn" class="gold" title="用一句话描述需求，AI 帮你挑插件">✨ AI 帮我选</button>
+    </div>
+
     <nav>
       <button data-tab="discover" class="active">发现</button>
-      <button data-tab="installable">可安装</button>
-      <button data-tab="installed">已安装</button>
+      <button data-tab="digest" id="digestTab">今日日报</button>
+      <button data-tab="installed" id="installedTab">已安装</button>
       <button data-tab="sources">数据源</button>
     </nav>
 
     <main>
       <div id="banner" hidden></div>
-      <div id="chips" class="chips"></div>
+      <div id="chips" class="filterrow"></div>
+      <div id="sortrow" class="filterrow" hidden></div>
       <div id="list" class="grid"></div>
+      <div id="pager" class="pager" hidden></div>
+      <div id="digestPane" hidden></div>
       <div id="installed" hidden></div>
       <div id="sourcesPane" hidden></div>
       <pre id="log" class="log" hidden></pre>
@@ -175,11 +324,15 @@
       <div class="dlg-head">
         <strong id="dName"></strong>
         <span class="grow"></span>
-        <button id="dClose" class="ghost">关闭</button>
+        <button id="dClose" class="ghost tiny">关闭</button>
       </div>
       <div class="dlg-body" id="dBody"></div>
       <div class="dlg-foot">
-        <button id="dRepo" class="ghost">打开仓库</button>
+        <span id="dMsg" class="hint"></span>
+        <span class="grow"></span>
+        <button id="dLike" class="ghost tiny">♥ 点赞</button>
+        <button id="dFav" class="ghost tiny">☆ 收藏</button>
+        <button id="dRepo" class="ghost tiny">打开仓库</button>
         <button id="dInstall" class="primary">安装</button>
       </div>
     </dialog>
@@ -187,56 +340,103 @@
     <script>
       const dict = {
         "zh-CN": {
-          title: "插件市场",
-          discover: "发现", installable: "可安装", installed: "已安装", sources: "数据源",
-          search: "搜索插件（回车）", searchBtn: "搜索", all: "全部", refresh: "刷新",
-          install: "安装", installing: "安装中…", uninstall: "卸载", confirmUninstall: "确认卸载",
+          title: "DSH 插件市场",
+          search: "描述你的需求，或搜插件名…",
+          searchBtn: "搜索",
+          aiBtn: "✨ AI 帮我选",
+          all: "全部", refresh: "刷新",
+          discover: "发现", digest: "今日日报", installed: "已安装", sources: "数据源",
+          install: "安装", installing: "安装中…", installedTag: "已安装", uninstall: "卸载", confirmUninstall: "再点一次确认卸载",
           disable: "停用", enable: "启用", detail: "详情", close: "关闭", repo: "打开仓库",
-          empty: "没有内容。换关键字、换数据源，或检查网络。",
+          empty: "没有内容。换个关键字、换数据源，或检查网络。",
+          emptyAi: "没找到合适的插件，换个说法再试。",
           loading: "读取目录…",
           noInstalled: "当前 profile 没有装任何插件。",
           core: "自带层", bundle: "层级插件", disabledTag: "已停用", plainDep: "普通依赖",
-          restart: "重启引擎", restartHint: "安装/停用/卸载后需要重启引擎才会生效。",
+          restart: "重启引擎", restartHint: "安装 / 停用 / 卸载后，需要重启引擎才会生效。",
+          restartNow: "现在重启", later: "稍后",
           addSource: "添加数据源", sourceLabel: "名称", sourceUrl: "地址", save: "保存",
-          active: "浏览中", remove: "删除", customHint: "自定义数据源可以是任何返回本市场开放格式 JSON 的 HTTPS 地址。",
-          qualification: "安装前校验", qualified: "npm latest", browseOnly: "只提供源码安装，桌面端不会执行目录里的命令",
-          category: "分类", stars: "星标", installs: "安装", updated: "更新", readme: "README",
-          progress: "安装输出", sourcesHint: "数据源按顺序保存，第一个是默认浏览源。",
+          active: "浏览中", remove: "删除", customHint: "自定义数据源是任何返回本市场开放格式 JSON 的 HTTPS 地址。",
+          qualification: "安装前校验", qualified: "npm latest · 声明 dsh.bundle.patch ✓",
+          browseOnly: "只提供源码安装，桌面端不会执行目录里的命令",
+          category: "分类", stars: "星标", installs: "安装", downloads: "下载", likes: "赞", favorites: "收藏",
+          aiTitle: "AI 为你挑选", aiTook: "耗时", aiModel: "模型",
+          aiPlaceholder: "比如：把界面改成透明磨砂的、我想让 AI 记住我的偏好、想要每早自动给我总结邮件",
+          digestEmpty: "日报还没有生成（服务器每日更新一次）。",
+          digestNew: "今日新收录", digestUpd: "版本更新", digestHot: "热度榜",
+          totalStat: "收录插件", installableStat: "可安装", newStat: "今日新增", updStat: "今日更新",
+          checkUpdates: "检查更新", packBtn: "一键打包", importBtn: "从包导入",
+          updatesFound: "发现 {n} 个插件可更新", updatesNone: "所有插件都是最新版本",
+          packing: "打包中…",
+          verified: "已验证", unverified: "未审查", redline: "有红线提示", caps: "能力声明", redlines: "红线提醒",
+          like: "♥ 点赞", liked: "已赞", fav: "☆ 收藏", faved: "已收藏",
+          page: "页", prev: "‹ 上页", next: "下页 ›",
+          sortHot: "热度", sortStars: "星标", sortNew: "最新", sortDownloads: "下载",
+          update: "更新",
         },
         en: {
           title: "Plugin Market",
-          discover: "Discover", installable: "Installable", installed: "Installed", sources: "Sources",
-          search: "Search plugins (Enter)", searchBtn: "Search", all: "All", refresh: "Refresh",
-          install: "Install", installing: "Installing…", uninstall: "Uninstall", confirmUninstall: "Confirm uninstall",
+          search: "Describe what you need, or search by name…",
+          searchBtn: "Search",
+          aiBtn: "✨ Ask AI",
+          all: "All", refresh: "Refresh",
+          discover: "Discover", digest: "Daily Digest", installed: "Installed", sources: "Sources",
+          install: "Install", installing: "Installing…", installedTag: "Installed", uninstall: "Uninstall", confirmUninstall: "Click again to confirm",
           disable: "Disable", enable: "Enable", detail: "Details", close: "Close", repo: "Open repository",
           empty: "Nothing here. Try another keyword or source, or check the network.",
+          emptyAi: "No matching plugins — try rephrasing.",
           loading: "Reading catalog…",
           noInstalled: "This profile has no plugins installed.",
           core: "In-box", bundle: "Bundle", disabledTag: "Disabled", plainDep: "Plain dependency",
           restart: "Restart engine", restartHint: "Install, disable and uninstall take effect after an engine restart.",
+          restartNow: "Restart now", later: "Later",
           addSource: "Add source", sourceLabel: "Label", sourceUrl: "URL", save: "Save",
           active: "Browsing", remove: "Remove", customHint: "A custom source is any HTTPS URL returning the market's open JSON schema.",
-          qualification: "Pre-install check", qualified: "npm latest", browseOnly: "Source-only install: the desktop never runs the catalog command",
-          category: "Category", stars: "Stars", installs: "Installs", updated: "Updated", readme: "README",
-          progress: "Install output", sourcesHint: "Sources are stored in order; the first one is the default browse source.",
+          qualification: "Pre-install check", qualified: "npm latest · dsh.bundle.patch declared ✓",
+          browseOnly: "Source-only install: the desktop never runs the catalog command",
+          category: "Category", stars: "Stars", installs: "Installs", downloads: "Downloads", likes: "Likes", favorites: "Favorites",
+          aiTitle: "Picked by AI", aiTook: "took", aiModel: "model",
+          aiPlaceholder: "e.g. frosted-glass UI, remember my preferences, a morning digest mail",
+          digestEmpty: "No digest yet (the server updates it daily).",
+          digestNew: "New today", digestUpd: "Updated", digestHot: "Hot",
+          totalStat: "Plugins", installableStat: "Installable", newStat: "New today", updStat: "Updated today",
+          checkUpdates: "Check updates", packBtn: "Export pack", importBtn: "Import pack",
+          updatesFound: "{n} plugin(s) can be updated", updatesNone: "Everything is up to date",
+          packing: "Packing…",
+          verified: "Verified", unverified: "Unreviewed", redline: "Red-line notice", caps: "Capabilities", redlines: "Red lines",
+          like: "♥ Like", liked: "Liked", fav: "☆ Favorite", faved: "Favorited",
+          page: "page", prev: "‹ Prev", next: "Next ›",
+          sortHot: "Hot", sortStars: "Stars", sortNew: "Newest", sortDownloads: "Downloads",
+          update: "Update",
         },
       };
       const locale = new URLSearchParams(location.search).get("locale") || "zh-CN";
-      const t = (key) => (dict[locale] || dict.en)[key] || key;
       const shortLocale = String(locale).toLowerCase().startsWith("zh") ? "zh" : "en";
+      const t = (key) => (dict[locale] || dict.en)[key] || key;
+      const tf = (key, map) => t(key).replace(/\{(\w+)\}/g, (_m, k) => String(map[k] ?? ""));
 
       const el = (id) => document.getElementById(id);
       const state = {
         tab: "discover",
-        page: { entries: [], categories: [], total: 0 },
+        page: { entries: [], categories: [], total: 0, page: 1, totalPages: 0, catalogTotal: 0 },
         installed: { plugins: [], disabled: [] },
         sources: [],
         sourceId: "",
         query: "",
         category: "",
+        sort: "hot",
+        pageNo: 1,
         busy: false,
         result: null,
+        ai: null,
+        digest: null,
+        updates: null,
+        likedIds: {},
+        favedIds: {},
       };
+
+      const houseSource = () => state.sources.find((source) => source.id === state.sourceId) || null;
+      const isHouse = () => (houseSource() || {}).kind === "dshMarket";
 
       function localeText(description) {
         if (!description) return "";
@@ -252,14 +452,15 @@
         node.className = "banner" + (kind ? " " + kind : "");
         node.innerHTML = "";
         const span = document.createElement("span");
+        span.className = "grow";
         span.textContent = text;
         node.appendChild(span);
         if (state.result && state.result.restartRequired) {
-          const btn = document.createElement("button");
-          btn.className = "primary";
-          btn.textContent = t("restart");
-          btn.onclick = async () => { await window.desktop.marketRestart(); };
-          node.appendChild(btn);
+          node.appendChild(button(t("restartNow"), "primary tiny", async () => {
+            await window.desktop.marketRestart();
+            banner(t("restartHint"), "");
+          }));
+          node.appendChild(button(t("later"), "ghost tiny", () => banner("")));
         }
       }
 
@@ -269,48 +470,10 @@
         node.textContent += text;
         node.scrollTop = node.scrollHeight;
       }
-
       function clearLog() {
         const node = el("log");
         node.textContent = "";
         node.hidden = true;
-      }
-
-      function card(entry, actions) {
-        const node = document.createElement("div");
-        node.className = "card";
-        const head = document.createElement("h3");
-        const name = document.createElement("span");
-        name.textContent = entry.name;
-        const owner = document.createElement("span");
-        owner.className = "owner";
-        owner.textContent = entry.owner;
-        head.append(name, owner);
-        const desc = document.createElement("div");
-        desc.className = "desc";
-        desc.textContent = localeText(entry.description) || "—";
-        const meta = document.createElement("div");
-        meta.className = "meta";
-        const bits = [
-          t("category") + ": " + (entry.categoryId || "unclassified"),
-          t("stars") + ": " + entry.stars,
-          t("installs") + ": " + entry.installs,
-        ];
-        if (entry.added) bits.push(t("updated") + ": " + entry.added);
-        for (const bit of bits) {
-          const span = document.createElement("span");
-          span.textContent = bit;
-          meta.appendChild(span);
-        }
-        const row = document.createElement("div");
-        row.className = "row";
-        const pkg = document.createElement("span");
-        pkg.className = "badge" + (entry.npmPackage ? " ok" : " warn");
-        pkg.textContent = entry.npmPackage || t("browseOnly");
-        row.appendChild(pkg);
-        for (const action of actions) row.appendChild(action);
-        node.append(head, desc, meta, row);
-        return node;
       }
 
       function button(label, cls, onClick) {
@@ -320,40 +483,163 @@
         node.onclick = onClick;
         return node;
       }
+      function span(text, cls) {
+        const node = document.createElement("span");
+        if (cls) node.className = cls;
+        node.textContent = text;
+        return node;
+      }
 
+      function fmtNum(n) {
+        const value = Number(n) || 0;
+        if (value >= 10000) return (value / 10000).toFixed(1).replace(/\.0$/, "") + "w";
+        if (value >= 1000) return (value / 1000).toFixed(1).replace(/\.0$/, "") + "k";
+        return String(value);
+      }
+
+      const topZh = { ui: "界面", theme: "主题", provider: "模型", workflow: "工作流", memory: "记忆", tool: "工具", security: "安全", extend: "扩展", comm: "通信", fun: "趣味", other: "其他" };
+
+      /* ---------------------------------------------------------- 卡片 */
+      function card(entry, why) {
+        const node = document.createElement("div");
+        node.className = "card";
+        const head = document.createElement("h3");
+        head.appendChild(span(entry.name, "nm"));
+        if (entry.owner) head.appendChild(span(entry.owner, "owner"));
+        if (entry.stars) head.appendChild(span("★ " + fmtNum(entry.stars), "star"));
+        const desc = document.createElement("div");
+        desc.className = "desc";
+        desc.textContent = localeText(entry.description) || "—";
+        const meta = document.createElement("div");
+        meta.className = "meta";
+        meta.appendChild(span(entry.topCategory ? (topZh[entry.topCategory] || entry.topCategory) : entry.categoryId));
+        if (entry.downloads) { meta.appendChild(span("·", "dot")); meta.appendChild(span("⬇ " + fmtNum(entry.downloads))); }
+        if (entry.likes) { meta.appendChild(span("·", "dot")); meta.appendChild(span("♥ " + entry.likes)); }
+        if (isHouse()) {
+          meta.appendChild(entry.verified ? span(t("verified"), "badge ok") : span(t("unverified"), "badge plain"));
+          if (entry.redLines && entry.redLines.length) meta.appendChild(span("⚠ " + t("redline"), "badge warn"));
+        }
+        const row = document.createElement("div");
+        row.className = "row";
+        row.appendChild(span(entry.npmPackage || t("browseOnly"), "badge" + (entry.npmPackage ? " acc" : " plain")));
+        const push = document.createElement("span");
+        push.className = "push";
+        row.appendChild(push);
+        const installed = state.installed.plugins.some((plugin) => plugin.packageName === entry.npmPackage);
+        row.appendChild(button(t("detail"), "ghost tiny", () => openDetail(entry)));
+        if (installed) {
+          row.appendChild(span(t("installedTag"), "badge ok"));
+        } else if (entry.npmPackage) {
+          row.appendChild(button(t("install"), "primary tiny", () => install(entry)));
+        }
+        node.append(head, desc, meta, row);
+        if (why) {
+          const wy = document.createElement("div");
+          wy.className = "why";
+          wy.textContent = "💡 " + why;
+          wy.style.color = "#9fb4dd";
+          wy.style.fontSize = "12px";
+          node.appendChild(wy);
+        }
+        return node;
+      }
+
+      /* ---------------------------------------------------------- 发现页 */
       function renderChips() {
         const chips = el("chips");
         chips.innerHTML = "";
+        chips.hidden = false;
         const all = document.createElement("button");
         all.className = "chip" + (state.category ? "" : " active");
         all.textContent = t("all");
-        all.onclick = async () => { state.category = ""; await load(); };
+        all.onclick = async () => { state.category = ""; state.pageNo = 1; await load(); };
         chips.appendChild(all);
         for (const category of state.page.categories || []) {
+          if (!category.count) continue;
           const chip = document.createElement("button");
           chip.className = "chip" + (state.category === category.id ? " active" : "");
-          chip.textContent = (shortLocale === "zh" ? category.zh : category.en) + (category.count ? ` ${category.count}` : "");
+          chip.appendChild(span(shortLocale === "zh" ? category.zh : category.en));
+          chip.appendChild(span(String(category.count), "n"));
           chip.onclick = async () => {
             state.category = state.category === category.id ? "" : category.id;
+            state.pageNo = 1;
             await load();
           };
           chips.appendChild(chip);
         }
       }
 
+      function renderSort() {
+        const node = el("sortrow");
+        node.innerHTML = "";
+        if (!isHouse()) { node.hidden = true; return; }
+        node.hidden = false;
+        const row = document.createElement("div");
+        row.className = "sortrow";
+        const sorts = [["hot", t("sortHot")], ["stars", t("sortStars")], ["new", t("sortNew")], ["downloads", t("sortDownloads")]];
+        for (const [key, label] of sorts) {
+          row.appendChild(button(label, state.sort === key ? "active" : "", async () => {
+            state.sort = key;
+            state.pageNo = 1;
+            await load();
+          }));
+        }
+        node.appendChild(row);
+      }
+
+      function renderPager() {
+        const node = el("pager");
+        node.innerHTML = "";
+        if (!isHouse() || state.page.totalPages <= 1) { node.hidden = true; return; }
+        node.hidden = false;
+        node.appendChild(button(t("prev"), "ghost tiny", async () => {
+          if (state.pageNo > 1) { state.pageNo -= 1; await load(); }
+        }));
+        node.appendChild(span(`${state.pageNo} / ${state.page.totalPages} ${t("page")}`));
+        node.appendChild(button(t("next"), "ghost tiny", async () => {
+          if (state.pageNo < state.page.totalPages) { state.pageNo += 1; await load(); }
+        }));
+      }
+
+      function renderAiResult() {
+        const box = el("list");
+        if (!state.ai) return false;
+        const wrap = document.createElement("div");
+        wrap.className = "airec";
+        const head = document.createElement("h3");
+        head.textContent = "✨ " + t("aiTitle");
+        const meta = document.createElement("div");
+        meta.className = "why";
+        meta.textContent = [state.ai.message, state.ai.model ? `${t("aiModel")} ${state.ai.model}` : "", state.ai.took ? `${t("aiTook")} ${state.ai.took}ms` : ""].filter(Boolean).join(" · ");
+        const grid = document.createElement("div");
+        grid.className = "grid";
+        for (const pick of state.ai.picks) grid.appendChild(card(pick.entry, pick.reason));
+        wrap.append(head, meta, grid);
+        box.appendChild(wrap);
+        return true;
+      }
+
       function renderList() {
         const list = el("list");
         list.innerHTML = "";
         list.hidden = false;
+        el("digestPane").hidden = true;
         el("installed").hidden = true;
         el("sourcesPane").hidden = true;
-        const entries = state.tab === "installable"
-          ? state.page.entries.filter((entry) => entry.npmPackage)
-          : state.page.entries;
+        el("sortrow").hidden = !isHouse();
+        if (state.ai && state.ai.picks && state.ai.picks.length) {
+          renderAiResult();
+          return;
+        }
+        const entries = state.page.entries || [];
         if (!entries.length) {
           const empty = document.createElement("div");
           empty.className = "empty";
           empty.textContent = t("empty");
+          const sub = document.createElement("div");
+          sub.className = "sub";
+          sub.textContent = t("customHint");
+          empty.appendChild(sub);
           list.appendChild(empty);
           return;
         }
@@ -362,28 +648,131 @@
           cards: entries.length,
           sample: entries.slice(0, 3).map((entry) => entry.npmPackage || entry.name).join(", "),
         });
-        for (const entry of entries) {
-          const installed = state.installed.plugins.some((plugin) => plugin.packageName === entry.npmPackage);
-          const actions = [
-            button(t("detail"), "ghost", () => openDetail(entry)),
-            installed
-              ? button(t("uninstall"), "danger", () => uninstall(entry.npmPackage))
-              : button(entry.npmPackage ? t("install") : t("browseOnly"), "primary", () => install(entry)),
-          ];
-          list.appendChild(card(entry, actions));
-        }
+        for (const entry of entries) list.appendChild(card(entry));
       }
 
+      /* ---------------------------------------------------------- 日报页 */
+      function renderDigest() {
+        el("list").hidden = true;
+        el("chips").innerHTML = "";
+        el("sortrow").hidden = true;
+        el("pager").hidden = true;
+        el("installed").hidden = true;
+        el("sourcesPane").hidden = true;
+        const pane = el("digestPane");
+        pane.hidden = false;
+        pane.innerHTML = "";
+        const digest = state.digest;
+        if (!digest || !digest.date) {
+          const empty = document.createElement("div");
+          empty.className = "empty";
+          empty.textContent = t("digestEmpty");
+          pane.appendChild(empty);
+          return;
+        }
+        const wrap = document.createElement("div");
+        wrap.className = "digest";
+        const hero = document.createElement("div");
+        hero.className = "hero";
+        const date = document.createElement("div");
+        date.className = "date";
+        date.textContent = digest.date;
+        const h2 = document.createElement("h2");
+        h2.textContent = digest.headline || digest.date;
+        hero.append(date, h2);
+        if (digest.editorNote) {
+          const note = document.createElement("div");
+          note.className = "note";
+          note.textContent = digest.editorNote;
+          hero.appendChild(note);
+        }
+        wrap.appendChild(hero);
+        const stats = document.createElement("div");
+        stats.className = "stats";
+        const statDefs = [
+          [digest.stats?.total, t("totalStat")],
+          [digest.stats?.installable, t("installableStat")],
+          [digest.stats?.newToday, t("newStat")],
+          [digest.stats?.updatedToday, t("updStat")],
+        ];
+        for (const [value, label] of statDefs) {
+          if (value === undefined) continue;
+          const item = document.createElement("div");
+          item.className = "stat";
+          const b = document.createElement("b");
+          b.textContent = fmtNum(value);
+          const s = document.createElement("span");
+          s.textContent = label;
+          item.append(b, s);
+          stats.appendChild(item);
+        }
+        wrap.appendChild(stats);
+        const cols = document.createElement("div");
+        cols.className = "digcol";
+        cols.appendChild(digestSection(t("digestNew"), (digest.newPlugins || []).slice(0, 12), (e) => localeText(e.description)));
+        cols.appendChild(digestSection(t("digestUpd"), (digest.updated || []).slice(0, 12), (e) => (e.prevVersion ? `${e.prevVersion} → ${e.version || ""}` : e.version || "")));
+        cols.appendChild(digestSection(t("digestHot"), (digest.hotTop || []).slice(0, 10), (e) => `★ ${fmtNum(e.stars)}`));
+        wrap.appendChild(cols);
+        pane.appendChild(wrap);
+      }
+
+      function digestSection(title, items, rightText) {
+        const sec = document.createElement("div");
+        sec.className = "digsec";
+        const h3 = document.createElement("h3");
+        h3.textContent = title;
+        sec.appendChild(h3);
+        if (!items.length) {
+          const empty = document.createElement("div");
+          empty.className = "hint";
+          empty.textContent = shortLocale === "zh" ? "今日暂无" : "Nothing today";
+          sec.appendChild(empty);
+          return sec;
+        }
+        for (const entry of items) {
+          const item = document.createElement("div");
+          item.className = "item";
+          item.appendChild(span(entry.name, "nm"));
+          item.appendChild(span(rightText(entry) || "", "tx"));
+          sec.appendChild(item);
+        }
+        return sec;
+      }
+
+      /* ---------------------------------------------------------- 已安装页 */
       function renderInstalled() {
         el("list").hidden = true;
         el("chips").innerHTML = "";
+        el("chips").hidden = true;
+        el("sortrow").hidden = true;
+        el("pager").hidden = true;
+        el("digestPane").hidden = true;
+        el("sourcesPane").hidden = true;
         const pane = el("installed");
         pane.hidden = false;
         pane.innerHTML = "";
-        const info = document.createElement("div");
-        info.className = "hint";
-        info.textContent = t("restartHint");
-        pane.appendChild(info);
+        const tools = document.createElement("div");
+        tools.className = "toolrow";
+        tools.appendChild(button("⟳ " + t("checkUpdates"), "ghost tiny", checkUpdates));
+        if (isHouse()) {
+          tools.appendChild(button("📦 " + t("packBtn"), "ghost tiny", exportPack));
+          tools.appendChild(button("📥 " + t("importBtn"), "ghost tiny", importPack));
+        }
+        tools.appendChild(button("⟲ " + t("restart"), "ghost tiny", async () => {
+          await window.desktop.marketRestart();
+          banner(t("restartHint"), "");
+        }));
+        const hint = document.createElement("span");
+        hint.className = "hint";
+        hint.textContent = t("restartHint");
+        tools.appendChild(hint);
+        pane.appendChild(tools);
+        if (state.updates && state.updates.updates.length) {
+          const bar = document.createElement("div");
+          bar.className = "banner gold";
+          bar.appendChild(span(tf("updatesFound", { n: state.updates.updates.length }), "grow"));
+          pane.appendChild(bar);
+        }
         if (!state.installed.plugins.length) {
           const empty = document.createElement("div");
           empty.className = "empty";
@@ -391,74 +780,70 @@
           pane.appendChild(empty);
           return;
         }
-        const grid = document.createElement("div");
-        grid.className = "grid";
+        const list = document.createElement("div");
+        list.className = "instlist";
         for (const plugin of state.installed.plugins) {
-          const node = document.createElement("div");
-          node.className = "card";
-          const head = document.createElement("h3");
-          head.textContent = plugin.packageName;
-          const meta = document.createElement("div");
-          meta.className = "meta";
-          const badge = document.createElement("span");
-          badge.className = "badge " + (plugin.core ? "" : "ok");
-          badge.textContent = plugin.core ? t("core") : plugin.bundle ? t("bundle") : t("plainDep");
-          meta.appendChild(badge);
-          if (plugin.disabled) {
-            const off = document.createElement("span");
-            off.className = "badge warn";
-            off.textContent = t("disabledTag");
-            meta.appendChild(off);
-          }
-          if (plugin.version) {
-            const version = document.createElement("span");
-            version.textContent = plugin.version;
-            meta.appendChild(version);
-          }
           const row = document.createElement("div");
-          row.className = "row";
-          if (plugin.removable) {
-            row.appendChild(
-              button(plugin.disabled ? t("enable") : t("disable"), "ghost", () => toggle(plugin.packageName, !plugin.disabled)),
-            );
-            row.appendChild(button(t("uninstall"), "danger", () => uninstall(plugin.packageName)));
-          } else {
-            row.appendChild(
-              button(plugin.disabled ? t("enable") : t("disable"), "ghost", () => toggle(plugin.packageName, !plugin.disabled)),
-            );
+          row.className = "instrow" + (plugin.disabled ? " disabled" : "");
+          const info = document.createElement("div");
+          info.className = "grow";
+          const nm = document.createElement("div");
+          nm.className = "nm";
+          nm.textContent = plugin.packageName;
+          const ver = document.createElement("div");
+          ver.className = "ver";
+          ver.textContent = [plugin.version, plugin.core ? t("core") : plugin.bundle ? t("bundle") : t("plainDep")].filter(Boolean).join(" · ");
+          info.append(nm, ver);
+          row.appendChild(info);
+          if (plugin.disabled) row.appendChild(span(t("disabledTag"), "badge warn"));
+          const upd = state.updates && state.updates.updates.find((item) => item.packageName === plugin.packageName);
+          if (upd) {
+            row.appendChild(span(`${upd.current} → ${upd.latest}`, "badge acc"));
+            row.appendChild(button("↑ " + t("update"), "primary tiny", async () => {
+              state.result = await window.desktop.marketInstall({ sourceId: state.sourceId, id: `npm:${plugin.packageName}` }).catch((error) => ({ ok: false, message: String(error && error.message ? error.message : error), restartRequired: false }));
+              banner(state.result.message || "", state.result.ok ? "ok" : "bad");
+              state.installed = await window.desktop.marketInventory();
+              await checkUpdates();
+            }));
           }
-          node.append(head, meta, row);
-          grid.appendChild(node);
+          row.appendChild(button(plugin.disabled ? t("enable") : t("disable"), "ghost tiny", () => toggle(plugin.packageName, !plugin.disabled)));
+          if (plugin.removable) row.appendChild(button(t("uninstall"), "danger tiny", () => uninstall(plugin.packageName)));
+          list.appendChild(row);
         }
-        pane.appendChild(grid);
-        window.desktop.marketUiLog({
-          tab: "installed",
-          cards: state.installed.plugins.length,
-          sample: state.installed.plugins.slice(0, 3).map((plugin) => plugin.packageName).join(", "),
-        });
+        pane.appendChild(list);
+        window.desktop.marketUiLog({ tab: "installed", cards: state.installed.plugins.length, sample: state.installed.plugins.slice(0, 3).map((p) => p.packageName).join(", ") });
       }
 
+      /* ---------------------------------------------------------- 数据源页 */
       function renderSources() {
         el("list").hidden = true;
         el("chips").innerHTML = "";
+        el("chips").hidden = true;
+        el("sortrow").hidden = true;
+        el("pager").hidden = true;
+        el("digestPane").hidden = true;
+        el("installed").hidden = true;
         const pane = el("sourcesPane");
         pane.hidden = false;
         pane.innerHTML = "";
         const hint = document.createElement("div");
         hint.className = "hint";
-        hint.textContent = t("sourcesHint") + " " + t("customHint");
+        hint.textContent = t("customHint");
         pane.appendChild(hint);
         const wrap = document.createElement("div");
         wrap.style.marginTop = "10px";
         for (const source of state.sources) {
           const row = document.createElement("div");
-          row.className = "src-row";
+          row.className = "src-row" + (source.id === state.sourceId ? " selected" : "");
           const radio = document.createElement("input");
           radio.type = "radio";
           radio.name = "activeSource";
           radio.checked = source.id === state.sourceId;
           radio.onchange = async () => {
             state.sourceId = source.id;
+            state.category = "";
+            state.pageNo = 1;
+            state.ai = null;
             await load();
           };
           const text = document.createElement("div");
@@ -466,24 +851,20 @@
           const label = document.createElement("div");
           label.textContent = source.label;
           const url = document.createElement("div");
-          url.className = "pill mono";
+          url.className = "hint";
           url.textContent = source.url;
           text.append(label, url);
           row.append(radio, text);
-          if (source.id === state.sourceId) {
-            const pill = document.createElement("span");
-            pill.className = "badge ok";
-            pill.textContent = t("active");
-            row.appendChild(pill);
+          if (source.id === state.sourceId) row.appendChild(span(t("active"), "badge ok"));
+          if (source.id !== "dsh" && source.id !== "dsh1024") {
+            row.appendChild(button(t("remove"), "danger tiny", () => removeSource(source.id)));
           }
-          row.appendChild(button(t("remove"), "danger", () => removeSource(source.id)));
           wrap.appendChild(row);
         }
         pane.appendChild(wrap);
-
         const form = document.createElement("div");
         form.className = "card";
-        form.style.marginTop = "10px";
+        form.style.marginTop = "12px";
         const title = document.createElement("h3");
         title.textContent = t("addSource");
         const labelField = document.createElement("div");
@@ -496,7 +877,7 @@
         const urlInput = document.createElement("input");
         urlInput.placeholder = t("sourceUrl") + " (https://…)";
         urlField.appendChild(urlInput);
-        const save = button(t("save"), "primary", async () => {
+        const save = button(t("save"), "primary tiny", async () => {
           const label = labelInput.value.trim();
           const url = urlInput.value.trim();
           if (!url) return;
@@ -512,12 +893,19 @@
         pane.appendChild(form);
       }
 
+      /* ---------------------------------------------------------- 加载 */
       async function load() {
         const list = el("list");
         list.innerHTML = "";
+        list.hidden = false;
+        el("digestPane").hidden = true;
+        el("chips").hidden = false;
         const loading = document.createElement("div");
         loading.className = "empty";
-        loading.textContent = t("loading");
+        const spin = document.createElement("span");
+        spin.className = "spin";
+        loading.appendChild(spin);
+        loading.appendChild(document.createTextNode(t("loading")));
         list.appendChild(loading);
         banner("");
         try {
@@ -525,24 +913,41 @@
             sourceId: state.sourceId,
             query: state.query,
             category: state.category,
+            sort: state.sort,
+            page: state.pageNo,
           });
         } catch (error) {
-          state.page = { entries: [], categories: [], total: 0, totalPages: 0, catalogTotal: 0 };
+          state.page = { entries: [], categories: [], total: 0, totalPages: 0, catalogTotal: 0, page: 1 };
           banner(String(error && error.message ? error.message : error), "bad");
         }
         state.installed = await window.desktop.marketInventory();
+        updateInstCount();
         renderChips();
+        renderSort();
+        renderPager();
         render();
+      }
+
+      function updateInstCount() {
+        const node = el("instCount");
+        const n = state.installed.plugins.length;
+        if (!n) { node.hidden = true; return; }
+        node.hidden = false;
+        node.textContent = String(n);
+        node.className = "count" + (state.updates && state.updates.updates.length ? " gold" : "");
       }
 
       function render() {
         if (state.tab === "installed") return renderInstalled();
         if (state.tab === "sources") return renderSources();
+        if (state.tab === "digest") return renderDigest();
         renderList();
       }
 
+      /* ---------------------------------------------------------- 详情 */
       async function openDetail(entry) {
         el("dName").textContent = entry.name;
+        el("dMsg").textContent = "";
         const body = el("dBody");
         body.innerHTML = "";
         const add = (tag, text, cls) => {
@@ -553,44 +958,94 @@
           return node;
         };
         add("div", localeText(entry.description));
-        add("div", t("category") + ": " + entry.categoryId, "hint");
-        if (entry.displayCommand) add("div", entry.displayCommand, "mono");
-        add("div", t("qualification") + "…", "hint");
-        const check = add("div", "");
+        const badgerow = add("div", undefined, "row");
+        if (entry.topCategory) badgerow.appendChild(span(topZh[entry.topCategory] || entry.topCategory, "badge"));
+        if (entry.version) badgerow.appendChild(span("v" + entry.version, "badge"));
+        if (entry.license) badgerow.appendChild(span(entry.license, "badge plain"));
+        if (isHouse()) badgerow.appendChild(span(entry.verified ? t("verified") : t("unverified"), "badge " + (entry.verified ? "ok" : "plain")));
+        if (entry.npmPackage) add("div", entry.displayCommand, "mono");
+        if (entry.capabilities && entry.capabilities.length) {
+          add("h4", t("caps"));
+          const ul = add("ul");
+          for (const item of entry.capabilities.slice(0, 12)) {
+            const li = document.createElement("li");
+            li.textContent = String(item);
+            ul.appendChild(li);
+          }
+        }
+        if (entry.redLines && entry.redLines.length) {
+          add("h4", "⚠ " + t("redlines"));
+          const ul = add("ul");
+          for (const item of entry.redLines.slice(0, 8)) {
+            const li = document.createElement("li");
+            li.textContent = String(item);
+            li.style.color = "#f3dcb4";
+            ul.appendChild(li);
+          }
+        }
+        if (entry.peers && entry.peers.length) {
+          add("h4", "peers");
+          add("div", entry.peers.join(", "), "hint");
+        }
+        const statsBits = [];
+        if (entry.stars) statsBits.push(`★ ${fmtNum(entry.stars)}`);
+        if (entry.downloads) statsBits.push(`⬇ ${fmtNum(entry.downloads)}`);
+        if (entry.likes) statsBits.push(`♥ ${entry.likes}`);
+        if (entry.favorites) statsBits.push(`☆ ${entry.favorites}`);
+        if (statsBits.length) add("div", statsBits.join("   "), "hint");
+        el("dInstall").disabled = !entry.npmPackage;
         el("dInstall").onclick = async () => {
           el("detailDlg").close();
           await install(entry);
         };
-        el("dInstall").disabled = !entry.npmPackage;
         el("dRepo").onclick = () => entry.repoUrl && window.desktop.marketOpenExternal(entry.repoUrl);
+        const likeBtn = el("dLike");
+        const favBtn = el("dFav");
+        likeBtn.hidden = !isHouse();
+        favBtn.hidden = !isHouse();
+        likeBtn.textContent = state.likedIds[entry.id] ? t("liked") : t("like");
+        favBtn.textContent = state.favedIds[entry.id] ? t("faved") : t("fav");
+        likeBtn.onclick = async () => {
+          const result = await window.desktop.marketInteract({ sourceId: state.sourceId, id: entry.id, action: "like" }).catch(() => null);
+          if (result && result.ok) { state.likedIds[entry.id] = true; likeBtn.textContent = t("liked"); }
+        };
+        favBtn.onclick = async () => {
+          const result = await window.desktop.marketInteract({ sourceId: state.sourceId, id: entry.id, action: "favorite" }).catch(() => null);
+          if (result && result.ok) { state.favedIds[entry.id] = true; favBtn.textContent = t("faved"); }
+        };
         el("detailDlg").showModal();
-        const qualified = await window.desktop.marketCheck({ sourceId: state.sourceId, id: entry.id });
-        check.textContent = qualified.ok
-          ? `${t("qualified")}: ${qualified.spec}（声明 dsh.bundle.patch ✓）`
-          : qualified.reason;
-        check.className = qualified.ok ? "badge ok" : "badge bad";
-        const detail = await window.desktop.marketDetail({ sourceId: state.sourceId, id: entry.id }).catch(() => null);
-        if (detail && detail.readme) {
-          add("h4", t("readme"));
-          add("pre", String(detail.readme).slice(0, 6000), "log");
+        if (entry.npmPackage) {
+          const check = add("div", t("qualification") + "…", "hint");
+          const qualified = await window.desktop.marketCheck({ sourceId: state.sourceId, id: entry.id }).catch(() => null);
+          if (qualified && qualified.ok) {
+            check.textContent = `${t("qualified")}：${qualified.spec}`;
+            check.className = "badge ok";
+          } else {
+            check.textContent = (qualified && qualified.reason) || t("browseOnly");
+            check.className = "badge warn";
+          }
         }
       }
 
+      /* ---------------------------------------------------------- 动作 */
       async function install(entry) {
         if (state.busy) return;
         state.busy = true;
         clearLog();
         banner(`${t("installing")} ${entry.npmPackage || entry.name}`, "");
-        logLine(`$ dsh plugin --profile web add ${entry.npmPackage || entry.name}\n`);
         try {
           state.result = await window.desktop.marketInstall({ sourceId: state.sourceId, id: entry.id });
           banner(state.result.message, state.result.ok ? "ok" : "bad");
+          if (state.result.ok && isHouse()) {
+            window.desktop.marketInteract({ sourceId: state.sourceId, id: entry.id, action: "install" }).catch(() => {});
+          }
         } catch (error) {
           state.result = { ok: false, restartRequired: false };
           banner(String(error && error.message ? error.message : error), "bad");
         }
         state.busy = false;
         state.installed = await window.desktop.marketInventory();
+        updateInstCount();
         render();
       }
 
@@ -599,7 +1054,7 @@
         if (!packageName) return;
         if (pendingUninstall !== packageName) {
           pendingUninstall = packageName;
-          banner(`${t("confirmUninstall")}: ${packageName}`, "");
+          banner(`${t("confirmUninstall")}：${packageName}`, "");
           state.result = null;
           setTimeout(() => { if (pendingUninstall === packageName) pendingUninstall = ""; }, 6000);
           return;
@@ -609,6 +1064,7 @@
         state.result = await window.desktop.marketUninstall(packageName);
         banner(state.result.message, state.result.ok ? "ok" : "bad");
         state.installed = await window.desktop.marketInventory();
+        updateInstCount();
         render();
       }
 
@@ -619,58 +1075,158 @@
         render();
       }
 
+      async function checkUpdates() {
+        try {
+          banner(t("checkUpdates") + "…", "");
+          state.updates = await window.desktop.marketUpdates();
+          banner(state.updates.updates.length ? tf("updatesFound", { n: state.updates.updates.length }) : t("updatesNone"), state.updates.updates.length ? "gold" : "ok");
+        } catch (error) {
+          banner(String(error && error.message ? error.message : error), "bad");
+        }
+        updateInstCount();
+        render();
+      }
+
+      async function exportPack() {
+        try {
+          banner(t("packing"), "");
+          const result = await window.desktop.marketExportPack();
+          banner(`${result.message}${result.filePath ? " → " + result.filePath : ""}`, result.ok ? "ok" : "bad");
+        } catch (error) {
+          banner(String(error && error.message ? error.message : error), "bad");
+        }
+      }
+
+      async function importPack() {
+        try {
+          const result = await window.desktop.marketImportPack();
+          if (result.results && result.results.length) {
+            const failed = result.results.filter((row) => !row.ok);
+            banner(result.message + (failed.length ? `（失败：${failed.map((row) => row.packageName).join("、")}）` : ""), result.ok ? "ok" : "warn");
+          } else {
+            banner(result.message, "warn");
+          }
+          state.installed = await window.desktop.marketInventory();
+          updateInstCount();
+          render();
+        } catch (error) {
+          banner(String(error && error.message ? error.message : error), "bad");
+        }
+      }
+
+      async function aiPick() {
+        const need = el("query").value.trim();
+        if (!need) {
+          el("query").focus();
+          el("query").placeholder = t("aiPlaceholder");
+          return;
+        }
+        state.ai = null;
+        state.query = need;
+        state.category = "";
+        state.tab = "discover";
+        document.querySelectorAll("nav button").forEach((other) => other.classList.toggle("active", other.dataset.tab === "discover"));
+        const list = el("list");
+        list.hidden = false;
+        el("digestPane").hidden = true;
+        el("installed").hidden = true;
+        el("sourcesPane").hidden = true;
+        el("chips").innerHTML = "";
+        el("sortrow").hidden = true;
+        el("pager").hidden = true;
+        list.innerHTML = "";
+        const loading = document.createElement("div");
+        loading.className = "empty";
+        const spin = document.createElement("span");
+        spin.className = "spin";
+        loading.appendChild(spin);
+        loading.appendChild(document.createTextNode("✨ " + t("aiBtn")));
+        list.appendChild(loading);
+        try {
+          const result = await window.desktop.marketRecommend({ sourceId: state.sourceId, need });
+          state.ai = result;
+          list.innerHTML = "";
+          if (!result.picks.length) {
+            const empty = document.createElement("div");
+            empty.className = "empty";
+            empty.textContent = result.message || t("emptyAi");
+            list.appendChild(empty);
+            return;
+          }
+          renderAiResult();
+        } catch (error) {
+          list.innerHTML = "";
+          const empty = document.createElement("div");
+          empty.className = "empty";
+          empty.textContent = String(error && error.message ? error.message : error);
+          list.appendChild(empty);
+        }
+      }
+
       async function removeSource(id) {
         const next = state.sources.filter((source) => source.id !== id);
         state.sources = await window.desktop.marketSaveSources(next);
         if (!state.sources.some((source) => source.id === state.sourceId)) state.sourceId = state.sources[0].id;
         renderSources();
+        await load();
       }
 
+      /* ---------------------------------------------------------- 启动 */
       async function boot() {
         document.title = t("title");
         el("title").textContent = t("title");
-        document.querySelectorAll("nav button").forEach((node) => {
+        const navButtons = document.querySelectorAll("nav button");
+        navButtons.forEach((node) => {
           const key = node.dataset.tab;
-          node.textContent = t(key);
-          node.onclick = () => {
+          node.onclick = async () => {
             state.tab = key;
-            document.querySelectorAll("nav button").forEach((other) => other.classList.toggle("active", other === node));
+            state.ai = null;
+            navButtons.forEach((other) => other.classList.toggle("active", other === node));
+            el("chips").hidden = key !== "discover";
+            if (key === "digest" && isHouse() && !state.digest) {
+              state.digest = await window.desktop.marketDaily({ sourceId: state.sourceId }).catch(() => null);
+            }
             render();
           };
         });
+        const countNode = document.createElement("span");
+        countNode.id = "instCount";
+        countNode.className = "count";
+        countNode.hidden = true;
+        el("installedTab").appendChild(countNode);
         el("query").placeholder = t("search");
         el("searchBtn").textContent = t("searchBtn");
-        el("browseBtn").textContent = t("all");
+        el("aiBtn").textContent = t("aiBtn");
         el("refreshBtn").textContent = t("refresh");
         el("dClose").textContent = t("close");
         el("dRepo").textContent = t("repo");
         el("dInstall").textContent = t("install");
         el("log").hidden = true;
-        el("log").closest("main").querySelector("#log").previousElementSibling;
-        const progress = document.createElement("div");
-        progress.className = "hint";
-        progress.textContent = t("progress");
-        el("log").parentNode.insertBefore(progress, el("log"));
-        progress.hidden = true;
 
         el("searchBtn").onclick = async () => {
+          state.ai = null;
+          state.tab = "discover";
           state.query = el("query").value.trim();
+          state.category = "";
+          state.pageNo = 1;
           await load();
         };
         el("query").onkeydown = async (event) => {
           if (event.key === "Enter") {
+            state.ai = null;
+            state.tab = "discover";
             state.query = el("query").value.trim();
+            state.category = "";
+            state.pageNo = 1;
             await load();
           }
         };
-        el("browseBtn").onclick = async () => {
-          el("query").value = "";
-          state.query = "";
-          state.category = "";
-          await load();
-        };
+        el("aiBtn").onclick = aiPick;
         el("refreshBtn").onclick = async () => {
+          state.ai = null;
+          state.digest = null;
           state.installed = await window.desktop.marketInventory();
+          updateInstCount();
           await load();
         };
         el("dClose").onclick = () => el("detailDlg").close();
@@ -687,11 +1243,20 @@
         select.value = state.sourceId;
         select.onchange = async () => {
           state.sourceId = select.value;
+          state.ai = null;
+          state.digest = null;
+          state.category = "";
+          state.pageNo = 1;
           await load();
         };
         window.desktop.onMarketProgress((chunk) => logLine(chunk));
         state.installed = await window.desktop.marketInventory();
+        updateInstCount();
         await load();
+        window.desktop.marketUpdates().then((result) => {
+          state.updates = result;
+          updateInstCount();
+        }).catch(() => {});
       }
 
       boot();

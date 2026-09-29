@@ -3,7 +3,16 @@ import type { SkinCard } from "./skins";
 import type { DesktopSettings } from "./util";
 import type { RecoveryActionId, RecoveryInfo } from "./recovery";
 import type { CatalogSource, MarketEntry, MarketPage } from "./market/catalog";
-import type { InstallOutcome, ProfileInventory } from "./market/service";
+import type {
+  DailyReport,
+  ExportPackOutcome,
+  ImportPackOutcome,
+  InstallOutcome,
+  InteractOutcome,
+  ProfileInventory,
+  RecommendOutcome,
+  UpdatesOutcome,
+} from "./market/service";
 
 contextBridge.exposeInMainWorld("desktop", {
   onStatus: (handler: (payload: { phase: string; text: string }) => void) => {
@@ -54,7 +63,7 @@ contextBridge.exposeInMainWorld("desktop", {
   marketSources: (): Promise<CatalogSource[]> => ipcRenderer.invoke("market:sources"),
   marketSaveSources: (sources: CatalogSource[]): Promise<CatalogSource[]> =>
     ipcRenderer.invoke("market:save-sources", sources),
-  marketBrowse: (input: { sourceId: string; query?: string; category?: string }): Promise<MarketPage> =>
+  marketBrowse: (input: { sourceId: string; query?: string; category?: string; sort?: string; page?: number }): Promise<MarketPage> =>
     ipcRenderer.invoke("market:browse", input),
   marketDetail: (input: { sourceId: string; id: string }): Promise<MarketEntry | null> =>
     ipcRenderer.invoke("market:detail", input),
@@ -68,6 +77,18 @@ contextBridge.exposeInMainWorld("desktop", {
     ipcRenderer.invoke("market:toggle", input),
   marketOpenExternal: (url: string): Promise<void> => ipcRenderer.invoke("market:open-external", url),
   marketRestart: (): Promise<void> => ipcRenderer.invoke("market:restart"),
+  /** 自建市场扩展：AI 推荐 / 日报 / 互动 / 更新检查 / 迁移打包。 */
+  marketRecommend: (input: { sourceId: string; need: string }): Promise<RecommendOutcome> =>
+    ipcRenderer.invoke("market:recommend", input),
+  marketDaily: (input: { sourceId: string }): Promise<DailyReport | null> => ipcRenderer.invoke("market:daily", input),
+  marketInteract: (input: {
+    sourceId: string;
+    id: string;
+    action: "like" | "favorite" | "install";
+  }): Promise<InteractOutcome> => ipcRenderer.invoke("market:interact", input),
+  marketUpdates: (): Promise<UpdatesOutcome> => ipcRenderer.invoke("market:updates"),
+  marketExportPack: (): Promise<ExportPackOutcome> => ipcRenderer.invoke("market:export-pack"),
+  marketImportPack: (): Promise<ImportPackOutcome> => ipcRenderer.invoke("market:import-pack"),
   /** UI state goes into the shell log, so a support bundle shows what rendered. */
   marketUiLog: (info: { tab?: string; cards?: number; sample?: string }): Promise<void> =>
     ipcRenderer.invoke("market:ui-log", info),
