@@ -792,7 +792,7 @@
           nm.textContent = plugin.packageName;
           const ver = document.createElement("div");
           ver.className = "ver";
-          ver.textContent = [plugin.version, plugin.core ? t("core") : plugin.bundle ? t("bundle") : t("plainDep")].filter(Boolean).join(" · ");
+          ver.textContent = [plugin.version, plugin.builtin ? "" : plugin.core ? t("core") : plugin.bundle ? t("bundle") : t("plainDep")].filter(Boolean).join(" · ");
           info.append(nm, ver);
           row.appendChild(info);
           if (plugin.disabled) row.appendChild(span(t("disabledTag"), "badge warn"));
