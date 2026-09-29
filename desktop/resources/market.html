@@ -352,7 +352,7 @@
           emptyAi: "没找到合适的插件，换个说法再试。",
           loading: "读取目录…",
           noInstalled: "当前 profile 没有装任何插件。",
-          core: "自带层", bundle: "层级插件", disabledTag: "已停用", plainDep: "普通依赖",
+          core: "自带层", bundle: "层级插件", builtin: "内置", disabledTag: "已停用", plainDep: "普通依赖",
           restart: "重启引擎", restartHint: "安装 / 停用 / 卸载后，需要重启引擎才会生效。",
           restartNow: "现在重启", later: "稍后",
           addSource: "添加数据源", sourceLabel: "名称", sourceUrl: "地址", save: "保存",
@@ -387,7 +387,7 @@
           emptyAi: "No matching plugins — try rephrasing.",
           loading: "Reading catalog…",
           noInstalled: "This profile has no plugins installed.",
-          core: "In-box", bundle: "Bundle", disabledTag: "Disabled", plainDep: "Plain dependency",
+          core: "In-box", bundle: "Bundle", builtin: "Built-in", disabledTag: "Disabled", plainDep: "Plain dependency",
           restart: "Restart engine", restartHint: "Install, disable and uninstall take effect after an engine restart.",
           restartNow: "Restart now", later: "Later",
           addSource: "Add source", sourceLabel: "Label", sourceUrl: "URL", save: "Save",
@@ -806,8 +806,12 @@
               await checkUpdates();
             }));
           }
-          row.appendChild(button(plugin.disabled ? t("enable") : t("disable"), "ghost tiny", () => toggle(plugin.packageName, !plugin.disabled)));
-          if (plugin.removable) row.appendChild(button(t("uninstall"), "danger tiny", () => uninstall(plugin.packageName)));
+          if (!plugin.builtin) {
+            row.appendChild(button(plugin.disabled ? t("enable") : t("disable"), "ghost tiny", () => toggle(plugin.packageName, !plugin.disabled)));
+            if (plugin.removable) row.appendChild(button(t("uninstall"), "danger tiny", () => uninstall(plugin.packageName)));
+          } else {
+            row.appendChild(span(t("builtin"), "badge"));
+          }
           list.appendChild(row);
         }
         pane.appendChild(list);

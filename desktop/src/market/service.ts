@@ -45,6 +45,7 @@ import {
   pluginAddArgs,
   pluginRemoveArgs,
   qualifyEntry,
+  readBuiltinPlugins,
   readInventory,
   runPluginCommand,
   type ProfileInventory,
@@ -326,7 +327,15 @@ export function createMarketService(options: MarketServiceOptions): MarketServic
   }
 
   async function inventory(): Promise<ProfileInventory> {
-    return await readInventory(options.dshHome());
+    const base = await readInventory(options.dshHome());
+    const builtins = await readBuiltinPlugins(path.join(options.userData, "plugins"));
+    if (builtins.length === 0) return base;
+    const known = new Set(base.plugins.map((plugin) => plugin.packageName));
+    for (const plugin of builtins) {
+      if (!known.has(plugin.packageName)) base.plugins.push(plugin);
+    }
+    base.plugins.sort((left, right) => left.packageName.localeCompare(right.packageName));
+    return base;
   }
 
   /** Run one engine CLI invocation, resolving the runtime lazily. */

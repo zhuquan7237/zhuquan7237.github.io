@@ -14,7 +14,7 @@
  */
 
 import { spawn } from "node:child_process";
-import { readFile } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import type { MarketEntry } from "./catalog";
 
@@ -42,6 +42,8 @@ export interface InstalledPlugin {
   core: boolean;
   /** True when a market row disables it at boot. */
   disabled: boolean;
+  /** True for desktop-managed built-in plugins; the market never mutates them. */
+  builtin?: boolean;
 }
 
 /** Result of qualifying one catalog entry for installation. */
@@ -190,6 +192,34 @@ export async function readInventory(dshHome: string): Promise<ProfileInventory> 
     patch = "";
   }
   return buildInventory(dshHome, manifest, patch);
+}
+
+/**
+ * Read the desktop-managed built-in plugins. They live under
+ * `<userData>/plugins` (usually as symlinks) and are maintained by the desktop
+ * shell itself: the market only lists them so the installed page tells the
+ * whole story, and never mutates them.
+ * @param pluginsDir - absolute path of the desktop plugins directory.
+ * @returns one read-only entry per built-in plugin; a missing directory yields [].
+ */
+export async function readBuiltinPlugins(pluginsDir: string): Promise<InstalledPlugin[]> {
+  let names: string[];
+  try {
+    const dirents = await readdir(pluginsDir, { withFileTypes: true });
+    names = dirents.filter((d) => d.isDirectory() || d.isSymbolicLink()).map((d) => d.name);
+  } catch {
+    return [];
+  }
+  const out: InstalledPlugin[] = [];
+  for (const name of names) {
+    const manifest = await readJsonOrNull(path.join(pluginsDir, name, "package.json"));
+    const packageName =
+      typeof manifest?.name === "string" && manifest.name ? manifest.name : `@dsh-desktop/${name}`;
+    const version = typeof manifest?.version === "string" ? manifest.version : "";
+    out.push({ packageName, version, bundle: false, removable: false, core: false, disabled: false, builtin: true });
+  }
+  out.sort((left, right) => left.packageName.localeCompare(right.packageName));
+  return out;
 }
 
 /** A single npm registry reply, reduced to the fields qualification needs. */
