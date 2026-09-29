@@ -1,9 +1,9 @@
 {
-  "version": "0.4.9",
-  "versionCode": 105,
+  "version": "0.5.0",
+  "versionCode": 106,
   "apkUrl": "https://m.zhuquan.xyz/mobile/dsh-mobile.apk",
-  "sha256": "b34fe532406cf5e22314c3ae54709a9ee776a49fe080136684cb4455f4f941c4",
+  "sha256": "0b0ef5c11aac532b8d9114768f245a3e50393410fcfebf0dea9167df9d81c775",
   "size": 3857667,
-  "notes": "自动选线：连上后静默探测备用线路，明显更快才无缝切换（首连零影响）；模型提供方报错可长按复制原文；对话长按支持系统选择、局部复制。",
-  "publishedAt": "2026-09-29T10:18:26+08:00"
+  "notes": "模型配置：提供商支持随时编辑（显示名/接口地址/协议/凭据变量名）——接口可在 Responses 与 Chat Completions 之间自由切换，另支持 Anthropic；提供商行显示当前协议。",
+  "publishedAt": "2026-09-29T11:04:41+08:00"
 }
