@@ -23,9 +23,10 @@
  */
 import { createHash, randomUUID } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, readdirSync, realpathSync, statSync, unlinkSync, writeFileSync, copyFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { hostname } from 'node:os';
 import { basename, dirname, extname, join, normalize, resolve, sep } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { SCOPE_LABELS, SCOPES, consumePairing, deviceForToken, deviceView, issuePairing, newToken, normalizePublicUrl, readStore, scopeAllows, storePath, writeStore, } from './devices.js';
 import { buildDoc, engineOps, mergeDocs, mergePhoneEditsOnto, overlayFor, } from './models.js';
 import { qrSvg } from './qr.js';
@@ -220,7 +221,133 @@ async function callEngine(ctx, method, payload, signal) {
         }
         void hint;
     }
+    // Nothing matched: leave a diagnosis in the message so a user-reported log
+    // shows which names were tried and what the engine actually exports.
+    const diagnostic = engineDiagnostics(ctx, method, endpoints);
+    if (lastError instanceof Error) {
+        lastError.message = `${lastError.message} [bridge-diag: ${diagnostic}]`;
+    }
+    else {
+        lastError = new Error(`engine endpoint resolution failed [bridge-diag: ${diagnostic}]`);
+    }
     throw lastError;
+}
+/** Remote-method markers live on the Service prototype under this string key. */
+const REMOTE_METHODS_KEY = '@deepseek-ai/dsh-typert-protocol/remote-methods';
+/** The bridge's own version, read once from its package.json. */
+let bridgeVersionCache;
+function bridgeVersion() {
+    if (bridgeVersionCache !== undefined)
+        return bridgeVersionCache;
+    try {
+        const pkg = JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'package.json'), 'utf8'));
+        bridgeVersionCache = typeof pkg.version === 'string' && pkg.version.length > 0 ? pkg.version : '?';
+    }
+    catch {
+        bridgeVersionCache = '?';
+    }
+    return bridgeVersionCache;
+}
+/** The engine's version, resolved best-effort through the plugin's module graph. */
+let engineVersionCache;
+function engineVersion() {
+    if (engineVersionCache !== undefined)
+        return engineVersionCache;
+    const roots = [import.meta.url];
+    const entry = process.argv[1];
+    if (typeof entry === 'string' && entry.length > 0) {
+        try {
+            roots.push(pathToFileURL(entry).href);
+        }
+        catch {
+            /* ignore */
+        }
+    }
+    for (const root of roots) {
+        try {
+            const req = createRequire(root);
+            const pkg = req('@deepseek-ai/dsh/package.json');
+            if (typeof pkg.version === 'string' && pkg.version.length > 0) {
+                engineVersionCache = pkg.version;
+                return engineVersionCache;
+            }
+        }
+        catch {
+            /* next root */
+        }
+    }
+    engineVersionCache = '?';
+    return engineVersionCache;
+}
+/** Export names of the Remote methods a live Service declares on its prototype. */
+function remoteMethodNames(service) {
+    try {
+        let prototype = Object.getPrototypeOf(service);
+        while (prototype !== null) {
+            const property = Object.getOwnPropertyDescriptor(prototype, REMOTE_METHODS_KEY);
+            if (property !== undefined) {
+                const descriptor = property.value;
+                const list = Array.isArray(descriptor?.methods) ? descriptor.methods : [];
+                return list
+                    .map((marker) => typeof marker?.exportName === 'string' && marker.exportName.length > 0
+                    ? marker.exportName
+                    : typeof marker?.method === 'string'
+                        ? marker.method
+                        : '')
+                    .filter((name) => name.length > 0);
+            }
+            prototype = Object.getPrototypeOf(prototype);
+        }
+    }
+    catch {
+        /* ignore */
+    }
+    return [];
+}
+/**
+ * One-line engine diagnosis attached to a failed endpoint resolution: which
+ * endpoint names were tried, how many Services are alive, and every Service
+ * whose namespace mentions the requested one — so a renamed or half-loaded
+ * Service is visible directly from the phone's report.
+ */
+export function engineDiagnostics(ctx, method, tried) {
+    const head = (method.split(/[./]/)[0] ?? method).toLowerCase();
+    const bits = [`tried=${tried.join('|')}`, `bridge=${bridgeVersion()}`, `engine=${engineVersion()}`];
+    try {
+        const props = ctx.reflect?.props ?? {};
+        const namespaces = [];
+        const related = [];
+        let services = 0;
+        for (const serviceKey of Object.keys(props)) {
+            const definition = props[serviceKey];
+            if (definition?.type !== 'service')
+                continue;
+            const receiver = ctx.get(serviceKey);
+            if (receiver === null || typeof receiver !== 'object')
+                continue;
+            const binding = Reflect.get(receiver, 'typertRemote');
+            if (binding === null || typeof binding !== 'object')
+                continue;
+            services += 1;
+            const namespace = Reflect.get(binding, 'namespace');
+            if (typeof namespace !== 'string' || namespace.length === 0)
+                continue;
+            if (namespaces.length < 48)
+                namespaces.push(namespace);
+            if (!namespace.toLowerCase().includes(head))
+                continue;
+            const names = remoteMethodNames(receiver);
+            related.push(names.length > 0 ? `${namespace}=[${names.slice(0, 12).join(',')}${names.length > 12 ? ',…' : ''}]` : `${namespace}=[]`);
+        }
+        bits.push(`services=${services}`);
+        bits.push(related.length > 0 ? `related:${related.slice(0, 6).join(' ')}` : `related:NONE(${head})`);
+        if (namespaces.length > 0)
+            bits.push(`namespaces=${namespaces.slice(0, 40).join(',')}${namespaces.length > 40 ? ',…' : ''}`);
+    }
+    catch (error) {
+        bits.push(`diag-failed=${error instanceof Error ? error.message : String(error)}`);
+    }
+    return bits.join('; ');
 }
 /** Invoke one already-named endpoint. */
 async function invokeEngine(ctx, endpoint, payload, signal) {
