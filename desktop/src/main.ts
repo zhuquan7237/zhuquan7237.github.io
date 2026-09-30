@@ -47,6 +47,7 @@ import {
   type HttpFetcher,
 } from "./desktop-update";
 import { ensureDefaultWorkspace } from "./dsh-workspace";
+import { isInsideDir, isSafeExternalUrl, isSameOrigin, mergeSettingsPreservingSecrets, stripUrlSecrets } from "./security";
 import { SKIN_OVERLAY_CSS, skinOverlayBootstrap } from "./skin-overlay";
 import {
   DEFAULT_SKIN_ID,
@@ -281,8 +282,16 @@ async function createMain(url: string, version: string): Promise<void> {
   });
   if (state.isMaximized) mainWindow.maximize();
   mainWindow.webContents.setWindowOpenHandler(({ url: target }) => {
-    void shell.openExternal(target);
+    // 只把 http(s)/mailto 交给系统；file:/ms-msdt: 等协议一律拒绝。
+    if (isSafeExternalUrl(target)) void shell.openExternal(target);
+    else shellLog(`已拦截非网页链接：${target.slice(0, 80)}`);
     return { action: "deny" };
+  });
+  // 主窗挂着 preload（window.desktop.*）：不许导航离开引擎自己的源。
+  mainWindow.webContents.on("will-navigate", (event, target) => {
+    if (isSameOrigin(target, url)) return;
+    event.preventDefault();
+    if (isSafeExternalUrl(target)) void shell.openExternal(target);
   });
   mainWindow.webContents.on("did-fail-load", (_event, code, desc, validatedURL, isMainFrame) => {
     if (!isMainFrame || code === -3) return;
@@ -554,7 +563,7 @@ async function diagnosticsInput(): Promise<DiagnosticsInput> {
     channel: current.channel,
     registry: current.registry,
     webPort: normalizeWebPort(current.webPort),
-    localUrl: running?.url ?? "",
+    localUrl: stripUrlSecrets(running?.url ?? ""),
     trayAvailable: Boolean(tray),
     autoRestarts: crashHistory.length,
     lastExitReason,
@@ -1716,7 +1725,7 @@ if (linuxReady) {
       ipcMain.handle("app:version", () => app.getVersion());
       ipcMain.handle("settings:get", () => settings);
       ipcMain.handle("settings:save", async (_event, next: DesktopSettings) => {
-        settings = { ...settings, ...next };
+        settings = mergeSettingsPreservingSecrets(settings, next);
         settings.webPort = normalizeWebPort(settings.webPort);
         await saveSettings(userData(), settings);
         applyShellLocale();
@@ -1823,7 +1832,7 @@ if (linuxReady) {
         // 只允许打开数据目录内的路径，防止渲染层拿这个口子开任意位置。
         const target = String(dir ?? "");
         const home = dshHomeDir();
-        if (target === "" || !target.startsWith(home)) return { ok: false, error: "路径不在数据目录内" };
+        if (!isInsideDir(target, home)) return { ok: false, error: "路径不在数据目录内" };
         const message = await shell.openPath(target);
         return message === "" ? { ok: true } : { ok: false, error: message };
       });

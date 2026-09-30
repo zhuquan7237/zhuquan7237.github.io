@@ -66,6 +66,7 @@ import { request as httpsRequest } from 'node:https'
 import { connect as netConnect } from 'node:net'
 import { networkInterfaces } from 'node:os'
 import { normalizeSince } from './hello.js'
+import { isLocalRequestAllowed } from './local-guard.js'
 import { type WsConnection, acceptUpgrade } from './ws.js'
 
 export * from './devices.js'
@@ -1650,6 +1651,11 @@ document.addEventListener('click', async (event) => {
     kind: 'prefix',
     path: LOCAL_PREFIX,
     handler: (req, res) => {
+      // 防 DNS 重绑定 / 跨站 POST：只认环回 Host（及环回 Origin，若有）。
+      if (!isLocalRequestAllowed(req.headers)) {
+        sendJson(res, 403, { ok: false, code: 'E_FORBIDDEN', message: '本机配对页只接受环回地址访问' })
+        return
+      }
       const path = pathAfter(req.url, LOCAL_PREFIX)
       if (path.startsWith('/state')) {
         sendJson(res, 200, localState())
@@ -3428,11 +3434,15 @@ document.addEventListener('click', async (event) => {
     { url: 'wss://cn.zhuquan.xyz:8443', label: '国内直连' },
     { url: 'wss://relay.zhuquan.xyz', label: 'Cloudflare' },
   ]
-  log(`远程中继：https://cn.zhuquan.xyz:8443/m/${relayKey.slice(0, 8)}…（首选国内直连，连不上自动回退 Cloudflare）`)
-  try {
-    relayLink = startRelayLink({ candidates: relayCandidates, deviceKey: relayKey, secret: relaySecret, localPort, log })
-  } catch (error) {
-    log(`中继启动失败：${error instanceof Error ? error.message : String(error)}`)
+  if (process.env.DSH_MOBILE_BRIDGE_NO_RELAY) {
+    log('远程中继已按环境变量跳过（DSH_MOBILE_BRIDGE_NO_RELAY）')
+  } else {
+    log(`远程中继：https://cn.zhuquan.xyz:8443/m/${relayKey.slice(0, 8)}…（首选国内直连，连不上自动回退 Cloudflare）`)
+    try {
+      relayLink = startRelayLink({ candidates: relayCandidates, deviceKey: relayKey, secret: relaySecret, localPort, log })
+    } catch (error) {
+      log(`中继启动失败：${error instanceof Error ? error.message : String(error)}`)
+    }
   }
 
   // 模型提问通道：作为常驻 Remote 客户端接入引擎；起不来不影响其余功能。
@@ -3514,8 +3524,12 @@ document.addEventListener('click', async (event) => {
       socket.on('error', () => upstream.destroy())
     })
     lanServer.on('error', (error) => log(`局域网直连启动失败：${error instanceof Error ? error.message : String(error)}`))
-    lanServer.listen(LAN_PORT, '0.0.0.0', () => {
-      log(`局域网直连已开启：http://${lanAddress}:${LAN_PORT}${PUBLIC_PREFIX}/ （手机与电脑同一 Wi-Fi 时用它配对）`)
-    })
+    if (process.env.DSH_MOBILE_BRIDGE_NO_LAN) {
+      log('局域网直连已按环境变量跳过（DSH_MOBILE_BRIDGE_NO_LAN）')
+    } else {
+      lanServer.listen(LAN_PORT, '0.0.0.0', () => {
+        log(`局域网直连已开启：http://${lanAddress}:${LAN_PORT}${PUBLIC_PREFIX}/ （手机与电脑同一 Wi-Fi 时用它配对）`)
+      })
+    }
   }
 }
