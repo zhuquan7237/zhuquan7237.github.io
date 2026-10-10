@@ -5,11 +5,15 @@
  * like the desktop panel's: the body needs React from the host's module table and
  * nothing else.
  *
- * It renders one settings section: catalogue status, a fleet summary, a queue of
- * corrections waiting for confirmation, and one card per provider route whose
- * models carry capability chips (图片 / 上下文 / 输出上限) with the source each
- * value came from. Anything the resolver could not state shows as 未知 instead of
- * a guess, and every value can be overridden by hand.
+ * One setting, one button. The host resolves and writes capabilities by itself
+ * (on boot, and whenever the model configuration changes), so this page only
+ * shows the result: catalogue status, a fleet summary, and one card per provider
+ * route whose models carry capability chips (图片 / 上下文 / 输出上限 / 推理) with
+ * the source each value came from. 「立即同步」 re-reads the upstream line-up for
+ * every route in one go — no per-route button, nothing to confirm. Anything the
+ * resolver could not state shows as 未知 instead of a guess, and a value can
+ * still be overridden by hand; an override is stored as such and sync never
+ * touches it.
  *
  * Styling uses only theme variables the dsh client actually defines, always with
  * theme-neutral fallbacks: naming a variable that does not exist is how the
@@ -25,10 +29,8 @@ window.__ModuleLoader__.load({
     const URLS = {
       overview: "/dsh-model-vision/overview",
       plan: "/dsh-model-vision/plan",
-      apply: "/dsh-model-vision/apply",
       sync: "/dsh-model-vision/sync",
       override: "/dsh-model-vision/override",
-      catalogue: "/dsh-model-vision/catalogue",
       seat: "/dsh-model-vision/seat",
     };
 
@@ -37,9 +39,12 @@ window.__ModuleLoader__.load({
         nav: "模型能力",
         title: "模型能力",
         subtitle:
-          "上游网关基本不公布模型能力（你 6 条路由里只有 1 条会给出上下文长度，1 条什么都不返回），所以这里用「上游元数据 + 跨厂商能力目录 + 家族规则」三层解析，目录每日自动更新。新出现的模型自动写入；要修正已有值前，先把差异列给你确认。",
-        refreshCatalogue: "刷新能力目录",
-        identifyAll: "一键识别全部",
+          "上游网关基本不公布模型能力，所以这里用「上游元数据 + 跨厂商能力目录 + 家族规则」三层解析，目录每日自动更新、结果自动写入：首次导入提供商后无需任何操作，模型有变化时点一下「立即同步」即可。",
+        syncNow: "立即同步",
+        syncing: "同步中…",
+        syncDone: "同步完成",
+        syncNothing: "能力已是最新",
+        updated: "已更新 {n} 个模型",
         catalogue: "能力目录",
         entries: "条",
         fromNetwork: "网络",
@@ -52,12 +57,6 @@ window.__ModuleLoader__.load({
         models: "个模型",
         visionCount: "支持图片",
         unknownCount: "无法判定",
-        pending: "待确认",
-        pendingTitle: "待确认的能力修正",
-        pendingHint: "这些模型配置里已经有值，但解析结果不同 —— 只有你知道原来的值是不是有意写的。",
-        applyAll: "全部应用",
-        ignore: "忽略",
-        applyRoute: "识别这条路由",
         collapse: "收起",
         expand: "展开",
         search: "筛选模型…",
@@ -85,9 +84,7 @@ window.__ModuleLoader__.load({
         save: "保存",
         cancel: "取消",
         reset: "清除",
-        manualHint: "手动值优先，之后不再被自动同步改动。",
-        applied: "已应用",
-        refreshed: "能力目录已更新",
+        manualHint: "手动值优先；自动同步不会再改动它。",
         error: "失败",
         empty: "还没有配置任何 provider 路由",
       },
@@ -95,9 +92,12 @@ window.__ModuleLoader__.load({
         nav: "Capabilities",
         title: "Model capabilities",
         subtitle:
-          "Gateways barely publish capabilities (only one of your six routes reports a context length, one reports nothing at all), so this resolves them from upstream metadata, a cross-vendor catalogue refreshed daily, and family rules. New models are written automatically; corrections to existing values are listed as a diff first.",
-        refreshCatalogue: "Refresh catalogue",
-        identifyAll: "Resolve everything",
+          "Gateways barely publish capabilities, so this resolves them from upstream metadata, a cross-vendor catalogue refreshed daily, and family rules — and writes the answer automatically. A first import needs nothing from you; press “Sync now” when a provider's line-up changes.",
+        syncNow: "Sync now",
+        syncing: "Syncing…",
+        syncDone: "Sync complete",
+        syncNothing: "already up to date",
+        updated: "{n} models updated",
         catalogue: "Catalogue",
         entries: "entries",
         fromNetwork: "network",
@@ -110,12 +110,6 @@ window.__ModuleLoader__.load({
         models: "models",
         visionCount: "accept images",
         unknownCount: "unknown",
-        pending: "to confirm",
-        pendingTitle: "Capability corrections to confirm",
-        pendingHint: "These models already carry a value the resolver disagrees with — only you know whether it was deliberate.",
-        applyAll: "Apply all",
-        ignore: "Ignore",
-        applyRoute: "Resolve this route",
         collapse: "Collapse",
         expand: "Expand",
         search: "Filter models…",
@@ -143,9 +137,7 @@ window.__ModuleLoader__.load({
         save: "Save",
         cancel: "Cancel",
         reset: "Reset",
-        manualHint: "A hand-set value wins and is no longer touched by sync.",
-        applied: "applied",
-        refreshed: "Catalogue updated",
+        manualHint: "A hand-set value wins; sync will not touch it.",
         error: "Failed",
         empty: "No provider route is configured yet",
       },
@@ -398,7 +390,6 @@ window.__ModuleLoader__.load({
       const [open, setOpen] = useState(false);
       const [plan, setPlan] = useState(null);
       const [error, setError] = useState("");
-      const [busy, setBusy] = useState(false);
       const [query, setQuery] = useState("");
       const [filter, setFilter] = useState("all");
 
@@ -413,36 +404,8 @@ window.__ModuleLoader__.load({
       }, [route.route]);
 
       useEffect(() => {
-        if (open && plan === null) loadPlan();
-      }, [open, plan, loadPlan]);
-
-      const identify = async () => {
-        setBusy(true);
-        try {
-          const body = await post(URLS.apply, { provider: route.route, accepted: [] });
-          await loadPlan();
-          await props.reloadOverview();
-          props.onMessage(`${route.route}: ${t.applied} ${body.applied} ${t.models || ""}`.trim());
-        } catch (problem) {
-          props.onMessage(`${t.error}: ${String((problem && problem.message) || problem)}`);
-        }
-        setBusy(false);
-      };
-
-      const acceptCorrections = async () => {
-        const ids = (plan ? plan.models : []).filter((m) => m.changes.some((c) => c.verdict === "correct")).map((m) => m.id);
-        if (ids.length === 0) return;
-        setBusy(true);
-        try {
-          const body = await post(URLS.apply, { provider: route.route, accepted: ids });
-          await loadPlan();
-          await props.reloadOverview();
-          props.onMessage(`${route.route}: ${t.applied} ${body.applied}`);
-        } catch (problem) {
-          props.onMessage(`${t.error}: ${String((problem && problem.message) || problem)}`);
-        }
-        setBusy(false);
-      };
+        if (open) loadPlan();
+      }, [open, props.generation, loadPlan]);
 
       const models = plan ? plan.models : [];
       const visible = useMemo(() => {
@@ -474,17 +437,12 @@ window.__ModuleLoader__.load({
             chip("total", `${route.total} ${t.models}`, V.dim),
             route.vision > 0 ? chip("vision", `${t.visionCount} ${route.vision}`, V.good) : null,
             route.unknown > 0 ? chip("unknown", `${t.unknownCount} ${route.unknown}`, V.bad) : null,
-            route.pendingCorrections > 0 ? chip("pending", `${t.pending} ${route.pendingCorrections}`, V.bad) : null,
             h("span", { key: "sum", style: { fontSize: "11px", color: V.faint, marginLeft: "auto" } },
               route.lastSync ? `${route.lastSync.at.slice(5, 16)} · ${route.lastSync.summary}` : t.never),
             button("open", open ? t.collapse : t.expand, (event) => {
               if (event && event.stopPropagation) event.stopPropagation();
               setOpen(!open);
             }),
-            button("go", t.applyRoute, (event) => {
-              if (event && event.stopPropagation) event.stopPropagation();
-              identify();
-            }, { disabled: busy, primary: true }),
           ],
         ),
         open
@@ -502,7 +460,6 @@ window.__ModuleLoader__.load({
                   : null,
                 h("div", { key: "filters", style: { display: "flex", gap: "4px", cursor: "pointer" } },
                   filters.map((pair) => h("span", { key: pair[0], onClick: () => setFilter(pair[0]) }, chip(`f-${pair[0]}`, pair[1], filter === pair[0] ? V.good : V.dim)))),
-                route.pendingCorrections > 0 ? button("applycorr", `${t.applyAll} (${route.pendingCorrections})`, acceptCorrections, { primary: true }) : null,
                 h("span", { key: "shown", style: { fontSize: "11px", color: V.faint, marginLeft: "auto" } }, `${visible.length}/${models.length}`),
               ]),
               error ? h("div", { key: "err", style: { padding: "6px 12px", color: V.bad, fontSize: "12px" } }, error) : null,
@@ -522,38 +479,13 @@ window.__ModuleLoader__.load({
       ]);
     }
 
-    function PendingQueue(props) {
-      const t = props.t;
-      const pending = props.routes.filter((route) => route.pendingCorrections > 0);
-      if (pending.length === 0) return null;
-      const total = pending.reduce((sum, route) => sum + route.pendingCorrections, 0);
-      return h(
-        "div",
-        {
-          style: { display: "flex", flexDirection: "column", gap: "8px", padding: "12px 14px", borderRadius: "12px", border: `1px solid ${V.bad}`, background: V.inner },
-        },
-        [
-          h("strong", { key: "t", style: { fontSize: "13px", color: V.bad } }, `${t.pendingTitle} (${total})`),
-          h("span", { key: "h", style: { fontSize: "11px", color: V.faint } }, t.pendingHint),
-          h("div", { key: "rows", style: { display: "flex", flexDirection: "column", gap: "6px" } },
-            pending.map((route) =>
-              h("div", { key: route.route, style: { display: "flex", alignItems: "center", gap: "8px", fontSize: "12px", flexWrap: "wrap" } }, [
-                h("code", { key: "r", style: { color: V.text } }, route.route),
-                h("span", { key: "c", style: { color: V.dim } }, `${route.pendingCorrections} ${t.pending}`),
-                button("apply", t.applyAll, () => props.onApply(route.route), { primary: true }),
-                button("ignore", t.ignore, () => props.onMessage(`${route.route}: ${t.ignore}`)),
-              ]),
-            )),
-        ],
-      );
-    }
-
     function CapabilitiesPage(props) {
       const t = COPY[props && props.lang === "en" ? "en" : "zh"];
       const [overview, setOverview] = useState(null);
       const [message, setMessage] = useState("");
       const [error, setError] = useState("");
       const [busy, setBusy] = useState(false);
+      const [generation, setGeneration] = useState(0);
 
       const load = useCallback(async () => {
         try {
@@ -573,40 +505,20 @@ window.__ModuleLoader__.load({
         post(URLS.seat, { stage: "seated", page: "model-capabilities" }).catch(() => undefined);
       }, []);
 
-      const syncAll = async () => {
+      const syncNow = async () => {
         setBusy(true);
         setMessage("");
+        setError("");
         try {
-          const body = await post(URLS.sync, {});
-          await load();
+          const body = await post(URLS.sync, { refresh: true });
           const applied = (body.results || []).reduce((sum, row) => sum + (row.applied || 0), 0);
-          setMessage(`${t.refreshed}: ${(body.refresh && body.refresh.message) || ""} · ${t.applied} ${applied}`);
+          setMessage(`${t.syncDone} · ${applied > 0 ? t.updated.replace("{n}", String(applied)) : t.syncNothing}`);
+          setGeneration((value) => value + 1);
+          await load();
         } catch (problem) {
           setError(`${t.error}: ${String((problem && problem.message) || problem)}`);
         }
         setBusy(false);
-      };
-
-      const refreshCatalogue = async () => {
-        setBusy(true);
-        try {
-          const body = await post(URLS.catalogue, {});
-          await load();
-          setMessage(`${t.refreshed}: ${body.message || ""}`);
-        } catch (problem) {
-          setError(`${t.error}: ${String((problem && problem.message) || problem)}`);
-        }
-        setBusy(false);
-      };
-
-      const applyRoute = async (route) => {
-        try {
-          const body = await post(URLS.apply, { provider: route, accepted: [] });
-          await load();
-          setMessage(`${route}: ${t.applied} ${body.applied}`);
-        } catch (problem) {
-          setError(`${t.error}: ${String((problem && problem.message) || problem)}`);
-        }
       };
 
       const routes = overview ? overview.routes : [];
@@ -616,9 +528,8 @@ window.__ModuleLoader__.load({
           total: acc.total + route.total,
           vision: acc.vision + route.vision,
           unknown: acc.unknown + route.unknown,
-          pending: acc.pending + route.pendingCorrections,
         }),
-        { total: 0, vision: 0, unknown: 0, pending: 0 },
+        { total: 0, vision: 0, unknown: 0 },
       );
 
       return h(
@@ -641,23 +552,21 @@ window.__ModuleLoader__.load({
                 )
               : null,
             h("span", { key: "flex", style: { flex: "1 1 auto" } }),
-            button("refresh", t.refreshCatalogue, refreshCatalogue, { disabled: busy || !!(catalogue && catalogue.refreshing) }),
-            button("sync", t.identifyAll, syncAll, { disabled: busy, primary: true }),
+            button("sync", busy ? t.syncing : t.syncNow, syncNow, { disabled: busy, primary: true }),
           ]),
           h("div", { key: "stats", style: { display: "flex", gap: "10px", flexWrap: "wrap" } }, [
             stat("r", t.routes, routes.length),
             stat("m", t.models, totals.total),
             stat("v", t.visionCount, totals.vision, V.good),
-            stat("p", t.pending, totals.pending, totals.pending > 0 ? V.bad : undefined),
             stat("u", t.unknownCount, totals.unknown, totals.unknown > 0 ? V.dim : undefined),
           ]),
           message ? h("div", { key: "msg", style: { fontSize: "12px", color: V.good } }, message) : null,
           error ? h("div", { key: "err", style: { fontSize: "12px", color: V.bad } }, error) : null,
           overview === null ? h("div", { key: "loading", style: { fontSize: "12px", color: V.dim } }, t.loading) : null,
           routes.length === 0 && overview !== null ? h("div", { key: "empty", style: { fontSize: "12px", color: V.dim } }, t.empty) : null,
-          h(PendingQueue, { key: "pending", t: t, routes: routes, onApply: applyRoute, onMessage: setMessage }),
           h("div", { key: "routes", style: { display: "flex", flexDirection: "column", gap: "10px" } },
-            routes.map((route) => h(RouteCard, { key: route.route, t: t, route: route, onMessage: setMessage, reloadOverview: load }))),
+            routes.map((route) => h(RouteCard, { key: route.route, t: t, route: route, generation: generation, onMessage: setMessage })),
+          ),
         ],
       );
     }

@@ -1,16 +1,16 @@
 /**
  * Planning and applying capability changes to one provider route's `models`
- * array, with a diff a human can read before anything is written.
+ * array, with every change carrying a diff the UI can read.
  *
- * The applied policy comes from the user's own decisions:
- *  - a model the route does not list yet is an addition → applied automatically,
- *    because "pull the list and the model just works" is the point;
- *  - a field the route never set is enrichment → also automatic (the engine's
- *    default is a guess, and a worse one);
+ * The applied policy is deliberately hands-off — one click refreshes the whole
+ * fleet, and nothing waits on a human:
+ *  - a model the route does not list yet is an addition → applied;
+ *  - a field the route never set is enrichment → applied (the engine's default
+ *    is a guess, and a worse one);
  *  - a field that already holds a value the resolver disagrees with is a
- *    correction → it waits for confirmation, because only the user knows whether
- *    that value was deliberate;
- *  - an explicit override is never second-guessed at all.
+ *    correction → also applied: "sync now" means the resolver wins;
+ *  - the one latch is an explicit override (`overrides`), which the resolver
+ *    never second-guesses — that is how a hand-set value survives every sync.
  *
  * Path ops in the settings service walk plain objects only, so a route's model
  * array is always restated whole — see `capabilities.ts` for why nothing here
@@ -191,23 +191,20 @@ export function planRoute(options: {
 }
 
 /**
- * Restate a route's `models` array with the accepted plan applied.
- *
- * Automatic verdicts (`add`, `enrich`) always apply. `correct` applies only for
- * a model the caller accepted — the difference between "the list grew" and "we
- * disagree with something you set".
+ * Restate a route's `models` array with the plan applied — every change the
+ * plan names, corrections included. A hand-set value is protected only by being
+ * an explicit override upstream of the resolver, not by withholding a write
+ * here; sync is the one moment where the resolver's answer becomes the
+ * configuration.
  *
  * @param options.stored - the route's stored entries, verbatim.
  * @param options.plan - the plan to apply.
- * @param options.accepted - model ids whose corrections the user confirmed.
  * @returns the next `models` array.
  */
 export function applyPlan(options: {
   stored: readonly Record<string, unknown>[]
   plan: RoutePlan
-  accepted?: readonly string[]
 }): Record<string, unknown>[] {
-  const accepted = new Set(options.accepted ?? [])
   const byId = new Map<string, PlannedModel>()
   for (const model of options.plan.models) byId.set(model.id, model)
 
@@ -219,8 +216,7 @@ export function applyPlan(options: {
   })
 
   for (const model of options.plan.models) {
-    const writable = model.changes.filter((change) => change.verdict !== 'correct' || accepted.has(model.id))
-    if (writable.length === 0) continue
+    if (model.changes.length === 0) continue
     let index = indexById.get(model.id)
     if (index === undefined) {
       index = next.length
@@ -228,7 +224,7 @@ export function applyPlan(options: {
       next.push({ id: model.id })
     }
     const entry = { ...next[index] }
-    for (const change of writable) entry[change.field] = Array.isArray(change.to) ? [...change.to] : change.to
+    for (const change of model.changes) entry[change.field] = Array.isArray(change.to) ? [...change.to] : change.to
     next[index] = entry
   }
   return next
@@ -239,8 +235,8 @@ export function summarizePlan(plan: RoutePlan): string {
   const { total, added, changed, correctable, unknown } = plan.counts
   const parts = [`${total} 个模型`]
   if (added > 0) parts.push(`新增 ${added}`)
-  if (changed > 0) parts.push(`可补全 ${changed - correctable}`)
-  if (correctable > 0) parts.push(`待确认修正 ${correctable}`)
+  if (changed - correctable > 0) parts.push(`补全 ${changed - correctable}`)
+  if (correctable > 0) parts.push(`修正 ${correctable}`)
   if (unknown > 0) parts.push(`无法判定 ${unknown}`)
   return parts.join(' · ')
 }

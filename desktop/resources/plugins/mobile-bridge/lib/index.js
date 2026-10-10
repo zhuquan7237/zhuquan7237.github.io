@@ -2664,9 +2664,10 @@ document.addEventListener('click', async (event) => {
         }
     };
     // ------------------------------------------------- 模型能力同步（model-vision）
-    // model-vision 只会每日刷新能力目录、从不主动写回各 route（桌面端要用户点
-    // 「同步」才 apply）；手机加完提供商/模型后这里替它立刻触发一次。失败只记日志，
-    // 绝不影响保存本身；任何调用方（App 的手动按钮 / 自动触发）共用这一个实现。
+    // model-vision 现在自己会跟着配置变更自动补全能力（界面只剩一个「立即同步」）；
+    // 手机加完提供商/模型后这里仍替它立刻触发一次，两次触发会在它那边合并为同一次
+    // 同步。失败只记日志，绝不影响保存本身；任何调用方（App 的手动按钮 / 自动触发）
+    // 共用这一个实现。
     let visionSyncTimer;
     const runVisionSync = () => new Promise((resolve) => {
         const payload = JSON.stringify({ refresh: false });

@@ -13,9 +13,11 @@
  * This plugin resolves them instead: an endpoint's own `/v1/models` metadata when
  * it publishes any, a cross-vendor catalogue snapshot refreshed from the network
  * (which matches ~95% of the models declared on this machine), and family rules
- * for the rest — with every value carrying the source it came from, additions
- * applied automatically, corrections offered as a diff for confirmation, and the
- * whole thing re-checked daily.
+ * for the rest — then applies the answer with no ceremony. There is exactly one
+ * button («立即同步»): on first import the capabilities arrive on their own
+ * (boot sync + a settings-change listener), and when a provider's line-up moves
+ * upstream, one click re-reads everything. Nothing waits for confirmation;
+ * a value set by hand is stored as an explicit override so sync never touches it.
  *
  * @module @dsh-desktop/dsh-model-vision
  */
@@ -129,6 +131,24 @@ export function apply(ctx) {
         catalogueOrigin = 'empty';
     }
     let refreshing = false;
+    const AUTO_SYNC_DEBOUNCE_MS = 2000;
+    /**
+     * Pending auto-sync, and the pump that runs it — the pump is started in this
+     * plugin's own (clean) async context rather than by the settings listener.
+     *
+     * Why the indirection: the engine serialises configuration writes through
+     * HMR's `runExclusive`, and `settings/document-updated` is emitted INSIDE that
+     * transaction. Node's AsyncLocalStorage — which HMR uses to detect nesting —
+     * bleeds into timers created while inside it, so a sync scheduled with
+     * setTimeout from the listener wakes up flagged as "inside an HMR
+     * transaction" and every settings write it makes is refused with "HMR
+     * transactions cannot be nested". A flag read by a pump started outside the
+     * context carries no such baggage (measured: an interval created outside
+     * stays outside, a timer created inside does not).
+     */
+    let autoPending;
+    /** Our own settings write is about to echo — drop exactly that one event. */
+    let swallowEcho = false;
     const persist = () => {
         try {
             mkdirSync(dirname(statePath()), { recursive: true });
@@ -270,7 +290,14 @@ export function apply(ctx) {
     const planFor = async (route) => {
         const models = await llm.listModels(route);
         const upstream = storedModels(route).length > 0 ? await upstreamFor(route) : {};
-        return planRoute({ route, models, stored: storedModels(route), catalogue, upstream });
+        return planRoute({
+            route,
+            models,
+            stored: storedModels(route),
+            catalogue,
+            upstream,
+            overrides: state.overrides?.[route],
+        });
     };
     const overview = async () => {
         const routes = storedRoutes();
@@ -295,7 +322,6 @@ export function apply(ctx) {
                 total: models.length,
                 vision,
                 unknown: models.filter((model) => model.unknown).length,
-                pendingCorrections: plan?.counts.correctable ?? 0,
                 summary: plan ? summarizePlan(plan) : '',
                 lastSync: state.lastSync?.[route] ?? null,
                 error,
@@ -303,18 +329,143 @@ export function apply(ctx) {
         }
         return { ok: true, catalogue: catalogueStatus(), routes: out };
     };
-    const applyRoute = async (route, accepted) => {
+    /**
+     * Apply one route's plan — every change, corrections included. A hand-set
+     * value is not held back here; it is protected by being an override in
+     * `state.overrides`, which the resolver reads back as the `manual` source
+     * (so the plan agrees with it and there is nothing to write over).
+     *
+     * Writing settings is a document update the whole app hears; remember that
+     * moment so the change listener does not schedule a follow-up sync for our
+     * own write.
+     */
+    const applyRoute = async (route) => {
         const plan = await planFor(route);
-        const next = applyPlan({ stored: storedModels(route), plan, accepted });
-        const written = plan.models.filter((model) => model.changes.some((change) => change.verdict !== 'correct' || accepted.includes(model.id))).length;
+        const next = applyPlan({ stored: storedModels(route), plan });
+        const written = plan.models.filter((model) => model.changes.length > 0).length;
         if (written > 0) {
-            await settings.mutate(SETTINGS_NS, [{ op: 'set', path: ['providers', route, 'models'], value: next }], undefined);
+            swallowEcho = true;
+            try {
+                await settings.mutate(SETTINGS_NS, [{ op: 'set', path: ['providers', route, 'models'], value: next }], undefined);
+            }
+            finally {
+                swallowEcho = false;
+            }
         }
         const summary = summarizePlan(plan);
         state.lastSync = { ...(state.lastSync ?? {}), [route]: { at: new Date().toISOString(), summary, applied: written } };
         persist();
         log(`应用模型能力：${route} — 写入 ${written} 个模型（${summary}）`);
-        return { ok: true, route, applied: written, summary, plan: await planFor(route) };
+        return { ok: true, route, applied: written, summary };
+    };
+    // ------------------------------------------------------------- 同步与触发
+    // 能力同步一共四个入口：启动兜底、设置变更监听、界面「立即同步」、手机桥接。
+    // 同一时刻只跑一次（runSync 合并并发调用）；自己的写入由一次性回声开关吞掉，
+    // 不会反弹成下一次同步。
+    let syncRun = null;
+    const runSync = (refresh, reason) => {
+        if (syncRun !== null)
+            return syncRun;
+        syncRun = (async () => {
+            try {
+                const report = refresh
+                    ? await refreshCatalogue(reason)
+                    : { ok: true, count: catalogueStatus().count, message: '跳过刷新' };
+                const results = [];
+                let applied = 0;
+                for (const route of Object.keys(storedRoutes())) {
+                    try {
+                        const row = await applyRoute(route);
+                        applied += row.applied;
+                        results.push(row);
+                    }
+                    catch (error) {
+                        const message = error instanceof Error ? error.message : String(error);
+                        log(`能力同步失败：${route} — ${message}`);
+                        results.push({ ok: false, route, applied: 0, message });
+                    }
+                }
+                log(`能力同步完成（${reason}）：写入 ${applied} 个模型，覆盖 ${results.length} 条路由`);
+                return { catalogue: catalogueStatus(), refresh: report, results, applied };
+            }
+            finally {
+                syncRun = null;
+            }
+        })();
+        return syncRun;
+    };
+    /** Fire-and-forget one auto-sync pass. */
+    const fireAutoSync = (reason) => {
+        void runSync(false, reason).catch((error) => log(`自动同步失败：${error instanceof Error ? error.message : String(error)}`));
+    };
+    /**
+     * Queue one debounced auto-sync. The listener records intent only — execution
+     * happens on the pump (see `autoPending` for why that distinction matters).
+     */
+    const requestAutoSync = (reason, delay = AUTO_SYNC_DEBOUNCE_MS) => {
+        autoPending = { at: Date.now() + delay, reason };
+    };
+    /**
+     * Remember a hand-set value (or forget one) so every later sync treats it as
+     * the answer. Overrides live in this plugin's own state, not in the settings
+     * file — a settings value cannot be told apart from one a sync just wrote,
+     * while an override is unambiguous, and that is what lets sync be aggressive
+     * without ever eating a user's decision.
+     */
+    const recordOverride = (route, model, field, value) => {
+        const all = { ...(state.overrides ?? {}) };
+        const forRoute = { ...(all[route] ?? {}) };
+        const entry = { ...(forRoute[model] ?? {}) };
+        if (value === undefined)
+            delete entry[field];
+        else if (field === 'input')
+            entry.input = value;
+        else if (field === 'contextWindow')
+            entry.contextWindow = value;
+        else
+            entry.maxTokens = value;
+        if (Object.keys(entry).length > 0)
+            forRoute[model] = entry;
+        else
+            delete forRoute[model];
+        if (Object.keys(forRoute).length > 0)
+            all[route] = forRoute;
+        else
+            delete all[route];
+        state.overrides = all;
+        persist();
+    };
+    /**
+     * Mirror an override into the route's settings entry so the engine honours it
+     * right now. A set swallows its own echo (sync must not argue with a value the
+     * user just chose); a clear deliberately lets the echo through, so the field
+     * comes straight back from the resolver on the next auto sync — exactly what
+     * "恢复自动" means.
+     */
+    const writeOverride = async (route, model, field, value) => {
+        const next = storedModels(route).map((entry) => ({ ...entry }));
+        let index = next.findIndex((entry) => entry.id === model);
+        if (index < 0) {
+            // Clearing a model the route does not have is a no-op — never conjure an
+            // entry just to delete a field from it.
+            if (value === undefined)
+                return;
+            index = next.length;
+            next.push({ id: model });
+        }
+        const entry = { ...next[index] };
+        if (value === undefined)
+            delete entry[field];
+        else
+            entry[field] = Array.isArray(value) ? [...value] : value;
+        next[index] = entry;
+        swallowEcho = value !== undefined;
+        try {
+            await settings.mutate(SETTINGS_NS, [{ op: 'set', path: ['providers', route, 'models'], value: next }], undefined);
+        }
+        finally {
+            swallowEcho = false;
+        }
     };
     const handlers = {
         [ROUTE_OVERVIEW]: async (_req, res) => {
@@ -331,29 +482,17 @@ export function apply(ctx) {
         [ROUTE_APPLY]: async (req, res) => {
             const body = await readBody(req);
             const route = typeof body.provider === 'string' ? body.provider : typeof body.route === 'string' ? body.route : '';
-            const accepted = Array.isArray(body.accepted) ? body.accepted.filter((v) => typeof v === 'string') : [];
             if (route === '') {
                 sendJson(res, 400, { ok: false, message: '缺少 provider' });
                 return;
             }
-            sendJson(res, 200, await applyRoute(route, accepted));
+            sendJson(res, 200, await applyRoute(route));
         },
         [ROUTE_SYNC]: async (req, res) => {
             const body = await readBody(req);
             const refresh = body.refresh !== false;
-            const report = refresh
-                ? await refreshCatalogue('手动同步')
-                : { ok: true, count: catalogueStatus().count, message: '跳过刷新' };
-            const results = [];
-            for (const route of Object.keys(storedRoutes())) {
-                try {
-                    results.push(await applyRoute(route, []));
-                }
-                catch (error) {
-                    results.push({ ok: false, route, message: error instanceof Error ? error.message : String(error) });
-                }
-            }
-            sendJson(res, 200, { ok: true, catalogue: catalogueStatus(), refresh: report, results });
+            const outcome = await runSync(refresh, '手动同步');
+            sendJson(res, 200, { ok: true, catalogue: outcome.catalogue, refresh: outcome.refresh, results: outcome.results });
         },
         [ROUTE_OVERRIDE]: async (req, res) => {
             const body = await readBody(req);
@@ -364,33 +503,27 @@ export function apply(ctx) {
                 sendJson(res, 400, { ok: false, message: '缺少 provider / model / field' });
                 return;
             }
-            const next = storedModels(route).map((entry) => ({ ...entry }));
-            let index = next.findIndex((entry) => entry.id === model);
-            if (index < 0) {
-                index = next.length;
-                next.push({ id: model });
-            }
-            const current = { ...next[index] };
+            let value;
             if (field === 'input') {
                 const raw = Array.isArray(body.value) ? body.value : [];
                 const kept = raw.filter((v) => MODALITIES.includes(v));
-                current.input = kept.length > 0 ? [...new Set(kept)] : ['text'];
+                value = kept.length > 0 ? [...new Set(kept)] : ['text'];
             }
             else if (body.value === null) {
-                delete current[field];
+                value = undefined;
             }
             else {
-                const value = Number(body.value);
-                if (!Number.isFinite(value) || value <= 0) {
+                const number = Number(body.value);
+                if (!Number.isFinite(number) || number <= 0) {
                     sendJson(res, 400, { ok: false, message: `${field} 必须是正数` });
                     return;
                 }
-                current[field] = Math.floor(value);
+                value = Math.floor(number);
             }
-            next[index] = current;
-            await settings.mutate(SETTINGS_NS, [{ op: 'set', path: ['providers', route, 'models'], value: next }], undefined);
-            log(`手动覆盖：${route} / ${model} ${field}`);
-            sendJson(res, 200, { ok: true, plan: await planFor(route) });
+            recordOverride(route, model, field, value);
+            await writeOverride(route, model, field, value);
+            log(`手动覆盖：${route} / ${model} ${field}${value === undefined ? '（恢复自动）' : ''}`);
+            sendJson(res, 200, { ok: true });
         },
         [ROUTE_CATALOGUE]: async (req, res) => {
             if (req.method === 'POST') {
@@ -428,13 +561,11 @@ export function apply(ctx) {
                 sendJson(res, 400, { ok: false, message: '缺少 provider / model' });
                 return;
             }
-            const value = { input: body.image === true ? ['text', 'image'] : ['text'] };
-            const next = storedModels(route).map((entry) => entry.id === model ? { ...entry, input: [...(value.input ?? [])] } : { ...entry });
-            if (!next.some((entry) => entry.id === model))
-                next.push({ id: model, input: [...(value.input ?? [])] });
-            await settings.mutate(SETTINGS_NS, [{ op: 'set', path: ['providers', route, 'models'], value: next }], undefined);
+            const value = body.image === true ? ['text', 'image'] : ['text'];
+            recordOverride(route, model, 'input', value);
+            await writeOverride(route, model, 'input', value);
             log(`手动设置图片能力：${route} / ${model} = ${body.image === true ? '支持' : '不支持'}`);
-            sendJson(res, 200, { ok: true, plan: await planFor(route) });
+            sendJson(res, 200, { ok: true });
         },
         [ROUTE_SEAT]: async (req, res) => {
             const body = await readBody(req);
@@ -447,6 +578,36 @@ export function apply(ctx) {
     const interval = setInterval(() => void refreshCatalogue('每日定时'), CATALOGUE_MAX_AGE_MS);
     interval.unref?.();
     ctx.effect(() => () => clearInterval(interval), 'dsh-model-vision: catalogue timer');
+    // 首次导入零操作：任何一次模型配置写入（引擎设置页、配置文件导入、手机桥接
+    // 保存）都会走到这里，防抖后由下面的泵自动补一次能力。自己写入产生的回声事件
+    // 被一次性开关精确吞掉（写→回声同步到达→只忽略这一个）。注意这里只记录意图，
+    // 不在本回调里排定时器——事件是在 HMR 事务上下文里发出的，定时器会继承该上下
+    // 文导致之后的写入被拒（见 autoPending 注释里的实测）。
+    ctx.on('settings/document-updated', ((ns) => {
+        if (ns !== SETTINGS_NS)
+            return;
+        if (swallowEcho) {
+            // Our own write's echo: drop just this event.
+            swallowEcho = false;
+            return;
+        }
+        requestAutoSync('模型配置变更');
+    }), { global: true });
+    // 启动兜底：导入也可能发生在引擎关闭期间（改配置文件、手机离线保存、桌面壳
+    // 启动时的模型目录同步），开机几秒后自己补一次，同样不需要任何人按按钮。
+    requestAutoSync('启动', 3000);
+    // 泵：每 500ms 看一眼排队的自动同步，到点就执行。它在 apply() 的干净上下文里
+    // 创建、每个 tick 都继承该上下文——自动同步的配置写入能通过 HMR 串行队列，
+    // 靠的就是这一点。
+    const pump = setInterval(() => {
+        const pending = autoPending;
+        if (pending === undefined || Date.now() < pending.at)
+            return;
+        autoPending = undefined;
+        fireAutoSync(pending.reason);
+    }, 500);
+    pump.unref?.();
+    ctx.effect(() => () => clearInterval(pump), 'dsh-model-vision: auto sync pump');
     const webServer = ctx.get('webServer');
     if (!webServer) {
         log('webServer 服务不可用，仅保留客户端界面');

@@ -85,7 +85,7 @@ describe("browser half contract", () => {
   });
 
   it("reads every host route it needs and surfaces failures as text", () => {
-    for (const route of ["overview", "plan", "apply", "sync", "override", "catalogue", "seat"]) {
+    for (const route of ["overview", "plan", "sync", "override", "seat"]) {
       expect(bundleSource).toContain(`/dsh-model-vision/${route}`);
     }
     expect(bundleSource).toContain("throw new Error((body && body.message)");
@@ -280,23 +280,18 @@ describe("planning and applying", () => {
     expect(summarizePlan(plan)).toContain("3 个模型");
   });
 
-  it("auto-applies additions and enrichment, and holds corrections until accepted", () => {
+  it("applies additions, enrichment and corrections alike — a sync writes everything the resolver states", () => {
     const plan = planRoute({
       route: "ouou",
       models: [{ id: "gpt-5.6-luna" }, { id: "new-model" }],
       stored: [{ id: "gpt-5.6-luna", input: ["text"], contextWindow: 262144, name: "keep" }],
       catalogue,
     });
-    const held = applyPlan({ stored: [{ id: "gpt-5.6-luna", input: ["text"], contextWindow: 262144, name: "keep" }], plan });
-    // Corrections untouched, enrichment applied, the new model appended.
-    expect(held[0]).toEqual({ id: "gpt-5.6-luna", input: ["text"], contextWindow: 262144, name: "keep", maxTokens: 128000 });
-    expect(held[1]).toMatchObject({ id: "new-model", input: ["text"], contextWindow: 200000, maxTokens: 8192 });
-    const accepted = applyPlan({
-      stored: [{ id: "gpt-5.6-luna", input: ["text"], contextWindow: 262144, name: "keep" }],
-      plan,
-      accepted: ["gpt-5.6-luna"],
-    });
-    expect(accepted[0]).toMatchObject({ input: ["text", "image"], contextWindow: 1050000, name: "keep" });
+    const next = applyPlan({ stored: [{ id: "gpt-5.6-luna", input: ["text"], contextWindow: 262144, name: "keep" }], plan });
+    // The correction lands (input + context window), enrichment fills maxTokens,
+    // and the new model is appended — nothing waits for a human.
+    expect(next[0]).toEqual({ id: "gpt-5.6-luna", input: ["text", "image"], contextWindow: 1050000, name: "keep", maxTokens: 128000 });
+    expect(next[1]).toMatchObject({ id: "new-model", input: ["text"], contextWindow: 200000, maxTokens: 8192 });
   });
 
   it("keeps every entry the plan does not name, and every field it does not touch", () => {
@@ -420,11 +415,23 @@ describe("reasoning efforts", () => {
       stored: [{ id: "m", name: "M", maxTokens: 4096 }],
       catalogue: catalogueWith({ m: { r: ["low", "high"] } }),
     });
-    expect(applyPlan({ stored: [{ id: "m", name: "M", maxTokens: 4096 }], plan, accepted: ["m"] })[0]).toEqual({
+    expect(applyPlan({ stored: [{ id: "m", name: "M", maxTokens: 4096 }], plan })[0]).toEqual({
       id: "m",
       name: "M",
       maxTokens: 4096,
       reasoningEfforts: { low: "low", high: "high" },
     });
+  });
+
+  it("keeps an explicit override as the last word — sync proposes nothing for that field", () => {
+    const plan = planRoute({
+      route: "route",
+      models: [{ id: "m" }],
+      stored: [{ id: "m", input: ["text"] }],
+      catalogue: catalogueWith({ m: { m: ["text", "image"] } }),
+      overrides: { m: { input: ["text"] } },
+    });
+    expect(plan.models[0].capabilities.input).toEqual({ value: ["text"], source: "manual" });
+    expect(plan.models[0].changes.some((change) => change.field === "input")).toBe(false);
   });
 });
