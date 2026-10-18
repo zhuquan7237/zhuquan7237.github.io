@@ -224,13 +224,21 @@ def probe(name: str, entry: dict, key: str | None):
     if key:
         request.add_header("authorization", f"Bearer {key}")
     started = time.time()
-    try:
-        with urllib.request.urlopen(request, timeout=TIMEOUT) as response:
-            payload = json.loads(response.read().decode("utf-8", "replace"))
-    except urllib.error.HTTPError as error:
-        return {"ok": False, "error": f"HTTP {error.code}", "models": [], "ms": int((time.time() - started) * 1000)}
-    except Exception as error:  # noqa: BLE001 - timeouts, DNS, TLS: all "this route said nothing"
-        return {"ok": False, "error": str(error)[:160], "models": [], "ms": int((time.time() - started) * 1000)}
+    payload = None
+    last_error = ""
+    for attempt in range(2):
+        try:
+            with urllib.request.urlopen(request, timeout=TIMEOUT) as response:
+                payload = json.loads(response.read().decode("utf-8", "replace"))
+            break
+        except urllib.error.HTTPError as error:
+            return {"ok": False, "error": f"HTTP {error.code}", "models": [], "ms": int((time.time() - started) * 1000)}
+        except Exception as error:  # noqa: BLE001 - timeouts, DNS, TLS: retry once, then give up
+            last_error = str(error)[:160]
+            if attempt == 0:
+                time.sleep(1.5)
+    if payload is None:
+        return {"ok": False, "error": last_error, "models": [], "ms": int((time.time() - started) * 1000)}
 
     rows = payload.get("data") if isinstance(payload, dict) else None
     if not isinstance(rows, list):
