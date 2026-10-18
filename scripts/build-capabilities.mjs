@@ -43,6 +43,10 @@ const flag = (name, fallback) => {
 const OFFLINE = flag("offline", "");
 const OUT = path.resolve(ROOT, flag("out", "dl/capabilities.json"));
 const OVERRIDES = path.resolve(ROOT, "dl/capabilities-overrides.json");
+// Produced on the author's machine by scripts/collect-gateway-capabilities.py:
+// private gateways publish capability metadata for models no public directory
+// lists, and CI cannot reach them (their keys never leave the machine).
+const GATEWAYS = path.resolve(ROOT, "dl/capabilities-gateways.json");
 const TIMEOUT_MS = 90_000;
 
 /**
@@ -74,12 +78,15 @@ function loadNormalizer() {
  */
 function keysFor(id, normalizeModelId) {
   const variants = new Set([id, String(id).split("/").pop() ?? id]);
-  for (const value of [...variants]) variants.add(String(value).replace(/:(free|batch|extended|nitro|floor|online)$/i, ""));
+  // Strip a routing decoration only, never a region prefix (`cn:model` names a
+  // route, not a decoration — the plugin's normaliser already removes it).
+  const undecorate = (value) => String(value).replace(/:(free|batch|extended|nitro|floor|online|thinking)$/i, "");
+  for (const value of [...variants]) variants.add(undecorate(value));
   const keys = new Set();
   for (const value of variants) {
     if (!value) continue;
     keys.add(normalizeModelId(value));
-    keys.add(normalizeModelId(String(value).replace(/:.*$/, "")));
+    keys.add(normalizeModelId(undecorate(value)));
     // Alias for a client whose normaliser predates decoration stripping: a
     // published catalogue must not stop answering an installer already out there.
     keys.add(String(value).trim().toLowerCase().replace(/^[~@]+/, "").replace(/[._\s]+/g, "-").replace(/-{2,}/g, "-").replace(/^-|-$/g, ""));
@@ -180,6 +187,18 @@ async function fetchJson(url, offlineName) {
   }
 }
 
+/**
+ * Reasoning answers merge by how much they say, not by which layer spoke first:
+ * a gateway's "it reasons" must not erase the level list a directory publishes,
+ * while an explicit "it does not reason" from the endpoint still stands.
+ */
+function mergeReasoning(current, next) {
+  if (current === undefined) return next;
+  if (current === 0 || next === 0) return current;
+  const rank = (value) => (Array.isArray(value) ? 2 : 1);
+  return rank(next) > rank(current) ? next : current;
+}
+
 async function main() {
   const normalizeModelId = loadNormalizer();
 
@@ -210,9 +229,20 @@ async function main() {
     }))]);
     console.log(`overrides ${rows.length}`);
   }
+  if (existsSync(GATEWAYS)) {
+    const raw = JSON.parse(readFileSync(GATEWAYS, "utf8"));
+    const rows = Array.isArray(raw?.models) ? raw.models : [];
+    layers.push(["gateway", rows.map((row) => ({
+      id: String(row?.id ?? ""),
+      modalities: engineModalities(row?.modalities),
+      context: positive(row?.context),
+      output: positive(row?.output),
+      reasoning: row?.reasoning === undefined ? undefined : Array.isArray(row.reasoning) ? engineEfforts(row.reasoning) : positive(row.reasoning),
+    }))]);
+    console.log(`gateways ${rows.length} (${raw?.generatedAt ?? "unknown"})`);
+  }
   if (fetched.modelsdev) layers.push(["models.dev", modelsDevModels(fetched.modelsdev)]);
   if (fetched.openrouter) layers.push(["openrouter", openRouterModels(fetched.openrouter)]);
-
   const keys = {};
   const counts = {};
   for (const [source, rows] of layers) {
@@ -224,7 +254,7 @@ async function main() {
         if (row.modalities.length > 0 && !entry.m) entry.m = row.modalities;
         if (row.context !== undefined && !entry.c) entry.c = row.context;
         if (row.output !== undefined && !entry.o) entry.o = row.output;
-        if (row.reasoning !== undefined && entry.r === undefined) entry.r = row.reasoning;
+        if (row.reasoning !== undefined) entry.r = mergeReasoning(entry.r, row.reasoning);
         if (!entry.s) entry.s = source;
       }
       kept += 1;

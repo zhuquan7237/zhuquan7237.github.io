@@ -122,8 +122,12 @@ const SUFFIXES =
 export function normalizeModelId(id: string): string {
   let s = String(id || '').trim().toLowerCase()
   s = s.replace(/^[~@]+/, '')
-  // A routing decoration is not part of the model's identity: `:free`, `:batch`
-  // and friends route the same weights, so they must not hide a catalogue hit.
+  // A region/channel prefix names where the gateway sends the request, not
+  // which model it is. CodeBuddy's pool publishes every id as `cn:<model>`, and
+  // treating that colon as a decoration collapsed them all onto the key `cn`.
+  s = s.replace(/^(?:cn|us|eu|sg|hk|jp|kr|tw|global|intl|oversea|overseas|cn2|gcp|aws|azure):(?=.)/, '')
+  // Any remaining decoration routes the same weights: `:free`, `:batch` and
+  // friends must not hide a catalogue hit.
   s = s.replace(/:.*$/, '')
   const parts = s.split('/')
   s = parts[parts.length - 1] || s
@@ -235,9 +239,17 @@ export function upstreamCapabilities(row: unknown): { input?: Modality[]; contex
   if (typeof row !== 'object' || row === null) return {}
   const item = row as Record<string, any>
   const raw = item.architecture?.input_modalities ?? item.input_modalities ?? item.capabilities?.input ?? item.modalities
-  const input = Array.isArray(raw)
+  let input = Array.isArray(raw)
     ? (raw.filter((m: unknown) => MODALITIES.includes(String(m) as Modality)).map(String) as Modality[])
     : undefined
+  // Boolean flags: gateway pools such as CodeBuddy's `cn:` catalogue publish
+  // `supports_images` instead of a modality list. Only an explicit value counts,
+  // because a missing flag means "not stated", not "no images".
+  if (input === undefined) {
+    const flag = item.supports_images ?? item.supports_vision ?? item.capabilities?.vision ?? item.capabilities?.images
+    if (flag === true) input = ['text', 'image']
+    else if (flag === false) input = ['text']
+  }
   const contextWindow = numberOr(item.context_length ?? item.context_window ?? item.max_context_length ?? item.max_input_tokens)
   const maxTokens = numberOr(item.max_output_tokens ?? item.max_tokens ?? item.top_provider?.max_completion_tokens)
   const out: { input?: Modality[]; contextWindow?: number; maxTokens?: number; reasoning?: ReasoningCapability } = {}
@@ -289,9 +301,13 @@ export function upstreamReasoning(item: Record<string, any>): ReasoningCapabilit
     if (levels.length > 0) return { kind: 'efforts', levels }
     if (list.length > 0) return { kind: 'toggle' }
   }
-  const flag = item.reasoning ?? item.capabilities?.reasoning
+  const flag = item.reasoning ?? item.capabilities?.reasoning ?? item.supports_reasoning
   if (flag === false) return { kind: 'none' }
   if (flag === true) return { kind: 'toggle' }
+  // A single default effort (`reasoning_effort: "high"`) proves the model
+  // reasons but does not enumerate the levels it accepts, so it is a toggle.
+  const effort = item.reasoning_effort ?? item.default_reasoning_effort ?? item.reasoning?.effort
+  if (typeof effort === 'string' && effort.trim().length > 0) return { kind: 'toggle' }
   return undefined
 }
 
@@ -384,8 +400,12 @@ export function resolveCapabilities(
     [entry?.o, 'catalogue'],
   ])
   const reasoning = pick<ReasoningCapability>(override?.reasoning, [
-    [upstream?.reasoning, 'upstream'],
+    // An endpoint that enumerates levels is more specific than the catalogue;
+    // one that only says "it reasons" is less specific than a catalogue list,
+    // so the richer answer wins without letting a guess outrank the endpoint.
+    [upstream?.reasoning?.kind === 'efforts' ? upstream.reasoning : undefined, 'upstream'],
     [reasoningFromEntry(entry), 'catalogue'],
+    [upstream?.reasoning, 'upstream'],
     [declared?.reasoning, 'declared'],
   ])
 

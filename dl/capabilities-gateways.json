@@ -1,0 +1,694 @@
+{
+ "version": 1,
+ "generatedAt": "2026-10-18T17:19:21Z",
+ "source": "gateway /v1/models probe (scripts/collect-gateway-capabilities.py)",
+ "providers": {
+  "aiapi": {
+   "ok": false,
+   "count": 0,
+   "ms": 1262,
+   "error": "HTTP 401"
+  },
+  "api888": {
+   "ok": true,
+   "count": 27,
+   "ms": 818,
+   "error": ""
+  },
+  "codego": {
+   "ok": true,
+   "count": 6,
+   "ms": 1452,
+   "error": ""
+  },
+  "codegoclaude": {
+   "ok": true,
+   "count": 13,
+   "ms": 1074,
+   "error": ""
+  },
+  "cpa": {
+   "ok": false,
+   "count": 0,
+   "ms": 5112,
+   "error": "<urlopen error [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1016)>"
+  },
+  "darkforger": {
+   "ok": false,
+   "count": 0,
+   "ms": 772,
+   "error": "HTTP 530"
+  },
+  "hjapi": {
+   "ok": true,
+   "count": 2,
+   "ms": 940,
+   "error": ""
+  },
+  "hyb": {
+   "ok": true,
+   "count": 1,
+   "ms": 928,
+   "error": ""
+  },
+  "loveyou": {
+   "ok": true,
+   "count": 2,
+   "ms": 839,
+   "error": ""
+  },
+  "nexavlinks": {
+   "ok": true,
+   "count": 17,
+   "ms": 1257,
+   "error": ""
+  },
+  "relayfor": {
+   "ok": true,
+   "count": 7,
+   "ms": 2905,
+   "error": ""
+  },
+  "rsiai": {
+   "ok": true,
+   "count": 4,
+   "ms": 2279,
+   "error": ""
+  },
+  "shuai": {
+   "ok": false,
+   "count": 0,
+   "ms": 1141,
+   "error": "HTTP 401"
+  },
+  "wb2api": {
+   "ok": true,
+   "count": 50,
+   "ms": 1228,
+   "error": ""
+  },
+  "xjm": {
+   "ok": true,
+   "count": 12,
+   "ms": 1158,
+   "error": ""
+  }
+ },
+ "models": [
+  {
+   "id": "cn:auto",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 256000,
+   "output": 32000,
+   "reasoning": 1
+  },
+  {
+   "id": "cn:balanced-model",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 300000,
+   "output": 48000,
+   "reasoning": 1
+  },
+  {
+   "id": "claude-fable-5"
+  },
+  {
+   "id": "claude-fable-5-1"
+  },
+  {
+   "id": "claude-haiku-4-5-20251001"
+  },
+  {
+   "id": "claude-opus-4-5"
+  },
+  {
+   "id": "claude-opus-4-6"
+  },
+  {
+   "id": "claude-opus-4-7"
+  },
+  {
+   "id": "claude-opus-4-8"
+  },
+  {
+   "id": "claude-opus-5"
+  },
+  {
+   "id": "claude-opus-5-5"
+  },
+  {
+   "id": "claude-sonnet-4-5"
+  },
+  {
+   "id": "claude-sonnet-4-6"
+  },
+  {
+   "id": "claude-sonnet-5"
+  },
+  {
+   "id": "claude-sonnet-5-5"
+  },
+  {
+   "id": "codex-auto-review"
+  },
+  {
+   "id": "cn:deep-model",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 300000,
+   "output": 48000,
+   "reasoning": 1
+  },
+  {
+   "id": "cn:deepseek-r1-0528",
+   "context": 96000,
+   "output": 8192
+  },
+  {
+   "id": "cn:deepseek-r1-0528-lkeap",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 96000,
+   "output": 16000
+  },
+  {
+   "id": "cn:deepseek-v3-0324",
+   "context": 96000,
+   "output": 8192
+  },
+  {
+   "id": "cn:deepseek-v3-0324-lkeap",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 112000,
+   "output": 16000
+  },
+  {
+   "id": "cn:deepseek-v3-1",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 96000,
+   "output": 32000
+  },
+  {
+   "id": "cn:deepseek-v3-1-lkeap",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 96000,
+   "output": 32000
+  },
+  {
+   "id": "cn:deepseek-v3-1-volc",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 96000,
+   "output": 32000
+  },
+  {
+   "id": "cn:deepseek-v3-2-volc",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 96000,
+   "output": 32000,
+   "reasoning": 1
+  },
+  {
+   "id": "deepseek/deepseek-v4.1-flash",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 1000000,
+   "output": 128000,
+   "reasoning": 1
+  },
+  {
+   "id": "cn:deepseek-v4-flash",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 1000000,
+   "output": 50000,
+   "reasoning": 1
+  },
+  {
+   "id": "cn:deepseek-v4-pro",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 1000000,
+   "output": 128000,
+   "reasoning": 1
+  },
+  {
+   "id": "deepseek-v4-pro-0813"
+  },
+  {
+   "id": "cn:default-1.1",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 200000,
+   "output": 8192,
+   "reasoning": 1
+  },
+  {
+   "id": "cn:default-1.2",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 200000,
+   "output": 24000,
+   "reasoning": 1
+  },
+  {
+   "id": "cn:fast-model",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 300000,
+   "output": 48000,
+   "reasoning": 1
+  },
+  {
+   "id": "gemini-3.1-pro-preview"
+  },
+  {
+   "id": "gemini-3.8-flash"
+  },
+  {
+   "id": "cn:glm-4.6",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 168000,
+   "output": 32000
+  },
+  {
+   "id": "cn:glm-4.6v",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 128000,
+   "output": 32000,
+   "reasoning": 1
+  },
+  {
+   "id": "cn:glm-5.0-turbo",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 200000,
+   "output": 48000,
+   "reasoning": 1
+  },
+  {
+   "id": "cn:glm-5.1",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 200000,
+   "output": 48000,
+   "reasoning": 1
+  },
+  {
+   "id": "cn:glm-5.2",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 1000000,
+   "output": 64000,
+   "reasoning": 1
+  },
+  {
+   "id": "glm-5.3",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 1000000,
+   "output": 64000,
+   "reasoning": 1
+  },
+  {
+   "id": "zcode/glm-5.3-flash",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 1000000,
+   "output": 131072,
+   "reasoning": 1
+  },
+  {
+   "id": "cn:glm-5v-turbo",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 200000,
+   "output": 64000,
+   "reasoning": 1
+  },
+  {
+   "id": "gpt-4o"
+  },
+  {
+   "id": "gpt-4o-mini"
+  },
+  {
+   "id": "gpt-5.1-codex"
+  },
+  {
+   "id": "gpt-5.2"
+  },
+  {
+   "id": "gpt-5.3-codex"
+  },
+  {
+   "id": "gpt-5.3-codex-spark"
+  },
+  {
+   "id": "gpt-5.4"
+  },
+  {
+   "id": "gpt-5.4-mini"
+  },
+  {
+   "id": "gpt-5.5"
+  },
+  {
+   "id": "gpt-5.6"
+  },
+  {
+   "id": "gpt-5.6-luna"
+  },
+  {
+   "id": "gpt-5.6-sol"
+  },
+  {
+   "id": "gpt-5.6-terra"
+  },
+  {
+   "id": "gpt-6"
+  },
+  {
+   "id": "gpt-6.1-sol"
+  },
+  {
+   "id": "gpt-6-astra"
+  },
+  {
+   "id": "gpt-6-astra-fast"
+  },
+  {
+   "id": "gpt-6-luna"
+  },
+  {
+   "id": "gpt-6-sol"
+  },
+  {
+   "id": "gpt-image-1"
+  },
+  {
+   "id": "gpt-image-1.5"
+  },
+  {
+   "id": "gpt-image-2"
+  },
+  {
+   "id": "gpt-image-2.5"
+  },
+  {
+   "id": "gpt-image-2-5-flare"
+  },
+  {
+   "id": "gpt-image-2-5-sunburst"
+  },
+  {
+   "id": "grok-4.6"
+  },
+  {
+   "id": "grok-4.7"
+  },
+  {
+   "id": "grok-4.7-build-fast"
+  },
+  {
+   "id": "cn:hunyuan-chat",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 128000,
+   "output": 8192
+  },
+  {
+   "id": "cn:hunyuan-2.0-instruct",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 128000,
+   "output": 16000,
+   "reasoning": 1
+  },
+  {
+   "id": "cn:hunyuan-image-alpha-edit",
+   "context": 1000000
+  },
+  {
+   "id": "cn:hy3",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 192000,
+   "output": 64000,
+   "reasoning": 1
+  },
+  {
+   "id": "cn:hy3-b",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 192000,
+   "output": 64000,
+   "reasoning": 1
+  },
+  {
+   "id": "cn:hy3-c",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 192000,
+   "output": 64000,
+   "reasoning": 1
+  },
+  {
+   "id": "cn:hy3-x",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 192000,
+   "output": 64000,
+   "reasoning": 1
+  },
+  {
+   "id": "cn:hy4-preview",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 960000,
+   "output": 64000,
+   "reasoning": 1
+  },
+  {
+   "id": "cn:hy4-preview-ctrl",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 960000,
+   "output": 64000,
+   "reasoning": 1
+  },
+  {
+   "id": "cn:hy4-preview-x",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 960000,
+   "output": 64000,
+   "reasoning": 1
+  },
+  {
+   "id": "cn:kimi-k2-thinking",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 256000,
+   "output": 32000,
+   "reasoning": 1
+  },
+  {
+   "id": "cn:kimi-k2.5",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 256000,
+   "output": 32000,
+   "reasoning": 1
+  },
+  {
+   "id": "cn:kimi-k2.6",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 256000,
+   "output": 32000,
+   "reasoning": 1
+  },
+  {
+   "id": "cn:kimi-k2.7",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 256000,
+   "output": 32000,
+   "reasoning": 1
+  },
+  {
+   "id": "cn:kimi-k2.8-preview",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 1000000,
+   "output": 64000,
+   "reasoning": 1
+  },
+  {
+   "id": "cn:kimi-k2-instruct-taiji",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 31000,
+   "output": 8192
+  },
+  {
+   "id": "kimi-k3"
+  },
+  {
+   "id": "cn:kimi-k3-1",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 1000000,
+   "output": 32000,
+   "reasoning": 1
+  },
+  {
+   "id": "cn:kling-video-v3",
+   "context": 1000000
+  },
+  {
+   "id": "cn:minimax-m2.5",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 200000,
+   "output": 48000,
+   "reasoning": 1
+  },
+  {
+   "id": "cn:minimax-m2.7",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 200000,
+   "output": 48000,
+   "reasoning": 1
+  },
+  {
+   "id": "cn:minimax-m3",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 512000,
+   "output": 64000,
+   "reasoning": 1
+  },
+  {
+   "id": "cn:minimax-video-h3",
+   "context": 1000000
+  },
+  {
+   "id": "muse-spark-1.3"
+  },
+  {
+   "id": "cn:space-bunny",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 1000000,
+   "output": 128000,
+   "reasoning": 1
+  },
+  {
+   "id": "cn:step-5-preview",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 1000000,
+   "output": 64000,
+   "reasoning": 1
+  }
+ ]
+}

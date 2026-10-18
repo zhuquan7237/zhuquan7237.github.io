@@ -136,6 +136,12 @@ describe("id normalization and family rules", () => {
     // A routing decoration routes the same weights and must not hide a hit.
     expect(normalizeModelId("openai/gpt-oss-20b:free")).toBe("gpt-oss-20b");
     expect(normalizeModelId("google/gemma-4-31b-it:batch")).toBe("gemma-4-31b-it");
+    // A region prefix says where the request goes, not which model it is: the
+    // CodeBuddy pool publishes every id as `cn:<model>` and treating that colon
+    // as a decoration collapsed them all onto the literal key `cn`.
+    expect(normalizeModelId("cn:deepseek-v4.1-flash")).toBe("deepseek-v4-1-flash");
+    expect(normalizeModelId("cn:glm-5.3")).toBe("glm-5-3");
+    expect(normalizeModelId("global:gpt-5.6-luna:free")).toBe("gpt-5-6-luna");
   });
 
   it("recognizes an image generator before the gpt-* vision rule", () => {
@@ -169,6 +175,16 @@ describe("catalogue parsing", () => {
     expect(caps).toEqual({ contextWindow: 256000, maxTokens: 32000 });
     expect(upstreamCapabilities({ id: "x", object: "model", owned_by: "y" })).toEqual({});
     expect(upstreamCapabilities({ id: "x", input_modalities: ["image", "junk"] }).input).toEqual(["image"]);
+    // A pool that publishes booleans instead of a modality list still counts.
+    expect(upstreamCapabilities({ id: "cn:deepseek-v4.1-flash", supports_images: true, supports_reasoning: true }).input).toEqual([
+      "text",
+      "image",
+    ]);
+    expect(upstreamCapabilities({ id: "x", supports_images: false }).input).toEqual(["text"]);
+    expect(upstreamCapabilities({ id: "x", supports_images: true }).reasoning).toBeUndefined();
+    expect(upstreamCapabilities({ id: "x", supports_reasoning: false }).reasoning).toEqual({ kind: "none" });
+    // A single default effort proves reasoning but not the level list.
+    expect(upstreamCapabilities({ id: "x", reasoning_effort: "medium" }).reasoning).toEqual({ kind: "toggle" });
   });
 
   it("points at a public catalogue and refuses a shapeless document", () => {
