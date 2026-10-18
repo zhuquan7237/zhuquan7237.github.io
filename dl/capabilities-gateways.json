@@ -1,96 +1,96 @@
 {
  "version": 1,
- "generatedAt": "2026-10-18T17:19:21Z",
+ "generatedAt": "2026-10-18T17:23:58Z",
  "source": "gateway /v1/models probe (scripts/collect-gateway-capabilities.py)",
  "providers": {
   "aiapi": {
    "ok": false,
    "count": 0,
-   "ms": 1262,
+   "ms": 1445,
    "error": "HTTP 401"
   },
   "api888": {
    "ok": true,
    "count": 27,
-   "ms": 818,
+   "ms": 1244,
    "error": ""
   },
   "codego": {
    "ok": true,
    "count": 6,
-   "ms": 1452,
+   "ms": 1119,
    "error": ""
   },
   "codegoclaude": {
    "ok": true,
    "count": 13,
-   "ms": 1074,
+   "ms": 1064,
    "error": ""
   },
   "cpa": {
-   "ok": false,
-   "count": 0,
-   "ms": 5112,
-   "error": "<urlopen error [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1016)>"
+   "ok": true,
+   "count": 17,
+   "ms": 2102,
+   "error": ""
   },
   "darkforger": {
    "ok": false,
    "count": 0,
-   "ms": 772,
+   "ms": 788,
    "error": "HTTP 530"
   },
   "hjapi": {
    "ok": true,
    "count": 2,
-   "ms": 940,
+   "ms": 859,
    "error": ""
   },
   "hyb": {
    "ok": true,
    "count": 1,
-   "ms": 928,
+   "ms": 1076,
    "error": ""
   },
   "loveyou": {
    "ok": true,
    "count": 2,
-   "ms": 839,
+   "ms": 844,
    "error": ""
   },
   "nexavlinks": {
    "ok": true,
    "count": 17,
-   "ms": 1257,
+   "ms": 1280,
    "error": ""
   },
   "relayfor": {
    "ok": true,
    "count": 7,
-   "ms": 2905,
+   "ms": 1614,
    "error": ""
   },
   "rsiai": {
    "ok": true,
    "count": 4,
-   "ms": 2279,
+   "ms": 1556,
    "error": ""
   },
   "shuai": {
    "ok": false,
    "count": 0,
-   "ms": 1141,
+   "ms": 978,
    "error": "HTTP 401"
   },
   "wb2api": {
    "ok": true,
    "count": 50,
-   "ms": 1228,
+   "ms": 1337,
    "error": ""
   },
   "xjm": {
    "ok": true,
    "count": 12,
-   "ms": 1158,
+   "ms": 889,
    "error": ""
   }
  },
@@ -296,10 +296,22 @@
    "reasoning": 1
   },
   {
+   "id": "gemini-3.1-flash-image"
+  },
+  {
+   "id": "gemini-3.1-flash-lite"
+  },
+  {
    "id": "gemini-3.1-pro-preview"
   },
   {
-   "id": "gemini-3.8-flash"
+   "id": "gemini-3.5-flash-lite"
+  },
+  {
+   "id": "gemini-3.8-flash-high"
+  },
+  {
+   "id": "gemini-3-flash"
   },
   {
    "id": "cn:glm-4.6",
@@ -454,6 +466,9 @@
   },
   {
    "id": "gpt-image-2-5-sunburst"
+  },
+  {
+   "id": "gpt-oss-120b-medium"
   },
   {
    "id": "grok-4.6"
