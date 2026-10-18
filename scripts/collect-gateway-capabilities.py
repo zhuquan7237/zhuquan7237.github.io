@@ -321,12 +321,21 @@ def main() -> int:
         if any(merged[k].get(f) != previous[k].get(f) for f in ("modalities", "context", "output", "reasoning"))
     )
 
+    volatile = bool(added or removed or renamed or changed)
     document = {
         "version": 1,
-        "generatedAt": datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z"),
+        # Keep the previous stamp when nothing moved: a timestamp-only rewrite
+        # would commit and redeploy the catalogue every single day for nothing.
+        "generatedAt": (
+            datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+            if volatile or previous_at in ("none", "unreadable", "?")
+            else previous_at
+        ),
         "source": "gateway /v1/models probe (scripts/collect-gateway-capabilities.py)",
+        # `ms` is deliberately absent: latency is a report number, not data, and
+        # including it made every run look like a change.
         "providers": {
-            name: {"ok": result["ok"], "count": len(result["models"]), "ms": result["ms"], "error": result["error"]}
+            name: {"ok": result["ok"], "count": len(result["models"]), "error": result["error"]}
             for name, result in sorted(results.items())
         },
         "models": [merged[k] for k in sorted(merged)],
