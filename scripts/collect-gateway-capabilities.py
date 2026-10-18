@@ -308,6 +308,13 @@ def main() -> int:
     failed = {name: result["error"] for name, result in results.items() if not result["ok"]}
     added = sorted(merged[k]["id"] for k in merged.keys() - previous.keys())
     removed = sorted(previous[k]["id"] for k in previous.keys() - merged.keys())
+    # A gateway that renames an id (bare → `cn:`-prefixed, say) keeps the same
+    # normalised key, so only the published spelling reveals it.
+    renamed = sorted(
+        f'{previous[k].get("id")} → {merged[k]["id"]}'
+        for k in merged.keys() & previous.keys()
+        if previous[k].get("id") and merged[k]["id"] != previous[k].get("id")
+    )
     changed = sorted(
         merged[k]["id"]
         for k in merged.keys() & previous.keys()
@@ -334,6 +341,8 @@ def main() -> int:
             print(f"new      : {len(added)} — " + ", ".join(added[:25]) + (" …" if len(added) > 25 else ""))
         if removed:
             print(f"gone     : {len(removed)} — " + ", ".join(removed[:25]) + (" …" if len(removed) > 25 else ""))
+        if renamed:
+            print(f"renamed  : {len(renamed)} — " + ", ".join(renamed[:12]) + (" …" if len(renamed) > 12 else ""))
         if changed:
             print(f"changed  : {len(changed)} — " + ", ".join(changed[:25]) + (" …" if len(changed) > 25 else ""))
 
