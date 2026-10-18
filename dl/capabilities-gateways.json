@@ -1,96 +1,96 @@
 {
  "version": 1,
- "generatedAt": "2026-10-18T17:23:58Z",
+ "generatedAt": "2026-10-18T17:37:04Z",
  "source": "gateway /v1/models probe (scripts/collect-gateway-capabilities.py)",
  "providers": {
   "aiapi": {
    "ok": false,
    "count": 0,
-   "ms": 1445,
+   "ms": 1698,
    "error": "HTTP 401"
   },
   "api888": {
    "ok": true,
    "count": 27,
-   "ms": 1244,
+   "ms": 914,
    "error": ""
   },
   "codego": {
    "ok": true,
    "count": 6,
-   "ms": 1119,
+   "ms": 1157,
    "error": ""
   },
   "codegoclaude": {
    "ok": true,
    "count": 13,
-   "ms": 1064,
+   "ms": 1020,
    "error": ""
   },
   "cpa": {
    "ok": true,
    "count": 17,
-   "ms": 2102,
+   "ms": 1034,
    "error": ""
   },
   "darkforger": {
    "ok": false,
    "count": 0,
-   "ms": 788,
+   "ms": 1381,
    "error": "HTTP 530"
   },
   "hjapi": {
    "ok": true,
    "count": 2,
-   "ms": 859,
+   "ms": 830,
    "error": ""
   },
   "hyb": {
    "ok": true,
    "count": 1,
-   "ms": 1076,
+   "ms": 1487,
    "error": ""
   },
   "loveyou": {
    "ok": true,
    "count": 2,
-   "ms": 844,
+   "ms": 897,
    "error": ""
   },
   "nexavlinks": {
    "ok": true,
    "count": 17,
-   "ms": 1280,
+   "ms": 1422,
    "error": ""
   },
   "relayfor": {
    "ok": true,
    "count": 7,
-   "ms": 1614,
+   "ms": 2685,
    "error": ""
   },
   "rsiai": {
    "ok": true,
    "count": 4,
-   "ms": 1556,
+   "ms": 1557,
    "error": ""
   },
   "shuai": {
    "ok": false,
    "count": 0,
-   "ms": 978,
+   "ms": 1117,
    "error": "HTTP 401"
   },
   "wb2api": {
    "ok": true,
    "count": 50,
-   "ms": 1337,
+   "ms": 1704,
    "error": ""
   },
   "xjm": {
    "ok": true,
    "count": 12,
-   "ms": 889,
+   "ms": 943,
    "error": ""
   }
  },
