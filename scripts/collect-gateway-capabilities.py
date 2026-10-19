@@ -168,7 +168,7 @@ def load_yaml(path: Path):
 
 
 def providers(home: Path):
-    """provider id -> {baseURL, apiKeyRef}, from every layer the engine reads."""
+    """provider id -> {baseURL, apiKeyRef, models[]}, from every layer the engine reads."""
     found = {}
     for relative in ("profiles/web/cordis.patch.yml", "cordis.patch.yml"):
         path = home / relative
@@ -187,10 +187,14 @@ def providers(home: Path):
                 if isinstance(section, dict):
                     for name, entry in section.items():
                         if isinstance(entry, dict) and entry.get("baseURL"):
-                            found.setdefault(name, {
+                            slot = found.setdefault(name, {
                                 "baseURL": str(entry["baseURL"]),
                                 "apiKeyRef": entry.get("apiKeyEnv") or entry.get("apiKeyRef"),
+                                "models": [],
                             })
+                            for model in entry.get("models") or []:
+                                if isinstance(model, dict) and isinstance(model.get("id"), str):
+                                    slot["models"].append(model["id"])
                 stack.extend(node.values())
             elif isinstance(node, list):
                 stack.extend(node)
@@ -294,6 +298,15 @@ def main() -> int:
             for field in ("modalities", "context", "output", "reasoning"):
                 if field in caps and field not in entry:
                     entry[field] = caps[field]
+
+    # A model the client is configured with but its gateway does not publish
+    # still deserves a row: without one, a variant cannot inherit its family's
+    # levels and the client shows "unknown" forever.
+    for name in sorted(routes):
+        for mid in routes[name].get("models", []):
+            identity = normalize(mid)
+            if identity and identity not in merged:
+                merged[identity] = {"id": mid}
 
     previous = {}
     if OUT.exists():

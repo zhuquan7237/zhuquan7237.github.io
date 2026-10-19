@@ -1,6 +1,6 @@
 {
  "version": 1,
- "generatedAt": "2026-10-19T03:26:40Z",
+ "generatedAt": "2026-10-19T03:37:59Z",
  "source": "gateway /v1/models probe (scripts/collect-gateway-capabilities.py)",
  "providers": {
   "aiapi": {
@@ -332,10 +332,19 @@
    "id": "gemini-3.5-flash-lite"
   },
   {
+   "id": "gemini-3.6-flash-high"
+  },
+  {
+   "id": "gemini-3.7-flash-high"
+  },
+  {
    "id": "gemini-3.8-flash-high"
   },
   {
    "id": "gemini-3-flash"
+  },
+  {
+   "id": "gemini-pro-agent"
   },
   {
    "id": "google/gemma-3-12b-it"
@@ -422,6 +431,9 @@
    "reasoning": 1
   },
   {
+   "id": "glm-5.3-flashx"
+  },
+  {
    "id": "cn:glm-5v-turbo",
    "modalities": [
     "text",
@@ -462,16 +474,31 @@
    "id": "gpt-5.5"
   },
   {
+   "id": "gpt-5.5-fast"
+  },
+  {
+   "id": "gpt-5.5-openai-compact"
+  },
+  {
    "id": "gpt-5.6"
   },
   {
    "id": "gpt-5.6-luna"
   },
   {
+   "id": "gpt-5.6-luna-fast"
+  },
+  {
    "id": "gpt-5.6-sol"
   },
   {
+   "id": "gpt-5.6-sol-fast"
+  },
+  {
    "id": "gpt-5.6-terra"
+  },
+  {
+   "id": "gpt-5.6-terra-fast"
   },
   {
    "id": "gpt-6"
@@ -490,6 +517,9 @@
   },
   {
    "id": "gpt-6-sol"
+  },
+  {
+   "id": "gpt-6-sol-openai-compact"
   },
   {
    "id": "gpt-image-1"
@@ -523,6 +553,33 @@
   },
   {
    "id": "grok-4.7-build-fast"
+  },
+  {
+   "id": "grok-chat-auto"
+  },
+  {
+   "id": "grok-chat-expert"
+  },
+  {
+   "id": "grok-chat-fast"
+  },
+  {
+   "id": "grok-chat-heavy"
+  },
+  {
+   "id": "grok-imagine-image"
+  },
+  {
+   "id": "grok-imagine-image-2.0"
+  },
+  {
+   "id": "grok-imagine-image-edit"
+  },
+  {
+   "id": "grok-imagine-image-lite"
+  },
+  {
+   "id": "grok-imagine-video"
   },
   {
    "id": "cn:hunyuan-chat",
@@ -701,6 +758,9 @@
   },
   {
    "id": "Kwai-Kolors/Kolors"
+  },
+  {
+   "id": "mimo-v2.6-flash"
   },
   {
    "id": "cn:minimax-m2.5",
