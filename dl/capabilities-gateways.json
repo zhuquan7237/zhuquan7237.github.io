@@ -1,8 +1,13 @@
 {
  "version": 1,
- "generatedAt": "2026-10-19T03:37:59Z",
+ "generatedAt": "2026-10-19T22:40:31Z",
  "source": "gateway /v1/models probe (scripts/collect-gateway-capabilities.py)",
  "providers": {
+  "agentrouter": {
+   "ok": false,
+   "count": 0,
+   "error": "HTTP 401"
+  },
   "aiapi": {
    "ok": false,
    "count": 0,
@@ -44,18 +49,18 @@
    "error": ""
   },
   "loveyou": {
-   "ok": true,
-   "count": 2,
-   "error": ""
+   "ok": false,
+   "count": 0,
+   "error": "HTTP 522"
   },
   "nexavlinks": {
    "ok": true,
-   "count": 17,
+   "count": 14,
    "error": ""
   },
   "relayfor": {
    "ok": true,
-   "count": 7,
+   "count": 11,
    "error": ""
   },
   "rsiai": {
@@ -70,7 +75,7 @@
   },
   "wb2api": {
    "ok": true,
-   "count": 50,
+   "count": 52,
    "error": ""
   },
   "xjm": {
@@ -546,15 +551,6 @@
    "id": "openai/gpt-oss-20b"
   },
   {
-   "id": "grok-4.6"
-  },
-  {
-   "id": "grok-4.7"
-  },
-  {
-   "id": "grok-4.7-build-fast"
-  },
-  {
    "id": "grok-chat-auto"
   },
   {
@@ -763,6 +759,16 @@
    "id": "mimo-v2.6-flash"
   },
   {
+   "id": "cn:mimo-v2.6-pro",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 1000000,
+   "output": 128000,
+   "reasoning": 1
+  },
+  {
    "id": "cn:minimax-m2.5",
    "modalities": [
     "text",
@@ -790,6 +796,16 @@
    ],
    "context": 512000,
    "output": 64000,
+   "reasoning": 1
+  },
+  {
+   "id": "cn:minimax-m3.1-flash",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 1000000,
+   "output": 128000,
    "reasoning": 1
   },
   {
