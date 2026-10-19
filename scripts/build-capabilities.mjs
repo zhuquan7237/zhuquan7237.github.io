@@ -150,9 +150,34 @@ function openRouterModels(doc) {
   }));
 }
 
+/**
+ * Which directory provider speaks for a model's vendor. A vendor's own row is a
+ * statement about the model; a reseller's row is a statement about one
+ * deployment, so the two cannot be averaged.
+ */
+const VENDOR_OF = [
+  [/^deepseek/, ["deepseek"]],
+  [/^(glm|zai)/, ["zai"]],
+  [/^(kimi|moonshot)/, ["moonshotai"]],
+  [/^(gpt|chatgpt|o[0-9])/, ["openai"]],
+  [/^claude/, ["anthropic"]],
+  [/^(gemini|gemma)/, ["google"]],
+  [/^grok/, ["xai"]],
+  [/^qwen/, ["alibaba", "alibaba-cn"]],
+  [/^mimo/, ["xiaomi"]],
+  [/^minimax/, ["minimax"]],
+  [/^llama/, ["meta"]],
+  [/^(mistral|magistral|devstral)/, ["mistral"]],
+];
+
+function isVendorRow(providerId, modelId) {
+  const key = String(modelId || "").toLowerCase().replace(/[._\s]+/g, "-");
+  return VENDOR_OF.some(([test, providers]) => test.test(key) && providers.includes(providerId));
+}
+
 function modelsDevModels(doc) {
   const rows = [];
-  for (const provider of Object.values(doc ?? {})) {
+  for (const [providerId, provider] of Object.entries(doc ?? {})) {
     for (const model of Object.values(provider?.models ?? {})) {
       const modalities = engineModalities(model?.modalities?.input);
       // `attachment` is the directory's own flag for accepting uploads; it is
@@ -164,6 +189,7 @@ function modelsDevModels(doc) {
         context: positive(model?.limit?.context),
         output: positive(model?.limit?.output),
         reasoning: reasoningFields(model),
+        vendor: isVendorRow(providerId, model?.id ?? ""),
       });
     }
   }
@@ -188,15 +214,84 @@ async function fetchJson(url, offlineName) {
 }
 
 /**
- * Reasoning answers merge by how much they say, not by which layer spoke first:
- * a gateway's "it reasons" must not erase the level list a directory publishes,
- * while an explicit "it does not reason" from the endpoint still stands.
+ * Which catalogue states a model's reasoning levels, and whose answer wins.
+ *
+ * Directories disagree because each mirrors one deployment, and taking
+ * whichever row happened to come first made DeepSeek depend on dictionary
+ * order. The policy, in order:
+ *
+ *  1. the endpoint's own `/v1/models` answer (a gateway knows what it accepts);
+ *  2. the vendor's own directory row (`zai` for GLM, `openai` for GPT);
+ *  3. the most common complete set among the mirrors, when at least two agree;
+ *  4. otherwise "it reasons, no named levels" — honest, not invented.
+ *
+ * Hand-written `dl/capabilities-overrides.json` rows still outrank all of this.
  */
-function mergeReasoning(current, next) {
-  if (current === undefined) return next;
-  if (current === 0 || next === 0) return current;
-  const rank = (value) => (Array.isArray(value) ? 2 : 1);
-  return rank(next) > rank(current) ? next : current;
+const LEVEL_ORDER = ["off", "minimal", "low", "medium", "high", "xhigh", "max"];
+const sortLevels = (levels) => [...new Set(levels)].sort((a, b) => LEVEL_ORDER.indexOf(a) - LEVEL_ORDER.indexOf(b));
+
+function noteReasoning(evidence, key, value, { vendor = false, endpoint = false, manual = false } = {}) {
+  let slot = evidence.get(key);
+  if (!slot) {
+    slot = { sets: new Map(), vendorSet: undefined, endpointSet: undefined, manualSet: undefined, toggle: 0, none: 0, enumerations: 0 };
+    evidence.set(key, slot);
+  }
+  if (Array.isArray(value)) {
+    slot.enumerations += 1;
+    const signature = value.join(",");
+    slot.sets.set(signature, (slot.sets.get(signature) ?? 0) + 1);
+    if (endpoint && !slot.endpointSet) slot.endpointSet = value;
+    if (vendor && !slot.vendorSet) slot.vendorSet = value;
+    if (manual && !slot.manualSet) slot.manualSet = value;
+  } else if (value === 1) {
+    slot.toggle += 1;
+  } else if (value === 0) {
+    slot.none += 1;
+  }
+}
+
+function decideReasoning(slot) {
+  if (!slot) return undefined;
+  if (slot.manualSet) return sortLevels(slot.manualSet);
+  if (slot.endpointSet) return sortLevels(slot.endpointSet);
+  if (slot.vendorSet) return sortLevels(slot.vendorSet);
+  // More mirrors describe it as "reasons, no named levels" than enumerate any:
+  // do not invent a ladder just because two resellers copied one.
+  if (slot.toggle > slot.enumerations) return slot.none > slot.toggle ? 0 : 1;
+  if (slot.sets.size > 0) {
+    const ranked = [...slot.sets.entries()].sort((a, b) => b[1] - a[1] || b[0].split(",").length - a[0].split(",").length);
+    const [signature, votes] = ranked[0];
+    // Two independent mirrors agreeing is evidence; a lone source is still the
+    // only answer available when nothing else enumerates.
+    if (votes >= 2 || slot.enumerations === votes) return sortLevels(signature.split(","));
+    return 1;
+  }
+  if (slot.none > 0 && slot.none >= slot.toggle) return 0;
+  return slot.toggle > 0 ? 1 : undefined;
+}
+
+/**
+ * Variants inherit from their base model, but only when the base is specific
+ * enough to be a family (`gpt-5-5` → `gpt-5-5-openai-compact`) or the suffix is
+ * a known variant tag (`hy3-x`). A one-token base with an arbitrary tail
+ * (`grok` → `grok-chat-auto`) proves nothing and is left alone.
+ */
+const VARIANT_TAGS = new Set(["x", "b", "c", "1", "2", "3", "4", "compact", "fast", "slow", "auto", "expert", "heavy", "lite", "edit", "pro", "mini", "air", "exp", "ctrl", "lkeap", "volc", "taiji", "highspeed", "agent"]);
+
+function inheritReasoning(keys) {
+  const donors = Object.entries(keys).filter(([, entry]) => Array.isArray(entry.r));
+  for (const [key, entry] of Object.entries(keys)) {
+    if (entry.r !== undefined && entry.r !== 1) continue; // explicit 0 or an own list stands
+    let best;
+    for (const [donorKey, donor] of donors) {
+      if (donorKey === key || !key.startsWith(`${donorKey}-`)) continue;
+      const tail = key.slice(donorKey.length + 1).split("-");
+      const base = donorKey.split("-").length;
+      const fits = (base >= 2 && tail.length <= 2) || (tail.length === 1 && VARIANT_TAGS.has(tail[0]));
+      if (fits && (!best || donorKey.length > best[0].length)) best = [donorKey, donor];
+    }
+    if (best) entry.r = best[1].r.slice();
+  }
 }
 
 async function main() {
@@ -244,6 +339,7 @@ async function main() {
   if (fetched.modelsdev) layers.push(["models.dev", modelsDevModels(fetched.modelsdev)]);
   if (fetched.openrouter) layers.push(["openrouter", openRouterModels(fetched.openrouter)]);
   const keys = {};
+  const evidence = new Map();
   const counts = {};
   for (const [source, rows] of layers) {
     let kept = 0;
@@ -254,13 +350,17 @@ async function main() {
         if (row.modalities.length > 0 && !entry.m) entry.m = row.modalities;
         if (row.context !== undefined && !entry.c) entry.c = row.context;
         if (row.output !== undefined && !entry.o) entry.o = row.output;
-        if (row.reasoning !== undefined) entry.r = mergeReasoning(entry.r, row.reasoning);
+        if (row.reasoning !== undefined) noteReasoning(evidence, key, row.reasoning, { vendor: row.vendor === true, endpoint: source === "gateway", manual: source === "manual" });
         if (!entry.s) entry.s = source;
       }
       kept += 1;
     }
     counts[source] = kept;
   }
+
+  for (const [key, entry] of Object.entries(keys)) entry.r = decideReasoning(evidence.get(key), key);
+
+  inheritReasoning(keys);
 
   const total = Object.keys(keys).length;
   const withImage = Object.values(keys).filter((entry) => (entry.m ?? []).includes("image")).length;

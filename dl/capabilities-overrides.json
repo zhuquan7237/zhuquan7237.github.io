@@ -1,4 +1,14 @@
 {
-  "_note": "手工修正，优先级高于所有自动目录源。字段：id 必填；modalities 只认 text/image；context 上下文；output 输出上限。填进来的是实测确定的值，不要猜。",
-  "models": []
+  "_note": "手工修正，优先级高于所有自动目录源。字段：id 必填；modalities 只认 text/image；context 上下文；output 输出上限；reasoning 为可选思考强度档位。填进来的是实测/官方文档确定的值，不要猜。",
+  "models": [
+    {
+      "id": "deepseek-v4.1-flash",
+      "reasoning": ["minimal", "low", "medium", "high", "xhigh", "max"],
+      "_why": "DeepSeek 官方 prompt encoder 接受 none/minimal/low/medium/high/xhigh/max（none 关闭思考）；公共目录只抄了 low/high/max 三个 —— 实测这条路由六个档位全部可用。minimal/low→effort 50，medium/high/xhigh→75，max→100。"
+    },
+    {
+      "id": "deepseek-v4.1-flash-1017",
+      "reasoning": ["minimal", "low", "medium", "high", "xhigh", "max"]
+    }
+  ]
 }
