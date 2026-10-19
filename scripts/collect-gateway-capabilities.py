@@ -280,6 +280,7 @@ def main() -> int:
     # Merge by normalised id; a later route may state a field an earlier one
     # omitted, but never overwrite a stated value with silence.
     merged: dict[str, dict] = {}
+    published: dict[str, set[str]] = {}
     for name in sorted(results):
         result = results[name]
         if not result["ok"]:
@@ -288,6 +289,7 @@ def main() -> int:
             identity = normalize(caps["id"])
             if not identity:
                 continue
+            published.setdefault(identity, set()).add(caps["id"])
             entry = merged.setdefault(identity, {"id": caps["id"]})
             for field in ("modalities", "context", "output", "reasoning"):
                 if field in caps and field not in entry:
@@ -306,10 +308,14 @@ def main() -> int:
 
     ok = [name for name, result in results.items() if result["ok"]]
     failed = {name: result["error"] for name, result in results.items() if not result["ok"]}
+    # Which spelling to print: keep yesterday's when the gateway still publishes
+    # it, so a new route joining the pool does not look like a mass rename.
+    for key, entry in merged.items():
+        if previous.get(key, {}).get("id") in published.get(key, set()):
+            entry["id"] = previous[key]["id"]
     added = sorted(merged[k]["id"] for k in merged.keys() - previous.keys())
     removed = sorted(previous[k]["id"] for k in previous.keys() - merged.keys())
-    # A gateway that renames an id (bare → `cn:`-prefixed, say) keeps the same
-    # normalised key, so only the published spelling reveals it.
+    # A real rename is the old spelling disappearing while the model stays.
     renamed = sorted(
         f'{previous[k].get("id")} → {merged[k]["id"]}'
         for k in merged.keys() & previous.keys()
