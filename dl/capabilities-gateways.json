@@ -1,6 +1,6 @@
 {
  "version": 1,
- "generatedAt": "2026-10-19T22:40:31Z",
+ "generatedAt": "2026-10-20T22:40:13Z",
  "source": "gateway /v1/models probe (scripts/collect-gateway-capabilities.py)",
  "providers": {
   "agentrouter": {
@@ -30,18 +30,13 @@
   },
   "cpa": {
    "ok": true,
-   "count": 17,
+   "count": 18,
    "error": ""
-  },
-  "darkforger": {
-   "ok": false,
-   "count": 0,
-   "error": "HTTP 530"
   },
   "hjapi": {
-   "ok": true,
-   "count": 2,
-   "error": ""
+   "ok": false,
+   "count": 0,
+   "error": "HTTP 503"
   },
   "hyb": {
    "ok": true,
@@ -49,18 +44,18 @@
    "error": ""
   },
   "loveyou": {
-   "ok": false,
-   "count": 0,
-   "error": "HTTP 522"
+   "ok": true,
+   "count": 2,
+   "error": ""
   },
   "nexavlinks": {
-   "ok": true,
-   "count": 14,
-   "error": ""
+   "ok": false,
+   "count": 0,
+   "error": "HTTP 403"
   },
   "relayfor": {
    "ok": true,
-   "count": 11,
+   "count": 12,
    "error": ""
   },
   "rsiai": {
@@ -292,9 +287,6 @@
    "reasoning": 1
   },
   {
-   "id": "deepseek-v4-pro-0813"
-  },
-  {
    "id": "cn:default-1.1",
    "modalities": [
     "text",
@@ -347,6 +339,9 @@
   },
   {
    "id": "gemini-3-flash"
+  },
+  {
+   "id": "gemini-4-argon-high"
   },
   {
    "id": "gemini-pro-agent"
@@ -551,31 +546,7 @@
    "id": "openai/gpt-oss-20b"
   },
   {
-   "id": "grok-chat-auto"
-  },
-  {
-   "id": "grok-chat-expert"
-  },
-  {
-   "id": "grok-chat-fast"
-  },
-  {
-   "id": "grok-chat-heavy"
-  },
-  {
-   "id": "grok-imagine-image"
-  },
-  {
-   "id": "grok-imagine-image-2.0"
-  },
-  {
-   "id": "grok-imagine-image-edit"
-  },
-  {
-   "id": "grok-imagine-image-lite"
-  },
-  {
-   "id": "grok-imagine-video"
+   "id": "grok-4.7"
   },
   {
    "id": "cn:hunyuan-chat",
