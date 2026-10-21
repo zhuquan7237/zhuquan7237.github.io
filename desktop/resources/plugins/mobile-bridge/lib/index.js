@@ -23,6 +23,7 @@
  */
 import { createHash, randomUUID } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, readdirSync, realpathSync, statSync, unlinkSync, writeFileSync, copyFileSync } from 'node:fs';
+import { gzipSync } from 'node:zlib';
 import { createRequire } from 'node:module';
 import { hostname } from 'node:os';
 import { basename, dirname, extname, join, normalize, resolve, sep } from 'node:path';
@@ -66,7 +67,25 @@ const log = (line) => {
 const APP_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'app');
 const isRecord = (value) => typeof value === 'object' && value !== null && !Array.isArray(value);
 function sendJson(res, status, payload) {
-    const body = JSON.stringify(payload);
+    const body = Buffer.from(JSON.stringify(payload), 'utf8');
+    // The phone almost always reaches us through the relay, where every byte is
+    // paid twice (Cloudflare → server → back). A 348-session list is ~170 KB raw
+    // and ~15 KB gzipped; OkHttp advertises gzip and decompresses transparently.
+    // `res.req` is the IncomingMessage Node attached to this response.
+    const request = res.req;
+    const accepted = /\bgzip\b/i.test(String(request?.headers['accept-encoding'] ?? ''));
+    if (accepted && body.byteLength >= 1024) {
+        const packed = gzipSync(body);
+        res.writeHead(status, {
+            'content-type': 'application/json; charset=utf-8',
+            'cache-control': 'no-store',
+            'referrer-policy': 'no-referrer',
+            'content-encoding': 'gzip',
+            vary: 'accept-encoding',
+        });
+        res.end(packed);
+        return;
+    }
     res.writeHead(status, {
         'content-type': 'application/json; charset=utf-8',
         'cache-control': 'no-store',
@@ -350,6 +369,27 @@ export function engineDiagnostics(ctx, method, tried) {
     }
     return bits.join('; ');
 }
+/** Lazily created owner Peer standing in for the phone on in-process calls. */
+let enginePeer = null;
+/**
+ * The engine 0.2.x gateway requires a Peer on every Remote invocation.
+ *
+ * 0.1.x defaulted a missing peer to the operator Peer; 0.2.x instead calls
+ * `assertPeerLive(peer)` first, so an omitted peer throws
+ * `Cannot read properties of undefined (reading 'signal')` and every call
+ * fails with `gateway/internal`. `connection.createPeer()` is the supported
+ * in-process entry (it hands the Peer a scope owned by this plugin context),
+ * and 0.1.x simply has no such method — there we keep passing `undefined`.
+ */
+function ownerPeer(ctx) {
+    if (enginePeer !== null)
+        return enginePeer;
+    const connection = ctx.get('connection');
+    if (connection === undefined || typeof connection.createPeer !== 'function')
+        return undefined;
+    enginePeer = connection.createPeer({ principal: { kind: 'owner' }, interactions: 'answer' });
+    return enginePeer;
+}
 /** Invoke one already-named endpoint. */
 async function invokeEngine(ctx, endpoint, payload, signal) {
     const gateway = ctx.get('typertGateway');
@@ -358,7 +398,7 @@ async function invokeEngine(ctx, endpoint, payload, signal) {
     if (typeof gateway.dispatchRpc === 'function') {
         // The carrier envelope is `{args}` — the gateway validates that a request
         // holds exactly one plain-object `args` field before it resolves anything.
-        const result = await gateway.dispatchRpc(endpoint, { args: payload ?? {} }, signal);
+        const result = await gateway.dispatchRpc(endpoint, { args: payload ?? {} }, signal, ownerPeer(ctx));
         if (isRecord(result) && 'ok' in result) {
             if (result.ok === true)
                 return result.value;
@@ -3280,11 +3320,21 @@ document.addEventListener('click', async (event) => {
                 return;
             }
             try {
-                const body = readFileSync(file);
-                res.writeHead(200, {
-                    'content-type': MIME[extname(file).toLowerCase()] ?? 'application/octet-stream',
+                let body = readFileSync(file);
+                const type = MIME[extname(file).toLowerCase()] ?? 'application/octet-stream';
+                const headers = {
+                    'content-type': type,
                     'cache-control': 'no-cache',
-                });
+                };
+                // Same relay arithmetic as JSON: the PWA bundle is a few hundred KB of
+                // text that compresses ~4x. Browsers/WebViews always advertise gzip.
+                const accepted = /\bgzip\b/i.test(String(req.headers['accept-encoding'] ?? ''));
+                if (accepted && body.byteLength >= 1024 && /text\/|javascript|json|svg/.test(type)) {
+                    body = gzipSync(body);
+                    headers['content-encoding'] = 'gzip';
+                    headers.vary = 'accept-encoding';
+                }
+                res.writeHead(200, headers);
                 res.end(body);
             }
             catch (error) {

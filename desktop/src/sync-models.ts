@@ -184,7 +184,60 @@ export async function fetchRemoteModelIds(baseURL: string, apiKey?: string): Pro
 
 function resolveSettingsFile(dshHome?: string): string {
   const home = dshHome || process.env.DSH_HOME || path.join(os.homedir(), ".dsh");
-  return path.join(home, "settings.yaml");
+  const legacy = path.join(home, "settings.yaml");
+  if (fs.existsSync(legacy)) return legacy;
+  // Engine 0.1.7+ imports settings.yaml into the profile user layer and renames
+  // the original to `settings.yaml.imported`. Reading the legacy path after that
+  // reports "配置文件不存在" on every boot; the live document is the patch file.
+  const profile = path.join(home, "profiles", "web", "cordis.patch.yml");
+  if (fs.existsSync(profile)) return profile;
+  return legacy;
+}
+
+interface LoadedSettings {
+  /** `{ 'llm-pi-ai': … }` view, whichever shape the file has. */
+  doc: Record<string, unknown>;
+  /** Present when the file is a loader patch array instead of a plain map. */
+  patch?: { root: unknown[]; entry: Record<string, unknown> };
+}
+
+/** Read either the legacy settings map or the 0.1.7+ profile patch array. */
+function loadSettingsDocument(filePath: string): LoadedSettings {
+  const parsed = yaml.load(fs.readFileSync(filePath, "utf8"));
+  if (Array.isArray(parsed)) {
+    const root = parsed as unknown[];
+    let entry = root.find(
+      (item) => item !== null && typeof item === "object" && (item as { id?: unknown }).id === "llm-pi-ai",
+    ) as Record<string, unknown> | undefined;
+    if (entry === undefined) {
+      entry = { id: "llm-pi-ai", config: {} };
+      root.push(entry);
+    }
+    const config =
+      entry.config !== null && typeof entry.config === "object" ? (entry.config as Record<string, unknown>) : {};
+    entry.config = config;
+    return { doc: { "llm-pi-ai": config }, patch: { root, entry } };
+  }
+  return { doc: (parsed ?? {}) as Record<string, unknown> };
+}
+
+/** Write back through the same shape it was read in. */
+function saveSettingsDocument(filePath: string, loaded: LoadedSettings): void {
+  if (loaded.patch === undefined) {
+    fs.writeFileSync(filePath, yaml.dump(loaded.doc, { indent: 2, lineWidth: -1, noRefs: true }), "utf8");
+    return;
+  }
+  const entry = loaded.patch.entry;
+  entry.config = loaded.doc["llm-pi-ai"];
+  if (!loaded.patch.root.includes(entry)) loaded.patch.root.push(entry);
+  // Keep the loader-patch header comment (js-yaml drops comments).
+  const head = fs
+    .readFileSync(filePath, "utf8")
+    .split("\n")
+    .filter((line) => line.startsWith("#"))
+    .join("\n");
+  const body = yaml.dump(loaded.patch.root, { indent: 2, lineWidth: -1, noRefs: true });
+  fs.writeFileSync(filePath, head === "" ? body : `${head}\n${body}`, "utf8");
 }
 
 type ModelEntry = Record<string, unknown>;
@@ -245,7 +298,7 @@ export async function getProvidersInfo(dshHome?: string, harnessPrefix?: string)
   if (!fs.existsSync(filePath)) return [];
   let parsed: Record<string, unknown>;
   try {
-    parsed = (yaml.load(fs.readFileSync(filePath, "utf8")) || {}) as Record<string, unknown>;
+    parsed = loadSettingsDocument(filePath).doc;
   } catch {
     return [];
   }
@@ -273,13 +326,14 @@ export async function syncAllProviderModels(dshHome?: string, harnessPrefix?: st
     return { success: false, count: 0, providers: [], error: `配置文件不存在: ${filePath}` };
   }
 
-  let parsed: Record<string, unknown>;
+  let loaded: LoadedSettings;
   try {
-    parsed = (yaml.load(fs.readFileSync(filePath, "utf8")) || {}) as Record<string, unknown>;
+    loaded = loadSettingsDocument(filePath);
   } catch (err: any) {
     return { success: false, count: 0, providers: [], error: `读取配置文件失败: ${err?.message || err}` };
   }
 
+  const parsed = loaded.doc;
   const configs = readProviderConfigs(parsed);
   if (configs.size === 0) {
     return { success: true, count: 0, providers: [], details: [] };
@@ -373,8 +427,7 @@ export async function syncAllProviderModels(dshHome?: string, harnessPrefix?: st
 
   if (totalNew > 0 || updatedProviders.length > 0) {
     try {
-      const dump = yaml.dump(parsed, { indent: 2, lineWidth: -1, noRefs: true });
-      fs.writeFileSync(filePath, dump, "utf8");
+      saveSettingsDocument(filePath, loaded);
     } catch (err: any) {
       return { success: false, count: totalNew, providers: updatedProviders, error: `写入配置文件失败: ${err?.message || err}` };
     }

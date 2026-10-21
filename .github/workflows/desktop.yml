@@ -134,6 +134,12 @@ jobs:
           body: |
             请用 ${{ steps.version.outputs.version }}。不要用更早的版本。
 
+            **0.7.5 → 0.7.6**
+            - **适配引擎 0.2.1-rc.2**：新引擎要求每次 Remote 调用都带 Peer，缺了会回 `Cannot read properties of undefined (reading 'signal')` —— 手机端于是表现为「连不上电脑 / 发了消息没有进度」。桥接现在用引擎的 `connection.createPeer()` 建一个插件自己的 owner Peer，并保留 0.1.x 兼容。
+            - **手机端回包压缩**：会话列表 86 KB → 19 KB、模型文档 49 KB → 3 KB（gzip），经中继加载明显更快。
+            - **模型同步适配新配置层**：引擎 0.1.7+ 已把 `settings.yaml` 迁进 `profiles/web/cordis.patch.yml`；启动时的模型补全不再报「配置文件不存在」，读写都落在这个新层（旧格式机器照旧）。
+            - 兼容性：建议手机端更新到 0.5.4（连接失败入口 / 日志多选发送）；旧版手机端仍可连接。
+
             **0.7.4 → 0.7.5**
             - **模型能力跟上 `cn:` 模型名**：CodeBuddy 池现在把每个模型都发成 `cn:<模型名>`，旧解析会把整串归一成 `cn`，导致这些模型的能力永远「未知」。现在区域前缀（`cn:`/`us:`/`global:` 等）会先被剥掉再查目录。
             - **认上游的布尔能力字段**：除上下文与输出上限外，`supports_images` / `supports_reasoning` / `reasoning_effort` 这类写法也会被读成图片与推理能力——私有网关（WorkBuddy、CPA、各中转）自己公布的能力终于能自动补进配置。

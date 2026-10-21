@@ -225,4 +225,47 @@ describe("sync-models", () => {
     const ids = await fetchRemoteModelIds("https://gw.example", "sk-k");
     expect(ids).toEqual(["via-openai-path"]);
   });
+
+  it("reads and writes the 0.1.7+ profile patch layer in place", async () => {
+    // Engine 0.1.7+ renamed settings.yaml to settings.yaml.imported and keeps the
+    // live document in profiles/web/cordis.patch.yml (a loader patch array).
+    const patchDir = path.join(tmpDir, "profiles", "web");
+    fs.mkdirSync(patchDir, { recursive: true });
+    const patchFile = path.join(patchDir, "cordis.patch.yml");
+    fs.writeFileSync(
+      patchFile,
+      [
+        "# Your patch layer for this dsh profile.",
+        "- id: some-other-plugin",
+        "  config:",
+        "    keep: me",
+        "- id: llm-pi-ai",
+        "  config:",
+        "    providers:",
+        "      hand:",
+        "        api: openai-completions",
+        "        baseURL: https://gw.example/v1",
+        "        models:",
+        "          - id: a",
+        "",
+      ].join("\n"),
+      "utf8",
+    );
+
+    const info = await getProvidersInfo(tmpDir);
+    expect(info.map((p) => p.id)).toEqual(["hand"]);
+    expect(info[0].models).toEqual(["a"]);
+
+    vi.stubGlobal("fetch", vi.fn(async () => REMOTE_LIST([{ id: "a" }, { id: "b" }])));
+    const res = await syncAllProviderModels(tmpDir);
+    expect(res.success).toBe(true);
+    expect(res.count).toBe(1);
+
+    const text = fs.readFileSync(patchFile, "utf8");
+    expect(text.startsWith("# Your patch layer for this dsh profile.")).toBe(true);
+    const parsed = yaml.load(text) as any[];
+    expect(parsed.find((e) => e.id === "some-other-plugin").config.keep).toBe("me");
+    const llm = parsed.find((e) => e.id === "llm-pi-ai");
+    expect(llm.config.providers.hand.models.map((m: any) => m.id)).toEqual(["a", "b"]);
+  });
 });
