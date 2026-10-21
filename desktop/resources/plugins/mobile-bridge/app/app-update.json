@@ -1,9 +1,9 @@
 {
-  "version": "0.5.3",
-  "versionCode": 109,
+  "version": "0.5.4",
+  "versionCode": 110,
   "apkUrl": "https://m.zhuquan.xyz/mobile/dsh-mobile.apk",
-  "sha256": "3ad71e27a99d716551ae36ee5fd066a55b00660ca836307ecc549dfa1b6cbb4c",
+  "sha256": "a5031f15ac06f7b67b4569ce7bdedc252e767323f0a2f84cfa9a9ba5e1c6c106",
   "size": 3858439,
-  "notes": "修复中继连接的 WebSocket 路径丢失问题：扫码配对后可正确建立实时连接。",
-  "publishedAt": "2026-10-01T01:33:17+08:00"
+  "notes": "连接不上电脑时，点顶部的「未连接」即可重试或解除本机绑定重新配对；错误日志支持多选发送。适配桌面端 0.7.6 的手机连接与进度反馈。",
+  "publishedAt": "2026-10-22T01:22:48+08:00"
 }
