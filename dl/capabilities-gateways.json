@@ -1,6 +1,6 @@
 {
  "version": 1,
- "generatedAt": "2026-10-20T22:40:13Z",
+ "generatedAt": "2026-10-21T22:40:27Z",
  "source": "gateway /v1/models probe (scripts/collect-gateway-capabilities.py)",
  "providers": {
   "agentrouter": {
@@ -34,24 +34,24 @@
    "error": ""
   },
   "hjapi": {
-   "ok": false,
-   "count": 0,
-   "error": "HTTP 503"
-  },
-  "hyb": {
-   "ok": true,
-   "count": 47,
-   "error": ""
-  },
-  "loveyou": {
    "ok": true,
    "count": 2,
    "error": ""
   },
+  "hyb": {
+   "ok": true,
+   "count": 45,
+   "error": ""
+  },
+  "loveyou": {
+   "ok": true,
+   "count": 13,
+   "error": ""
+  },
   "nexavlinks": {
-   "ok": false,
-   "count": 0,
-   "error": "HTTP 403"
+   "ok": true,
+   "count": 2,
+   "error": ""
   },
   "relayfor": {
    "ok": true,
@@ -68,6 +68,11 @@
    "count": 0,
    "error": "HTTP 401"
   },
+  "syhub": {
+   "ok": true,
+   "count": 2,
+   "error": ""
+  },
   "wb2api": {
    "ok": true,
    "count": 52,
@@ -75,7 +80,7 @@
   },
   "xjm": {
    "ok": true,
-   "count": 12,
+   "count": 6,
    "error": ""
   }
  },
@@ -287,6 +292,9 @@
    "reasoning": 1
   },
   {
+   "id": "deepseek-v4-pro-0813"
+  },
+  {
    "id": "cn:default-1.1",
    "modalities": [
     "text",
@@ -323,7 +331,7 @@
    "id": "gemini-3.1-flash-lite"
   },
   {
-   "id": "gemini-3.1-pro-preview"
+   "id": "gemini-3.1-pro-low"
   },
   {
    "id": "gemini-3.5-flash-lite"
@@ -645,7 +653,7 @@
    "reasoning": 1
   },
   {
-   "id": "moonshotai/kimi-k2-thinking",
+   "id": "cn:kimi-k2-thinking",
    "modalities": [
     "text",
     "image"
@@ -695,9 +703,6 @@
    "reasoning": 1
   },
   {
-   "id": "moonshotai/Kimi-K2-Instruct-0905"
-  },
-  {
    "id": "cn:kimi-k2-instruct-taiji",
    "modalities": [
     "text",
@@ -725,6 +730,9 @@
   },
   {
    "id": "Kwai-Kolors/Kolors"
+  },
+  {
+   "id": "mercury-3"
   },
   {
    "id": "mimo-v2.6-flash"
@@ -818,9 +826,6 @@
   },
   {
    "id": "Qwen/Qwen3-Reranker-8B"
-  },
-  {
-   "id": "Qwen/QwQ-32B"
   },
   {
    "id": "FunAudioLLM/SenseVoiceSmall"
