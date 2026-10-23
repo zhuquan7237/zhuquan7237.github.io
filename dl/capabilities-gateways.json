@@ -1,6 +1,6 @@
 {
  "version": 1,
- "generatedAt": "2026-10-22T22:40:28Z",
+ "generatedAt": "2026-10-23T22:40:29Z",
  "source": "gateway /v1/models probe (scripts/collect-gateway-capabilities.py)",
  "providers": {
   "agentrouter": {
@@ -15,7 +15,7 @@
   },
   "api888": {
    "ok": true,
-   "count": 27,
+   "count": 7,
    "error": ""
   },
   "codego": {
@@ -50,12 +50,12 @@
   },
   "nexavlinks": {
    "ok": true,
-   "count": 13,
+   "count": 10,
    "error": ""
   },
   "relayfor": {
    "ok": true,
-   "count": 12,
+   "count": 11,
    "error": ""
   },
   "rsiai": {
@@ -398,19 +398,10 @@
    "reasoning": 1
   },
   {
-   "id": "gpt-4o"
-  },
-  {
    "id": "gpt-4o-mini"
   },
   {
-   "id": "gpt-5.1-codex"
-  },
-  {
    "id": "gpt-5.2"
-  },
-  {
-   "id": "gpt-5.3-codex"
   },
   {
    "id": "gpt-5.3-codex-spark"
@@ -452,9 +443,6 @@
    "id": "gpt-5.6-terra-fast"
   },
   {
-   "id": "gpt-6"
-  },
-  {
    "id": "gpt-6.1-sol"
   },
   {
@@ -485,10 +473,10 @@
    "id": "gpt-image-2.5"
   },
   {
-   "id": "gpt-image-2-5-flare"
+   "id": "gpt-image-2.5-flare"
   },
   {
-   "id": "gpt-image-2-5-sunburst"
+   "id": "gpt-image-2.5-sunburst"
   },
   {
    "id": "gpt-oss-120b-medium"
