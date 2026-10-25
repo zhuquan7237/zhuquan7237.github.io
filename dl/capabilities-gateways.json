@@ -1,17 +1,22 @@
 {
  "version": 1,
- "generatedAt": "2026-10-23T22:40:29Z",
+ "generatedAt": "2026-10-25T22:40:34Z",
  "source": "gateway /v1/models probe (scripts/collect-gateway-capabilities.py)",
  "providers": {
   "agentrouter": {
    "ok": false,
    "count": 0,
-   "error": "HTTP 401"
+   "error": "HTTP 404"
   },
   "aiapi": {
    "ok": false,
    "count": 0,
    "error": "HTTP 401"
+  },
+  "anyrouter": {
+   "ok": false,
+   "count": 0,
+   "error": "HTTP 404"
   },
   "api888": {
    "ok": true,
@@ -30,7 +35,12 @@
   },
   "cpa": {
    "ok": true,
-   "count": 18,
+   "count": 20,
+   "error": ""
+  },
+  "guga": {
+   "ok": true,
+   "count": 57,
    "error": ""
   },
   "hjapi": {
@@ -50,7 +60,7 @@
   },
   "nexavlinks": {
    "ok": true,
-   "count": 10,
+   "count": 15,
    "error": ""
   },
   "relayfor": {
@@ -75,7 +85,7 @@
   },
   "wb2api": {
    "ok": true,
-   "count": 52,
+   "count": 51,
    "error": ""
   },
   "xjm": {
@@ -104,6 +114,15 @@
    "context": 300000,
    "output": 48000,
    "reasoning": 1
+  },
+  {
+   "id": "beam"
+  },
+  {
+   "id": "big-pickle"
+  },
+  {
+   "id": "chatgpt-voice"
   },
   {
    "id": "claude-fable-5"
@@ -233,6 +252,9 @@
    "reasoning": 1
   },
   {
+   "id": "deepseek-v4.1-flash-1017"
+  },
+  {
    "id": "cn:deepseek-v4-flash",
    "modalities": [
     "text",
@@ -241,6 +263,12 @@
    "context": 1000000,
    "output": 50000,
    "reasoning": 1
+  },
+  {
+   "id": "deepseek-v4-flash-0731"
+  },
+  {
+   "id": "deepseek-v4-flash-vision"
   },
   {
    "id": "cn:deepseek-v4-pro",
@@ -301,7 +329,7 @@
    "id": "gemini-3.6-flash-high"
   },
   {
-   "id": "gemini-3.7-flash-high"
+   "id": "gemini-3.7-flash"
   },
   {
    "id": "gemini-3.8-flash-high"
@@ -314,6 +342,9 @@
   },
   {
    "id": "gemini-pro-agent"
+  },
+  {
+   "id": "gemma-4-31b"
   },
   {
    "id": "cn:glm-4.6",
@@ -473,16 +504,49 @@
    "id": "gpt-image-2.5"
   },
   {
+   "id": "gpt-image-2.5-4k"
+  },
+  {
    "id": "gpt-image-2.5-flare"
   },
   {
    "id": "gpt-image-2.5-sunburst"
   },
   {
+   "id": "gpt-image-2.5-sunburst-4K"
+  },
+  {
    "id": "gpt-oss-120b-medium"
   },
   {
+   "id": "grok-4.20-multi-agent-xhigh"
+  },
+  {
+   "id": "grok-4.3-fast"
+  },
+  {
+   "id": "grok-4.6"
+  },
+  {
    "id": "grok-4.7"
+  },
+  {
+   "id": "grok-4.7-build-fast"
+  },
+  {
+   "id": "grok-imagine-image"
+  },
+  {
+   "id": "grok-imagine-image-2.0"
+  },
+  {
+   "id": "grok-imagine-image-lite"
+  },
+  {
+   "id": "grok-imagine-image-pro"
+  },
+  {
+   "id": "grok-imagine-video"
   },
   {
    "id": "cn:hunyuan-chat",
@@ -578,6 +642,12 @@
    "reasoning": 1
   },
   {
+   "id": "jev-latest"
+  },
+  {
+   "id": "jev-1.13"
+  },
+  {
    "id": "cn:kimi-k2-thinking",
    "modalities": [
     "text",
@@ -598,24 +668,7 @@
    "reasoning": 1
   },
   {
-   "id": "cn:kimi-k2.6",
-   "modalities": [
-    "text",
-    "image"
-   ],
-   "context": 256000,
-   "output": 32000,
-   "reasoning": 1
-  },
-  {
-   "id": "cn:kimi-k2.7",
-   "modalities": [
-    "text",
-    "image"
-   ],
-   "context": 256000,
-   "output": 32000,
-   "reasoning": 1
+   "id": "kimi-k2.6"
   },
   {
    "id": "cn:kimi-k2.8-preview",
@@ -637,7 +690,20 @@
    "output": 8192
   },
   {
+   "id": "kimi-k3"
+  },
+  {
    "id": "cn:kimi-k3-1",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 1000000,
+   "output": 32000,
+   "reasoning": 1
+  },
+  {
+   "id": "kimi-k3.1-pro",
    "modalities": [
     "text",
     "image"
@@ -651,7 +717,13 @@
    "context": 1000000
   },
   {
+   "id": "longcat-2.5-preview"
+  },
+  {
    "id": "mercury-3"
+  },
+  {
+   "id": "mimo-v2.5"
   },
   {
    "id": "mimo-v2.6-flash"
@@ -665,6 +737,9 @@
    "context": 1000000,
    "output": 128000,
    "reasoning": 1
+  },
+  {
+   "id": "minimax-h3"
   },
   {
    "id": "cn:minimax-m2.5",
@@ -714,6 +789,36 @@
    "id": "muse-spark-1.3"
   },
   {
+   "id": "Nano Banana 2.1"
+  },
+  {
+   "id": "Nano Banana 2 Lite"
+  },
+  {
+   "id": "Nano Banana Pro"
+  },
+  {
+   "id": "nemotron-3.5-lightning"
+  },
+  {
+   "id": "nemotron-3.5-super-vl"
+  },
+  {
+   "id": "NSFW"
+  },
+  {
+   "id": "omni1.1-flash"
+  },
+  {
+   "id": "qwen3.8-27b"
+  },
+  {
+   "id": "qwen3.8-flash"
+  },
+  {
+   "id": "qwen3.8-flash-next"
+  },
+  {
    "id": "cn:space-bunny",
    "modalities": [
     "text",
@@ -732,6 +837,15 @@
    "context": 1000000,
    "output": 64000,
    "reasoning": 1
+  },
+  {
+   "id": "veo-3.1-fast"
+  },
+  {
+   "id": "veo-3.1-lite"
+  },
+  {
+   "id": "veo-3.1-quality"
   }
  ]
 }
