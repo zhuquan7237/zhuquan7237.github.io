@@ -1,6 +1,6 @@
 {
  "version": 1,
- "generatedAt": "2026-10-25T22:40:34Z",
+ "generatedAt": "2026-10-26T22:40:56Z",
  "source": "gateway /v1/models probe (scripts/collect-gateway-capabilities.py)",
  "providers": {
   "agentrouter": {
@@ -20,7 +20,7 @@
   },
   "api888": {
    "ok": true,
-   "count": 7,
+   "count": 9,
    "error": ""
   },
   "codego": {
@@ -49,9 +49,9 @@
    "error": ""
   },
   "hyb": {
-   "ok": false,
-   "count": 0,
-   "error": "HTTP 403"
+   "ok": true,
+   "count": 43,
+   "error": ""
   },
   "loveyou": {
    "ok": true,
@@ -90,7 +90,7 @@
   },
   "xjm": {
    "ok": true,
-   "count": 12,
+   "count": 13,
    "error": ""
   }
  },
@@ -116,7 +116,25 @@
    "reasoning": 1
   },
   {
+   "id": "netease-youdao/bce-embedding-base_v1"
+  },
+  {
+   "id": "netease-youdao/bce-reranker-base_v1"
+  },
+  {
    "id": "beam"
+  },
+  {
+   "id": "BAAI/bge-large-en-v1.5"
+  },
+  {
+   "id": "BAAI/bge-large-zh-v1.5"
+  },
+  {
+   "id": "BAAI/bge-m3"
+  },
+  {
+   "id": "BAAI/bge-reranker-v2-m3"
   },
   {
    "id": "big-pickle"
@@ -177,6 +195,12 @@
    "reasoning": 1
   },
   {
+   "id": "deepseek-ai/DeepSeek-OCR"
+  },
+  {
+   "id": "deepseek-ai/DeepSeek-R1"
+  },
+  {
    "id": "cn:deepseek-r1-0528",
    "context": 96000,
    "output": 8192
@@ -189,6 +213,15 @@
    ],
    "context": 96000,
    "output": 16000
+  },
+  {
+   "id": "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B"
+  },
+  {
+   "id": "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B"
+  },
+  {
+   "id": "deepseek-ai/DeepSeek-V3"
   },
   {
    "id": "cn:deepseek-v3-0324",
@@ -223,6 +256,9 @@
    "output": 32000
   },
   {
+   "id": "deepseek-ai/DeepSeek-V3.1-Terminus"
+  },
+  {
    "id": "cn:deepseek-v3-1-volc",
    "modalities": [
     "text",
@@ -230,6 +266,9 @@
    ],
    "context": 96000,
    "output": 32000
+  },
+  {
+   "id": "deepseek-ai/DeepSeek-V3.2"
   },
   {
    "id": "cn:deepseek-v3-2-volc",
@@ -314,6 +353,9 @@
    "reasoning": 1
   },
   {
+   "id": "openrouter/free"
+  },
+  {
    "id": "gemini-3.1-flash-image"
   },
   {
@@ -344,7 +386,16 @@
    "id": "gemini-pro-agent"
   },
   {
+   "id": "google/gemma-3-12b-it"
+  },
+  {
+   "id": "google/gemma-3-4b-it"
+  },
+  {
    "id": "gemma-4-31b"
+  },
+  {
+   "id": "THUDM/GLM-4.1V-9B-Thinking"
   },
   {
    "id": "cn:glm-4.6",
@@ -364,6 +415,12 @@
    "context": 128000,
    "output": 32000,
    "reasoning": 1
+  },
+  {
+   "id": "THUDM/glm-4-9b-chat"
+  },
+  {
+   "id": "THUDM/GLM-4-9B-0414"
   },
   {
    "id": "cn:glm-5.0-turbo",
@@ -429,6 +486,9 @@
    "reasoning": 1
   },
   {
+   "id": "THUDM/GLM-Z1-9B-0414"
+  },
+  {
    "id": "gpt-4o-mini"
   },
   {
@@ -477,6 +537,9 @@
    "id": "gpt-6.1-sol"
   },
   {
+   "id": "gpt-6.1-terra"
+  },
+  {
    "id": "gpt-6-astra"
   },
   {
@@ -517,6 +580,9 @@
   },
   {
    "id": "gpt-oss-120b-medium"
+  },
+  {
+   "id": "openai/gpt-oss-20b"
   },
   {
    "id": "grok-4.20-multi-agent-xhigh"
@@ -570,6 +636,9 @@
   {
    "id": "cn:hunyuan-image-alpha-edit",
    "context": 1000000
+  },
+  {
+   "id": "tencent/Hunyuan-MT-7B"
   },
   {
    "id": "cn:hy3",
@@ -717,6 +786,9 @@
    "context": 1000000
   },
   {
+   "id": "Kwai-Kolors/Kolors"
+  },
+  {
    "id": "longcat-2.5-preview"
   },
   {
@@ -810,6 +882,12 @@
    "id": "omni1.1-flash"
   },
   {
+   "id": "Qwen/Qwen2.5-7B-Instruct"
+  },
+  {
+   "id": "Qwen/Qwen3-235B-A22B"
+  },
+  {
    "id": "qwen3.8-27b"
   },
   {
@@ -817,6 +895,33 @@
   },
   {
    "id": "qwen3.8-flash-next"
+  },
+  {
+   "id": "Qwen/Qwen3-8B"
+  },
+  {
+   "id": "Qwen/Qwen3-Embedding-0.6B"
+  },
+  {
+   "id": "Qwen/Qwen3-Embedding-4B"
+  },
+  {
+   "id": "Qwen/Qwen3-Embedding-8B"
+  },
+  {
+   "id": "Qwen/Qwen3-Next-80B-A3B-Thinking"
+  },
+  {
+   "id": "Qwen/Qwen3-Reranker-0.6B"
+  },
+  {
+   "id": "Qwen/Qwen3-Reranker-4B"
+  },
+  {
+   "id": "Qwen/Qwen3-Reranker-8B"
+  },
+  {
+   "id": "FunAudioLLM/SenseVoiceSmall"
   },
   {
    "id": "cn:space-bunny",
@@ -837,6 +942,9 @@
    "context": 1000000,
    "output": 64000,
    "reasoning": 1
+  },
+  {
+   "id": "TeleAI/TeleSpeechASR"
   },
   {
    "id": "veo-3.1-fast"
