@@ -2,13 +2,44 @@
   "_note": "手工修正，优先级高于所有自动目录源。字段：id 必填；modalities 只认 text/image；context 上下文；output 输出上限；reasoning 为可选思考强度档位。填进来的是实测/官方文档确定的值，不要猜。",
   "models": [
     {
+      "id": "gpt-6.1-terra",
+      "modalities": [
+        "text",
+        "image"
+      ],
+      "context": 1050000,
+      "output": 128000,
+      "reasoning": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "_why": "OpenAI 官方文档 gpt-6.1-terra：1,050,000 上下文 / 922,000 最大输入 / 128,000 输出 / text+image / 知识截止 2026-06-01；reasoning.effort 支持 none/low/medium/high/xhigh/max（none 无法由引擎档位表达，未列入）。实测 ss2a.top 路由：返回 model=gpt-6.1-terra（未串号）、16x16 红图识别为红色、Responses 工具调用返回 function_call、low/high/max 三档均 200 且 max 有 reasoning_tokens、8k 中段暗号准确。"
+    },
+    {
       "id": "deepseek-v4.1-flash",
-      "reasoning": ["minimal", "low", "medium", "high", "xhigh", "max"],
+      "reasoning": [
+        "minimal",
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
       "_why": "DeepSeek 官方 prompt encoder 接受 none/minimal/low/medium/high/xhigh/max（none 关闭思考）；公共目录只抄了 low/high/max 三个 —— 实测这条路由六个档位全部可用。minimal/low→effort 50，medium/high/xhigh→75，max→100。"
     },
     {
       "id": "deepseek-v4.1-flash-1017",
-      "reasoning": ["minimal", "low", "medium", "high", "xhigh", "max"]
+      "reasoning": [
+        "minimal",
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ]
     }
   ]
 }
