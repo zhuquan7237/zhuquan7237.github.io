@@ -1,9 +1,9 @@
 {
-  "version": "0.5.4",
-  "versionCode": 110,
+  "version": "0.5.8",
+  "versionCode": 114,
   "apkUrl": "https://m.zhuquan.xyz/mobile/dsh-mobile.apk",
-  "sha256": "a5031f15ac06f7b67b4569ce7bdedc252e767323f0a2f84cfa9a9ba5e1c6c106",
-  "size": 3858439,
-  "notes": "连接不上电脑时，点顶部的「未连接」即可重试或解除本机绑定重新配对；错误日志支持多选发送。适配桌面端 0.7.6 的手机连接与进度反馈。",
-  "publishedAt": "2026-10-22T01:22:48+08:00"
+  "sha256": "3e1f7e990f650f4acfe9880ff9b1ce9e29223c7c4eb3820dfc320d8c5e5022d6",
+  "size": 3858455,
+  "notes": "修复：电脑端生成的文件名带空格时，手机端预览/下载会失败（路径编码把空格误送成加号，一律 404）。",
+  "publishedAt": "2026-10-29T00:39:17+08:00"
 }

@@ -2439,6 +2439,12 @@ document.addEventListener('click', async (event) => {
             if (action === 'fsticket') {
                 // WebView 的子资源请求带不了 Authorization 头，给文件 URL 发一张短票据
                 // （首次响应再把它写成 cookie，vendor/three.min.js 这类相对请求也能带上）。
+                // 顺带清掉已过期的票据：票据只在被使用时校验过期，不清理就只增不减。
+                const now = Date.now();
+                for (const [key, record] of fileTickets) {
+                    if (record.expires <= now)
+                        fileTickets.delete(key);
+                }
                 const ticket = randomUUID().replace(/-/g, '');
                 fileTickets.set(ticket, { sessionId, expires: Date.now() + FILE_TICKET_MS });
                 sendJson(res, 200, {

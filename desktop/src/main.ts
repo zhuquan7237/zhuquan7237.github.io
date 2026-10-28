@@ -1474,15 +1474,31 @@ async function openMarket(): Promise<void> {
  * would: open 设置, then pick the section by its label. The main window already
  * holds the engine's auth cookie, and the section renders in the engine's own
  * design language (which is the whole point of moving it there).
+ *
+ * `sections` is a candidate list because section titles follow the engine UI
+ * language: the bundled plugins register both 「搜索引擎」 and "Search engines",
+ * and the engine's own sections are translated too. Trying every candidate
+ * keeps the deep links working in either locale.
  */
-async function openEngineSettings(section: string): Promise<{ ok: boolean; error?: string }> {
+async function openEngineSettings(sections: string | string[]): Promise<{ ok: boolean; error?: string }> {
   if (!mainWindow || mainWindow.isDestroyed()) return { ok: false, error: "主窗口不可用。" };
-  const label = JSON.stringify(String(section ?? "").trim());
+  const labels = (Array.isArray(sections) ? sections : [sections])
+    .map((section) => String(section ?? "").trim())
+    .filter(Boolean);
+  if (labels.length === 0) return { ok: false, error: "没有指定要打开的设置页。" };
+  const labelList = JSON.stringify(labels);
   const script = `(async () => {
     const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
     const find = (text) => [...document.querySelectorAll("*")]
       .filter((el) => el.children.length === 0 && (el.textContent || "").trim() === text)
       .pop();
+    const findAny = (names) => {
+      for (const text of names) {
+        const el = find(text);
+        if (el) return el;
+      }
+      return null;
+    };
     const fire = (el) => {
       const rect = el.getBoundingClientRect();
       const x = rect.x + rect.width / 2;
@@ -1491,15 +1507,15 @@ async function openEngineSettings(section: string): Promise<{ ok: boolean; error
         el.dispatchEvent(new MouseEvent(type, { bubbles: true, cancelable: true, view: window, clientX: x, clientY: y, button: 0 }));
       }
     };
-    let item = find(${label});
+    let item = findAny(${labelList});
     if (!item) {
-      const open = find("设置");
+      const open = findAny(["设置", "Settings"]);
       if (!open) return { ok: false, error: "找不到引擎界面里的设置入口：请先切回主界面再试。" };
       fire(open);
       await sleep(800);
-      item = find(${label});
+      item = findAny(${labelList});
     }
-    if (!item) return { ok: false, error: "引擎设置里没有「" + ${label} + "」这一项：插件可能没装上，重启一次引擎再试。" };
+    if (!item) return { ok: false, error: "引擎设置里没有「" + ${labelList}.join("/") + "」这一项：插件可能没装上，重启一次引擎再试。" };
     fire(item);
     return { ok: true };
   })()`;
@@ -1779,10 +1795,10 @@ if (linuxReady) {
         };
       });
       ipcMain.handle("mobile:open-search-settings", async () =>
-        await openEngineSettings("搜索引擎"),
+        await openEngineSettings(["搜索引擎", "Search engines"]),
       );
       ipcMain.handle("mobile:open-pairing-settings", async () =>
-        await openEngineSettings("手机配对"),
+        await openEngineSettings(["手机配对", "Phone pairing"]),
       );
       // 隔空传输（文件互传）：列表 / 选文件放入 / 删除 / 打开文件夹。
       // 所有操作都走桥接的回环路由，插件保持传输目录的唯一写入方。
@@ -1850,7 +1866,7 @@ if (linuxReady) {
             await shell.openPath(logsDir(userData()));
             return { ok: true };
           case "engine-settings":
-            return await openEngineSettings("通用设置");
+            return await openEngineSettings(["通用设置", "General"]);
           default:
             return { ok: false, error: `未知操作：${String(action)}` };
         }
