@@ -1,6 +1,6 @@
 {
  "version": 1,
- "generatedAt": "2026-10-27T22:40:57Z",
+ "generatedAt": "2026-10-29T22:40:44Z",
  "source": "gateway /v1/models probe (scripts/collect-gateway-capabilities.py)",
  "providers": {
   "agentrouter": {
@@ -35,7 +35,7 @@
   },
   "guga": {
    "ok": true,
-   "count": 57,
+   "count": 54,
    "error": ""
   },
   "hyb": {
@@ -45,7 +45,7 @@
   },
   "linuxyou": {
    "ok": true,
-   "count": 10,
+   "count": 11,
    "error": ""
   },
   "loveyou": {
@@ -55,7 +55,7 @@
   },
   "nexavlinks": {
    "ok": true,
-   "count": 17,
+   "count": 20,
    "error": ""
   },
   "relayfor": {
@@ -112,9 +112,6 @@
    "id": "netease-youdao/bce-reranker-base_v1"
   },
   {
-   "id": "beam"
-  },
-  {
    "id": "BAAI/bge-large-en-v1.5"
   },
   {
@@ -125,9 +122,6 @@
   },
   {
    "id": "BAAI/bge-reranker-v2-m3"
-  },
-  {
-   "id": "big-pickle"
   },
   {
    "id": "chatgpt-voice"
@@ -414,16 +408,6 @@
    "reasoning": 1
   },
   {
-   "id": "cn:glm-5.1",
-   "modalities": [
-    "text",
-    "image"
-   ],
-   "context": 200000,
-   "output": 48000,
-   "reasoning": 1
-  },
-  {
    "id": "cn:glm-5.2",
    "modalities": [
     "text",
@@ -451,16 +435,6 @@
    ],
    "context": 1000000,
    "output": 131072,
-   "reasoning": 1
-  },
-  {
-   "id": "cn:glm-5v-turbo",
-   "modalities": [
-    "text",
-    "image"
-   ],
-   "context": 200000,
-   "output": 64000,
    "reasoning": 1
   },
   {
@@ -495,6 +469,9 @@
   },
   {
    "id": "gpt-5.6-terra"
+  },
+  {
+   "id": "gpt-6-chat-thinking"
   },
   {
    "id": "gpt-6.1-sol"
@@ -661,6 +638,36 @@
    "reasoning": 1
   },
   {
+   "id": "cn:hy4-preview-exp1",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 960000,
+   "output": 64000,
+   "reasoning": 1
+  },
+  {
+   "id": "cn:hy4-preview-exp2",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 960000,
+   "output": 64000,
+   "reasoning": 1
+  },
+  {
+   "id": "cn:hy4-preview-exp3",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 960000,
+   "output": 64000,
+   "reasoning": 1
+  },
+  {
    "id": "cn:hy4-preview-x",
    "modalities": [
     "text",
@@ -749,9 +756,6 @@
    "id": "Kwai-Kolors/Kolors"
   },
   {
-   "id": "longcat-2.5-preview"
-  },
-  {
    "id": "mercury-3"
   },
   {
@@ -794,14 +798,7 @@
    "reasoning": 1
   },
   {
-   "id": "cn:minimax-m3",
-   "modalities": [
-    "text",
-    "image"
-   ],
-   "context": 512000,
-   "output": 64000,
-   "reasoning": 1
+   "id": "minimax-m3"
   },
   {
    "id": "cn:minimax-m3.1-flash",
