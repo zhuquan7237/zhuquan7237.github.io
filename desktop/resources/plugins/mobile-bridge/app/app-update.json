@@ -1,9 +1,9 @@
 {
-  "version": "0.5.8",
-  "versionCode": 114,
+  "version": "0.5.9",
+  "versionCode": 115,
   "apkUrl": "https://m.zhuquan.xyz/mobile/dsh-mobile.apk",
-  "sha256": "3e1f7e990f650f4acfe9880ff9b1ce9e29223c7c4eb3820dfc320d8c5e5022d6",
-  "size": 3858455,
-  "notes": "修复：电脑端生成的文件名带空格时，手机端预览/下载会失败（路径编码把空格误送成加号，一律 404）。",
-  "publishedAt": "2026-10-29T00:39:17+08:00"
+  "sha256": "044b2b946658c003770a54de28544d948b5641c8be392955f21923a957bf0895",
+  "size": 3709475,
+  "notes": "应用图标换成新的扁平头像（蓝发＋白色荷叶边，底色 #A9C7F2）：自适应图标按 72dp 可见区重新配比，圆形遮罩下不再切到发梢。",
+  "publishedAt": "2026-10-29T09:30:16+08:00"
 }
