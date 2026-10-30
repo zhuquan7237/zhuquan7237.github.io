@@ -1,6 +1,6 @@
 {
  "version": 1,
- "generatedAt": "2026-10-29T22:40:44Z",
+ "generatedAt": "2026-10-30T22:40:46Z",
  "source": "gateway /v1/models probe (scripts/collect-gateway-capabilities.py)",
  "providers": {
   "agentrouter": {
@@ -15,7 +15,7 @@
   },
   "api8888": {
    "ok": true,
-   "count": 9,
+   "count": 8,
    "error": ""
   },
   "codego": {
@@ -45,7 +45,7 @@
   },
   "linuxyou": {
    "ok": true,
-   "count": 11,
+   "count": 29,
    "error": ""
   },
   "loveyou": {
@@ -441,16 +441,34 @@
    "id": "THUDM/GLM-Z1-9B-0414"
   },
   {
+   "id": "gpt-4o-audio-preview"
+  },
+  {
    "id": "gpt-4o-mini"
   },
   {
+   "id": "gpt-4o-realtime-preview"
+  },
+  {
    "id": "gpt-5.2"
+  },
+  {
+   "id": "gpt-5.2-2025-12-11"
+  },
+  {
+   "id": "gpt-5.2-pro"
+  },
+  {
+   "id": "gpt-5.2-pro-2025-12-11"
   },
   {
    "id": "gpt-5.3-codex-spark"
   },
   {
    "id": "gpt-5.4"
+  },
+  {
+   "id": "gpt-5.4-2026-03-05"
   },
   {
    "id": "gpt-5.4-mini"
