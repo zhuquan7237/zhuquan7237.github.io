@@ -956,7 +956,16 @@ export function apply(ctx: Context, config: { publicUrl?: string } = {}): void {
 
   // ------------------------------------------------------------------- events
   const frames: EventFrame[] = []
-  const clients = new Map<WsConnection, { deviceId: string; since: number }>()
+  type ClientState = {
+    deviceId: string
+    since: number
+    pending: boolean
+    draining: boolean
+    delivered: boolean
+    timer?: ReturnType<typeof setTimeout>
+    deferredHello?: Record<string, unknown>
+  }
+  const clients = new Map<WsConnection, ClientState>()
   let seq = 0
   /**
    * Names this counter's lifetime. `seq` restarts with the process, so a phone
@@ -967,18 +976,94 @@ export function apply(ctx: Context, config: { publicUrl?: string } = {}): void {
   /** Highest event seq seen per session, from the live event stream. */
   const headSeqs = new Map<string, number>()
 
+  const forgetClient = (connection: WsConnection): void => {
+    const state = clients.get(connection)
+    if (state?.timer !== undefined) clearTimeout(state.timer)
+    clients.delete(connection)
+  }
+
+  const helloText = (replay: number, gap: boolean): string =>
+    JSON.stringify({ kind: 'hello', seq, time: Date.now(), data: { server: { bridge: 'dsh-mobile-bridge', version: 1, epoch }, replay, gap } })
+
+  /** Drain a bounded snapshot before newer live frames, even on reentrant writes. */
+  function drainClient(connection: WsConnection, state: ClientState, initial?: EventFrame[], ack?: { replay: number; gap: boolean }): void {
+    if (state.draining || !connection.open || clients.get(connection) !== state) return
+    state.draining = true
+    const send = (text: string): boolean => {
+      if (connection.send(text)) return true
+      forgetClient(connection)
+      connection.close(1011)
+      return false
+    }
+    try {
+      if (ack !== undefined && !send(helloText(ack.replay, ack.gap))) return
+      let batch = initial
+      while (connection.open && clients.get(connection) === state) {
+        if (batch === undefined) {
+          // The global ring also serves as the bounded pending-live queue. If it
+          // wrapped while we were writing, report the lost range before moving on.
+          const oldest = frames[0]?.seq
+          batch = oldest === undefined ? [] : frames.slice(Math.max(0, state.since - oldest + 1))
+          if (oldest !== undefined && state.since + 1 < oldest) {
+            state.since = oldest - 1
+            if (!send(helloText(batch.length, true))) return
+          }
+        }
+        if (batch.length === 0) break
+        for (const frame of batch) {
+          if (!connection.open || clients.get(connection) !== state) return
+          if (frame.seq <= state.since) continue
+          // Advance before writing: socket.write can synchronously reenter publish.
+          state.since = frame.seq
+          state.delivered = true
+          if (!send(JSON.stringify(frame))) return
+        }
+        batch = undefined
+      }
+    } finally {
+      state.draining = false
+      const deferred = state.deferredHello
+      state.deferredHello = undefined
+      if (deferred !== undefined && connection.open && clients.get(connection) === state) handleClientHello(connection, state, deferred)
+    }
+  }
+
+  function handleClientHello(connection: WsConnection, state: ClientState, parsed: Record<string, unknown>): void {
+    // A test socket (or another synchronous stream) can deliver hello while a
+    // write is in progress. Finish that batch before handling the new cursor.
+    if (state.draining) {
+      state.deferredHello = parsed
+      return
+    }
+    if (state.timer !== undefined) clearTimeout(state.timer)
+    state.timer = undefined
+    const oldest = frames[0]?.seq
+    // A numerically plausible watermark may still belong to an old process.
+    const wrongEpoch = typeof parsed.epoch === 'string' && parsed.epoch !== '' && parsed.epoch !== epoch
+    const info = normalizeSince(wrongEpoch ? 0 : Number(parsed.since ?? 0), seq, oldest)
+    // A zero cursor with a known epoch is not a brand-new anonymous client:
+    // if the ring starts later than 1, its missing events need reconciliation.
+    const zeroCursorGap = parsed.epoch === epoch && info.since === 0 && oldest !== undefined && oldest > 1
+    // Once fallback/live delivery started, replaying older frames would rewind
+    // the wire. Signal a gap instead and let a capable client refresh history.
+    const cannotRewind = state.delivered && info.since < state.since
+    state.since = state.delivered ? Math.max(state.since, info.since) : info.since
+    state.pending = false
+    const backlog = frames.filter((frame) => frame.seq > state.since)
+    drainClient(connection, state, backlog, { replay: backlog.length, gap: wrongEpoch || info.gap || zeroCursorGap || cannotRewind })
+  }
+
   const publish = (frame: Omit<EventFrame, 'seq' | 'time'>): void => {
     seq += 1
     const full: EventFrame = { seq, epoch, time: Date.now(), ...frame }
     frames.push(full)
     if (frames.length > EVENT_BUFFER) frames.splice(0, frames.length - EVENT_BUFFER)
-    const text = JSON.stringify(full)
     for (const [connection, state] of clients) {
       if (!connection.open) {
-        clients.delete(connection)
+        forgetClient(connection)
         continue
       }
-      if (full.seq > state.since) connection.send(text)
+      if (!state.pending) drainClient(connection, state)
     }
   }
 
@@ -996,6 +1081,7 @@ export function apply(ctx: Context, config: { publicUrl?: string } = {}): void {
         } catch {
           // 已经断了
         }
+        forgetClient(connection)
         closed += 1
       }
     }
@@ -1115,21 +1201,24 @@ export function apply(ctx: Context, config: { publicUrl?: string } = {}): void {
     log(`订阅会话事件失败：${error instanceof Error ? error.message : String(error)}`)
   }
 
-  // 进度脉冲（0.2.31，0.2.36 提速到 1s）：只转发「计数」不转发内容。手机端据此显示
-  // 「模型正在输出…」+「已用时 · 输出 N 字」——回答「它真在思考还是卡死了」。
-  // ⚠️ 内容逐字渲染已于 0.2.30 因闪烁整体下线，这里只累计字符数、按 ≥1s
-  // 节流发一帧计数（不含任何文本），把「还活着」的证明和「文字闪烁」彻底解耦。
-  const progressBySession = new Map<string, { turn: number; step: number; text: number; reason: number; lastEmit: number }>()
+  // 进度脉冲只携带计数和阶段，绝不恢复逐字内容流（手机逐字渲染曾造成闪烁）。
+  // start 在引擎调用 llm.stream 后、收到首个上游 chunk 之前发出，因此只能称为等待，
+  // 不能称模型已思考。真正的 chunk 到达、或内容种类切换时立即发帧，不被 1s 心跳压住。
+  type ProgressPhase = 'waiting' | 'responding' | 'reasoning' | 'output' | 'tool'
+  type ProgressEntry = { attemptId: string; turn: number; step: number; text: number; reason: number; phase: ProgressPhase; lastEmit: number }
+  const progressBySession = new Map<string, ProgressEntry>()
   const PROGRESS_MIN_GAP_MS = 1000
-  const emitProgress = (sessionId: string, entry: { turn: number; step: number; text: number; reason: number; lastEmit: number }, force = false): void => {
+  const emitProgress = (sessionId: string, entry: ProgressEntry, force = false): void => {
     const now = Date.now()
     if (!force && now - entry.lastEmit < PROGRESS_MIN_GAP_MS) return
     entry.lastEmit = now
     publish({
       kind: 'event',
       sessionId,
-      type: 'assistant/progress',
-      data: { turn: entry.turn, step: entry.step, textChars: entry.text, reasoningChars: entry.reason, at: now },
+      // Older phones regard any assistant/progress as proof of a response. A
+      // waiting attempt must therefore use a distinct, ignorable event type.
+      type: entry.phase === 'waiting' ? 'assistant/waiting' : 'assistant/progress',
+      data: { turn: entry.turn, step: entry.step, textChars: entry.text, reasoningChars: entry.reason, phase: entry.phase, at: now },
     })
   }
   try {
@@ -1142,11 +1231,12 @@ export function apply(ctx: Context, config: { publicUrl?: string } = {}): void {
       const attemptId = typeof frame.attemptId === 'string' ? frame.attemptId : ''
       if (attemptId === '') return
       const cut = attemptId.lastIndexOf(':')
-      const sessionId = cut > 0 ? attemptId.slice(0, cut) : ''
+      // 引擎提供 agent.session.id，attemptId 的字符串形状只是旧版兼容兜底。
+      const agent = isRecord(payload.agent) ? payload.agent : {}
+      const sessionId = sessionIdOf(agent.session) || (cut > 0 ? attemptId.slice(0, cut) : '')
       if (sessionId === '') return
       if (frame.type === 'start') {
-        // 新尝试开始：计数归零，给手机一个「这次尝试开始了」的信号
-        const entry = { turn: Number(frame.turn ?? 0), step: Number(frame.step ?? 0), text: 0, reason: 0, lastEmit: 0 }
+        const entry: ProgressEntry = { attemptId, turn: Number(frame.turn ?? 0), step: Number(frame.step ?? 0), text: 0, reason: 0, phase: 'waiting', lastEmit: 0 }
         progressBySession.set(sessionId, entry)
         if (progressBySession.size > 64) {
           const oldest = progressBySession.keys().next().value
@@ -1157,7 +1247,8 @@ export function apply(ctx: Context, config: { publicUrl?: string } = {}): void {
       }
       if (frame.type === 'end') {
         const entry = progressBySession.get(sessionId)
-        if (entry !== undefined) {
+        // 旧尝试的迟到帧不能清掉新尝试。
+        if (entry !== undefined && entry.attemptId === attemptId) {
           emitProgress(sessionId, entry, true)
           progressBySession.delete(sessionId)
         }
@@ -1165,16 +1256,34 @@ export function apply(ctx: Context, config: { publicUrl?: string } = {}): void {
       }
       if (frame.type !== 'chunk' || !isRecord(frame.chunk)) return
       const chunk = frame.chunk
-      const kind = chunk.type === 'text-delta' ? 'text' : chunk.type === 'reasoning-delta' ? 'reason' : ''
-      if (kind === '' || typeof chunk.text !== 'string' || chunk.text === '') return
+      // pi-ai also emits usage + error/aborted finish on network failures, even
+      // when no provider bytes arrived. Neither is proof of a model response.
+      if (chunk.type === 'usage') return
+      if (chunk.type === 'finish' && (!isRecord(chunk.reason) || chunk.reason.kind === 'error' || chunk.reason.kind === 'aborted')) return
       let entry = progressBySession.get(sessionId)
+      if (entry !== undefined && entry.attemptId !== attemptId) return
       if (entry === undefined) {
-        entry = { turn: 0, step: 0, text: 0, reason: 0, lastEmit: 0 }
+        entry = { attemptId, turn: 0, step: 0, text: 0, reason: 0, phase: 'waiting', lastEmit: 0 }
         progressBySession.set(sessionId, entry)
       }
-      if (kind === 'text') entry.text += chunk.text.length
-      else entry.reason += chunk.text.length
-      emitProgress(sessionId, entry)
+      const previous = entry.phase
+      // chunk 本身意味着上游有响应，但没有非空内容时不宣称已经输出或思考。
+      if (entry.phase === 'waiting') entry.phase = 'responding'
+      if (chunk.type === 'text-delta' && typeof chunk.text === 'string' && chunk.text !== '') {
+        entry.text += chunk.text.length
+        entry.phase = 'output'
+      } else if (chunk.type === 'reasoning-delta' && typeof chunk.text === 'string' && chunk.text !== '') {
+        entry.reason += chunk.text.length
+        entry.phase = 'reasoning'
+      } else if (chunk.type === 'tool-call-delta' && ((typeof chunk.name === 'string' && chunk.name !== '') || (typeof chunk.argumentsDelta === 'string' && chunk.argumentsDelta !== ''))) {
+        entry.phase = 'tool'
+      } else if (chunk.type === 'block-end' && isRecord(chunk.block)) {
+        const block = chunk.block
+        if (block.type === 'text' && typeof block.text === 'string' && block.text !== '') entry.phase = 'output'
+        else if (block.type === 'reasoning' && typeof block.text === 'string' && block.text !== '') entry.phase = 'reasoning'
+        else if (block.type === 'tool-call') entry.phase = 'tool'
+      }
+      emitProgress(sessionId, entry, entry.phase !== previous)
     }) as never, { global: true } as never)
     log('进度脉冲订阅已就绪：agent/assistant-stream（仅计数，不带内容）')
   } catch (error) {
@@ -2372,7 +2481,7 @@ document.addEventListener('click', async (event) => {
       }
       log(`新建会话：${sessionId}`)
       sendJson(res, 200, { ok: true, sessionId, ...(isRecord(created) ? created : {}) })
-    }),
+    }, true),
   })
 
   webServer.register({
@@ -3419,6 +3528,7 @@ document.addEventListener('click', async (event) => {
           ;(socket as unknown as { end: (body: string) => void }).end('HTTP/1.1 403 Forbidden\r\n\r\n')
           return
         }
+        const connectedAt = seq
         const connection = acceptUpgrade(
           req as never,
           socket as never,
@@ -3429,25 +3539,46 @@ document.addEventListener('click', async (event) => {
                 const parsed = JSON.parse(text) as Record<string, unknown>
                 if (parsed.type === 'hello') {
                   const state = clients.get(client)
-                  const oldest = frames.length > 0 ? (frames[0] as EventFrame).seq : undefined
-                  const info = normalizeSince(Number(parsed.since ?? 0), seq, oldest)
-                  if (state !== undefined) state.since = info.since
-                  const backlog = frames.filter((frame) => frame.seq > info.since)
-                  client.send(JSON.stringify({ kind: 'hello', seq, time: Date.now(), data: { server: { bridge: 'dsh-mobile-bridge', version: 1, epoch }, replay: backlog.length, gap: info.gap } }))
-                  for (const frame of backlog) client.send(JSON.stringify(frame))
+                  if (state !== undefined) handleClientHello(client, state, parsed)
                   return
                 }
-                if (parsed.type === 'ping') client.send(JSON.stringify({ kind: 'notify', seq, time: Date.now(), level: 'debug', title: 'pong' }))
+                if (parsed.type === 'ping') {
+                  const state = clients.get(client)
+                  // A pong is not a delivered event and must not move a phone's cursor.
+                  const deliveredSeq = state?.delivered ? state.since : 0
+                  client.send(JSON.stringify({ kind: 'notify', seq: deliveredSeq, time: Date.now(), level: 'debug', title: 'pong' }))
+                }
               } catch {
                 // ignore malformed client frames
               }
             },
-            onClose: (client) => clients.delete(client),
+            onClose: (client) => forgetClient(client),
           },
         )
         if (connection !== undefined) {
-          clients.set(connection, { deviceId: auth.device.id, since: 0 })
-          connection.send(JSON.stringify({ kind: 'hello', seq, time: Date.now(), data: { server: { bridge: 'dsh-mobile-bridge', version: 1, epoch }, replay: 0, gap: false } }))
+          const state: ClientState = { deviceId: auth.device.id, since: connectedAt, pending: true, draining: false, delivered: false }
+          clients.set(connection, state)
+          // ws.close() marks the connection closed before the transport emits
+          // close, so its onClose callback is skipped for a peer close frame.
+          ;(socket as { once: (event: string, listener: () => void) => unknown }).once('close', () => forgetClient(connection))
+          // Old clients may never send hello. Wait briefly, then deliver only
+          // frames produced since connection; the shared ring bounds memory.
+          state.timer = setTimeout(() => {
+            state.timer = undefined
+            if (!connection.open || clients.get(connection) !== state) {
+              forgetClient(connection)
+              return
+            }
+            if (!state.pending) return
+            state.pending = false
+            drainClient(connection, state)
+          }, 500)
+          state.timer.unref?.()
+          if (!connection.send(helloText(0, false))) {
+            forgetClient(connection)
+            connection.close(1011)
+            return
+          }
           log(`设备已连接事件流：${auth.device.name}（当前 ${clients.size} 条连接）`)
         }
       },

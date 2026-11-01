@@ -350,7 +350,9 @@ async function syncSkins(onLog: (line: string) => void = shellLog): Promise<Inst
   const pluginRows = renderPluginRows(settings);
   if (!settings.skinsEnabled) {
     const catalog = await loadCatalog(userData()).catch(() => []);
-    if (catalog.length) await applySkin(dshHomeDir(), catalog, OFFICIAL_SKIN_ID, pluginRows);
+    // Built-in engine plugins are independent of third-party skins. Even on a
+    // fresh install with an empty catalog, their patch rows must be written.
+    await applySkin(dshHomeDir(), catalog, OFFICIAL_SKIN_ID, pluginRows);
     return catalog;
   }
   try {
@@ -1489,12 +1491,27 @@ async function openEngineSettings(sections: string | string[]): Promise<{ ok: bo
   const labelList = JSON.stringify(labels);
   const script = `(async () => {
     const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-    const find = (text) => [...document.querySelectorAll("*")]
-      .filter((el) => el.children.length === 0 && (el.textContent || "").trim() === text)
-      .pop();
-    const findAny = (names) => {
-      for (const text of names) {
-        const el = find(text);
+    const outsideChat = (el) => !el.closest('[data-slot="main"], [data-slot="conversation.chat.node"]');
+    const findSettingsDialog = () => {
+      // Both old and current engines render the settings header slot inside
+      // the settings navigation rail. Other dialogs may contain the same text.
+      const dialogs = [...document.querySelectorAll('[role="dialog"]')].filter((dialog) => {
+        const header = dialog.querySelector('[data-slot="settings.header"]');
+        const inSidebar = dialog.closest('[data-slot="sidebar.settings"]');
+        const inPortal = dialog.parentElement === document.body || dialog.parentElement?.parentElement === document.body;
+        return outsideChat(dialog) && (inSidebar || inPortal) && header && header.closest("nav");
+      });
+      return dialogs.length === 1 ? dialogs[0] : null;
+    };
+    const findSection = (dialog) => {
+      const header = dialog.querySelector('[data-slot="settings.header"]');
+      const nav = header && header.closest("nav");
+      if (!nav) return null;
+      for (const text of ${labelList}) {
+        const el = [...nav.querySelectorAll("*")].find((candidate) => {
+          const control = candidate.closest('button, [role="tab"]');
+          return candidate.children.length === 0 && (candidate.textContent || "").trim() === text && control && nav.contains(control);
+        });
         if (el) return el;
       }
       return null;
@@ -1507,14 +1524,46 @@ async function openEngineSettings(sections: string | string[]): Promise<{ ok: bo
         el.dispatchEvent(new MouseEvent(type, { bubbles: true, cancelable: true, view: window, clientX: x, clientY: y, button: 0 }));
       }
     };
-    let item = findAny(${labelList});
-    if (!item) {
-      const open = findAny(["设置", "Settings"]);
-      if (!open) return { ok: false, error: "找不到引擎界面里的设置入口：请先切回主界面再试。" };
-      fire(open);
+    let dialog = findSettingsDialog();
+    if (!dialog) {
+      // Launchers are trusted only in the engine's sidebar settings slot.
+      // Matching text or even an aria-label in chat is never sufficient.
+      const sidebars = [...document.querySelectorAll('[data-slot="sidebar.settings"]')].filter((slot) =>
+        outsideChat(slot) && slot.closest('[data-slot="sidebar"]')
+      );
+      if (sidebars.length !== 1) return { ok: false, error: "找不到引擎界面里的设置入口：请先切回主界面再试。" };
+      const buttons = [...sidebars[0].querySelectorAll("button")];
+      const accounts = buttons.filter((button) => ["账号菜单", "Account menu"].includes(button.getAttribute("aria-label")) && button.getAttribute("aria-haspopup") === "menu");
+      const direct = buttons.filter((button) => ["设置", "Settings"].includes(button.getAttribute("aria-label")) && button.getAttribute("aria-haspopup") === "dialog");
+      if (accounts.length === 1) {
+        const account = accounts[0];
+        // Account menus are portalled to body. Reopen an already-open menu so
+        // that only the newly created menu can be associated with this click.
+        if (account.getAttribute("aria-expanded") === "true") {
+          account.click();
+          await sleep(150);
+          if (account.getAttribute("aria-expanded") !== "false") return { ok: false, error: "无法打开账号菜单中的设置。" };
+        }
+        const existingMenus = new Set(document.querySelectorAll('[role="menu"]'));
+        account.click();
+        await sleep(150);
+        const menus = [...document.querySelectorAll('[role="menu"]')].filter((menu) => menu.parentElement === document.body && !existingMenus.has(menu));
+        if (account.getAttribute("aria-expanded") !== "true" || menus.length !== 1) return { ok: false, error: "无法定位账号菜单中的设置。" };
+        const matches = [...menus[0].querySelectorAll('[role="menuitem"]')].filter((item) =>
+          [...item.querySelectorAll("*")].some((el) => el.children.length === 0 && ["设置", "Settings"].includes((el.textContent || "").trim()))
+        );
+        if (matches.length !== 1) return { ok: false, error: "账号菜单里没有唯一的设置入口。" };
+        matches[0].click();
+      } else if (accounts.length === 0 && direct.length === 1) {
+        // Older engine versions expose a labelled settings button directly.
+        direct[0].click();
+      } else {
+        return { ok: false, error: "找不到引擎界面里的设置入口：请先切回主界面再试。" };
+      }
       await sleep(800);
-      item = findAny(${labelList});
+      dialog = findSettingsDialog();
     }
+    const item = dialog && findSection(dialog);
     if (!item) return { ok: false, error: "引擎设置里没有「" + ${labelList}.join("/") + "」这一项：插件可能没装上，重启一次引擎再试。" };
     fire(item);
     return { ok: true };

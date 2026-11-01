@@ -47,6 +47,7 @@ describe("settings page keeps what the user already had", () => {
     // This window only links there.
     expect(html).toContain("window.desktop.mobileOpenPairingSettings()");
     expect(html).toContain("btnOpenPairing");
+    expect(html).toContain("左下角的「更多」→「设置」");
     for (const gone of ["btnRotate", "pairQrHolder", "devList", "loadPairing", "mobileUrl"]) {
       expect(html).not.toContain(gone);
     }

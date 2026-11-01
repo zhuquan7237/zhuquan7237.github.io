@@ -217,12 +217,38 @@ export function startRelayLink({ candidates, deviceKey, secret, localPort, log =
                 socket.send(JSON.stringify({ t: 'up', id: frame.id, ok: false }));
             return;
         }
+        // The public relay upgrades the phone before our loopback WS is ready.
+        // Android sends hello from onOpen, so dropping data in CONNECTING loses
+        // the resume watermark. Bound the queue to avoid unbounded memory use.
+        const pending = [];
+        let pendingBytes = 0;
+        const MAX_PENDING_BYTES = 1024 * 1024;
+        const MAX_PENDING_FRAMES = 256;
+        const deliver = (data) => {
+            const bytes = Buffer.from(data.b64 ?? '', 'base64');
+            // A Buffer would turn an ordinary text hello into a binary WS frame;
+            // the bridge's protocol deliberately accepts JSON text only.
+            ws.send(data.bin === true ? bytes : bytes.toString('utf8'));
+        };
+        ws.binaryType = 'arraybuffer';
         channels.set(frame.id, {
             send: (data) => {
-                if (ws.readyState === 1)
-                    ws.send(Buffer.from(data.b64 ?? '', 'base64'));
+                if (ws.readyState === 1) {
+                    deliver(data);
+                }
+                else if (ws.readyState === 0) {
+                    const size = typeof data.b64 === 'string' ? data.b64.length : 0;
+                    if (pending.length >= MAX_PENDING_FRAMES || pendingBytes + size > MAX_PENDING_BYTES) {
+                        try { ws.close(); } catch { /* already closed */ }
+                        return;
+                    }
+                    pending.push(data);
+                    pendingBytes += size;
+                }
             },
             close: () => {
+                pending.length = 0;
+                pendingBytes = 0;
                 try {
                     ws.close();
                 }
@@ -232,11 +258,15 @@ export function startRelayLink({ candidates, deviceKey, secret, localPort, log =
         ws.addEventListener('open', () => {
             if (socket?.readyState === 1)
                 socket.send(JSON.stringify({ t: 'up', id: frame.id, ok: true }));
+            for (const data of pending) deliver(data);
+            pending.length = 0;
+            pendingBytes = 0;
         });
         ws.addEventListener('message', (event) => {
+            const binary = typeof event.data !== 'string';
             const raw = Buffer.from(event.data);
             if (socket?.readyState === 1)
-                socket.send(JSON.stringify({ t: 'data', id: frame.id, b64: raw.toString('base64') }));
+                socket.send(JSON.stringify({ t: 'data', id: frame.id, bin: binary, b64: raw.toString('base64') }));
         });
         ws.addEventListener('close', () => {
             channels.delete(frame.id);

@@ -1,9 +1,9 @@
 {
-  "version": "0.5.9",
-  "versionCode": 115,
+  "version": "0.6.0",
+  "versionCode": 116,
   "apkUrl": "https://m.zhuquan.xyz/mobile/dsh-mobile.apk",
-  "sha256": "044b2b946658c003770a54de28544d948b5641c8be392955f21923a957bf0895",
-  "size": 3709475,
-  "notes": "应用图标换成新的扁平头像（蓝发＋白色荷叶边，底色 #A9C7F2）：自适应图标按 72dp 可见区重新配比，圆形遮罩下不再切到发梢。",
-  "publishedAt": "2026-10-29T09:30:16+08:00"
+  "sha256": "3f40758581d0b6ff2ab3d5ace181d176208a735480d4e4fdfc5b375e052d061b",
+  "size": 3725855,
+  "notes": "修复跨端历史、发送回执与停止竞态；按电脑连接隔离未确认提交；等待/思考状态不冒充响应，完整回答完成后显示；改进中文 Markdown 编号、表格与深浅主题可读性。",
+  "publishedAt": "2026-11-01T14:05:00+00:00"
 }
