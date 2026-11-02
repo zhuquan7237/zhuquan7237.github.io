@@ -2361,6 +2361,10 @@ document.addEventListener('click', async (event) => {
   //  2) 2s TTL 内存缓存 + 关键事件（turn 起止、新建、改名）失效 ——
   //     手机反复刷新列表时不再每次打到引擎。
   let sessionsListCache: { at: number; full: Record<string, unknown>; lite: Record<string, unknown> } | null = null
+  /** 正在取的那一份（并发调用共享同一个 Promise，别各打一次引擎）。 */
+  let sessionsListInFlight: Promise<{ full: Record<string, unknown>; lite: Record<string, unknown> }> | null = null
+  /** 缓存代数：drop 时 +1，用来丢掉「出发比变更更早」的过期结果。 */
+  let sessionsCacheGen = 0
   const SESSIONS_CACHE_MS = 2000
   const slimSession = (item: unknown): unknown => {
     if (!isRecord(item)) return item
@@ -2395,6 +2399,8 @@ document.addEventListener('click', async (event) => {
   }
   const dropSessionsCache = (): void => {
     sessionsListCache = null
+    // 有请求正在路上时也记一笔：它回来时列表已经变了，不能把旧结果当新缓存存下去。
+    sessionsCacheGen += 1
   }
 
   /** 列表全量载荷（含 projections，2s 缓存）——列表接口与搜索补全共用。 */
@@ -2403,13 +2409,29 @@ document.addEventListener('click', async (event) => {
     if (sessionsListCache !== null && now - sessionsListCache.at < SESSIONS_CACHE_MS) {
       return sessionsListCache
     }
-    const listed = (await callEngine(ctx, 'session.list', {})) as unknown
-    const full = { ok: true, ...withFileCounts(listed) } as Record<string, unknown>
-    const rawItems = Array.isArray(full.items) ? (full.items as unknown[]) : []
-    const lite: Record<string, unknown> = { ok: true, items: rawItems.map(slimSession) }
-    const entry = { at: now, full, lite }
-    sessionsListCache = entry
-    return entry
+    // 缓存没命中、又正好有一份正在取：跟着它走，别再打一次引擎。
+    // 手机一次刷新会并发发好几个列表请求（实测 1.09 秒 6 个），全都落在
+    // 「缓存还没填上」那一小段窗口里，以前是各自 `session.list` 一次 ——
+    // 引擎本来就忙，这一下就是六次排队。
+    if (sessionsListInFlight !== null) {
+      return sessionsListInFlight
+    }
+    const generationAtStart = sessionsCacheGen
+    sessionsListInFlight = (async () => {
+      try {
+        const listed = (await callEngine(ctx, 'session.list', {})) as unknown
+        const full = { ok: true, ...withFileCounts(listed) } as Record<string, unknown>
+        const rawItems = Array.isArray(full.items) ? (full.items as unknown[]) : []
+        const lite: Record<string, unknown> = { ok: true, items: rawItems.map(slimSession) }
+        const entry = { at: Date.now(), full, lite }
+        if (generationAtStart === sessionsCacheGen) sessionsListCache = entry
+        return entry
+      }
+      finally {
+        sessionsListInFlight = null
+      }
+    })()
+    return sessionsListInFlight
   }
 
   /** session.search 的命中只带 sessionId/snippet：用列表行补全标题/时间/模型，保持相关性顺序。 */
