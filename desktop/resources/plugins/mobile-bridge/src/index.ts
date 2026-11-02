@@ -1653,11 +1653,11 @@ export function apply(ctx: Context, config: { publicUrl?: string } = {}): void {
   const relayBase = (): string => {
     if (relayLink === null || relayKey === '') return ''
     if (relayLink.status() === 'offline') return ''
-    const line = String(relayLink.current()?.url ?? '')
-    // 自己正走国内直连才给直连入口；走 Cloudflare 就统一给隧道入口（哪都通）
-    return line.includes('cn.')
-      ? `https://cn.zhuquan.xyz:8443/m/${relayKey}`
-      : `https://relay.zhuquan.xyz/m/${relayKey}`
+    // 手机入口固定给国内直连，不再跟着「电脑端当前走哪条线」变。
+    // 手机和电脑在不同网络里，各自到阿里云的可达性互不代表：电脑端偶发回退到
+    // Cloudflare，不该把手机也拖去绕 200ms 的 CF。手机连不上直连时由 App 侧
+    // Wire.alternateRelayBase 自动退 Cloudflare，不需要桌面端替它预判。
+    return `https://cn.zhuquan.xyz:8443/m/${relayKey}`
   }
 
   const lanBase = (): string => (lanAddress === '' ? '' : `http://${lanAddress}:${LAN_PORT}`)
@@ -1685,7 +1685,7 @@ export function apply(ctx: Context, config: { publicUrl?: string } = {}): void {
       relay: {
         enabled: relayLink !== null,
         status: relayLink?.status() ?? 'off',
-        path: relayBase() === '' ? '' : (String(relayLink?.current()?.url ?? '').includes('cn.') ? 'direct' : 'cloudflare'),
+        path: relayBase() === '' ? '' : 'direct',
       },
       publicUrlSource: publicUrlSource(),
       publicUrlConfigured: configuredPublicUrl(),
