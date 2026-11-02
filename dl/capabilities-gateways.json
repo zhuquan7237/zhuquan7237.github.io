@@ -1,6 +1,6 @@
 {
  "version": 1,
- "generatedAt": "2026-10-30T22:40:46Z",
+ "generatedAt": "2026-11-02T06:40:56Z",
  "source": "gateway /v1/models probe (scripts/collect-gateway-capabilities.py)",
  "providers": {
   "agentrouter": {
@@ -15,17 +15,12 @@
   },
   "api8888": {
    "ok": true,
-   "count": 8,
+   "count": 7,
    "error": ""
   },
   "codego": {
    "ok": true,
    "count": 6,
-   "error": ""
-  },
-  "codegoclaude": {
-   "ok": true,
-   "count": 13,
    "error": ""
   },
   "cpa-computer": {
@@ -39,33 +34,18 @@
    "error": ""
   },
   "hyb": {
-   "ok": true,
-   "count": 43,
-   "error": ""
+   "ok": false,
+   "count": 0,
+   "error": "HTTP 401"
   },
   "linuxyou": {
-   "ok": true,
-   "count": 29,
-   "error": ""
-  },
-  "loveyou": {
-   "ok": true,
-   "count": 13,
-   "error": ""
-  },
-  "nexavlinks": {
-   "ok": true,
-   "count": 20,
-   "error": ""
-  },
-  "relayfor": {
    "ok": true,
    "count": 11,
    "error": ""
   },
-  "rsiai": {
+  "relayfor": {
    "ok": true,
-   "count": 4,
+   "count": 13,
    "error": ""
   },
   "syhub": {
@@ -75,12 +55,12 @@
   },
   "wb2api": {
    "ok": true,
-   "count": 51,
+   "count": 50,
    "error": ""
   },
   "xjm": {
    "ok": true,
-   "count": 13,
+   "count": 8,
    "error": ""
   }
  },
@@ -106,24 +86,6 @@
    "reasoning": 1
   },
   {
-   "id": "netease-youdao/bce-embedding-base_v1"
-  },
-  {
-   "id": "netease-youdao/bce-reranker-base_v1"
-  },
-  {
-   "id": "BAAI/bge-large-en-v1.5"
-  },
-  {
-   "id": "BAAI/bge-large-zh-v1.5"
-  },
-  {
-   "id": "BAAI/bge-m3"
-  },
-  {
-   "id": "BAAI/bge-reranker-v2-m3"
-  },
-  {
    "id": "chatgpt-voice"
   },
   {
@@ -133,28 +95,10 @@
    "id": "claude-fable-5-1"
   },
   {
-   "id": "claude-haiku-4-5-20251001"
-  },
-  {
-   "id": "claude-opus-4-5"
-  },
-  {
-   "id": "claude-opus-4-6"
-  },
-  {
-   "id": "claude-opus-4-7"
-  },
-  {
-   "id": "claude-opus-4-8"
-  },
-  {
-   "id": "claude-opus-5"
+   "id": "claude-opus-4-6-thinking"
   },
   {
    "id": "claude-opus-5-5"
-  },
-  {
-   "id": "claude-sonnet-4-5"
   },
   {
    "id": "claude-sonnet-4-6"
@@ -163,7 +107,7 @@
    "id": "claude-sonnet-5"
   },
   {
-   "id": "claude-sonnet-5-5"
+   "id": "claude-sonnet-5-5-high"
   },
   {
    "id": "codex-auto-review"
@@ -179,12 +123,6 @@
    "reasoning": 1
   },
   {
-   "id": "deepseek-ai/DeepSeek-OCR"
-  },
-  {
-   "id": "deepseek-ai/DeepSeek-R1"
-  },
-  {
    "id": "cn:deepseek-r1-0528",
    "context": 96000,
    "output": 8192
@@ -197,15 +135,6 @@
    ],
    "context": 96000,
    "output": 16000
-  },
-  {
-   "id": "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B"
-  },
-  {
-   "id": "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B"
-  },
-  {
-   "id": "deepseek-ai/DeepSeek-V3"
   },
   {
    "id": "cn:deepseek-v3-0324",
@@ -240,9 +169,6 @@
    "output": 32000
   },
   {
-   "id": "deepseek-ai/DeepSeek-V3.1-Terminus"
-  },
-  {
    "id": "cn:deepseek-v3-1-volc",
    "modalities": [
     "text",
@@ -250,9 +176,6 @@
    ],
    "context": 96000,
    "output": 32000
-  },
-  {
-   "id": "deepseek-ai/DeepSeek-V3.2"
   },
   {
    "id": "cn:deepseek-v3-2-volc",
@@ -337,9 +260,6 @@
    "reasoning": 1
   },
   {
-   "id": "openrouter/free"
-  },
-  {
    "id": "gemini-3.1-flash-image"
   },
   {
@@ -361,16 +281,7 @@
    "id": "gemini-4-argon-high"
   },
   {
-   "id": "google/gemma-3-12b-it"
-  },
-  {
-   "id": "google/gemma-3-4b-it"
-  },
-  {
    "id": "gemma-4-31b"
-  },
-  {
-   "id": "THUDM/GLM-4.1V-9B-Thinking"
   },
   {
    "id": "cn:glm-4.6",
@@ -390,12 +301,6 @@
    "context": 128000,
    "output": 32000,
    "reasoning": 1
-  },
-  {
-   "id": "THUDM/glm-4-9b-chat"
-  },
-  {
-   "id": "THUDM/GLM-4-9B-0414"
   },
   {
    "id": "cn:glm-5.0-turbo",
@@ -438,46 +343,7 @@
    "reasoning": 1
   },
   {
-   "id": "THUDM/GLM-Z1-9B-0414"
-  },
-  {
-   "id": "gpt-4o-audio-preview"
-  },
-  {
-   "id": "gpt-4o-mini"
-  },
-  {
-   "id": "gpt-4o-realtime-preview"
-  },
-  {
-   "id": "gpt-5.2"
-  },
-  {
-   "id": "gpt-5.2-2025-12-11"
-  },
-  {
-   "id": "gpt-5.2-pro"
-  },
-  {
-   "id": "gpt-5.2-pro-2025-12-11"
-  },
-  {
-   "id": "gpt-5.3-codex-spark"
-  },
-  {
-   "id": "gpt-5.4"
-  },
-  {
-   "id": "gpt-5.4-2026-03-05"
-  },
-  {
-   "id": "gpt-5.4-mini"
-  },
-  {
    "id": "gpt-5.5"
-  },
-  {
-   "id": "gpt-5.6"
   },
   {
    "id": "gpt-5.6-luna"
@@ -507,12 +373,6 @@
    "id": "gpt-6-sol"
   },
   {
-   "id": "gpt-image-1"
-  },
-  {
-   "id": "gpt-image-1.5"
-  },
-  {
    "id": "gpt-image-2"
   },
   {
@@ -528,13 +388,7 @@
    "id": "gpt-image-2.5-sunburst"
   },
   {
-   "id": "gpt-image-2.5-sunburst-4K"
-  },
-  {
    "id": "gpt-oss-120b-medium"
-  },
-  {
-   "id": "openai/gpt-oss-20b"
   },
   {
    "id": "gpt-reserve"
@@ -550,9 +404,6 @@
   },
   {
    "id": "grok-4.7"
-  },
-  {
-   "id": "grok-4.7-build-fast"
   },
   {
    "id": "grok-imagine-image"
@@ -591,9 +442,6 @@
   {
    "id": "cn:hunyuan-image-alpha-edit",
    "context": 1000000
-  },
-  {
-   "id": "tencent/Hunyuan-MT-7B"
   },
   {
    "id": "cn:hy3",
@@ -656,37 +504,27 @@
    "reasoning": 1
   },
   {
-   "id": "cn:hy4-preview-exp1",
-   "modalities": [
-    "text",
-    "image"
-   ],
-   "context": 960000,
-   "output": 64000,
-   "reasoning": 1
-  },
-  {
-   "id": "cn:hy4-preview-exp2",
-   "modalities": [
-    "text",
-    "image"
-   ],
-   "context": 960000,
-   "output": 64000,
-   "reasoning": 1
-  },
-  {
-   "id": "cn:hy4-preview-exp3",
-   "modalities": [
-    "text",
-    "image"
-   ],
-   "context": 960000,
-   "output": 64000,
-   "reasoning": 1
-  },
-  {
    "id": "cn:hy4-preview-x",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 960000,
+   "output": 64000,
+   "reasoning": 1
+  },
+  {
+   "id": "cn:hy4preview-exp1",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 960000,
+   "output": 64000,
+   "reasoning": 1
+  },
+  {
+   "id": "cn:hy4preview-exp2",
    "modalities": [
     "text",
     "image"
@@ -744,9 +582,6 @@
    "output": 8192
   },
   {
-   "id": "kimi-k3"
-  },
-  {
    "id": "cn:kimi-k3-1",
    "modalities": [
     "text",
@@ -769,9 +604,6 @@
   {
    "id": "cn:kling-video-v3",
    "context": 1000000
-  },
-  {
-   "id": "Kwai-Kolors/Kolors"
   },
   {
    "id": "mercury-3"
@@ -833,7 +665,10 @@
    "context": 1000000
   },
   {
-   "id": "muse-spark-1.3"
+   "id": "muse-image"
+  },
+  {
+   "id": "muse-video"
   },
   {
    "id": "Nano Banana 2.1"
@@ -857,12 +692,6 @@
    "id": "omni1.1-flash"
   },
   {
-   "id": "Qwen/Qwen2.5-7B-Instruct"
-  },
-  {
-   "id": "Qwen/Qwen3-235B-A22B"
-  },
-  {
    "id": "qwen3.8-27b"
   },
   {
@@ -870,33 +699,6 @@
   },
   {
    "id": "qwen3.8-flash-next"
-  },
-  {
-   "id": "Qwen/Qwen3-8B"
-  },
-  {
-   "id": "Qwen/Qwen3-Embedding-0.6B"
-  },
-  {
-   "id": "Qwen/Qwen3-Embedding-4B"
-  },
-  {
-   "id": "Qwen/Qwen3-Embedding-8B"
-  },
-  {
-   "id": "Qwen/Qwen3-Next-80B-A3B-Thinking"
-  },
-  {
-   "id": "Qwen/Qwen3-Reranker-0.6B"
-  },
-  {
-   "id": "Qwen/Qwen3-Reranker-4B"
-  },
-  {
-   "id": "Qwen/Qwen3-Reranker-8B"
-  },
-  {
-   "id": "FunAudioLLM/SenseVoiceSmall"
   },
   {
    "id": "cn:space-bunny",
@@ -917,9 +719,6 @@
    "context": 1000000,
    "output": 64000,
    "reasoning": 1
-  },
-  {
-   "id": "TeleAI/TeleSpeechASR"
   },
   {
    "id": "veo-3.1-fast"
