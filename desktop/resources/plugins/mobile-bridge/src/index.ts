@@ -2401,6 +2401,9 @@ document.addEventListener('click', async (event) => {
     sessionsListCache = null
     // 有请求正在路上时也记一笔：它回来时列表已经变了，不能把旧结果当新缓存存下去。
     sessionsCacheGen += 1
+    // Requests arriving after a mutation must start in the new generation.
+    // Existing callers may finish their old request, but cannot own this slot.
+    sessionsListInFlight = null
   }
 
   /** 列表全量载荷（含 projections，2s 缓存）——列表接口与搜索补全共用。 */
@@ -2428,7 +2431,7 @@ document.addEventListener('click', async (event) => {
         return entry
       }
       finally {
-        sessionsListInFlight = null
+        if (generationAtStart === sessionsCacheGen) sessionsListInFlight = null
       }
     })()
     return sessionsListInFlight

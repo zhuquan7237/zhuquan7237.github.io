@@ -421,6 +421,9 @@ describe('mobile bridge sessions over real HTTP', () => {
   let failSelection: boolean;
   /** 让 session/list 慢一点，才能造出「缓存还没填上」的并发窗口。 */
   let listDelay: number;
+  let releaseFirstList: (() => void) | undefined;
+  let holdFirstList: boolean;
+  let created: boolean;
 
   beforeEach(async () => {
     home = mkdtempSync(join(process.env.TMPDIR || tmpdir(), 'dsh-bridge-http-'));
@@ -432,7 +435,7 @@ describe('mobile bridge sessions over real HTTP', () => {
     store.devices.push({ id: 'http-device', name: 'http', platform: 'test', tokenHash: auth.tokenHash, scopes: ['read', 'prompt'], createdAt: 1, lastSeenAt: 1 });
     writeStore(store);
 
-    calls = []; failSelection = false; listDelay = 0;
+    calls = []; failSelection = false; listDelay = 0; holdFirstList = false; created = false; releaseFirstList = undefined;
     const gateway = {
       async dispatchRpc(endpoint: string, payload: { args: any }) {
         // Mirror the actual 0.2.x descriptors: list names its argument
@@ -442,10 +445,14 @@ describe('mobile bridge sessions over real HTTP', () => {
         const args = payload.args[field];
         calls.push({ endpoint, args });
         if (endpoint === 'session/list') {
+          const items = [{ sessionId: created ? 'created-session' : 'existing', cwd: 'C:/old' }];
+          if (holdFirstList && calls.filter((call) => call.endpoint === 'session/list').length === 1) {
+            await new Promise<void>((resolve) => { releaseFirstList = resolve; });
+          }
           if (listDelay > 0) await new Promise((resolve) => setTimeout(resolve, listDelay));
-          return { ok: true, value: { items: [{ sessionId: 'existing', cwd: 'C:/old' }] } };
+          return { ok: true, value: { items } };
         }
-        if (endpoint === 'session/create') return { ok: true, value: { sessionId: 'created-session' } };
+        if (endpoint === 'session/create') { created = true; return { ok: true, value: { sessionId: 'created-session' } }; }
         if (endpoint === 'session/selectModel') return failSelection
           ? { ok: false, error: { code: 'session/model-unavailable', message: 'model selection rejected' } }
           : { ok: true, value: { selected: { provider: args.provider, model: args.model } } };
@@ -468,6 +475,7 @@ describe('mobile bridge sessions over real HTTP', () => {
   });
 
   afterEach(async () => {
+    releaseFirstList?.();
     if (server) await new Promise<void>((resolve) => server.close(() => resolve()));
     vi.unstubAllEnvs();
     if (home) rmSync(home, { recursive: true, force: true });
@@ -506,6 +514,23 @@ describe('mobile bridge sessions over real HTTP', () => {
     await (await fetch(base, { method: 'POST', headers })).json();
     await (await fetch(base, { headers })).json();
     expect(calls.filter((call) => call.endpoint === 'session/list')).toHaveLength(2);
+  });
+
+  it('a list requested after create must not reuse a pre-create flight or lose its cache when that older flight completes', async () => {
+    holdFirstList = true;
+    const headers = { authorization: 'Bearer ' + token };
+    const old = fetch(base, { headers }).then((response) => response.json());
+    await vi.waitFor(() => expect(releaseFirstList).toBeTypeOf('function'));
+    try {
+      await (await fetch(base, { method: 'POST', headers })).json();
+      const next = fetch(base, { headers }).then((response) => response.json());
+      await vi.waitFor(() => expect(calls.filter((call) => call.endpoint === 'session/list')).toHaveLength(2));
+      expect(await next).toMatchObject({ items: [{ sessionId: 'created-session' }] });
+      releaseFirstList!();
+      expect(await old).toMatchObject({ items: [{ sessionId: 'existing' }] });
+      expect(await (await fetch(base, { headers })).json()).toMatchObject({ items: [{ sessionId: 'created-session' }] });
+      expect(calls.filter((call) => call.endpoint === 'session/list')).toHaveLength(2);
+    } finally { releaseFirstList?.(); await old; }
   });
 
   it('creates a default session for a truly empty POST body', async () => {

@@ -9,7 +9,7 @@
 Search: DeepSeek Harness Desktop, dsh desktop, DeepSeek Harness 桌面版, DeepSeek Harness 桌面端, DeepSeek Harness 下载.
 
 <p align="center">
-  <img src="../assets/desktop-preview.png" alt="DeepSeek Harness 桌面版 0.2.6：默认皮肤「深海女仆工坊」" width="920" />
+  <img src="../assets/desktop-preview.png" alt="DeepSeek Harness 桌面版 0.7.9：默认皮肤「深海女仆工坊」" width="920" />
 </p>
 
 This package does **not** vendor the official monorepo. Other community desktops copy the whole harness into their GitHub repo (that ranks well in search). This shell installs `@deepseek-ai/dsh` from npm instead. See [compare.html](https://dsh.zhuquan.xyz/compare.html). On launch it:
@@ -19,6 +19,10 @@ This package does **not** vendor the official monorepo. Other community desktops
 3. Starts `dsh web` and shows the official Web UI in a native window
 
 Harness releases therefore land without rebuilding this desktop app. The shell only needs a new version if windowing, installers, or the updater itself change.
+
+## 当前版本：0.7.9
+
+手机端统一冷灰与蓝色主题，重排首页信息层级；桌面配对页重新设计，支持设备搜索与清晰的扫码步骤；加固中继 HTTP/2 请求处理，并合并两端重叠的会话列表请求。
 
 ## 0.5.0 新增：桌面端面板（第一个第一方 DSH 插件）
 
@@ -87,14 +91,14 @@ DeepSeek Harness 的生态已经有一万多个插件，0.4.0 把「发现 → �
 
 ```sh
 # Linux 推荐 tar.gz（不需要 FUSE）。AppImage 在 Ubuntu 24.04 上常因缺少 libfuse2 无法打开。
-tar -xzf DeepSeek-0.2.6-linux-x64.tar.gz
-./DeepSeek-0.2.6-linux-x64/DeepSeek
+tar -xzf DeepSeek-0.7.9-linux-x64.tar.gz
+./DeepSeek-0.7.9-linux-x64/DeepSeek
 
 # Debian/Ubuntu
-sudo apt install ./DeepSeek-0.2.6-linux-amd64.deb
+sudo apt install ./DeepSeek-0.7.9-linux-amd64.deb
 ```
 
-Windows：下载 `DeepSeek-0.2.6-win.exe`。若 SmartScreen 提示未签名，选「更多信息 → 仍要运行」。
+Windows：下载 `DeepSeek-0.7.9-win.exe`。若 SmartScreen 提示未签名，选「更多信息 → 仍要运行」。
 
 macOS：打开 dmg，把 App 拖进「应用程序」。若提示「文件已损坏」，终端运行 `xattr -cr /Applications/DeepSeek.app`，或双击盘里的 `Open-DeepSeek.command` / 打开 `Read-Me-First.txt`。
 
@@ -118,10 +122,10 @@ GitHub Actions builds:
 Download installers from [dsh.zhuquan.xyz/dl/](https://dsh.zhuquan.xyz/dl/). GitHub Release is the fallback. GitHub Actions artifacts are not a public store.
 
 - Linux：
-  - `https://dsh.zhuquan.xyz/dl/DeepSeek-0.2.6-linux-x64.tar.gz`
-  - `https://dsh.zhuquan.xyz/dl/DeepSeek-0.2.6-linux-amd64.deb`
-  - `https://dsh.zhuquan.xyz/dl/DeepSeek-0.2.6-linux-arm64.tar.gz`
-  - `https://dsh.zhuquan.xyz/dl/DeepSeek-0.2.6-linux-arm64.deb`
+  - `https://dsh.zhuquan.xyz/dl/DeepSeek-0.7.9-linux-x64.tar.gz`
+  - `https://dsh.zhuquan.xyz/dl/DeepSeek-0.7.9-linux-amd64.deb`
+  - `https://dsh.zhuquan.xyz/dl/DeepSeek-0.7.9-linux-arm64.tar.gz`
+  - `https://dsh.zhuquan.xyz/dl/DeepSeek-0.7.9-linux-arm64.deb`
 
 请用 **0.2.6**。不要用 0.1.0–0.1.19。安装包优先从 https://dsh.zhuquan.xyz/dl/ 下载。
 

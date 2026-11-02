@@ -1,0 +1,31 @@
+{
+  "name": "DeepSeek Harness",
+  "identifier": "xyz.zhuquan.dsh.source",
+  "subtitle": "电脑端 Harness 的随身控制器（自签版）",
+  "description": "扫码配对后看会话、发提示词、切模型。用免费 Apple ID 自签安装：证书 7 天过期，靠 SideStore 自动刷新或 AltStore 手动刷新续期。",
+  "iconURL": "https://m.zhuquan.xyz/mobile/icon-512.png",
+  "apps": [
+    {
+      "name": "DSH Mobile",
+      "bundleIdentifier": "com.dsh.mobile.ios",
+      "developerName": "zhuquan7237",
+      "subtitle": "DeepSeek Harness 手机端",
+      "localizedDescription": "电脑端 Harness 的随身控制器：扫码配对、看会话、发提示词、切模型。",
+      "iconURL": "https://m.zhuquan.xyz/mobile/icon-512.png",
+      "tintColor": "D9B879",
+      "category": "utilities",
+      "version": "0.6.1",
+      "versionDate": "2026-11-02",
+      "downloadURL": "https://github.com/zhuquan7237/deepseek-harness-mobile/releases/download/v0.6.1/dsh-mobile-ios-unsigned-0.6.1.ipa",
+      "size": 609208,
+      "versions": [
+        {
+          "version": "0.6.1",
+          "date": "2026-11-02T04:07:35Z",
+          "downloadURL": "https://github.com/zhuquan7237/deepseek-harness-mobile/releases/download/v0.6.1/dsh-mobile-ios-unsigned-0.6.1.ipa",
+          "size": 609208
+        }
+      ]
+    }
+  ]
+}

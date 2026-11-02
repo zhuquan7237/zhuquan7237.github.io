@@ -1,9 +1,9 @@
 {
-  "version": "0.6.0",
-  "versionCode": 116,
+  "version": "0.6.1",
+  "versionCode": 117,
   "apkUrl": "https://m.zhuquan.xyz/mobile/dsh-mobile.apk",
-  "sha256": "3f40758581d0b6ff2ab3d5ace181d176208a735480d4e4fdfc5b375e052d061b",
-  "size": 3725855,
-  "notes": "修复跨端历史、发送回执与停止竞态；按电脑连接隔离未确认提交；等待/思考状态不冒充响应，完整回答完成后显示；改进中文 Markdown 编号、表格与深浅主题可读性。",
-  "publishedAt": "2026-11-01T14:05:00+00:00"
+  "sha256": "a972864270216abd03c607915a8a8913483136a3166abb76fc03b3a1b796ce8c",
+  "size": 3725871,
+  "notes": "统一冷灰蓝色主题与手机首页层级，支持深浅主题；减少重复会话列表请求，改善窄屏与大字体可读性。建议搭配桌面端 0.7.9。",
+  "publishedAt": "2026-11-02T04:02:10.341Z"
 }
