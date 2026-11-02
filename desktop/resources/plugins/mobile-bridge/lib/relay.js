@@ -19,6 +19,34 @@ import net from 'node:net';
 
 const HEADER_DROP = new Set(['host', 'connection', 'upgrade', 'sec-websocket-key', 'sec-websocket-version',
     'sec-websocket-extensions', 'sec-websocket-protocol', 'content-length']);
+/** 合法 HTTP/1.1 头名。中继来的帧不可信：HTTP/2 伪头（":method" 等）会让
+ *  http.request({headers}) 在 setHeader 里抛 ERR_INVALID_HTTP_TOKEN。
+ *  这个 throw 发生在事件回调里，没人接 = 整个引擎进程退出（2026-11-02 实测）。 */
+const HEADER_TOKEN = /^[!#$%&'*+\-.^_`|~0-9A-Za-z]+$/;
+
+/**
+ * 只保留合法的 HTTP/1.1 头名。
+ *
+ * 中继那头的帧是外部输入，不能假设它干净：客户端走 HTTP/2 时，Node 的
+ * http2 兼容层会把 `:method` / `:path` / `:authority` / `:scheme` 一起放进
+ * `req.headers`，中继原样转发过来，这里若不过滤就会交给
+ * `http.request({ headers })` → `setHeader` 抛 `ERR_INVALID_HTTP_TOKEN`。
+ * 这个 throw 在 WebSocket 事件回调里没人接，引擎按致命异常退出进程 ——
+ * 也就是「一个用浏览器打开远程页面的请求，就能让用户桌面端整机掉线」。
+ *
+ * @param {Record<string, unknown>} raw 帧里的 headers
+ * @returns {Record<string, string>} 可以直接交给 http.request 的头
+ */
+export const sanitizeRelayHeaders = (raw) => {
+    const out = {};
+    for (const [name, value] of Object.entries(raw ?? {})) {
+        if (typeof name !== 'string' || name.startsWith(':') || !HEADER_TOKEN.test(name))
+            continue;
+        if (!HEADER_DROP.has(name.toLowerCase()))
+            out[name] = value;
+    }
+    return out;
+};
 
 /** 稳定超过这么久，就算"这条线路可用"，断了也重连同一条而不是换线路。 */
 const STABLE_MS = 20000;
@@ -55,6 +83,10 @@ export function startRelayLink({ candidates, deviceKey, secret, localPort, log =
         if (closed)
             return;
         state = 'connecting';
+        // 每次尝试都重置：openedAt 只在「本次已经连上」时才有意义。以前它保留上次
+        // 连接的时间，close 里那条「稳定过就不换线」的判断于是永远为真 —— 曾经连上
+        // 一次的线路挂了以后会一直重试它，永远不回退到 Cloudflare。
+        openedAt = 0;
         const mine = ++attempt;
         const candidate = list[index];
         // 先探一下能不能连上：不可达的地址（比如安全组没放行的直连口）会让 TCP 连接
@@ -111,29 +143,43 @@ export function startRelayLink({ candidates, deviceKey, secret, localPort, log =
             catch {
                 return;
             }
-            if (frame.t === 'ping') {
-                // 中继靠心跳判活：必须回，否则静默 35s 会被踢掉
-                if (socket?.readyState === 1)
-                    socket.send(JSON.stringify({ t: 'pong', at: Date.now() }));
+            if (typeof frame !== 'object' || frame === null)
+                return;
+            // 中继帧是外部输入：这里任何未捕获的 throw 都会冒到事件循环顶层，
+            // 引擎按「致命异常」处理并退出进程（一个坏帧 = 桌面端整机掉线）。
+            try {
+                if (frame.t === 'ping') {
+                    // 中继靠心跳判活：必须回，否则静默 35s 会被踢掉
+                    if (socket?.readyState === 1)
+                        socket.send(JSON.stringify({ t: 'pong', at: Date.now() }));
+                }
+                else if (frame.t === 'req') {
+                    handleRequest(frame);
+                }
+                else if (frame.t === 'up') {
+                    handleUpgrade(frame);
+                }
+                else if (frame.t === 'data' && frame.id) {
+                    channels.get(frame.id)?.send(frame);
+                }
+                else if (frame.t === 'close' && frame.id) {
+                    channels.get(frame.id)?.close();
+                }
             }
-            else if (frame.t === 'req') {
-                handleRequest(frame);
-            }
-            else if (frame.t === 'up') {
-                handleUpgrade(frame);
-            }
-            else if (frame.t === 'data' && frame.id) {
-                channels.get(frame.id)?.send(frame);
-            }
-            else if (frame.t === 'close' && frame.id) {
-                channels.get(frame.id)?.close();
+            catch (error) {
+                note(`中继帧处理异常（已忽略）：${error instanceof Error ? error.message : String(error)}`);
+                if (frame.t === 'req')
+                    reply(frame, { status: 500, headers: { 'content-type': 'text/plain' }, body: '' });
             }
         });
-        socket.addEventListener('close', () => {
+        socket.addEventListener('close', (event) => {
             clearTimeout(guard);
             state = 'offline';
             if (closed || mine !== attempt)
                 return;
+            // 以前这里一声不响：链路掉了日志里什么都看不到，只能靠中继侧的「设备下线」
+            // 反推。掉线原因和耗时必须留痕，否则「手机一直转圈」永远查不动。
+            note(`连接断开（${candidate.label ?? candidate.name}，code=${event?.code ?? '?'}）`);
             if (switching)
                 switching = false;
             else if (!(openedAt > 0 && Date.now() - openedAt > STABLE_MS))
@@ -165,11 +211,7 @@ export function startRelayLink({ candidates, deviceKey, secret, localPort, log =
             reply(frame, { status: 403, headers: { 'content-type': 'text/plain' }, body: Buffer.from('只转发手机端接口').toString('base64') });
             return;
         }
-        const headers = {};
-        for (const [key, value] of Object.entries(frame.headers ?? {})) {
-            if (!HEADER_DROP.has(key.toLowerCase()))
-                headers[key] = value;
-        }
+        const headers = sanitizeRelayHeaders(frame.headers);
         headers.host = `127.0.0.1:${localPort}`;
         const body = frame.body ? Buffer.from(frame.body, 'base64') : null;
         if (body)
