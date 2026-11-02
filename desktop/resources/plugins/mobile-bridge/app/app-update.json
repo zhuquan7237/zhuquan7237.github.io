@@ -1,9 +1,9 @@
 {
-  "version": "0.6.1",
-  "versionCode": 117,
+  "version": "0.6.2",
+  "versionCode": 118,
   "apkUrl": "https://m.zhuquan.xyz/mobile/dsh-mobile.apk",
-  "sha256": "a972864270216abd03c607915a8a8913483136a3166abb76fc03b3a1b796ce8c",
-  "size": 3725871,
-  "notes": "统一冷灰蓝色主题与手机首页层级，支持深浅主题；减少重复会话列表请求，改善窄屏与大字体可读性。建议搭配桌面端 0.7.9。",
-  "publishedAt": "2026-11-02T04:02:10.341Z"
+  "sha256": "a5584b18b9e6256e9814c5005d9434f6770396816d972461f2f1f6f541e8dbd6",
+  "size": 3742243,
+  "notes": "连接速度修复：检测到旧的 Cloudflare 线路时会提示重新配对；默认选路与重新配对都优先使用国内直连入口。配合桌面端更新后，实测单次请求从 361ms 降到 27ms。",
+  "publishedAt": "2026-11-02T17:51:50+08:00"
 }
