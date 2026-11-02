@@ -419,6 +419,8 @@ describe('mobile bridge sessions over real HTTP', () => {
   let token: string;
   let calls: Array<{ endpoint: string; args: any }>;
   let failSelection: boolean;
+  /** 让 session/list 慢一点，才能造出「缓存还没填上」的并发窗口。 */
+  let listDelay: number;
 
   beforeEach(async () => {
     home = mkdtempSync(join(process.env.TMPDIR || tmpdir(), 'dsh-bridge-http-'));
@@ -430,7 +432,7 @@ describe('mobile bridge sessions over real HTTP', () => {
     store.devices.push({ id: 'http-device', name: 'http', platform: 'test', tokenHash: auth.tokenHash, scopes: ['read', 'prompt'], createdAt: 1, lastSeenAt: 1 });
     writeStore(store);
 
-    calls = []; failSelection = false;
+    calls = []; failSelection = false; listDelay = 0;
     const gateway = {
       async dispatchRpc(endpoint: string, payload: { args: any }) {
         // Mirror the actual 0.2.x descriptors: list names its argument
@@ -439,7 +441,10 @@ describe('mobile bridge sessions over real HTTP', () => {
         if (!(field in payload.args)) return { ok: false, error: { code: 'gateway/bad-request', message: `missing "${field}"` } };
         const args = payload.args[field];
         calls.push({ endpoint, args });
-        if (endpoint === 'session/list') return { ok: true, value: { items: [{ sessionId: 'existing', cwd: 'C:/old' }] } };
+        if (endpoint === 'session/list') {
+          if (listDelay > 0) await new Promise((resolve) => setTimeout(resolve, listDelay));
+          return { ok: true, value: { items: [{ sessionId: 'existing', cwd: 'C:/old' }] } };
+        }
         if (endpoint === 'session/create') return { ok: true, value: { sessionId: 'created-session' } };
         if (endpoint === 'session/selectModel') return failSelection
           ? { ok: false, error: { code: 'session/model-unavailable', message: 'model selection rejected' } }
@@ -473,6 +478,34 @@ describe('mobile bridge sessions over real HTTP', () => {
     expect(res.status).toBe(200);
     expect(await res.json()).toMatchObject({ ok: true, items: [{ sessionId: 'existing', cwd: 'C:/old' }] });
     expect(calls).toEqual([{ endpoint: 'session/list', args: {} }]);
+  });
+
+  it('并发拉同一个列表只打一次引擎（在途合并）', async () => {
+    // 手机一次刷新会并发发好几个列表请求，全都落在「缓存还没填上」那一小段窗口里。
+    // 以前每个都各自 session.list 一次，引擎本来就在忙，这一下就是多次排队。
+    listDelay = 150;
+    const headers = { authorization: 'Bearer ' + token };
+    const responses = await Promise.all(Array.from({ length: 5 }, () => fetch(base, { headers })));
+    for (const res of responses) {
+      expect(res.status).toBe(200);
+      expect(await res.json()).toMatchObject({ ok: true });
+    }
+    expect(calls.filter((call) => call.endpoint === 'session/list')).toHaveLength(1);
+  });
+
+  it('缓存命中时不打引擎；2 秒后重新取', async () => {
+    const headers = { authorization: 'Bearer ' + token };
+    await (await fetch(base, { headers })).json();
+    await (await fetch(base, { headers })).json();
+    expect(calls.filter((call) => call.endpoint === 'session/list')).toHaveLength(1);
+  });
+
+  it('create 之后缓存作废，不会再给一份旧列表', async () => {
+    const headers = { authorization: 'Bearer ' + token };
+    await (await fetch(base, { headers })).json();
+    await (await fetch(base, { method: 'POST', headers })).json();
+    await (await fetch(base, { headers })).json();
+    expect(calls.filter((call) => call.endpoint === 'session/list')).toHaveLength(2);
   });
 
   it('creates a default session for a truly empty POST body', async () => {
