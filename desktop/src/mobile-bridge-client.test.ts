@@ -46,6 +46,7 @@ function fakeReact(): unknown {
     useState: (value: unknown) => [value, () => undefined],
     useEffect: () => undefined,
     useCallback: (fn: unknown) => fn,
+    useRef: (value: unknown) => ({ current: value }),
   };
 }
 

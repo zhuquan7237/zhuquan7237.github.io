@@ -20,8 +20,13 @@ window.__ModuleLoader__.load({
   id: "@dsh-desktop/dsh-mobile-bridge",
   factory: (require) => {
     const React = require("react");
-    const h = React.createElement;
-    const { useState, useEffect, useCallback } = React;
+    // Static sibling lists use variadic children; mapped device rows keep IDs.
+    function h(type, props, children) {
+      return Array.isArray(children)
+        ? React.createElement(type, props, ...children)
+        : React.createElement(type, props, children);
+    }
+    const { useState, useEffect, useCallback, useRef } = React;
 
     const URLS = {
       state: "/mobile-local/state",
@@ -37,7 +42,7 @@ window.__ModuleLoader__.load({
         nav: "手机配对",
         title: "手机配对",
         subtitle:
-          "手机是随身的遥控器：会话、模型和干活都在电脑上。这里生成配对码与二维码，也管理已经绑定的设备。配对码 5 分钟有效，扫一次就完成绑定。",
+          "把电脑上的会话带到手机，随时查看进度、继续对话。",
         bridge: "桥接",
         bridgeUp: "正常",
         bridgeDown: "读不到状态",
@@ -51,8 +56,8 @@ window.__ModuleLoader__.load({
         codeTitle: "配对码",
         codeExpired: "已过期",
         codeTtl: "后失效",
-        noCode: "当前没有有效配对码",
-        noCodeHint: "点下面的按钮生成一串新码。",
+        noCode: "准备连接你的手机",
+        noCodeHint: "生成一次性配对码后，使用手机 App 扫描左侧二维码。",
         generate: "生成配对码",
         regenerate: "重新生成配对码",
         generating: "生成中…",
@@ -62,11 +67,11 @@ window.__ModuleLoader__.load({
         qrHint: "手机 App →「扫码配对」",
         qrUnavailable: "二维码不可用",
         linkLabel: "配对链接",
-        linkMissing: "先生成配对码，并确认已配置公网地址。",
-        urlLabel: "公网地址（配对二维码指向的地址）",
+        linkMissing: "生成配对码后，可复制链接作为扫码的备用方式。",
+        urlLabel: "连接地址",
         urlPlaceholder: "https://m.example.com",
         urlHint:
-          "手机和电脑不在同一网络时填隧道域名，例如 Cloudflare Tunnel 的域名；留空表示只用局域网地址。保存后二维码会立即指向新地址，并自动换一枚新码。",
+          "同一 Wi-Fi 可使用局域网地址；跨网络连接时填写手机可访问的隧道或中继地址。保存会更新二维码，并使旧配对码失效。",
         urlSave: "保存地址",
         urlSaving: "保存中…",
         urlSaved: "已保存",
@@ -94,12 +99,30 @@ window.__ModuleLoader__.load({
         errRevoke: "解除设备失败",
         errConfig: "保存地址失败",
         errNetwork: "请求失败",
+        connectTitle: "连接新手机",
+        step1: "打开手机 App",
+        step1Hint: "进入「扫码配对」，允许使用相机。",
+        step2: "扫描二维码",
+        step2Hint: "扫码即可绑定；也可使用下方配对码。",
+        manual: "无法扫码？输入配对码",
+        privacy: "配对码 5 分钟有效，请勿向他人分享。模型密钥始终保留在电脑端。",
+        addressHint: "检查手机能否访问此地址",
+        devicesHint: "管理已获授权的手机；解除后，该设备立即失去访问权限。",
+        searchDevices: "搜索设备名称或平台",
+        noDevicesMatch: "没有匹配的设备",
+        loading: "正在读取连接状态…",
+        showDevices: "显示全部设备",
+        collapseDevices: "收起设备列表",
+        retry: "重新读取状态",
+        codeExpiredHint: "配对码已过期，重新生成后再扫码。",
+        qrReady: "生成后显示二维码",
+        savedAddress: "当前连接地址",
       },
       en: {
         nav: "Phone pairing",
         title: "Phone pairing",
         subtitle:
-          "The phone is a remote control: sessions, models and work stay on this computer. Generate the pairing code and QR here, and manage the devices that are already bound. A code answers for five minutes; one scan binds the phone.",
+          "Take your desktop conversations with you. Check progress and continue from your phone.",
         bridge: "Bridge",
         bridgeUp: "healthy",
         bridgeDown: "no state",
@@ -113,8 +136,8 @@ window.__ModuleLoader__.load({
         codeTitle: "Pairing code",
         codeExpired: "expired",
         codeTtl: "left",
-        noCode: "No live pairing code",
-        noCodeHint: "Press the button below to issue one.",
+        noCode: "Connect your phone",
+        noCodeHint: "Generate a one-time code, then scan the QR with the mobile app.",
         generate: "Generate code",
         regenerate: "New code",
         generating: "Generating…",
@@ -125,7 +148,7 @@ window.__ModuleLoader__.load({
         qrUnavailable: "QR unavailable",
         linkLabel: "Pairing link",
         linkMissing: "Generate a code and make sure the public address is set.",
-        urlLabel: "Public address (what the QR points at)",
+        urlLabel: "Connection address",
         urlPlaceholder: "https://m.example.com",
         urlHint:
           "Fill in the tunnel domain when the phone is not on the same network, e.g. a Cloudflare Tunnel hostname. Blank keeps the LAN address only. Saving re-points the QR immediately and issues a fresh code.",
@@ -156,6 +179,24 @@ window.__ModuleLoader__.load({
         errRevoke: "Failed to revoke the device",
         errConfig: "Failed to save the address",
         errNetwork: "Request failed",
+        connectTitle: "Connect a new phone",
+        step1: "Open the mobile app",
+        step1Hint: "Choose “Scan QR” and allow camera access.",
+        step2: "Scan the QR code",
+        step2Hint: "Scan to pair, or enter the code below.",
+        manual: "Cannot scan? Enter this code",
+        privacy: "Codes expire in 5 minutes. Keep them private. Model API keys stay on this computer.",
+        addressHint: "Check that your phone can reach this address",
+        devicesHint: "Manage authorized phones. Revoking a device immediately removes its access.",
+        searchDevices: "Search by device name or platform",
+        noDevicesMatch: "No matching devices",
+        loading: "Reading connection status…",
+        showDevices: "Show all devices",
+        collapseDevices: "Show fewer devices",
+        retry: "Retry connection",
+        codeExpiredHint: "This code expired. Generate a new one to scan.",
+        qrReady: "Generate a code to display the QR",
+        savedAddress: "Current connection address",
       },
     };
 
@@ -168,21 +209,25 @@ window.__ModuleLoader__.load({
       borderSoft: "1px solid var(--dsw-alias-border-l1, rgba(127,127,127,.16))",
       card: "var(--dsw-alias-bg-layer-1, rgba(127,127,127,.06))",
       inner: "var(--dsw-alias-bg-layer-2, rgba(127,127,127,.08))",
-      good: "var(--dsw-alias-state-business-primary, #1a9e63)",
+      good: "var(--dsw-alias-state-success-primary, #237453)",
       bad: "var(--dsw-alias-state-error-primary, #e2635f)",
       hover: "var(--dsw-alias-interactive-bg-hover, rgba(127,127,127,.12))",
-      accent: "var(--dsw-alias-brand-primary, #3a83f7)",
+      accent: "var(--dsw-alias-link, #4176e6)",
+      // A slightly deeper desktop blue keeps small white button text readable.
+      fill: "color-mix(in srgb, var(--dsw-static-deepseek-500, #4176e6) 90%, #000)",
     };
 
     const MONO = 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace';
 
     function buttonStyle(primary) {
       return {
-        padding: "6px 14px",
-        fontSize: "12.5px",
-        borderRadius: "8px",
+        padding: "9px 14px",
+        minHeight: "38px",
+        fontSize: "13px",
+        fontWeight: 500,
+        borderRadius: "10px",
         border: primary ? "1px solid transparent" : V.border,
-        background: primary ? V.accent : "transparent",
+        background: primary ? V.fill : "transparent",
         color: primary ? "#fff" : V.text,
         cursor: "pointer",
         fontFamily: "inherit",
@@ -193,11 +238,12 @@ window.__ModuleLoader__.load({
     function inputStyle() {
       return {
         flex: 1,
-        minHeight: "34px",
-        minWidth: "200px",
-        padding: "0 10px",
-        fontSize: "12.5px",
-        borderRadius: "8px",
+        minHeight: "40px",
+        minWidth: 0,
+        width: "100%",
+        padding: "9px 12px",
+        fontSize: "13px",
+        borderRadius: "10px",
         border: V.border,
         background: V.inner,
         color: V.text,
@@ -209,9 +255,9 @@ window.__ModuleLoader__.load({
       return {
         display: "flex",
         flexDirection: "column",
-        gap: "10px",
-        padding: "14px",
-        borderRadius: "12px",
+        gap: "16px",
+        padding: "20px",
+        borderRadius: "16px",
         border: V.borderSoft,
         background: V.card,
       };
@@ -229,7 +275,9 @@ window.__ModuleLoader__.load({
 
     async function get(path) {
       const response = await fetch(path, { headers: { accept: "application/json" } });
-      return readJson(response);
+      const data = await readJson(response);
+      if (!response.ok) throw new Error(data.message || data.error || `HTTP ${response.status}`);
+      return data;
     }
 
     async function post(path, body) {
@@ -238,12 +286,16 @@ window.__ModuleLoader__.load({
         headers: { "content-type": "application/json" },
         body: JSON.stringify(body || {}),
       });
-      return readJson(response);
+      const data = await readJson(response);
+      if (!response.ok) throw new Error(data.message || data.error || `HTTP ${response.status}`);
+      return data;
     }
 
     async function del(path) {
       const response = await fetch(path, { method: "DELETE", headers: { accept: "application/json" } });
-      return readJson(response);
+      const data = await readJson(response);
+      if (!response.ok) throw new Error(data.message || data.error || `HTTP ${response.status}`);
+      return data;
     }
 
     /** "4:07" style countdown for a millisecond deadline. */
@@ -286,35 +338,54 @@ window.__ModuleLoader__.load({
       const [qrIssue, setQrIssue] = useState("");
       const [copied, setCopied] = useState(false);
       const [revoking, setRevoking] = useState("");
+      const [deviceQuery, setDeviceQuery] = useState("");
+      const [devicesExpanded, setDevicesExpanded] = useState(false);
+      const [bridgeError, setBridgeError] = useState(false);
+      const loadSequence = useRef(0);
 
       const say = useCallback((text, bad) => {
         setMessage(text || "");
         setMessageBad(bad === true);
       }, []);
 
-      const load = useCallback(async () => {
-        setBusy((current) => (current === "rotate" ? current : "load"));
+      const load = useCallback(async (quiet = false) => {
+        const sequence = ++loadSequence.current;
+        if (!quiet) setBusy((current) => (current || "load"));
         try {
           const incoming = await get(URLS.state);
+          if (sequence !== loadSequence.current) return;
           if (!incoming || incoming.ok === false) {
             say(`${t.errState}：${(incoming && (incoming.message || incoming.error)) || t.errNetwork}`, true);
-            setState(null);
+            setBridgeError(true);
             return;
           }
           setState(incoming);
-          setUrlDraft(incoming.publicUrl || "");
-          if (messageBad) say("");
+          setBridgeError(false);
+          setMessage((current) => current.startsWith(t.errState) ? "" : current);
+          // Background refresh must never overwrite an address being edited.
+          setUrlDraft((draft) => draft === null ? incoming.publicUrl || "" : draft);
         } catch (error) {
+          if (sequence !== loadSequence.current) return;
           say(`${t.errState}：${String((error && error.message) || error)}`, true);
-          setState(null);
+          setBridgeError(true);
         } finally {
-          setBusy((current) => (current === "load" ? "" : current));
+          if (!quiet && sequence === loadSequence.current) setBusy((current) => (current === "load" ? "" : current));
         }
-      }, [say, t, messageBad]);
+      }, [say, t]);
 
       useEffect(() => {
         load();
+        return () => { ++loadSequence.current; };
       }, [load]);
+
+      // Reflect newly paired/revoked devices without disturbing form drafts.
+      useEffect(() => {
+        if (busy || revoking) return;
+        const timer = setInterval(() => {
+          if (document.visibilityState !== "hidden") load(true);
+        }, 8000);
+        return () => clearInterval(timer);
+      }, [load, busy, revoking]);
 
       // A live countdown is cheap here (one text node per second) and it is the
       // difference between "this code works" and "why does pairing fail".
@@ -353,7 +424,7 @@ window.__ModuleLoader__.load({
         return () => {
           cancelled = true;
         };
-      }, [codeLive, state, t]);
+      }, [codeLive, state && state.pairCode, link, t]);
 
       const rotate = useCallback(async () => {
         setBusy("rotate");
@@ -363,6 +434,7 @@ window.__ModuleLoader__.load({
             say(`${t.errRotate}：${(result && (result.message || result.error)) || t.errNetwork}`, true);
           } else {
             say("");
+            setCopied(false);
             setNow(Date.now());
           }
         } catch (error) {
@@ -405,6 +477,8 @@ window.__ModuleLoader__.load({
             say(`${t.errConfig}：${(result && (result.message || result.error)) || t.errNetwork}`, true);
           } else {
             say(value === "" ? t.urlCleared : t.urlSaved, false);
+            setUrlDraft(null);
+            setCopied(false);
             setNow(Date.now());
           }
         } catch (error) {
@@ -441,304 +515,178 @@ window.__ModuleLoader__.load({
       const urlNote =
         source === "store" ? t.fromStore : source === "config" ? t.fromConfig : "";
 
-      const codeColor = codeLive ? V.text : V.faint;
+      const available = !!state && !bridgeError;
+      const query = deviceQuery.trim().toLocaleLowerCase();
+      const orderedDevices = devices.sort((a, b) => (b.lastSeenAt || 0) - (a.lastSeenAt || 0));
+      const matchingDevices = orderedDevices.filter((device) =>
+        !query || [device.name, device.platform].join(" ").toLocaleLowerCase().includes(query));
+      const visibleDevices = devicesExpanded || query ? matchingDevices : matchingDevices.slice(0, 5);
+      const locked = busy !== "" || !available;
+      const address = state && (state.phoneUrl || publicUrl);
+      const urlChanged = urlDraft !== null && urlDraft.trim() !== publicUrl;
+      const css = `
+        .dsh-pairing { container-type:inline-size; min-width:0; color:${V.text}; font-family:var(--dsw-font-family,system-ui,-apple-system,"Segoe UI",sans-serif); font-size:13px; line-height:1.55; }
+        .dsh-pairing *, .dsh-pairing *::before, .dsh-pairing *::after { box-sizing:border-box; }
+        .dsh-pairing h2,.dsh-pairing h3,.dsh-pairing p { margin:0; font-family:inherit; }
+        .dsh-pairing h2 { font-size:20px; line-height:1.4; font-weight:600; letter-spacing:-.3px; }
+        .dsh-pairing h3 { font-size:14px; line-height:1.5; font-weight:600; }
+        .dsh-pairing button { display:inline-flex; align-items:center; justify-content:center; gap:7px; line-height:1.4; }
+        .dsh-pairing button:hover:not(:disabled) { filter:brightness(.96); }
+        .dsh-pairing button:disabled { opacity:.45; cursor:not-allowed; }
+        .dsh-pairing :is(button,input,summary):focus-visible { outline:2px solid ${V.accent}; outline-offset:3px; }
+        .dsh-pairing .pair-stack { display:flex; flex-direction:column; gap:20px; padding:4px 2px 24px; }
+        .dsh-pairing .pair-head,.dsh-pairing .pair-section-head { display:flex; align-items:center; justify-content:space-between; gap:14px; }
+        .dsh-pairing .pair-sub { color:${V.dim}; font-size:12px; line-height:1.7; margin-top:5px; }
+        .dsh-pairing .pair-status { display:flex; gap:7px; align-items:center; font-size:12px; }
+        .dsh-pairing .pair-status-dot { width:7px; height:7px; border-radius:50%; background:currentColor; flex-shrink:0; }
+        .dsh-pairing .pair-grid { display:grid; grid-template-columns:190px minmax(0,1fr); gap:28px; align-items:start; }
+        .dsh-pairing .pair-qr-wrap { text-align:center; display:flex; flex-direction:column; align-items:center; gap:10px; }
+        .dsh-pairing .pair-qr { width:190px; height:190px; border-radius:14px; display:grid; place-items:center; background:#fff; border:${V.borderSoft}; overflow:hidden; }
+        .dsh-pairing .pair-qr-empty { display:flex; flex-direction:column; align-items:center; gap:12px; padding:16px; font-size:12px; color:#627086; }
+        .dsh-pairing .pair-instructions { display:flex; flex-direction:column; gap:14px; min-width:0; }
+        .dsh-pairing .pair-step { display:flex; align-items:flex-start; gap:10px; }
+        .dsh-pairing .pair-step-no { display:grid; place-items:center; width:24px; height:24px; flex-shrink:0; border-radius:8px; background:${V.inner}; color:${V.accent}; font-size:12px; font-weight:600; }
+        .dsh-pairing .pair-step-title { font-size:13px; font-weight:500; }
+        .dsh-pairing .pair-step-hint { font-size:12px; color:${V.dim}; margin-top:3px; }
+        .dsh-pairing .pair-manual { border-top:${V.borderSoft}; padding-top:12px; }
+        .dsh-pairing .pair-code { font-family:${MONO}; font-size:28px; line-height:1.4; font-weight:600; letter-spacing:3px; font-variant-numeric:tabular-nums; user-select:all; margin:3px 0; overflow-wrap:anywhere; }
+        .dsh-pairing .pair-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:2px; }
+        .dsh-pairing .pair-note { display:flex; gap:8px; font-size:12px; color:${V.dim}; border-top:${V.borderSoft}; padding-top:14px; }
+        .dsh-pairing .pair-note svg { margin-top:2px; flex-shrink:0; }
+        .dsh-pairing .pair-address-summary { display:flex; flex-direction:column; gap:4px; cursor:pointer; list-style:none; border-radius:8px; }
+        .dsh-pairing summary::-webkit-details-marker { display:none; }
+        .dsh-pairing summary .pair-chevron { transition:transform .16s; }
+        .dsh-pairing details[open] .pair-chevron { transform:rotate(90deg); }
+        .dsh-pairing .pair-address-label { display:flex; gap:8px; align-items:center; font-size:13px; font-weight:500; }
+        .dsh-pairing .pair-address-value { font-size:12px; color:${V.dim}; overflow-wrap:anywhere; }
+        .dsh-pairing .pair-url-form { display:flex; flex-direction:column; gap:10px; padding-top:16px; }
+        .dsh-pairing .pair-url-row { display:flex; gap:8px; }
+        .dsh-pairing .pair-devices { max-height:340px; overflow:auto; overscroll-behavior:contain; padding-right:3px; }
+        .dsh-pairing .pair-device { display:flex; align-items:center; gap:12px; padding:13px 0; border-bottom:${V.borderSoft}; }
+        .dsh-pairing .pair-device:last-child { border-bottom:0; }
+        .dsh-pairing .pair-device-icon { width:36px; height:36px; display:grid; place-items:center; border-radius:11px; background:${V.inner}; color:${V.dim}; flex-shrink:0; }
+        .dsh-pairing .pair-device-name { font-size:13px; font-weight:500; overflow-wrap:anywhere; }
+        .dsh-pairing .pair-device-meta { display:flex; flex-wrap:wrap; gap:3px 12px; color:${V.dim}; font-size:11px; margin-top:3px; }
+        .dsh-pairing .pair-empty { padding:20px; text-align:center; color:${V.dim}; font-size:12px; }
+        .dsh-pairing .pair-feedback { font-size:12px; padding:12px 14px; border:${V.borderSoft}; border-radius:10px; color:${messageBad ? V.bad : V.dim}; background:${V.card}; overflow-wrap:anywhere; }
+        @container (max-width:510px) { .dsh-pairing .pair-grid { grid-template-columns:minmax(0,1fr); gap:20px; } .dsh-pairing .pair-head { align-items:flex-start; flex-wrap:wrap; } .dsh-pairing .pair-qr-wrap { justify-self:center; } .dsh-pairing .pair-url-row { flex-wrap:wrap; } .dsh-pairing .pair-url-row input { flex-basis:100%; } }
+        @media (prefers-reduced-motion:reduce) { .dsh-pairing summary .pair-chevron { transition:none; } }
+      `;
+      function icon(name, size = 18) {
+        const paths = {
+          phone: "M8 2h8a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2ZM10 18h4",
+          qr: "M3 3h6v6H3ZM15 3h6v6h-6ZM3 15h6v6H3ZM15 15h3v3h3v3h-6v-3h-3v-3ZM12 3v6M3 12h6M12 12h9M12 18v3",
+          shield: "m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6ZM8 12l3 3 5-6",
+          arrow: "m9 5 7 7-7 7",
+          copy: "M9 9h12v12H9ZM5 15H3V3h12v2",
+          refresh: "M20 7a9 9 0 1 0 1 8M20 3v5h-5",
+        };
+        return h("svg", { width:size, height:size, viewBox:"0 0 24 24", fill:"none", stroke:"currentColor", strokeWidth:1.6, strokeLinecap:"round", strokeLinejoin:"round", "aria-hidden":true }, h("path", { d:paths[name] || paths.phone }));
+      }
+      function action(key, label, onClick, options = {}) {
+        return h("button", { key, type:"button", style:buttonStyle(options.primary), disabled:options.disabled, onClick, "aria-label":options.ariaLabel }, [options.icon ? icon(options.icon, 15) : null, label]);
+      }
+      const qrVisible = available && codeLive && link && qrIssue === "";
 
-      return h("div", { style: { display: "flex", flexDirection: "column", gap: "14px", padding: "4px 2px 20px", color: V.text } }, [
-        h("div", { key: "head", style: { display: "flex", flexDirection: "column", gap: "6px" } }, [
-          h("strong", { key: "t", style: { fontSize: "15px" } }, t.title),
-          h("span", { key: "s", style: { fontSize: "12px", color: V.dim, lineHeight: 1.7 } }, t.subtitle),
-        ]),
-
-        // Status bar: bridge health, device count, the effective address.
-        h(
-          "div",
-          {
-            key: "bar",
-            style: {
-              display: "flex",
-              alignItems: "center",
-              gap: "10px",
-              flexWrap: "wrap",
-              padding: "10px 14px",
-              borderRadius: "12px",
-              border: V.borderSoft,
-              background: V.card,
-            },
-          },
-          [
-            h(
-              "span",
-              { key: "b", style: { fontSize: "12px", color: state ? V.good : V.bad } },
-              `${t.bridge}：${state ? t.bridgeUp : t.bridgeDown}`,
-            ),
-            h(
-              "span",
-              { key: "d", style: { fontSize: "12px", color: V.dim } },
-              `${t.devices}：${devices.length}`,
-            ),
-            h(
-              "span",
-              { key: "u", style: { fontSize: "12px", color: publicUrl ? V.dim : V.bad } },
-              `${t.publicUrl}：${publicUrl || t.publicUrlNone}${urlNote === "" ? "" : ` ${urlNote}`}`,
-            ),
-            h(
-              "div",
-              { key: "sp", style: { marginLeft: "auto", display: "flex", gap: "8px" } },
-              [
-                h(
-                  "button",
-                  { key: "r", type: "button", style: buttonStyle(false), disabled: busy === "load", onClick: load },
-                  busy === "load" ? t.refreshing : t.refresh,
-                ),
-              ],
-            ),
-          ],
-        ),
-
-        // Pairing card: QR on the left, code and link on the right.
-        h("div", { key: "pair", style: cardStyle() }, [
-          h("span", { key: "h", style: { fontSize: "13px", fontWeight: 600 } }, t.codeTitle),
-          h(
-            "div",
-            { key: "body", style: { display: "flex", gap: "16px", flexWrap: "wrap", alignItems: "flex-start" } },
-            [
-              h(
-                "div",
-                {
-                  key: "qr",
-                  style: {
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    gap: "6px",
-                    width: "180px",
-                  },
-                },
-                [
-                  h(
-                    "div",
-                    {
-                      key: "tile",
-                      style: {
-                        // A QR must stay on white: scanners fail on a themed tile.
-                        width: "180px",
-                        height: "180px",
-                        display: "grid",
-                        placeItems: "center",
-                        borderRadius: "12px",
-                        border: V.borderSoft,
-                        background: "#ffffff",
-                        overflow: "hidden",
-                      },
-                    },
-                    codeLive && link && qrIssue === ""
-                      ? h("img", {
-                          key: "img",
-                          src: `${URLS.qr}?c=${encodeURIComponent(state.pairCode)}`,
-                          alt: t.qrAlt,
-                          width: 168,
-                          height: 168,
-                          style: { display: "block" },
-                        })
-                      : h(
-                          "span",
-                          { key: "ph", style: { fontSize: "11px", color: "#9aa0a6", padding: "0 10px", textAlign: "center", lineHeight: 1.6 } },
-                          codeLive ? qrIssue || t.qrUnavailable : t.noCode,
-                        ),
-                  ),
-                  h(
-                    "span",
-                    { key: "hint", style: { fontSize: "11px", color: V.faint, textAlign: "center", lineHeight: 1.5 } },
-                    qrIssue === "" ? t.qrHint : t.qrUnavailable,
-                  ),
-                ],
-              ),
-              h(
-                "div",
-                { key: "main", style: { flex: 1, minWidth: "240px", display: "flex", flexDirection: "column", gap: "8px" } },
-                [
-                  h(
-                    "div",
-                    {
-                      key: "code",
-                      style: {
-                        fontFamily: MONO,
-                        fontSize: "30px",
-                        letterSpacing: "4px",
-                        fontWeight: 600,
-                        color: codeColor,
-                        lineHeight: 1.3,
-                      },
-                    },
-                    codeLive ? code : t.noCode,
-                  ),
-                  h(
-                    "span",
-                    { key: "ttl", style: { fontSize: "12px", color: codeLive ? V.dim : V.bad } },
-                    codeLive && expiresAt !== null
-                      ? `${countdown(expiresAt, now)} ${t.codeTtl}`
-                      : t.noCodeHint,
-                  ),
-                  h(
-                    "div",
-                    { key: "link", style: { display: "flex", flexDirection: "column", gap: "4px" } },
-                    [
-                      h("span", { key: "l", style: { fontSize: "11px", color: V.faint } }, t.linkLabel),
-                      h(
-                        "code",
-                        {
-                          key: "v",
-                          style: {
-                            fontFamily: MONO,
-                            fontSize: "11.5px",
-                            color: link ? V.dim : V.faint,
-                            wordBreak: "break-all",
-                            lineHeight: 1.6,
-                          },
-                        },
-                        link || t.linkMissing,
-                      ),
-                    ],
-                  ),
-                  h("div", { key: "btn", style: { display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "2px" } }, [
-                    h(
-                      "button",
-                      {
-                        key: "g",
-                        type: "button",
-                        style: buttonStyle(true),
-                        disabled: busy === "rotate",
-                        onClick: rotate,
-                      },
-                      busy === "rotate" ? t.generating : codeLive ? t.regenerate : t.generate,
-                    ),
-                    h(
-                      "button",
-                      { key: "c", type: "button", style: buttonStyle(false), onClick: copyLink, disabled: !link },
-                      copied ? t.copied : t.copyLink,
-                    ),
+      return h("div", { className:"dsh-pairing" }, [
+        h("style", { key:"style" }, css),
+        h("div", { key:"content", className:"pair-stack" }, [
+          h("header", { key:"head", className:"pair-head" }, [
+            h("div", { key:"title" }, [h("h2", null, t.title), h("p", { className:"pair-sub" }, t.subtitle)]),
+            h("div", { key:"status", style:{ display:"flex", gap:12, alignItems:"center" } }, [
+              h("span", { className:"pair-status", role:"status", style:{ color:available ? V.good : bridgeError ? V.bad : V.dim } }, [
+                h("span", { className:"pair-status-dot" }), available ? t.bridge + " · " + t.bridgeUp : bridgeError ? t.bridgeDown : t.loading,
+              ]),
+              action("refresh", busy === "load" ? t.refreshing : t.refresh, () => load(), { icon:"refresh", disabled:busy !== "" }),
+            ]),
+          ]),
+          message ? h("div", { key:"feedback", className:"pair-feedback", role:messageBad ? "alert" : "status" }, [
+            message,
+            bridgeError ? action("retry", t.retry, () => load(), { disabled:busy !== "" }) : null,
+          ]) : null,
+          h("section", { key:"pair", "aria-labelledby":"pair-connect-title", style:cardStyle() }, [
+            h("h3", { key:"heading", id:"pair-connect-title" }, t.connectTitle),
+            h("div", { key:"body", className:"pair-grid" }, [
+              h("div", { key:"qr", className:"pair-qr-wrap" }, [
+                h("div", { key:"tile", className:"pair-qr", style:{ background: "#ffffff" } },
+                  qrVisible ? h("img", {
+                    key:String(state.pairCode), src:URLS.qr + "?c=" + encodeURIComponent(state.pairCode),
+                    alt:t.qrAlt, width:174, height:174, style:{ display:"block" },
+                    onError:() => setQrIssue(t.qrUnavailable),
+                  }) : h("div", { className:"pair-qr-empty" }, [icon("qr", 42),
+                    h("span", null, !available ? bridgeError ? t.bridgeDown : t.loading : codeLive ? qrIssue || t.qrUnavailable : t.qrReady)])),
+                h("span", { style:{ fontSize:11, color:V.dim } }, t.qrHint),
+              ]),
+              h("div", { key:"instructions", className:"pair-instructions" }, [
+                [1, 2].map((number) => h("div", { key:"step" + number, className:"pair-step" }, [
+                  h("span", { className:"pair-step-no" }, number),
+                  h("div", null, [h("p", { className:"pair-step-title" }, t["step" + number]), h("p", { className:"pair-step-hint" }, t["step" + number + "Hint"])]),
+                ])),
+                h("div", { key:"code", className:"pair-manual" }, codeLive ? [
+                  h("p", { style:{ fontSize:11, color:V.dim } }, t.manual),
+                  h("div", { className:"pair-code", "aria-label":t.codeTitle }, code),
+                  h("p", { style:{ fontSize:12, color:V.dim } }, expiresAt !== null ? countdown(expiresAt, now) + " " + t.codeTtl : t.privacy),
+                ] : [
+                  h("h3", null, code ? t.codeExpired : t.noCode),
+                  h("p", { className:"pair-sub" }, code ? t.codeExpiredHint : t.noCodeHint),
+                ]),
+                h("div", { key:"actions", className:"pair-actions" }, [
+                  action("generate", busy === "rotate" ? t.generating : codeLive ? t.regenerate : t.generate, rotate, { primary:true, disabled:locked }),
+                  action("copy", copied ? t.copied : t.copyLink, copyLink, { icon:"copy", disabled:!link || !available || busy !== "" }),
+                ]),
+                codeLive && link ? h("details", { key:"link" }, [
+                  h("summary", { style:{ cursor:"pointer", fontSize:11, color:V.dim } }, t.linkLabel),
+                  h("p", { style:{ fontSize:11, overflowWrap:"anywhere", marginTop:6, userSelect:"all", color:V.dim } }, link),
+                ]) : null,
+              ]),
+            ]),
+            h("div", { key:"privacy", className:"pair-note" }, [icon("shield", 15), h("span", null, t.privacy)]),
+          ]),
+          h("details", { key:"url", style:cardStyle() }, [
+            h("summary", { key:"summary", className:"pair-address-summary" }, [
+              h("span", { className:"pair-address-label" }, [t.urlLabel, h("span", { className:"pair-chevron", style:{ marginLeft:"auto", display:"flex" } }, icon("arrow", 16))]),
+              h("span", { className:"pair-address-value" }, address || t.publicUrlNone),
+            ]),
+            h("div", { key:"form", className:"pair-url-form" }, [
+              h("label", { htmlFor:"pair-public-url", style:{ fontSize:12, color:V.dim } }, t.publicUrl + (urlNote ? " " + urlNote : "")),
+              h("div", { className:"pair-url-row" }, [
+                h("input", { id:"pair-public-url", type:"url", value:urlDraft === null ? publicUrl : urlDraft,
+                  placeholder:t.urlPlaceholder, spellCheck:false, autoComplete:"off", style:inputStyle(),
+                  onChange:(event) => setUrlDraft(event.target.value),
+                  onKeyDown:(event) => { if (event.key === "Enter" && urlChanged && !locked) { event.preventDefault(); saveUrl(); } },
+                }),
+                action("save", busy === "url" ? t.urlSaving : t.urlSave, saveUrl, { disabled:locked || !urlChanged }),
+              ]),
+              h("p", { className:"pair-sub" }, t.urlHint),
+              h("p", { style:{ fontSize:11, color:V.dim } }, t.addressHint),
+            ]),
+          ]),
+          h("section", { key:"devices", "aria-labelledby":"pair-devices-title", style:cardStyle() }, [
+            h("div", { key:"heading", className:"pair-section-head" }, [
+              h("h3", { id:"pair-devices-title" }, t.devicesTitle),
+              h("span", { style:{ borderRadius:7, background:V.inner, padding:"2px 8px", fontSize:12, color:V.dim } }, devices.length),
+            ]),
+            h("p", { key:"hint", className:"pair-sub", style:{ marginTop:-10 } }, t.devicesHint),
+            devices.length > 5 ? h("input", { key:"search", type:"search", value:deviceQuery,
+              "aria-label":t.searchDevices, placeholder:t.searchDevices, style:inputStyle(),
+              onChange:(event) => setDeviceQuery(event.target.value),
+            }) : null,
+            h("div", { key:"list", className:"pair-devices", tabIndex:visibleDevices.length > 3 ? 0 : undefined, "aria-label":t.devicesTitle },
+              visibleDevices.length ? visibleDevices.map((device, index) => h("div", { key:device.id || index, className:"pair-device" }, [
+                h("div", { className:"pair-device-icon" }, icon("phone", 19)),
+                h("div", { style:{ flex:1, minWidth:0 } }, [
+                  h("p", { className:"pair-device-name" }, device.name || t.deviceUntitled),
+                  h("div", { className:"pair-device-meta" }, [
+                    h("span", null, [device.platform, scopesText(t, device.scopes)].filter(Boolean).join(" · ")),
+                    h("span", null, t.lastSeen + " " + formatSeen(device.lastSeenAt, t)),
                   ]),
-                ],
-              ),
-            ],
-          ),
-        ]),
-
-        // Public address, editable here so pairing never needs the shell window.
-        h("div", { key: "url", style: cardStyle() }, [
-          h("span", { key: "l", style: { fontSize: "13px", fontWeight: 600 } }, t.urlLabel),
-          h(
-            "div",
-            { key: "row", style: { display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" } },
-            [
-              h("input", {
-                key: "i",
-                type: "text",
-                value: urlDraft === null ? "" : urlDraft,
-                placeholder: t.urlPlaceholder,
-                spellCheck: false,
-                style: inputStyle(),
-                onChange: (event) => setUrlDraft(event.target.value),
-                onKeyDown: (event) => {
-                  if (event.key === "Enter") saveUrl();
-                },
-              }),
-              h(
-                "button",
-                { key: "s", type: "button", style: buttonStyle(false), disabled: busy === "url", onClick: saveUrl },
-                busy === "url" ? t.urlSaving : t.urlSave,
-              ),
-            ],
-          ),
-          h("span", { key: "h", style: { fontSize: "11px", color: V.faint, lineHeight: 1.7 } }, t.urlHint),
-        ]),
-
-        // Devices.
-        h("div", { key: "dev", style: cardStyle() }, [
-          h(
-            "span",
-            { key: "h", style: { fontSize: "13px", fontWeight: 600 } },
-            `${t.devicesTitle}（${devices.length}）`,
-          ),
-          devices.length === 0
-            ? h("span", { key: "e", style: { fontSize: "12px", color: V.faint } }, t.devicesEmpty)
-            : h(
-                "div",
-                { key: "list", style: { display: "flex", flexDirection: "column", gap: "8px" } },
-                devices.map((device, index) =>
-                  h(
-                    "div",
-                    {
-                      key: device.id || index,
-                      style: {
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "10px",
-                        flexWrap: "wrap",
-                        padding: "8px 10px",
-                        borderRadius: "10px",
-                        border: V.borderSoft,
-                        background: V.inner,
-                      },
-                    },
-                    [
-                      h(
-                        "div",
-                        { key: "who", style: { display: "flex", flexDirection: "column", gap: "2px", minWidth: "180px", flex: 1 } },
-                        [
-                          h("span", { key: "n", style: { fontSize: "12.5px" } }, device.name || t.deviceUntitled),
-                          h(
-                            "span",
-                            { key: "m", style: { fontSize: "11px", color: V.dim } },
-                            `${device.platform ? `${device.platform} · ` : ""}${scopesText(t, device.scopes)} · ${t.lastSeen} ${formatSeen(device.lastSeenAt, t)}`,
-                          ),
-                        ],
-                      ),
-                      h(
-                        "button",
-                        {
-                          key: "r",
-                          type: "button",
-                          style: buttonStyle(false),
-                          disabled: revoking === device.id,
-                          onClick: () => revoke(device),
-                        },
-                        revoking === device.id ? t.revoking : t.revoke,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-        ]),
-
-        message !== ""
-          ? h(
-              "div",
-              {
-                key: "msg",
-                style: {
-                  fontSize: "12px",
-                  color: messageBad ? V.bad : V.dim,
-                  lineHeight: 1.7,
-                  padding: "8px 12px",
-                  borderRadius: "10px",
-                  border: V.borderSoft,
-                  background: V.card,
-                },
-              },
-              message,
-            )
-          : null,
-
-        h("div", { key: "foot", style: { display: "flex", flexDirection: "column", gap: "4px" } }, [
-          h("span", { key: "h", style: { fontSize: "11px", color: V.faint, lineHeight: 1.7 } }, t.hint),
-          state && state.storePath
-            ? h(
-                "span",
-                { key: "p", style: { fontSize: "11px", color: V.faint, fontFamily: MONO, wordBreak: "break-all" } },
-                `${t.storePath}：${String(state.storePath)}`,
-              )
-            : null,
+                ]),
+                action("revoke", revoking === device.id ? t.revoking : t.revoke, () => revoke(device), {
+                  disabled:!!revoking || locked, ariaLabel:t.revoke + " · " + (device.name || t.deviceUntitled),
+                }),
+              ])) : h("div", { className:"pair-empty" }, !state && !bridgeError ? t.loading : query ? t.noDevicesMatch : t.devicesEmpty)),
+            matchingDevices.length > 5 && !query ? action("expand", devicesExpanded ? t.collapseDevices : t.showDevices + " (" + devices.length + ")", () => setDevicesExpanded(!devicesExpanded)) : null,
+          ]),
         ]),
       ]);
     }
