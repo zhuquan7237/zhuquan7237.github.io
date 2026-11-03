@@ -1583,17 +1583,22 @@ export function apply(ctx, config = {}) {
     let relayLink = null;
     let lanAddress = '';
     const LAN_PORT = 17732;
-    /** 中继给手机用的入口（链路不在线就不给，避免把手机指到连不上的路）。 */
+    /**
+     * 中继给手机用的入口（链路不在线就不给，避免把手机指到连不上的路）。
+     *
+     * 用 nav-cn.zhuquan.xyz（Cloudflare 隧道，与 relay 同一后端 8790）而不是 cn:8443 直连：
+     * 实测部分手机（小米 Turbo 3 / Android 15）连 cn.zhuquan.xyz 的 443/8443 时，TCP 刚建立
+     * 就在 TLS 之前被本机掐断（中继侧记录 9–14ms、请求从未到达处理器），App 于是回退到
+     * relay.zhuquan.xyz —— 那是 App 判定的「旧线路」，每次启动都提示重新配对。
+     * nav-cn 走 CF 隧道可用，且不在 App 的旧线路名单（relay.zhuquan.xyz / m.zhuquan.xyz）里，
+     * 提示自然消失。直连入口（cn:443 与 :8443）仍在中继上监听，需要时可随时换回。
+     */
     const relayBase = () => {
         if (relayLink === null || relayKey === '')
             return '';
         if (relayLink.status() === 'offline')
             return '';
-        // 手机入口固定给国内直连，不再跟着「电脑端当前走哪条线」变。
-        // 手机和电脑在不同网络里，各自到阿里云的可达性互不代表：电脑端偶发回退到
-        // Cloudflare，不该把手机也拖去绕 200ms 的 CF。手机连不上直连时由 App 侧
-        // Wire.alternateRelayBase 自动退 Cloudflare，不需要桌面端替它预判。
-        return `https://cn.zhuquan.xyz:8443/m/${relayKey}`;
+        return `https://nav-cn.zhuquan.xyz/m/${relayKey}`;
     };
     const lanBase = () => (lanAddress === '' ? '' : `http://${lanAddress}:${LAN_PORT}`);
     /** 配对二维码/链接用的基地址。 */
@@ -3609,7 +3614,7 @@ document.addEventListener('click', async (event) => {
         log('远程中继已按环境变量跳过（DSH_MOBILE_BRIDGE_NO_RELAY）');
     }
     else {
-        log(`远程中继：https://cn.zhuquan.xyz:8443/m/${relayKey.slice(0, 8)}…（首选国内直连，连不上自动回退 Cloudflare）`);
+        log(`远程中继：手机入口 https://nav-cn.zhuquan.xyz/m/${relayKey.slice(0, 8)}…（CF 隧道；cn:443/8443 直连入口保留备用）`);
         try {
             relayLink = startRelayLink({ candidates: relayCandidates, deviceKey: relayKey, secret: relaySecret, localPort, log });
         }

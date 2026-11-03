@@ -14,15 +14,15 @@
       "iconURL": "https://m.zhuquan.xyz/mobile/icon-512.png",
       "tintColor": "D9B879",
       "category": "utilities",
-      "version": "0.6.1",
+      "version": "0.6.2",
       "versionDate": "2026-11-02",
-      "downloadURL": "https://github.com/zhuquan7237/deepseek-harness-mobile/releases/download/v0.6.1/dsh-mobile-ios-unsigned-0.6.1.ipa",
+      "downloadURL": "https://github.com/zhuquan7237/deepseek-harness-mobile/releases/download/v0.6.2/dsh-mobile-ios-unsigned-0.6.2.ipa",
       "size": 609208,
       "versions": [
         {
-          "version": "0.6.1",
-          "date": "2026-11-02T04:07:35Z",
-          "downloadURL": "https://github.com/zhuquan7237/deepseek-harness-mobile/releases/download/v0.6.1/dsh-mobile-ios-unsigned-0.6.1.ipa",
+          "version": "0.6.2",
+          "date": "2026-11-02T09:59:35Z",
+          "downloadURL": "https://github.com/zhuquan7237/deepseek-harness-mobile/releases/download/v0.6.2/dsh-mobile-ios-unsigned-0.6.2.ipa",
           "size": 609208
         }
       ]
