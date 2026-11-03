@@ -1,6 +1,6 @@
 {
  "version": 1,
- "generatedAt": "2026-11-02T06:40:56Z",
+ "generatedAt": "2026-11-03T06:40:24Z",
  "source": "gateway /v1/models probe (scripts/collect-gateway-capabilities.py)",
  "providers": {
   "agentrouter": {
@@ -15,7 +15,7 @@
   },
   "api8888": {
    "ok": true,
-   "count": 7,
+   "count": 9,
    "error": ""
   },
   "codego": {
@@ -38,6 +38,11 @@
    "count": 0,
    "error": "HTTP 401"
   },
+  "krill": {
+   "ok": true,
+   "count": 10,
+   "error": ""
+  },
   "linuxyou": {
    "ok": true,
    "count": 11,
@@ -45,7 +50,7 @@
   },
   "relayfor": {
    "ok": true,
-   "count": 13,
+   "count": 11,
    "error": ""
   },
   "syhub": {
@@ -59,9 +64,9 @@
    "error": ""
   },
   "xjm": {
-   "ok": true,
-   "count": 8,
-   "error": ""
+   "ok": false,
+   "count": 0,
+   "error": "HTTP 403"
   }
  },
  "models": [
@@ -343,6 +348,9 @@
    "reasoning": 1
   },
   {
+   "id": "gpt-5.3-codex-spark"
+  },
+  {
    "id": "gpt-5.5"
   },
   {
@@ -350,6 +358,9 @@
   },
   {
    "id": "gpt-5.6-sol"
+  },
+  {
+   "id": "gpt-5.6-sol-fast"
   },
   {
    "id": "gpt-5.6-terra"
@@ -361,16 +372,31 @@
    "id": "gpt-6.1-sol"
   },
   {
+   "id": "gpt-6.1-sol-fast"
+  },
+  {
+   "id": "gpt-6.1-sol-ultrafast"
+  },
+  {
    "id": "gpt-6.1-terra"
   },
   {
    "id": "gpt-6-astra"
   },
   {
+   "id": "gpt-6-astra-fast"
+  },
+  {
+   "id": "gpt-6-astra-ultrafast"
+  },
+  {
    "id": "gpt-6-luna"
   },
   {
    "id": "gpt-6-sol"
+  },
+  {
+   "id": "gpt-6-sol-fast"
   },
   {
    "id": "gpt-image-2"
@@ -592,7 +618,7 @@
    "reasoning": 1
   },
   {
-   "id": "kimi-k3.1-pro",
+   "id": "cn:kimi-k3.1-pro",
    "modalities": [
     "text",
     "image"
