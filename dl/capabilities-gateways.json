@@ -1,12 +1,17 @@
 {
  "version": 1,
- "generatedAt": "2026-11-03T06:40:24Z",
+ "generatedAt": "2026-11-03T22:40:33Z",
  "source": "gateway /v1/models probe (scripts/collect-gateway-capabilities.py)",
  "providers": {
   "agentrouter": {
    "ok": false,
    "count": 0,
    "error": "HTTP 404"
+  },
+  "aiapi": {
+   "ok": true,
+   "count": 1,
+   "error": ""
   },
   "anyrouter": {
    "ok": false,
@@ -15,7 +20,7 @@
   },
   "api8888": {
    "ok": true,
-   "count": 9,
+   "count": 7,
    "error": ""
   },
   "codego": {
@@ -50,7 +55,7 @@
   },
   "relayfor": {
    "ok": true,
-   "count": 11,
+   "count": 12,
    "error": ""
   },
   "syhub": {
@@ -64,9 +69,9 @@
    "error": ""
   },
   "xjm": {
-   "ok": false,
-   "count": 0,
-   "error": "HTTP 403"
+   "ok": true,
+   "count": 13,
+   "error": ""
   }
  },
  "models": [
@@ -346,9 +351,6 @@
    "context": 1000000,
    "output": 131072,
    "reasoning": 1
-  },
-  {
-   "id": "gpt-5.3-codex-spark"
   },
   {
    "id": "gpt-5.5"
