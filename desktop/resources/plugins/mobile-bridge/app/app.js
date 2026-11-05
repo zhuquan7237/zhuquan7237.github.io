@@ -1040,7 +1040,9 @@
             let doc = state.doc;
             if (!doc) { try { doc = (await api(API.models)).doc; state.doc = doc; } catch {} }
             if (!doc || !doc.items.length) { toast('没有读到模型列表'); return; }
-            const rows = doc.items.slice(0, 60).map((item) => `<div class="row" data-pick="${escapeHtml(item.provider)}|${escapeHtml(item.modelId)}"><div class="grow"><div class="name">${escapeHtml(item.name || item.modelId)}</div><div class="meta"><span>${escapeHtml(item.provider)}</span>${item.enabled ? '' : '<span class="pill">已停用</span>'}</div></div></div>`).join('');
+            // 全部模型都给出来：官方提供商（只读）排在列表末尾，旧实现截到 60 条时
+            // 模型一多就永远切不到它们。sheet 本身可滚动（.sheet-card max-height 78vh）。
+            const rows = doc.items.map((item) => `<div class="row" data-pick="${escapeHtml(item.provider)}|${escapeHtml(item.modelId)}"><div class="grow"><div class="name">${escapeHtml(item.name || item.modelId)}</div><div class="meta"><span>${escapeHtml(item.provider)}</span>${item.readonly ? '<span class="pill">只读</span>' : ''}${item.enabled ? '' : '<span class="pill">已停用</span>'}</div></div></div>`).join('');
             showSheet(`<h2 style="margin:0 0 10px;font-size:14px">切换这个会话使用的模型</h2>${rows}`, () => {
               document.querySelectorAll('[data-pick]').forEach((row) => {
                 row.onclick = async () => {
