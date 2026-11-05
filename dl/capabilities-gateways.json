@@ -1,6 +1,6 @@
 {
  "version": 1,
- "generatedAt": "2026-11-04T22:41:02Z",
+ "generatedAt": "2026-11-05T22:41:03Z",
  "source": "gateway /v1/models probe (scripts/collect-gateway-capabilities.py)",
  "providers": {
   "agentrouter": {
@@ -20,12 +20,12 @@
   },
   "api8888": {
    "ok": true,
-   "count": 9,
+   "count": 25,
    "error": ""
   },
   "codego": {
    "ok": true,
-   "count": 6,
+   "count": 11,
    "error": ""
   },
   "cpa-computer": {
@@ -50,7 +50,7 @@
   },
   "linuxyou": {
    "ok": true,
-   "count": 29,
+   "count": 11,
    "error": ""
   },
   "relayfor": {
@@ -69,9 +69,9 @@
    "error": ""
   },
   "xjm": {
-   "ok": true,
-   "count": 13,
-   "error": ""
+   "ok": false,
+   "count": 0,
+   "error": "HTTP 403"
   }
  },
  "models": [
@@ -186,6 +186,9 @@
    ],
    "context": 96000,
    "output": 32000
+  },
+  {
+   "id": "deepseek-v3.2"
   },
   {
    "id": "cn:deepseek-v3-2-volc",
@@ -323,6 +326,9 @@
    "reasoning": 1
   },
   {
+   "id": "glm-5.1"
+  },
+  {
    "id": "cn:glm-5.2",
    "modalities": [
     "text",
@@ -353,40 +359,13 @@
    "reasoning": 1
   },
   {
-   "id": "gpt-4o-audio-preview"
+   "id": "glm-5.3-flashx"
   },
   {
-   "id": "gpt-4o-realtime-preview"
-  },
-  {
-   "id": "gpt-5.2"
-  },
-  {
-   "id": "gpt-5.2-2025-12-11"
-  },
-  {
-   "id": "gpt-5.2-pro"
-  },
-  {
-   "id": "gpt-5.2-pro-2025-12-11"
-  },
-  {
-   "id": "gpt-5.3-codex-spark"
-  },
-  {
-   "id": "gpt-5.4"
-  },
-  {
-   "id": "gpt-5.4-2026-03-05"
-  },
-  {
-   "id": "gpt-5.4-mini"
+   "id": "glm-5v-turbo"
   },
   {
    "id": "gpt-5.5"
-  },
-  {
-   "id": "gpt-5.6"
   },
   {
    "id": "gpt-5.6-luna"
@@ -432,12 +411,6 @@
   },
   {
    "id": "gpt-6-sol-fast"
-  },
-  {
-   "id": "gpt-image-1"
-  },
-  {
-   "id": "gpt-image-1.5"
   },
   {
    "id": "gpt-image-2"
@@ -650,6 +623,9 @@
    "id": "kimi-k2.6"
   },
   {
+   "id": "kimi-k2.7-code"
+  },
+  {
    "id": "cn:kimi-k2.8-preview",
    "modalities": [
     "text",
@@ -667,6 +643,9 @@
    ],
    "context": 31000,
    "output": 8192
+  },
+  {
+   "id": "kimi-k3"
   },
   {
    "id": "cn:kimi-k3-1",
@@ -694,6 +673,9 @@
   },
   {
    "id": "mimo-v2.5"
+  },
+  {
+   "id": "mimo-v2.5-pro"
   },
   {
    "id": "mimo-v2.6-flash"
@@ -783,6 +765,9 @@
   },
   {
    "id": "qwen3.8-flash-next"
+  },
+  {
+   "id": "qwen3.8-max"
   },
   {
    "id": "cn:space-bunny",
