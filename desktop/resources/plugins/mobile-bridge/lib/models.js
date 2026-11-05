@@ -125,6 +125,73 @@ export function buildDoc(namespaceView, overlay, keyConfigured = {}, now = Date.
         items,
     };
 }
+/**
+ * Append engine-owned providers (the official DeepSeek account/API-key
+ * routes, and anything else a plugin registers with `ctx.llm`) to the phone
+ * document as read-only rows.
+ *
+ * The bridge's write path only speaks `llm-pi-ai`. Anything outside it can be
+ * *selected* for a session (`session.selectModel` takes a provider route) but
+ * must never be written back, so these rows carry `readonly: true` and the
+ * save path drops them before diffing.
+ *
+ * @param doc - the bridge-owned document.
+ * @param groups - live engine catalog groups, in registration order.
+ * @returns the document the phone renders.
+ */
+export function mergeEngineModels(doc, groups) {
+    const owned = new Set(doc.providers.map((provider) => provider.id));
+    const extra = groups.filter((group) => group.id !== '' && !owned.has(group.id) && group.models.length > 0);
+    if (extra.length === 0)
+        return doc;
+    const providers = [...doc.providers];
+    const items = [...doc.items];
+    for (const group of extra) {
+        providers.push({
+            id: group.id,
+            ...(group.name !== undefined ? { name: group.name } : {}),
+            apiKeyConfigured: true,
+            network: null,
+            readonly: true,
+        });
+        let index = 0;
+        for (const model of group.models) {
+            if (model.id === '')
+                continue;
+            const params = {};
+            if (model.contextWindow !== undefined)
+                params.contextWindow = model.contextWindow;
+            if (model.maxTokens !== undefined)
+                params.maxTokens = model.maxTokens;
+            if (model.input !== undefined)
+                params.input = [...model.input];
+            if (model.reasoningEfforts !== undefined)
+                params.reasoningEfforts = model.reasoningEfforts;
+            if (model.defaultEffort !== undefined)
+                params.defaultReasoningEffort = model.defaultEffort;
+            const id = modelId(group.id, model.id);
+            items.push({
+                id,
+                provider: group.id,
+                ...(group.name !== undefined ? { providerName: group.name } : {}),
+                apiKeyConfigured: true,
+                modelId: model.id,
+                ...(model.name !== undefined ? { name: model.name } : {}),
+                params,
+                enabled: true,
+                tags: [],
+                order: index,
+                readonly: true,
+            });
+            index += 1;
+        }
+    }
+    return { ...doc, providers, items };
+}
+/** Which item fields a write may touch — read-only rows are never written. */
+export function writableItems(items, readonlyProviders) {
+    return items.filter((item) => item.readonly !== true && !readonlyProviders.has(item.provider));
+}
 /** Comparable view of one item's fields, for diffing. */
 export function itemFields(item) {
     return {

@@ -50,13 +50,16 @@ import {
   writeStore,
 } from './devices.js'
 import {
+  type EngineModelGroup,
   type MobileModelDoc,
   type ModelOverlay,
   buildDoc,
   engineOps,
   mergeDocs,
+  mergeEngineModels,
   mergePhoneEditsOnto,
   overlayFor,
+  writableItems,
 } from './models.js'
 import { qrSvg } from './qr.js'
 import { directHosts, type NetworkConfig, type NetworkRoute } from './network.js'
@@ -80,7 +83,30 @@ export * from './ws.js'
 export const name = 'dsh-mobile-bridge'
 
 /** Services the host half needs. */
-export const inject = ['webServer', 'connection', 'credentials']
+export const inject = ['webServer', 'connection', 'credentials', 'llm']
+
+/**
+ * The slice of the engine's LLM registry this bridge reads.
+ *
+ * `llm-pi-ai` is configuration the bridge owns. Everything else — the official
+ * DeepSeek account route after login, the official API-key route, and any
+ * plugin-registered adapter — is live registry state: it can be *selected* for
+ * a session but never written through the settings namespace.
+ */
+interface LlmRuntimeLike {
+  listProviders(): { id: string; name?: string }[]
+  listModels(provider: string): Promise<readonly { id: string; name?: string; description?: string; inputModalities?: readonly string[] }[]>
+  resolveModelInfo(
+    provider: string,
+    model: string,
+    signal?: AbortSignal,
+  ): Promise<{
+    inputModalities?: readonly string[]
+    context?: { contextWindow?: number }
+    defaultMaxTokens?: number
+    reasoning?: { efforts?: readonly { id: string; name?: string }[]; defaultEffort?: string }
+  }>
+}
 
 /** Public prefix the tunnel forwards. */
 export const PUBLIC_PREFIX = '/mobile'
@@ -1553,7 +1579,7 @@ export function apply(ctx: Context, config: { publicUrl?: string } = {}): void {
     return undefined
   }
 
-  const buildModelDoc = async (store: BridgeStore): Promise<MobileModelDoc> => {
+  const buildModelDocFor = async (store: BridgeStore): Promise<MobileModelDoc> => {
     const view = await modelNamespace()
     const refs = new Set<string>()
     const value = isRecord(view?.value) ? (view?.value as Record<string, unknown>) : {}
@@ -1571,6 +1597,66 @@ export function apply(ctx: Context, config: { publicUrl?: string } = {}): void {
       }
     }
     return buildDoc(view, overlayOf(store), keyConfigured, Date.now(), networkOf(store).routes ?? {})
+  }
+
+  /** The engine's live LLM registry, minus the routes this bridge configures. */
+  const engineModelGroups = async (owned: ReadonlySet<string>): Promise<EngineModelGroup[]> => {
+    const llm = ctx.get('llm') as unknown as LlmRuntimeLike | undefined
+    if (llm === undefined || typeof llm.listProviders !== 'function' || typeof llm.listModels !== 'function') return []
+    const groups: EngineModelGroup[] = []
+    for (const provider of llm.listProviders()) {
+      if (typeof provider?.id !== 'string' || provider.id === '' || owned.has(provider.id)) continue
+      try {
+        const models = await llm.listModels(provider.id)
+        const entries: EngineModelGroup['models'] = []
+        for (const model of models) {
+          if (typeof model?.id !== 'string' || model.id === '') continue
+          let resolved: Awaited<ReturnType<LlmRuntimeLike['resolveModelInfo']>> | undefined
+          try {
+            resolved = await llm.resolveModelInfo(provider.id, model.id)
+          } catch {
+            resolved = undefined
+          }
+          const efforts = resolved?.reasoning?.efforts
+          entries.push({
+            id: model.id,
+            ...(typeof model.name === 'string' && model.name !== '' ? { name: model.name } : {}),
+            ...(typeof model.description === 'string' && model.description !== '' ? { description: model.description } : {}),
+            ...(typeof resolved?.context?.contextWindow === 'number' ? { contextWindow: resolved.context.contextWindow } : {}),
+            ...(typeof resolved?.defaultMaxTokens === 'number' ? { maxTokens: resolved.defaultMaxTokens } : {}),
+            ...(Array.isArray(resolved?.inputModalities) ? { input: resolved.inputModalities.map(String) } : {}),
+            ...(Array.isArray(efforts) && efforts.length > 0
+              ? { reasoningEfforts: Object.fromEntries(efforts.map((effort) => [String(effort.id), String(effort.id)])) as Record<string, string> }
+              : {}),
+            ...(typeof resolved?.reasoning?.defaultEffort === 'string' ? { defaultEffort: resolved.reasoning.defaultEffort } : {}),
+          })
+        }
+        if (entries.length > 0) {
+          groups.push({
+            id: provider.id,
+            ...(typeof provider.name === 'string' && provider.name !== '' ? { name: provider.name } : {}),
+            models: entries,
+          })
+        }
+      } catch (error) {
+        log(`引擎模型目录读取失败：${provider.id}（${String((error as Error)?.message ?? error)}）`)
+      }
+    }
+    return groups
+  }
+
+  /**
+   * The document the phone renders: the bridge-owned `llm-pi-ai` rows plus
+   * every other provider the engine currently advertises (official DeepSeek
+   * login, official API key, plugin routes) as read-only rows.
+   *
+   * Before 0.2.45 only `llm-pi-ai` was read, so a phone could not see — let
+   * alone switch to — the official DeepSeek models the desktop shows.
+   */
+  const buildModelDoc = async (store: BridgeStore): Promise<MobileModelDoc> => {
+    const managed = await buildModelDocFor(store)
+    const groups = await engineModelGroups(new Set(managed.providers.map((provider) => provider.id)))
+    return mergeEngineModels(managed, groups)
   }
 
   const networkOf = (store: BridgeStore): NetworkConfig => store.network ?? {}
@@ -2810,28 +2896,35 @@ document.addEventListener('click', async (event) => {
         return
       }
       const store = load()
-      const current = await buildModelDoc(store)
+      // 写路径只碰桥接自己的 llm-pi-ai 文档。引擎侧 live provider（官方 DeepSeek 账号 /
+      // 官方 API key / 其它插件注册的路由）只读：手机可以选它们，但绝不写回配置——
+      // 否则会把官方模型塞进 pi-ai 的 providers，或把官方 provider 整段 unset。
+      const managedDoc = await buildModelDocFor(store)
+      const engineGroups = await engineModelGroups(new Set(managedDoc.providers.map((provider) => provider.id)))
+      const readonlyProviders = new Set(engineGroups.map((group) => group.id))
+      const current = mergeEngineModels(managedDoc, engineGroups)
       const baseRevision = Number(body.baseRevision ?? -1)
       const overlayRevision = Number(body.overlayRevision ?? -1)
-      const incoming = Array.isArray(body.items) ? body.items : []
+      const incoming = writableItems(Array.isArray(body.items) ? (body.items as MobileModelDoc['items']) : [], readonlyProviders)
       // A phone that failed to load a document must not be able to erase every
       // provider by submitting an empty list — that is a wipe dressed as a save.
       // Deleting everything stays possible, but it has to be asked for.
-      if (incoming.length === 0 && current.items.length > 0 && body.allowEmpty !== true) {
-        log(`拒绝空文档提交（当前 ${current.items.length} 个模型）`)
+      if (incoming.length === 0 && managedDoc.items.length > 0 && body.allowEmpty !== true) {
+        log(`拒绝空文档提交（当前 ${managedDoc.items.length} 个模型）`)
         sendJson(res, 200, {
           ok: false,
           code: 'E_EMPTY_DOC',
-          message: `拒绝保存空列表：电脑端现在有 ${current.items.length} 个模型。请先重新读取，或显式传 allowEmpty 表示确实要清空。`,
+          message: `拒绝保存空列表：电脑端现在有 ${managedDoc.items.length} 个模型。请先重新读取，或显式传 allowEmpty 表示确实要清空。`,
           doc: current,
         })
         return
       }
-      const wanted: MobileModelDoc = { ...current, items: incoming as MobileModelDoc['items'] }
+      const wanted: MobileModelDoc = { ...managedDoc, items: incoming }
       const force = body.force === true
 
       if (!force && (baseRevision !== current.revision || overlayRevision !== current.overlayRevision)) {
-        const merged = mergeDocs((body.base ?? incoming) as MobileModelDoc['items'], current.items, incoming as MobileModelDoc['items'])
+        const base = writableItems(Array.isArray(body.base) ? (body.base as MobileModelDoc['items']) : incoming, readonlyProviders)
+        const merged = mergeDocs(base, managedDoc.items, incoming)
         if (!merged.merged) {
           log(`模型配置冲突：${merged.conflicts.length} 处被两端同时修改`)
           sendJson(res, 200, {
@@ -2849,19 +2942,15 @@ document.addEventListener('click', async (event) => {
         // 掉桌面新增的模型——2026-09-24 实测过的数据丢失，别再退回去）。
         // 不带 `base`（老客户端）→ 维持原语义（手机列表整表为准），升级后自动享受合并。
         if (Array.isArray(body.base)) {
-          wanted.items = mergePhoneEditsOnto(
-            current.items,
-            body.base as MobileModelDoc['items'],
-            incoming as MobileModelDoc['items'],
-          )
+          wanted.items = mergePhoneEditsOnto(managedDoc.items, base, incoming)
           const kept = wanted.items.length - incoming.length
           if (kept > 0) log(`模型配置保存（三方合并）：保住桌面侧 ${kept} 个手机未见的模型`)
         } else {
-          wanted.items = incoming as MobileModelDoc['items']
+          wanted.items = incoming
         }
       }
 
-      const ops = engineOps(current, wanted)
+      const ops = engineOps(managedDoc, wanted)
       if (ops.length > 0) {
         snapshotSettings()
         await callEngine(ctx, 'settings.mutate', { ns: MODEL_NS, ops, expectedRevision: current.revision })

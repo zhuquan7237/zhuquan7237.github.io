@@ -901,8 +901,8 @@
         <button class="danger" id="unpair" style="margin-left:8px">解除本机绑定</button>
       </div>
       <div class="group-title">模型配置（${items.length} 个，来自电脑端）</div>
-      ${provider.map((row) => `<div class="card"><h2>${escapeHtml(row.name || row.id)}</h2><p>${escapeHtml(row.baseURL || '')} · ${escapeHtml(row.apiMode || '')} · ${row.apiKeyConfigured ? 'Key 已配置' : 'Key 未配置'}</p></div>`).join('')}
-      ${items.length ? `<div class="card"><h2>逐模型开关</h2><p>启用状态与标签是手机端的标记，保存在电脑端桥接里；引擎本身没有「停用某个模型」这个字段。</p>${items.map((item) => `<label class="field" style="display:flex;align-items:center;gap:10px"><input type="checkbox" data-model="${escapeHtml(item.id)}" ${item.enabled ? 'checked' : ''}/><span>${escapeHtml(item.name || item.modelId)}<br><span class="meta">${escapeHtml(item.provider)} · 图片 ${(item.params && item.params.input || []).includes('image') ? '是' : '否'} · 上下文 ${(item.params && item.params.contextWindow) || '—'}</span></span></label>`).join('')}<button class="primary" id="save-models">保存模型开关</button></div>` : ''}
+      ${provider.map((row) => `<div class="card"><h2>${escapeHtml(row.name || row.id)}${row.readonly ? ' <span class="meta">· 只读</span>' : ''}</h2><p>${row.readonly ? '由电脑端的引擎自己管理（官方登录 / 官方 API key），手机可直接选用，改动请到电脑端做。' : `${escapeHtml(row.baseURL || '')} · ${escapeHtml(row.apiMode || '')} · ${row.apiKeyConfigured ? 'Key 已配置' : 'Key 未配置'}`}</p></div>`).join('')}
+      ${items.length ? `<div class="card"><h2>逐模型开关</h2><p>启用状态与标签是手机端的标记，保存在电脑端桥接里；引擎本身没有「停用某个模型」这个字段。只读模型由电脑端管理。</p>${items.map((item) => item.readonly ? `<div class="field" style="display:flex;align-items:center;gap:10px"><span class="meta">只读</span><span>${escapeHtml(item.name || item.modelId)}<br><span class="meta">${escapeHtml(item.provider)} · 图片 ${(item.params && item.params.input || []).includes('image') ? '是' : '否'} · 上下文 ${(item.params && item.params.contextWindow) || '—'}</span></span></div>` : `<label class="field" style="display:flex;align-items:center;gap:10px"><input type="checkbox" data-model="${escapeHtml(item.id)}" ${item.enabled ? 'checked' : ''}/><span>${escapeHtml(item.name || item.modelId)}<br><span class="meta">${escapeHtml(item.provider)} · 图片 ${(item.params && item.params.input || []).includes('image') ? '是' : '否'} · 上下文 ${(item.params && item.params.contextWindow) || '—'}</span></span></label>`).join('')}<button class="primary" id="save-models">保存模型开关</button></div>` : ''}
       <div class="group-title">已绑定的设备（${devices.length}）</div>
       <div class="card">${devices.map((row) => `<div class="row" style="padding:8px 0"><div class="grow"><div class="name">${escapeHtml(row.name || '未命名')}</div><div class="meta"><span>${(row.scopes || []).join('/')}</span><span>${timeText(row.lastSeenAt)}</span>${row.id === (state.device && state.device.id) ? '<span class="pill live">本机</span>' : ''}</div></div>${row.id === (state.device && state.device.id) ? '' : `<button class="ghost danger" data-revoke="${row.id}">解除</button>`}</div>`).join('') || '<p>还没有设备</p>'}</div>
       <div style="height:24px"></div>`;
@@ -923,7 +923,7 @@
     if (save) save.onclick = async () => {
       const boxes = [...document.querySelectorAll('[data-model]')];
       const disabled = boxes.filter((box) => !box.checked).map((box) => box.dataset.model);
-      const items2 = state.doc.items.map((item) => Object.assign({}, item, { enabled: !disabled.includes(item.id) }));
+      const items2 = state.doc.items.filter((item) => !item.readonly).map((item) => Object.assign({}, item, { enabled: !disabled.includes(item.id) }));
       try {
         const result = await api(API.models, { method: 'PUT', body: { baseRevision: state.doc.revision, overlayRevision: state.doc.overlayRevision, items: items2, base: state.doc.items } });
         state.doc = result.doc;
