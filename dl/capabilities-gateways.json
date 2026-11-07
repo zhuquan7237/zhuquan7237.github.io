@@ -1,6 +1,6 @@
 {
  "version": 1,
- "generatedAt": "2026-11-06T22:41:07Z",
+ "generatedAt": "2026-11-07T22:40:30Z",
  "source": "gateway /v1/models probe (scripts/collect-gateway-capabilities.py)",
  "providers": {
   "agentrouter": {
@@ -33,11 +33,6 @@
    "count": 11,
    "error": ""
   },
-  "guga": {
-   "ok": true,
-   "count": 54,
-   "error": ""
-  },
   "hyb": {
    "ok": false,
    "count": 0,
@@ -49,13 +44,23 @@
    "error": ""
   },
   "linuxyou": {
+   "ok": false,
+   "count": 0,
+   "error": "HTTP 403"
+  },
+  "node": {
    "ok": true,
-   "count": 11,
+   "count": 19,
    "error": ""
   },
   "relayfor": {
    "ok": true,
-   "count": 12,
+   "count": 6,
+   "error": ""
+  },
+  "subds": {
+   "ok": true,
+   "count": 1,
    "error": ""
   },
   "syhub": {
@@ -99,12 +104,6 @@
    "id": "bge-reranker-v2-m3"
   },
   {
-   "id": "chatgpt-voice"
-  },
-  {
-   "id": "claude-fable-5"
-  },
-  {
    "id": "claude-fable-5-1"
   },
   {
@@ -115,9 +114,6 @@
   },
   {
    "id": "claude-sonnet-4-6"
-  },
-  {
-   "id": "claude-sonnet-5"
   },
   {
    "id": "claude-sonnet-5-5-high"
@@ -236,7 +232,7 @@
    "id": "deepseek-v4-flash-0731"
   },
   {
-   "id": "deepseek-v4-flash-vision"
+   "id": "deepseek-v4-flash-vision-exp"
   },
   {
    "id": "cn:deepseek-v4-pro",
@@ -333,9 +329,6 @@
    "id": "gemini-3.5-flash-lite"
   },
   {
-   "id": "gemini-3.7-flash"
-  },
-  {
    "id": "gemini-3.8-flash-high"
   },
   {
@@ -343,9 +336,6 @@
   },
   {
    "id": "gemini-4-argon-high"
-  },
-  {
-   "id": "gemma-4-31b"
   },
   {
    "id": "cn:glm-4.6",
@@ -428,10 +418,10 @@
    "id": "glm-5v-turbo"
   },
   {
-   "id": "gpt-5.5"
+   "id": "gpt-4o"
   },
   {
-   "id": "gpt-5.6-luna"
+   "id": "gpt-5.5"
   },
   {
    "id": "gpt-5.6-sol"
@@ -441,9 +431,6 @@
   },
   {
    "id": "gpt-5.6-terra"
-  },
-  {
-   "id": "gpt-6-chat-thinking"
   },
   {
    "id": "gpt-6.1-sol"
@@ -482,9 +469,6 @@
    "id": "gpt-image-2.5"
   },
   {
-   "id": "gpt-image-2.5-4k"
-  },
-  {
    "id": "gpt-image-2.5-flare"
   },
   {
@@ -494,34 +478,7 @@
    "id": "gpt-oss-120b-medium"
   },
   {
-   "id": "gpt-reserve"
-  },
-  {
-   "id": "grok-4.20-multi-agent-xhigh"
-  },
-  {
-   "id": "grok-4.3-fast"
-  },
-  {
-   "id": "grok-4.6"
-  },
-  {
    "id": "grok-4.7"
-  },
-  {
-   "id": "grok-imagine-image"
-  },
-  {
-   "id": "grok-imagine-image-2.0"
-  },
-  {
-   "id": "grok-imagine-image-lite"
-  },
-  {
-   "id": "grok-imagine-image-pro"
-  },
-  {
-   "id": "grok-imagine-video"
   },
   {
    "id": "happyhorse-1.0"
@@ -663,12 +620,6 @@
    "reasoning": 1
   },
   {
-   "id": "jev-latest"
-  },
-  {
-   "id": "jev-1.13"
-  },
-  {
    "id": "cn:kimi-k2-thinking",
    "modalities": [
     "text",
@@ -790,7 +741,7 @@
    "reasoning": 1
   },
   {
-   "id": "minimax-h3"
+   "id": "MiniMax-H3"
   },
   {
    "id": "cn:minimax-m2.5",
@@ -833,33 +784,6 @@
    "context": 1000000
   },
   {
-   "id": "muse-image"
-  },
-  {
-   "id": "muse-video"
-  },
-  {
-   "id": "Nano Banana 2.1"
-  },
-  {
-   "id": "Nano Banana 2 Lite"
-  },
-  {
-   "id": "Nano Banana Pro"
-  },
-  {
-   "id": "nemotron-3.5-lightning"
-  },
-  {
-   "id": "nemotron-3.5-super-vl"
-  },
-  {
-   "id": "NSFW"
-  },
-  {
-   "id": "omni1.1-flash"
-  },
-  {
    "id": "qwen3.5-397b-a17b"
   },
   {
@@ -872,13 +796,7 @@
    "id": "qwen3.7-max"
   },
   {
-   "id": "qwen3.8-27b"
-  },
-  {
    "id": "qwen3.8-flash"
-  },
-  {
-   "id": "qwen3.8-flash-next"
   },
   {
    "id": "qwen3.8-max"
@@ -888,6 +806,9 @@
   },
   {
    "id": "qwen3-embedding-8b"
+  },
+  {
+   "id": "seedream_4.6"
   },
   {
    "id": "sensenova-6.8-flash"
@@ -917,15 +838,6 @@
    "context": 1000000,
    "output": 64000,
    "reasoning": 1
-  },
-  {
-   "id": "veo-3.1-fast"
-  },
-  {
-   "id": "veo-3.1-lite"
-  },
-  {
-   "id": "veo-3.1-quality"
   },
   {
    "id": "wan3.0-video"
