@@ -1,6 +1,6 @@
 {
  "version": 1,
- "generatedAt": "2026-11-07T22:40:30Z",
+ "generatedAt": "2026-11-08T22:40:31Z",
  "source": "gateway /v1/models probe (scripts/collect-gateway-capabilities.py)",
  "providers": {
   "agentrouter": {
@@ -46,7 +46,12 @@
   "linuxyou": {
    "ok": false,
    "count": 0,
-   "error": "HTTP 403"
+   "error": "HTTP 401"
+  },
+  "mistral": {
+   "ok": true,
+   "count": 64,
+   "error": ""
   },
   "node": {
    "ok": true,
@@ -55,7 +60,7 @@
   },
   "relayfor": {
    "ok": true,
-   "count": 6,
+   "count": 5,
    "error": ""
   },
   "subds": {
@@ -119,6 +124,38 @@
    "id": "claude-sonnet-5-5-high"
   },
   {
+   "id": "codestral-latest",
+   "modalities": [
+    "text"
+   ],
+   "context": 256000,
+   "reasoning": 0
+  },
+  {
+   "id": "codestral-2508",
+   "modalities": [
+    "text"
+   ],
+   "context": 256000,
+   "reasoning": 0
+  },
+  {
+   "id": "codestral-embed",
+   "modalities": [
+    "text"
+   ],
+   "context": 8192,
+   "reasoning": 0
+  },
+  {
+   "id": "codestral-embed-2505",
+   "modalities": [
+    "text"
+   ],
+   "context": 8192,
+   "reasoning": 0
+  },
+  {
    "id": "codex-auto-review"
   },
   {
@@ -130,6 +167,9 @@
    "context": 300000,
    "output": 48000,
    "reasoning": 1
+  },
+  {
+   "id": "DeepSeek"
   },
   {
    "id": "deepseek-flash"
@@ -210,7 +250,13 @@
    "reasoning": 1
   },
   {
-   "id": "deepseek-v4.1-flash-1017"
+   "id": "deepseek-v4.1-flash-1017",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 1048576,
+   "reasoning": 1
   },
   {
    "id": "deepseek-v4.1-flash-1017-sjb"
@@ -378,12 +424,11 @@
   {
    "id": "cn:glm-5.2",
    "modalities": [
-    "text",
-    "image"
+    "text"
    ],
-   "context": 1000000,
-   "output": 64000,
-   "reasoning": 1
+   "context": 1048576,
+   "reasoning": 1,
+   "output": 64000
   },
   {
    "id": "glm-5.2-sjb"
@@ -719,6 +764,42 @@
    "context": 1000000
   },
   {
+   "id": "labs-leanstral-1-5",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 262144,
+   "reasoning": 1
+  },
+  {
+   "id": "labs-leanstral-1-5-1",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 262144,
+   "reasoning": 1
+  },
+  {
+   "id": "magistral-medium-latest",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 262144,
+   "reasoning": 1
+  },
+  {
+   "id": "magistral-small-latest",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 262144,
+   "reasoning": 1
+  },
+  {
    "id": "mercury-3"
   },
   {
@@ -784,6 +865,271 @@
    "context": 1000000
   },
   {
+   "id": "ministral-14b-latest",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 262144,
+   "reasoning": 0
+  },
+  {
+   "id": "ministral-14b-2512",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 262144,
+   "reasoning": 0
+  },
+  {
+   "id": "ministral-3b-latest",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 131072,
+   "reasoning": 0
+  },
+  {
+   "id": "ministral-3b-2512",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 131072,
+   "reasoning": 0
+  },
+  {
+   "id": "ministral-8b-latest",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 262144,
+   "reasoning": 0
+  },
+  {
+   "id": "ministral-8b-2512",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 262144,
+   "reasoning": 0
+  },
+  {
+   "id": "mistral-medium-latest",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 262144,
+   "reasoning": 1
+  },
+  {
+   "id": "mistral-code-latest",
+   "modalities": [
+    "text"
+   ],
+   "context": 256000,
+   "reasoning": 0
+  },
+  {
+   "id": "mistral-code-fim-latest",
+   "modalities": [
+    "text"
+   ],
+   "context": 256000,
+   "reasoning": 0
+  },
+  {
+   "id": "mistral-embed",
+   "modalities": [
+    "text"
+   ],
+   "context": 8192,
+   "reasoning": 0
+  },
+  {
+   "id": "mistral-embed-2312",
+   "modalities": [
+    "text"
+   ],
+   "context": 8192,
+   "reasoning": 0
+  },
+  {
+   "id": "mistral-large-latest",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 262144,
+   "reasoning": 0
+  },
+  {
+   "id": "mistral-large-2512",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 262144,
+   "reasoning": 0
+  },
+  {
+   "id": "mistral-large-4",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 1048576,
+   "reasoning": 1
+  },
+  {
+   "id": "mistral-large-4-0",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 1048576,
+   "reasoning": 1
+  },
+  {
+   "id": "mistral-medium-2604",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 262144,
+   "reasoning": 1
+  },
+  {
+   "id": "mistral-medium-3",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 262144,
+   "reasoning": 1
+  },
+  {
+   "id": "mistral-medium-3-5",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 262144,
+   "reasoning": 1
+  },
+  {
+   "id": "mistral-moderation-2603",
+   "modalities": [
+    "text"
+   ],
+   "context": 131071,
+   "reasoning": 0
+  },
+  {
+   "id": "mistral-ocr-latest",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 16384,
+   "reasoning": 0
+  },
+  {
+   "id": "mistral-ocr-2512",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 16384,
+   "reasoning": 0
+  },
+  {
+   "id": "mistral-ocr-3",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 16384,
+   "reasoning": 0
+  },
+  {
+   "id": "mistral-ocr-3-0",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 16384,
+   "reasoning": 0
+  },
+  {
+   "id": "mistral-ocr-4",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 16384,
+   "reasoning": 0
+  },
+  {
+   "id": "mistral-ocr-4-1",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 16384,
+   "reasoning": 0
+  },
+  {
+   "id": "mistral-small-latest",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 262144,
+   "reasoning": 1
+  },
+  {
+   "id": "mistral-small-2603",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 262144,
+   "reasoning": 1
+  },
+  {
+   "id": "mistral-vibe-cli-latest",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 262144,
+   "reasoning": 1
+  },
+  {
+   "id": "mistral-vibe-cli-fast",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 262144,
+   "reasoning": 1
+  },
+  {
+   "id": "mistral-vibe-cli-with-tools",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 262144,
+   "reasoning": 1
+  },
+  {
    "id": "qwen3.5-397b-a17b"
   },
   {
@@ -840,10 +1186,187 @@
    "reasoning": 1
   },
   {
+   "id": "voxtral-mini-latest",
+   "modalities": [
+    "text"
+   ],
+   "context": 16384,
+   "reasoning": 0
+  },
+  {
+   "id": "voxtral-mini-2602",
+   "modalities": [
+    "text"
+   ],
+   "context": 16384,
+   "reasoning": 0
+  },
+  {
+   "id": "voxtral-mini-realtime-latest",
+   "modalities": [
+    "text"
+   ],
+   "context": 32768,
+   "reasoning": 0
+  },
+  {
+   "id": "voxtral-mini-realtime-2602",
+   "modalities": [
+    "text"
+   ],
+   "context": 32768,
+   "reasoning": 0
+  },
+  {
+   "id": "voxtral-mini-transcribe-3",
+   "modalities": [
+    "text"
+   ],
+   "context": 65536,
+   "reasoning": 0
+  },
+  {
+   "id": "voxtral-mini-transcribe-3-0",
+   "modalities": [
+    "text"
+   ],
+   "context": 65536,
+   "reasoning": 0
+  },
+  {
+   "id": "voxtral-mini-transcribe-realtime-2602",
+   "modalities": [
+    "text"
+   ],
+   "context": 32768,
+   "reasoning": 0
+  },
+  {
+   "id": "voxtral-mini-transcribe-realtime-3",
+   "modalities": [
+    "text"
+   ],
+   "context": 65536,
+   "reasoning": 0
+  },
+  {
+   "id": "voxtral-mini-transcribe-realtime-3-0",
+   "modalities": [
+    "text"
+   ],
+   "context": 65536,
+   "reasoning": 0
+  },
+  {
+   "id": "voxtral-mini-tts-latest",
+   "modalities": [
+    "text"
+   ],
+   "context": 4096,
+   "reasoning": 0
+  },
+  {
+   "id": "voxtral-mini-tts-2603",
+   "modalities": [
+    "text"
+   ],
+   "context": 4096,
+   "reasoning": 0
+  },
+  {
+   "id": "voxtral-mini-tts-3",
+   "modalities": [
+    "text"
+   ],
+   "context": 4096,
+   "reasoning": 0
+  },
+  {
+   "id": "voxtral-mini-tts-3-0",
+   "modalities": [
+    "text"
+   ],
+   "context": 4096,
+   "reasoning": 0
+  },
+  {
+   "id": "voxtral-small-latest",
+   "modalities": [
+    "text"
+   ],
+   "context": 32768,
+   "reasoning": 0
+  },
+  {
+   "id": "voxtral-small-2507",
+   "modalities": [
+    "text"
+   ],
+   "context": 32768,
+   "reasoning": 0
+  },
+  {
+   "id": "voxtral-small-transcribe-3",
+   "modalities": [
+    "text"
+   ],
+   "context": 65536,
+   "reasoning": 0
+  },
+  {
+   "id": "voxtral-small-transcribe-3-0",
+   "modalities": [
+    "text"
+   ],
+   "context": 65536,
+   "reasoning": 0
+  },
+  {
    "id": "wan3.0-video"
   },
   {
    "id": "wan3.0-video-prime"
+  },
+  {
+   "id": "zai-glm-latest",
+   "modalities": [
+    "text"
+   ],
+   "context": 1048576,
+   "reasoning": 1
+  },
+  {
+   "id": "zai-glm-5",
+   "modalities": [
+    "text"
+   ],
+   "context": 1048576,
+   "reasoning": 1
+  },
+  {
+   "id": "zai-glm-5-2",
+   "modalities": [
+    "text"
+   ],
+   "context": 1048576,
+   "reasoning": 1
+  },
+  {
+   "id": "zai-glm-5-3",
+   "modalities": [
+    "text"
+   ],
+   "context": 1048576,
+   "reasoning": 1
+  },
+  {
+   "id": "zai-glm-5-3-flash",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 1048576,
+   "reasoning": 1
   }
  ]
 }
