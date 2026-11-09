@@ -6,7 +6,7 @@ import path from "node:path";
 import { homedir } from "node:os";
 import { loadSettings, saveSettings } from "./settings";
 import { syncAllProviderModels, getProvidersInfo } from "./sync-models";
-import { ensureHarness, fetchPublishedVersion, listInstalledHarnesses, startHarnessWeb, stopHarness, stopHarnessTree, type HarnessInstall, type RunningHarness } from "./harness";
+import { ensureHarness, fetchPublishedVersion, listInstalledHarnesses, patchPiAiBlockContent, startHarnessWeb, stopHarness, stopHarnessTree, type HarnessInstall, type RunningHarness } from "./harness";
 import { applyLinuxRuntimeFlags } from "./linux-flags";
 import { createTranslator, shellLocaleFromSetting, type ShellLocale, type Translator } from "./i18n";
 import { FileLogger, collectLogText, logsDir } from "./logs";
@@ -1656,6 +1656,15 @@ async function boot(forceUpdate: boolean): Promise<void> {
       forceUpdate,
     );
     lastInstall = install;
+    // Engine upgrades replace node_modules, so re-apply the adapter patch on
+    // every launch (idempotent). Never blocks boot: an unknown adapter shape
+    // only logs, and the engine still starts.
+    const enginePatch = await patchPiAiBlockContent(install.prefix).catch(() => "unexpected" as const);
+    if (enginePatch === "applied") {
+      shellLog("引擎兼容补丁已应用：内容块流式解析（Mistral 等）");
+    } else if (enginePatch === "unexpected") {
+      shellLog("引擎兼容补丁未命中：适配器源码形状已变，需更新补丁");
+    }
     settings.lastHarnessVersion = install.version;
     await saveSettings(userData(), settings);
 

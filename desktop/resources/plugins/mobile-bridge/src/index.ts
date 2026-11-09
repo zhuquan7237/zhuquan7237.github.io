@@ -61,12 +61,13 @@ import {
   overlayFor,
   writableItems,
 } from './models.js'
+import { cursorFromError } from './cursor.js'
+import { fetchUpstreamJson } from './upstream.js'
 import { qrSvg } from './qr.js'
 import { directHosts, type NetworkConfig, type NetworkRoute } from './network.js'
 import { startRelayLink } from './relay.js'
 import { QuestionsMuxClient } from './mux-client.js'
 import { createServer as createHttpServer, request as httpRequest } from 'node:http'
-import { request as httpsRequest } from 'node:https'
 import { connect as netConnect } from 'node:net'
 import { networkInterfaces } from 'node:os'
 import { normalizeSince } from './hello.js'
@@ -1526,9 +1527,10 @@ export function apply(ctx: Context, config: { publicUrl?: string } = {}): void {
       try {
         return await callEngine(ctx, 'session.page', { ...base, throughSeq: through })
       } catch (error) {
-        const match = /past cursor (\d+)/.exec(String((error as Error)?.message ?? error))
-        if (match === null) throw error
-        headSeqs.set(sessionId, Number(match[1]))
+        const text = String((error as Error)?.message ?? error)
+        const parsed = cursorFromError(text)
+        if (parsed === null) throw error
+        headSeqs.set(sessionId, parsed)
       }
     }
     throw new Error('无法确定会话游标')
@@ -3148,49 +3150,7 @@ document.addEventListener('click', async (event) => {
     } catch {
       return { ok: false, code: 'E_BAD_URL', message: `接口地址无法解析：${baseURL}` }
     }
-    const lib = target.protocol === 'http:' ? httpRequest : httpsRequest
-    const outcome = await new Promise<{ status: number; body: string } | { error: string }>((finish) => {
-      let settled = false
-      const done = (result: { status: number; body: string } | { error: string }): void => {
-        if (!settled) {
-          settled = true
-          finish(result)
-        }
-      }
-      let outbound: ReturnType<typeof lib>
-      try {
-        outbound = lib(
-          {
-            host: target.hostname,
-            port: target.port !== '' ? Number(target.port) : target.protocol === 'http:' ? 80 : 443,
-            path: target.pathname + target.search,
-            method: 'GET',
-            headers: {
-              accept: 'application/json',
-              ...(key !== '' ? { authorization: `Bearer ${key}` } : {}),
-              'user-agent': 'dsh-mobile-bridge',
-            },
-          },
-          (reply) => {
-            let raw = ''
-            reply.setEncoding('utf8')
-            reply.on('data', (chunk: string) => {
-              raw += chunk
-            })
-            reply.on('end', () => done({ status: reply.statusCode ?? 0, body: raw }))
-          },
-        )
-      } catch (error) {
-        done({ error: error instanceof Error ? error.message : String(error) })
-        return
-      }
-      outbound.on('error', (error) => done({ error: error.message }))
-      outbound.setTimeout(30_000, () => {
-        outbound.destroy()
-        done({ error: '请求上游超时（30 秒）' })
-      })
-      outbound.end()
-    })
+    const outcome = await fetchUpstreamJson(target, key)
     if ('error' in outcome) {
       return { ok: false, code: 'E_UPSTREAM', message: `请求上游失败：${outcome.error}` }
     }

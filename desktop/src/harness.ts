@@ -249,6 +249,105 @@ export async function ensureHarness(
   return { version, bin: dshBin(prefix), prefix };
 }
 
+/** Marker embedded in the patched adapter; its presence means the patch is in. */
+export const PI_AI_BLOCK_MARKER = "/* dsh:block-content-array */"
+
+export type EnginePatchResult = "applied" | "already" | "missing" | "unexpected"
+
+const PI_AI_ORIGINAL = `                    if (choice.delta.content !== null &&
+                        choice.delta.content !== undefined &&
+                        choice.delta.content.length > 0) {
+                        const block = ensureTextBlock();
+                        block.text += choice.delta.content;
+                        stream.push({
+                            type: "text_delta",
+                            contentIndex: getContentIndex(block),
+                            delta: choice.delta.content,
+                            partial: output,
+                        });
+                    }`
+
+const PI_AI_PATCHED = `                    ${PI_AI_BLOCK_MARKER}
+                    // Strict OpenAI-compatible providers (Mistral) stream typed content
+                    // blocks instead of a string. Concatenating that array yields
+                    // "[object Object]", so map thinking -> reasoning and text -> text.
+                    const rawContent = choice.delta.content;
+                    if (Array.isArray(rawContent)) {
+                        for (const part of rawContent) {
+                            if (!part || typeof part !== "object")
+                                continue;
+                            if (part.type === "thinking") {
+                                const source = part.thinking;
+                                const txt = Array.isArray(source)
+                                    ? source.map((t) => (t && typeof t.text === "string" ? t.text : "")).join("")
+                                    : typeof source === "string" ? source : "";
+                                if (txt.length > 0) {
+                                    const tblock = ensureThinkingBlock("thinking");
+                                    tblock.thinking += txt;
+                                    stream.push({
+                                        type: "thinking_delta",
+                                        contentIndex: getContentIndex(tblock),
+                                        delta: txt,
+                                        partial: output,
+                                    });
+                                }
+                            }
+                            else if (part.type === "text") {
+                                const txt = typeof part.text === "string" ? part.text : "";
+                                if (txt.length > 0) {
+                                    const block = ensureTextBlock();
+                                    block.text += txt;
+                                    stream.push({
+                                        type: "text_delta",
+                                        contentIndex: getContentIndex(block),
+                                        delta: txt,
+                                        partial: output,
+                                    });
+                                }
+                            }
+                        }
+                    }
+                    else if (rawContent !== null && rawContent !== undefined && rawContent.length > 0) {
+                        const block = ensureTextBlock();
+                        block.text += rawContent;
+                        stream.push({
+                            type: "text_delta",
+                            contentIndex: getContentIndex(block),
+                            delta: rawContent,
+                            partial: output,
+                        });
+                    }`
+
+/**
+ * Teach the installed engine's OpenAI-compatible adapter to read typed content
+ * blocks (Mistral and similar strict providers), so a reasoning answer renders
+ * as reasoning + text instead of "[object Object]".
+ *
+ * Runs against the harness prefix on every launch because an engine upgrade
+ * replaces node_modules. Idempotent: a second call returns "already".
+ */
+export async function patchPiAiBlockContent(prefix: string): Promise<EnginePatchResult> {
+  const target = path.join(
+    prefix,
+    "node_modules",
+    "@earendil-works",
+    "pi-ai",
+    "dist",
+    "api",
+    "openai-completions.js",
+  )
+  let source: string
+  try {
+    source = await readFile(target, "utf8")
+  } catch {
+    return "missing"
+  }
+  if (source.includes(PI_AI_BLOCK_MARKER)) return "already"
+  if (!source.includes(PI_AI_ORIGINAL)) return "unexpected"
+  await writeFile(target, source.replace(PI_AI_ORIGINAL, PI_AI_PATCHED), "utf8")
+  return "applied"
+}
+
 /**
  * `dsh web` flags. The engine refuses `--host 0.0.0.0` on purpose ("it would
  * expose remote code execution to the network"), so the shell stays on loopback
