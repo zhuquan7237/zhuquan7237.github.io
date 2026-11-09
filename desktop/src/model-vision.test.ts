@@ -451,3 +451,68 @@ describe("reasoning efforts", () => {
     expect(plan.models[0].changes.some((change) => change.field === "input")).toBe(false);
   });
 });
+
+/**
+ * A route may serve a strict subset of a model's reasoning levels (Mistral
+ * rejects `minimal`/`medium` for `deepseek-v4-1-flash-1017`). The catalogue is
+ * keyed by model id, so per-route truth has to live in an override — and the
+ * override must reach `reasoningEfforts`, not just the resolver.
+ */
+describe("per-route reasoning overrides", () => {
+  const levels = ["low", "high", "xhigh", "max"] as const;
+
+  it("resolves an override as the manual answer", () => {
+    const capabilities = resolveCapabilities("deepseek-v4-1-flash-1017", {
+      override: { reasoning: { kind: "efforts", levels: [...levels] } },
+    });
+    expect(capabilities.reasoning.source).toBe("manual");
+    expect(capabilities.reasoning.value).toEqual({ kind: "efforts", levels: [...levels] });
+    expect(wireReasoning(capabilities.reasoning.value!)).toEqual({
+      low: "low",
+      high: "high",
+      xhigh: "xhigh",
+      max: "max",
+    });
+  });
+
+  it("plans the override into reasoningEfforts instead of the catalogue's list", () => {
+    const catalogue = catalogueWith({
+      "deepseek-v4-1-flash-1017": { m: ["text"], c: 1048576, o: 262144, r: ["minimal", "low", "medium", "high", "xhigh", "max"] },
+    });
+    const plan = planRoute({
+      route: "mistral",
+      models: [{ id: "deepseek-v4-1-flash-1017", name: "DeepSeek V4.1 Flash (Mistral)" }],
+      stored: [{ id: "deepseek-v4-1-flash-1017" }],
+      catalogue,
+      overrides: { "deepseek-v4-1-flash-1017": { reasoning: { kind: "efforts", levels: [...levels] } } },
+    });
+    const change = plan.models[0].changes.find((entry) => entry.field === "reasoningEfforts");
+    expect(change?.source).toBe("manual");
+    expect(change?.to).toEqual({ low: "low", high: "high", xhigh: "xhigh", max: "max" });
+  });
+
+  it("lets the catalogue win without an override (why the override is required)", () => {
+    const catalogue = catalogueWith({
+      "deepseek-v4-1-flash-1017": { m: ["text"], c: 1048576, o: 262144, r: ["minimal", "low", "medium", "high", "xhigh", "max"] },
+    });
+    const plan = planRoute({
+      route: "mistral",
+      models: [{ id: "deepseek-v4-1-flash-1017" }],
+      stored: [{ id: "deepseek-v4-1-flash-1017", reasoningEfforts: { low: "low", high: "high", xhigh: "xhigh", max: "max" } }],
+      catalogue,
+    });
+    const change = plan.models[0].changes.find((entry) => entry.field === "reasoningEfforts");
+    // The stored list is a declaration, not an override: the catalogue still
+    // corrects it back to the six levels the model id advertises globally —
+    // including ones this route rejects. Only an explicit override holds.
+    expect(change?.source).toBe("catalogue");
+    expect(Object.keys(change?.to as Record<string, string>)).toEqual([
+      "minimal",
+      "low",
+      "medium",
+      "high",
+      "xhigh",
+      "max",
+    ]);
+  });
+});

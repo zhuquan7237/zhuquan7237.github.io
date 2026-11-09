@@ -134,6 +134,11 @@ jobs:
           body: |
             请用 ${{ steps.version.outputs.version }}。不要用更早的版本。
 
+            **0.8.3 → 0.8.4**
+            - **模型能力可以按路由覆盖思考档位**：全局能力目录按模型 id 索引，同一个模型在 A 家支持 6 档、在 B 家只支持 4 档时，原来的「手动覆盖」只能改图片 / 上下文 / 输出，改不了推理档位——同步一跑就把上游不支持的 `minimal` / `medium` 又写回去。现在 `/dsh-model-vision/override` 支持 `field: "reasoning"`（传档位数组，`null` 恢复自动），覆盖值在同步后仍然生效。
+            - 实测：Mistral 的 `deepseek-v4-1-flash-1017` 固定为 low / high / xhigh / max 四档，引擎设置与 `/mobile/models` 都只剩这四档，点「立即同步」后 applied=0、不再回写。
+            - 本次改 model-vision 插件（0.3.4）；mobile-bridge 仍为 0.2.47，手机 App 无需更新。
+
             **0.8.2 → 0.8.3**
             - **思考输出不再显示成 `[object Object]`（Mistral 等严格提供商）**：引擎的 OpenAI 兼容适配器把 `delta.content` 当字符串拼接，而 Mistral 开思考后返回的是块数组（thinking + text）。桌面端启动时会给引擎自动打兼容补丁：幂等、引擎升级后重打、补丁不命中只记日志不阻塞启动。实测 `reasoningEffort=max` 时思考过程与正文都正常，工具调用不受影响。
             - **「从上游同步模型」不再 30 秒超时**：桥接原来用 `node:https` 拉 `/v1/models`，绕过了引擎启动时安装的代理调度器，凡是要走代理的提供商（如 `api.mistral.ai`）必然超时；改用 `fetch` 后实测 mistral 返回 64 个模型。

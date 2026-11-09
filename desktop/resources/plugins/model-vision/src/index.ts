@@ -32,12 +32,16 @@ import {
   type Catalogue,
   type CatalogueEntry,
   type Modality,
+  type ReasoningCapability,
+  type ReasoningLevel,
   MODALITIES,
+  REASONING_LEVELS,
   catalogueFromModels,
   normalizeModelId,
   parseCatalogue,
   sourceLabel,
   upstreamCapabilities,
+  wireReasoning,
 } from './capabilities.js'
 import { type RoutePlan, applyPlan, normalizedInput, planRoute, summarizePlan } from './sync.js'
 
@@ -485,7 +489,7 @@ export function apply(ctx: Context): void {
   }
 
   // ----------------------------------------------------------------- overrides
-  type OverrideField = 'input' | 'contextWindow' | 'maxTokens'
+  type OverrideField = 'input' | 'contextWindow' | 'maxTokens' | 'reasoning'
 
   /**
    * Remember a hand-set value (or forget one) so every later sync treats it as
@@ -494,13 +498,14 @@ export function apply(ctx: Context): void {
    * while an override is unambiguous, and that is what lets sync be aggressive
    * without ever eating a user's decision.
    */
-  const recordOverride = (route: string, model: string, field: OverrideField, value: Modality[] | number | undefined): void => {
+  const recordOverride = (route: string, model: string, field: OverrideField, value: Modality[] | number | ReasoningCapability | undefined): void => {
     const all = { ...(state.overrides ?? {}) }
     const forRoute = { ...(all[route] ?? {}) }
     const entry: CapabilityOverride = { ...(forRoute[model] ?? {}) }
     if (value === undefined) delete entry[field]
     else if (field === 'input') entry.input = value as Modality[]
     else if (field === 'contextWindow') entry.contextWindow = value as number
+    else if (field === 'reasoning') entry.reasoning = value as ReasoningCapability
     else entry.maxTokens = value as number
     if (Object.keys(entry).length > 0) forRoute[model] = entry
     else delete forRoute[model]
@@ -521,7 +526,7 @@ export function apply(ctx: Context): void {
     route: string,
     model: string,
     field: OverrideField,
-    value: Modality[] | number | undefined,
+    value: Modality[] | number | ReasoningCapability | undefined,
   ): Promise<void> => {
     const next = storedModels(route).map((entry) => ({ ...entry }))
     let index = next.findIndex((entry) => entry.id === model)
@@ -533,8 +538,16 @@ export function apply(ctx: Context): void {
       next.push({ id: model })
     }
     const entry = { ...next[index] }
-    if (value === undefined) delete entry[field]
-    else entry[field] = Array.isArray(value) ? [...value] : value
+    // The engine spells reasoning as `reasoningEfforts`; a level list maps to
+    // {level: wireSpelling}. `undefined` (toggle) has no spelling to write.
+    const engineField = field === 'reasoning' ? 'reasoningEfforts' : field
+    if (value === undefined) delete entry[engineField]
+    else if (field === 'reasoning') {
+      const wired = wireReasoning(value as ReasoningCapability)
+      if (wired === undefined) delete entry.reasoningEfforts
+      else entry.reasoningEfforts = wired
+    }
+    else entry[engineField] = Array.isArray(value) ? [...value] : value
     next[index] = entry
     swallowEcho = value !== undefined
     try {
@@ -576,16 +589,34 @@ export function apply(ctx: Context): void {
       const route = typeof body.provider === 'string' ? body.provider : ''
       const model = typeof body.model === 'string' ? body.model : ''
       const field =
-        body.field === 'contextWindow' || body.field === 'maxTokens' || body.field === 'input' ? body.field : undefined
+        body.field === 'contextWindow' || body.field === 'maxTokens' || body.field === 'input' || body.field === 'reasoning'
+          ? body.field
+          : undefined
       if (route === '' || model === '' || field === undefined) {
         sendJson(res, 400, { ok: false, message: '缺少 provider / model / field' })
         return
       }
-      let value: Modality[] | number | undefined
+      let value: Modality[] | number | ReasoningCapability | undefined
       if (field === 'input') {
         const raw = Array.isArray(body.value) ? body.value : []
         const kept = raw.filter((v): v is Modality => MODALITIES.includes(v as Modality))
         value = kept.length > 0 ? [...new Set(kept)] : ['text']
+      } else if (field === 'reasoning') {
+        if (body.value === null) {
+          value = undefined
+        } else {
+          // A route may serve a level list its provider actually accepts. The
+          // global catalogue is keyed by model id, so the same id on two routes
+          // can differ — this override is the per-route answer. `null` clears
+          // it and hands the field back to the resolver.
+          const raw = Array.isArray(body.value) ? body.value : []
+          const levels = [...new Set(raw.filter((v): v is ReasoningLevel => REASONING_LEVELS.includes(v as ReasoningLevel)))]
+          if (levels.length === 0) {
+            sendJson(res, 400, { ok: false, message: 'reasoning 需要档位数组（如 low / high / xhigh / max）' })
+            return
+          }
+          value = { kind: 'efforts', levels }
+        }
       } else if (body.value === null) {
         value = undefined
       } else {

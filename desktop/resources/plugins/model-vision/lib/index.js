@@ -25,7 +25,7 @@ import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { homedir } from 'node:os';
 import { fileURLToPath } from 'node:url';
-import { MODALITIES, catalogueFromModels, normalizeModelId, parseCatalogue, sourceLabel, upstreamCapabilities, } from './capabilities.js';
+import { MODALITIES, REASONING_LEVELS, catalogueFromModels, normalizeModelId, parseCatalogue, sourceLabel, upstreamCapabilities, wireReasoning, } from './capabilities.js';
 import { applyPlan, normalizedInput, planRoute, summarizePlan } from './sync.js';
 export * from './capabilities.js';
 export * from './sync.js';
@@ -422,6 +422,8 @@ export function apply(ctx) {
             entry.input = value;
         else if (field === 'contextWindow')
             entry.contextWindow = value;
+        else if (field === 'reasoning')
+            entry.reasoning = value;
         else
             entry.maxTokens = value;
         if (Object.keys(entry).length > 0)
@@ -454,10 +456,20 @@ export function apply(ctx) {
             next.push({ id: model });
         }
         const entry = { ...next[index] };
+        // The engine spells reasoning as `reasoningEfforts`; a level list maps to
+        // {level: wireSpelling}. `undefined` (toggle) has no spelling to write.
+        const engineField = field === 'reasoning' ? 'reasoningEfforts' : field;
         if (value === undefined)
-            delete entry[field];
+            delete entry[engineField];
+        else if (field === 'reasoning') {
+            const wired = wireReasoning(value);
+            if (wired === undefined)
+                delete entry.reasoningEfforts;
+            else
+                entry.reasoningEfforts = wired;
+        }
         else
-            entry[field] = Array.isArray(value) ? [...value] : value;
+            entry[engineField] = Array.isArray(value) ? [...value] : value;
         next[index] = entry;
         swallowEcho = value !== undefined;
         try {
@@ -498,7 +510,9 @@ export function apply(ctx) {
             const body = await readBody(req);
             const route = typeof body.provider === 'string' ? body.provider : '';
             const model = typeof body.model === 'string' ? body.model : '';
-            const field = body.field === 'contextWindow' || body.field === 'maxTokens' || body.field === 'input' ? body.field : undefined;
+            const field = body.field === 'contextWindow' || body.field === 'maxTokens' || body.field === 'input' || body.field === 'reasoning'
+                ? body.field
+                : undefined;
             if (route === '' || model === '' || field === undefined) {
                 sendJson(res, 400, { ok: false, message: '缺少 provider / model / field' });
                 return;
@@ -508,6 +522,24 @@ export function apply(ctx) {
                 const raw = Array.isArray(body.value) ? body.value : [];
                 const kept = raw.filter((v) => MODALITIES.includes(v));
                 value = kept.length > 0 ? [...new Set(kept)] : ['text'];
+            }
+            else if (field === 'reasoning') {
+                if (body.value === null) {
+                    value = undefined;
+                }
+                else {
+                    // A route may serve a level list its provider actually accepts. The
+                    // global catalogue is keyed by model id, so the same id on two routes
+                    // can differ — this override is the per-route answer. `null` clears
+                    // it and hands the field back to the resolver.
+                    const raw = Array.isArray(body.value) ? body.value : [];
+                    const levels = [...new Set(raw.filter((v) => REASONING_LEVELS.includes(v)))];
+                    if (levels.length === 0) {
+                        sendJson(res, 400, { ok: false, message: 'reasoning 需要档位数组（如 low / high / xhigh / max）' });
+                        return;
+                    }
+                    value = { kind: 'efforts', levels };
+                }
             }
             else if (body.value === null) {
                 value = undefined;
