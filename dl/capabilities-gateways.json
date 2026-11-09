@@ -1,6 +1,6 @@
 {
  "version": 1,
- "generatedAt": "2026-11-08T22:40:31Z",
+ "generatedAt": "2026-11-09T22:40:30Z",
  "source": "gateway /v1/models probe (scripts/collect-gateway-capabilities.py)",
  "providers": {
   "agentrouter": {
@@ -55,12 +55,12 @@
   },
   "node": {
    "ok": true,
-   "count": 19,
+   "count": 20,
    "error": ""
   },
   "relayfor": {
    "ok": true,
-   "count": 5,
+   "count": 7,
    "error": ""
   },
   "subds": {
@@ -75,7 +75,7 @@
   },
   "wb2api": {
    "ok": true,
-   "count": 51,
+   "count": 56,
    "error": ""
   },
   "xjm": {
@@ -167,9 +167,6 @@
    "context": 300000,
    "output": 48000,
    "reasoning": 1
-  },
-  {
-   "id": "DeepSeek"
   },
   {
    "id": "deepseek-flash"
@@ -463,6 +460,16 @@
    "id": "glm-5v-turbo"
   },
   {
+   "id": "cn:glm5.3flash-ctrl",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 1000000,
+   "output": 131072,
+   "reasoning": 1
+  },
+  {
    "id": "gpt-4o"
   },
   {
@@ -616,6 +623,46 @@
   },
   {
    "id": "cn:hy4-preview-x",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 960000,
+   "output": 64000,
+   "reasoning": 1
+  },
+  {
+   "id": "cn:hy4flash-exp1",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 960000,
+   "output": 64000,
+   "reasoning": 1
+  },
+  {
+   "id": "cn:hy4flash-exp2",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 960000,
+   "output": 64000,
+   "reasoning": 1
+  },
+  {
+   "id": "cn:hy4flash-exp3",
+   "modalities": [
+    "text",
+    "image"
+   ],
+   "context": 960000,
+   "output": 64000,
+   "reasoning": 1
+  },
+  {
+   "id": "cn:hy4flash-exp4",
    "modalities": [
     "text",
     "image"
