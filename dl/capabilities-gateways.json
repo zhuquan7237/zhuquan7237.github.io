@@ -1,6 +1,6 @@
 {
  "version": 1,
- "generatedAt": "2026-11-09T22:40:30Z",
+ "generatedAt": "2026-11-10T22:40:08Z",
  "source": "gateway /v1/models probe (scripts/collect-gateway-capabilities.py)",
  "providers": {
   "agentrouter": {
@@ -20,7 +20,7 @@
   },
   "api8888": {
    "ok": true,
-   "count": 83,
+   "count": 34,
    "error": ""
   },
   "codego": {
@@ -60,7 +60,7 @@
   },
   "relayfor": {
    "ok": true,
-   "count": 7,
+   "count": 8,
    "error": ""
   },
   "subds": {
@@ -104,9 +104,6 @@
    "context": 300000,
    "output": 48000,
    "reasoning": 1
-  },
-  {
-   "id": "bge-reranker-v2-m3"
   },
   {
    "id": "claude-fable-5-1"
@@ -256,12 +253,6 @@
    "reasoning": 1
   },
   {
-   "id": "deepseek-v4.1-flash-1017-sjb"
-  },
-  {
-   "id": "deepseek-v4.1-flash-sjb"
-  },
-  {
    "id": "cn:deepseek-v4-flash",
    "modalities": [
     "text",
@@ -273,9 +264,6 @@
   },
   {
    "id": "deepseek-v4-flash-0731"
-  },
-  {
-   "id": "deepseek-v4-flash-vision-exp"
   },
   {
    "id": "cn:deepseek-v4-pro",
@@ -309,48 +297,6 @@
    "context": 200000,
    "output": 24000,
    "reasoning": 1
-  },
-  {
-   "id": "doubao-seed-2.0-code"
-  },
-  {
-   "id": "doubao-seed-2.0-pro"
-  },
-  {
-   "id": "doubao-seed-2-1-pro-260628"
-  },
-  {
-   "id": "doubao-seedance-2.0"
-  },
-  {
-   "id": "doubao-seedance-2-0-260128"
-  },
-  {
-   "id": "doubao-seedance-2.0-aicc"
-  },
-  {
-   "id": "doubao-seedance-2-0-fast"
-  },
-  {
-   "id": "doubao-seedance-2-0-fast-260128"
-  },
-  {
-   "id": "doubao-seedance-2-0-fast-l"
-  },
-  {
-   "id": "doubao-seedance-2-0-mini-260615"
-  },
-  {
-   "id": "doubao-seedance-2-0-mini-l"
-  },
-  {
-   "id": "doubao-seedance-2-5-260628"
-  },
-  {
-   "id": "doubao-seedream-5-0-260128"
-  },
-  {
-   "id": "doubao-seedream-5-0-pro-260628"
   },
   {
    "id": "cn:fast-model",
@@ -400,9 +346,6 @@
    "reasoning": 1
   },
   {
-   "id": "glm-5"
-  },
-  {
    "id": "cn:glm-5.0-turbo",
    "modalities": [
     "text",
@@ -416,9 +359,6 @@
    "id": "glm-5.1"
   },
   {
-   "id": "glm-5.1-sjb"
-  },
-  {
    "id": "cn:glm-5.2",
    "modalities": [
     "text"
@@ -426,9 +366,6 @@
    "context": 1048576,
    "reasoning": 1,
    "output": 64000
-  },
-  {
-   "id": "glm-5.2-sjb"
   },
   {
    "id": "cn:glm-5.3",
@@ -452,9 +389,6 @@
   },
   {
    "id": "glm-5.3-flashx"
-  },
-  {
-   "id": "glm-5.3-sjb"
   },
   {
    "id": "glm-5v-turbo"
@@ -531,12 +465,6 @@
   },
   {
    "id": "grok-4.7"
-  },
-  {
-   "id": "happyhorse-1.0"
-  },
-  {
-   "id": "happyhorse-1.1"
   },
   {
    "id": "cn:hunyuan-chat",
@@ -741,9 +669,6 @@
    "id": "kimi-k2.7-code"
   },
   {
-   "id": "kimi-k2.7-code-highspeed"
-  },
-  {
    "id": "cn:kimi-k2.8-preview",
    "modalities": [
     "text",
@@ -784,27 +709,6 @@
    "context": 1000000,
    "output": 32000,
    "reasoning": 1
-  },
-  {
-   "id": "kimi-k3.1-pro-highspeed"
-  },
-  {
-   "id": "moonshotai/Kimi-K3.1-Pro-HighSpeed-SJB"
-  },
-  {
-   "id": "moonshotai/Kimi-K3.1-Pro-SJB"
-  },
-  {
-   "id": "kimi-k3-sjb"
-  },
-  {
-   "id": "kling-3.0"
-  },
-  {
-   "id": "kling-3.0-omni"
-  },
-  {
-   "id": "kling-4.0"
   },
   {
    "id": "cn:kling-video-v3",
@@ -869,9 +773,6 @@
    "reasoning": 1
   },
   {
-   "id": "MiniMax-H3"
-  },
-  {
    "id": "cn:minimax-m2.5",
    "modalities": [
     "text",
@@ -895,7 +796,7 @@
    "id": "MiniMax-M2.7-highspeed"
   },
   {
-   "id": "minimax-m3"
+   "id": "MiniMax-M3"
   },
   {
    "id": "cn:minimax-m3.1-flash",
@@ -1177,15 +1078,6 @@
    "reasoning": 1
   },
   {
-   "id": "qwen3.5-397b-a17b"
-  },
-  {
-   "id": "qwen3.5-plus"
-  },
-  {
-   "id": "qwen3.6-plus"
-  },
-  {
    "id": "qwen3.7-max"
   },
   {
@@ -1193,12 +1085,6 @@
   },
   {
    "id": "qwen3.8-max"
-  },
-  {
-   "id": "qwen3.8-max-sjb"
-  },
-  {
-   "id": "qwen3-embedding-8b"
   },
   {
    "id": "seedream_4.6"
@@ -1367,12 +1253,6 @@
    ],
    "context": 65536,
    "reasoning": 0
-  },
-  {
-   "id": "wan3.0-video"
-  },
-  {
-   "id": "wan3.0-video-prime"
   },
   {
    "id": "zai-glm-latest",
