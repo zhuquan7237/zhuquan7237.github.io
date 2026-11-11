@@ -1,6 +1,6 @@
 {
  "version": 1,
- "generatedAt": "2026-11-10T22:40:08Z",
+ "generatedAt": "2026-11-11T22:40:12Z",
  "source": "gateway /v1/models probe (scripts/collect-gateway-capabilities.py)",
  "providers": {
   "agentrouter": {
@@ -20,7 +20,7 @@
   },
   "api8888": {
    "ok": true,
-   "count": 34,
+   "count": 42,
    "error": ""
   },
   "codego": {
@@ -30,7 +30,7 @@
   },
   "cpa-computer": {
    "ok": true,
-   "count": 11,
+   "count": 12,
    "error": ""
   },
   "hyb": {
@@ -55,12 +55,12 @@
   },
   "node": {
    "ok": true,
-   "count": 20,
+   "count": 21,
    "error": ""
   },
   "relayfor": {
    "ok": true,
-   "count": 8,
+   "count": 5,
    "error": ""
   },
   "subds": {
@@ -79,9 +79,9 @@
    "error": ""
   },
   "xjm": {
-   "ok": false,
-   "count": 0,
-   "error": "HTTP 403"
+   "ok": true,
+   "count": 8,
+   "error": ""
   }
  },
  "models": [
@@ -253,6 +253,12 @@
    "reasoning": 1
   },
   {
+   "id": "deepseek-v4.1-flash-1017-sjb"
+  },
+  {
+   "id": "deepseek-v4.1-flash-sjb"
+  },
+  {
    "id": "cn:deepseek-v4-flash",
    "modalities": [
     "text",
@@ -264,6 +270,9 @@
   },
   {
    "id": "deepseek-v4-flash-0731"
+  },
+  {
+   "id": "deepseek-v4-flash-vision-exp"
   },
   {
    "id": "cn:deepseek-v4-pro",
@@ -315,16 +324,28 @@
    "id": "gemini-3.1-flash-lite"
   },
   {
+   "id": "gemini-3.1-pro-preview"
+  },
+  {
    "id": "gemini-3.5-flash-lite"
   },
   {
+   "id": "gemini-3.6-flash"
+  },
+  {
    "id": "gemini-3.8-flash-high"
+  },
+  {
+   "id": "gemini-3.8-flash-tiered"
   },
   {
    "id": "gemini-3-flash"
   },
   {
    "id": "gemini-4-argon-high"
+  },
+  {
+   "id": "gemini-4-carbon"
   },
   {
    "id": "cn:glm-4.6",
@@ -346,6 +367,9 @@
    "reasoning": 1
   },
   {
+   "id": "glm-5"
+  },
+  {
    "id": "cn:glm-5.0-turbo",
    "modalities": [
     "text",
@@ -359,6 +383,9 @@
    "id": "glm-5.1"
   },
   {
+   "id": "glm-5.1-sjb"
+  },
+  {
    "id": "cn:glm-5.2",
    "modalities": [
     "text"
@@ -366,6 +393,9 @@
    "context": 1048576,
    "reasoning": 1,
    "output": 64000
+  },
+  {
+   "id": "glm-5.2-sjb"
   },
   {
    "id": "cn:glm-5.3",
@@ -389,6 +419,9 @@
   },
   {
    "id": "glm-5.3-flashx"
+  },
+  {
+   "id": "glm-5.3-sjb"
   },
   {
    "id": "glm-5v-turbo"
@@ -669,6 +702,9 @@
    "id": "kimi-k2.7-code"
   },
   {
+   "id": "kimi-k2.7-code-highspeed"
+  },
+  {
    "id": "cn:kimi-k2.8-preview",
    "modalities": [
     "text",
@@ -709,6 +745,12 @@
    "context": 1000000,
    "output": 32000,
    "reasoning": 1
+  },
+  {
+   "id": "kimi-k3.1-pro-highspeed"
+  },
+  {
+   "id": "kimi-k3-sjb"
   },
   {
    "id": "cn:kling-video-v3",
@@ -1088,15 +1130,6 @@
   },
   {
    "id": "seedream_4.6"
-  },
-  {
-   "id": "sensenova-6.8-flash"
-  },
-  {
-   "id": "sensenova-6.8-flash-lite"
-  },
-  {
-   "id": "sensenova-u1.5-lite"
   },
   {
    "id": "cn:space-bunny",
