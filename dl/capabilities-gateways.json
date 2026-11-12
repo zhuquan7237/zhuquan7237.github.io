@@ -1,6 +1,6 @@
 {
  "version": 1,
- "generatedAt": "2026-11-11T22:40:12Z",
+ "generatedAt": "2026-11-12T22:40:13Z",
  "source": "gateway /v1/models probe (scripts/collect-gateway-capabilities.py)",
  "providers": {
   "agentrouter": {
@@ -30,7 +30,7 @@
   },
   "cpa-computer": {
    "ok": true,
-   "count": 12,
+   "count": 13,
    "error": ""
   },
   "hyb": {
@@ -40,7 +40,7 @@
   },
   "krill": {
    "ok": true,
-   "count": 10,
+   "count": 0,
    "error": ""
   },
   "linuxyou": {
@@ -75,12 +75,12 @@
   },
   "wb2api": {
    "ok": true,
-   "count": 56,
+   "count": 51,
    "error": ""
   },
   "xjm": {
    "ok": true,
-   "count": 8,
+   "count": 5,
    "error": ""
   }
  },
@@ -348,6 +348,9 @@
    "id": "gemini-4-carbon"
   },
   {
+   "id": "gemini-4-hydrogen-xhigh"
+  },
+  {
    "id": "cn:glm-4.6",
    "modalities": [
     "text",
@@ -427,16 +430,6 @@
    "id": "glm-5v-turbo"
   },
   {
-   "id": "cn:glm5.3flash-ctrl",
-   "modalities": [
-    "text",
-    "image"
-   ],
-   "context": 1000000,
-   "output": 131072,
-   "reasoning": 1
-  },
-  {
    "id": "gpt-4o"
   },
   {
@@ -444,9 +437,6 @@
   },
   {
    "id": "gpt-5.6-sol"
-  },
-  {
-   "id": "gpt-5.6-sol-fast"
   },
   {
    "id": "gpt-5.6-terra"
@@ -458,28 +448,16 @@
    "id": "gpt-6.1-sol-fast"
   },
   {
-   "id": "gpt-6.1-sol-ultrafast"
-  },
-  {
    "id": "gpt-6.1-terra"
   },
   {
    "id": "gpt-6-astra"
   },
   {
-   "id": "gpt-6-astra-fast"
-  },
-  {
-   "id": "gpt-6-astra-ultrafast"
-  },
-  {
    "id": "gpt-6-luna"
   },
   {
    "id": "gpt-6-sol"
-  },
-  {
-   "id": "gpt-6-sol-fast"
   },
   {
    "id": "gpt-image-2"
@@ -584,46 +562,6 @@
   },
   {
    "id": "cn:hy4-preview-x",
-   "modalities": [
-    "text",
-    "image"
-   ],
-   "context": 960000,
-   "output": 64000,
-   "reasoning": 1
-  },
-  {
-   "id": "cn:hy4flash-exp1",
-   "modalities": [
-    "text",
-    "image"
-   ],
-   "context": 960000,
-   "output": 64000,
-   "reasoning": 1
-  },
-  {
-   "id": "cn:hy4flash-exp2",
-   "modalities": [
-    "text",
-    "image"
-   ],
-   "context": 960000,
-   "output": 64000,
-   "reasoning": 1
-  },
-  {
-   "id": "cn:hy4flash-exp3",
-   "modalities": [
-    "text",
-    "image"
-   ],
-   "context": 960000,
-   "output": 64000,
-   "reasoning": 1
-  },
-  {
-   "id": "cn:hy4flash-exp4",
    "modalities": [
     "text",
     "image"
@@ -955,8 +893,8 @@
     "text",
     "image"
    ],
-   "context": 262144,
-   "reasoning": 0
+   "context": 1048576,
+   "reasoning": 1
   },
   {
    "id": "mistral-large-2512",
