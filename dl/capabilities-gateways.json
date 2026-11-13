@@ -1,6 +1,6 @@
 {
  "version": 1,
- "generatedAt": "2026-11-12T22:40:13Z",
+ "generatedAt": "2026-11-13T22:40:17Z",
  "source": "gateway /v1/models probe (scripts/collect-gateway-capabilities.py)",
  "providers": {
   "agentrouter": {
@@ -55,12 +55,12 @@
   },
   "node": {
    "ok": true,
-   "count": 21,
+   "count": 22,
    "error": ""
   },
   "relayfor": {
    "ok": true,
-   "count": 5,
+   "count": 4,
    "error": ""
   },
   "subds": {
@@ -80,7 +80,7 @@
   },
   "xjm": {
    "ok": true,
-   "count": 5,
+   "count": 6,
    "error": ""
   }
  },
@@ -346,6 +346,9 @@
   },
   {
    "id": "gemini-4-carbon"
+  },
+  {
+   "id": "gemini-4-hydrogen"
   },
   {
    "id": "gemini-4-hydrogen-xhigh"
