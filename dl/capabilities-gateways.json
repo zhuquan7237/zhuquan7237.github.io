@@ -1,6 +1,6 @@
 {
  "version": 1,
- "generatedAt": "2026-11-13T22:40:17Z",
+ "generatedAt": "2026-11-14T22:40:20Z",
  "source": "gateway /v1/models probe (scripts/collect-gateway-capabilities.py)",
  "providers": {
   "agentrouter": {
@@ -36,12 +36,7 @@
   "hyb": {
    "ok": false,
    "count": 0,
-   "error": "HTTP 401"
-  },
-  "krill": {
-   "ok": true,
-   "count": 0,
-   "error": ""
+   "error": "HTTP 403"
   },
   "linuxyou": {
    "ok": false,
@@ -53,19 +48,19 @@
    "count": 64,
    "error": ""
   },
-  "node": {
-   "ok": true,
-   "count": 22,
-   "error": ""
-  },
   "relayfor": {
    "ok": true,
-   "count": 4,
+   "count": 5,
    "error": ""
   },
   "subds": {
    "ok": true,
-   "count": 1,
+   "count": 3,
+   "error": ""
+  },
+  "subgpt": {
+   "ok": true,
+   "count": 20,
    "error": ""
   },
   "syhub": {
@@ -74,9 +69,9 @@
    "error": ""
   },
   "wb2api": {
-   "ok": true,
-   "count": 51,
-   "error": ""
+   "ok": false,
+   "count": 0,
+   "error": "Expecting value: line 1 column 1 (char 0)"
   },
   "xjm": {
    "ok": true,
@@ -85,26 +80,6 @@
   }
  },
  "models": [
-  {
-   "id": "cn:auto",
-   "modalities": [
-    "text",
-    "image"
-   ],
-   "context": 256000,
-   "output": 32000,
-   "reasoning": 1
-  },
-  {
-   "id": "cn:balanced-model",
-   "modalities": [
-    "text",
-    "image"
-   ],
-   "context": 300000,
-   "output": 48000,
-   "reasoning": 1
-  },
   {
    "id": "claude-fable-5-1"
   },
@@ -156,92 +131,13 @@
    "id": "codex-auto-review"
   },
   {
-   "id": "cn:deep-model",
-   "modalities": [
-    "text",
-    "image"
-   ],
-   "context": 300000,
-   "output": 48000,
-   "reasoning": 1
+   "id": "codex-auto-review-fast"
   },
   {
    "id": "deepseek-flash"
   },
   {
-   "id": "cn:deepseek-r1-0528",
-   "context": 96000,
-   "output": 8192
-  },
-  {
-   "id": "cn:deepseek-r1-0528-lkeap",
-   "modalities": [
-    "text",
-    "image"
-   ],
-   "context": 96000,
-   "output": 16000
-  },
-  {
-   "id": "cn:deepseek-v3-0324",
-   "context": 96000,
-   "output": 8192
-  },
-  {
-   "id": "cn:deepseek-v3-0324-lkeap",
-   "modalities": [
-    "text",
-    "image"
-   ],
-   "context": 112000,
-   "output": 16000
-  },
-  {
-   "id": "cn:deepseek-v3-1",
-   "modalities": [
-    "text",
-    "image"
-   ],
-   "context": 96000,
-   "output": 32000
-  },
-  {
-   "id": "cn:deepseek-v3-1-lkeap",
-   "modalities": [
-    "text",
-    "image"
-   ],
-   "context": 96000,
-   "output": 32000
-  },
-  {
-   "id": "cn:deepseek-v3-1-volc",
-   "modalities": [
-    "text",
-    "image"
-   ],
-   "context": 96000,
-   "output": 32000
-  },
-  {
-   "id": "cn:deepseek-v3-2-volc",
-   "modalities": [
-    "text",
-    "image"
-   ],
-   "context": 96000,
-   "output": 32000,
-   "reasoning": 1
-  },
-  {
-   "id": "deepseek-v4.1-flash",
-   "modalities": [
-    "text",
-    "image"
-   ],
-   "context": 1000000,
-   "output": 128000,
-   "reasoning": 1
+   "id": "deepseek-v4.1-flash"
   },
   {
    "id": "deepseek-v4.1-flash-1017",
@@ -259,14 +155,7 @@
    "id": "deepseek-v4.1-flash-sjb"
   },
   {
-   "id": "cn:deepseek-v4-flash",
-   "modalities": [
-    "text",
-    "image"
-   ],
-   "context": 1000000,
-   "output": 50000,
-   "reasoning": 1
+   "id": "deepseek-v4-flash"
   },
   {
    "id": "deepseek-v4-flash-0731"
@@ -275,47 +164,10 @@
    "id": "deepseek-v4-flash-vision-exp"
   },
   {
-   "id": "cn:deepseek-v4-pro",
-   "modalities": [
-    "text",
-    "image"
-   ],
-   "context": 1000000,
-   "output": 128000,
-   "reasoning": 1
+   "id": "deepseek-v4-pro"
   },
   {
    "id": "deepseek-v4-pro-0813"
-  },
-  {
-   "id": "cn:default-1.1",
-   "modalities": [
-    "text",
-    "image"
-   ],
-   "context": 200000,
-   "output": 8192,
-   "reasoning": 1
-  },
-  {
-   "id": "cn:default-1.2",
-   "modalities": [
-    "text",
-    "image"
-   ],
-   "context": 200000,
-   "output": 24000,
-   "reasoning": 1
-  },
-  {
-   "id": "cn:fast-model",
-   "modalities": [
-    "text",
-    "image"
-   ],
-   "context": 300000,
-   "output": 48000,
-   "reasoning": 1
   },
   {
    "id": "gemini-3.1-flash-image"
@@ -354,36 +206,7 @@
    "id": "gemini-4-hydrogen-xhigh"
   },
   {
-   "id": "cn:glm-4.6",
-   "modalities": [
-    "text",
-    "image"
-   ],
-   "context": 168000,
-   "output": 32000
-  },
-  {
-   "id": "cn:glm-4.6v",
-   "modalities": [
-    "text",
-    "image"
-   ],
-   "context": 128000,
-   "output": 32000,
-   "reasoning": 1
-  },
-  {
    "id": "glm-5"
-  },
-  {
-   "id": "cn:glm-5.0-turbo",
-   "modalities": [
-    "text",
-    "image"
-   ],
-   "context": 200000,
-   "output": 48000,
-   "reasoning": 1
   },
   {
    "id": "glm-5.1"
@@ -392,36 +215,21 @@
    "id": "glm-5.1-sjb"
   },
   {
-   "id": "cn:glm-5.2",
+   "id": "glm-5.2",
    "modalities": [
     "text"
    ],
    "context": 1048576,
-   "reasoning": 1,
-   "output": 64000
+   "reasoning": 1
   },
   {
    "id": "glm-5.2-sjb"
   },
   {
-   "id": "cn:glm-5.3",
-   "modalities": [
-    "text",
-    "image"
-   ],
-   "context": 1000000,
-   "output": 64000,
-   "reasoning": 1
+   "id": "glm-5.3"
   },
   {
-   "id": "glm-5.3-flash",
-   "modalities": [
-    "text",
-    "image"
-   ],
-   "context": 1000000,
-   "output": 131072,
-   "reasoning": 1
+   "id": "glm-5.3-flash"
   },
   {
    "id": "glm-5.3-flashx"
@@ -433,16 +241,25 @@
    "id": "glm-5v-turbo"
   },
   {
-   "id": "gpt-4o"
+   "id": "gpt-5.5"
   },
   {
-   "id": "gpt-5.5"
+   "id": "gpt-5.6-luna"
+  },
+  {
+   "id": "gpt-5.6-luna-fast"
   },
   {
    "id": "gpt-5.6-sol"
   },
   {
+   "id": "gpt-5.6-sol-fast"
+  },
+  {
    "id": "gpt-5.6-terra"
+  },
+  {
+   "id": "gpt-5.6-terra-fast"
   },
   {
    "id": "gpt-6.1-sol"
@@ -454,13 +271,25 @@
    "id": "gpt-6.1-terra"
   },
   {
+   "id": "gpt-6.1-terra-fast"
+  },
+  {
    "id": "gpt-6-astra"
+  },
+  {
+   "id": "gpt-6-astra-fast"
   },
   {
    "id": "gpt-6-luna"
   },
   {
+   "id": "gpt-6-luna-fast"
+  },
+  {
    "id": "gpt-6-sol"
+  },
+  {
+   "id": "gpt-6-sol-fast"
   },
   {
    "id": "gpt-image-2"
@@ -478,160 +307,19 @@
    "id": "gpt-oss-120b-medium"
   },
   {
+   "id": "gpt-reserve"
+  },
+  {
+   "id": "gpt-reserve-fast"
+  },
+  {
    "id": "grok-4.7"
   },
   {
-   "id": "cn:hunyuan-chat",
-   "modalities": [
-    "text",
-    "image"
-   ],
-   "context": 128000,
-   "output": 8192
+   "id": "hy3"
   },
   {
-   "id": "cn:hunyuan-2.0-instruct",
-   "modalities": [
-    "text",
-    "image"
-   ],
-   "context": 128000,
-   "output": 16000,
-   "reasoning": 1
-  },
-  {
-   "id": "cn:hunyuan-image-alpha-edit",
-   "context": 1000000
-  },
-  {
-   "id": "cn:hy3",
-   "modalities": [
-    "text",
-    "image"
-   ],
-   "context": 192000,
-   "output": 64000,
-   "reasoning": 1
-  },
-  {
-   "id": "cn:hy3-b",
-   "modalities": [
-    "text",
-    "image"
-   ],
-   "context": 192000,
-   "output": 64000,
-   "reasoning": 1
-  },
-  {
-   "id": "cn:hy3-c",
-   "modalities": [
-    "text",
-    "image"
-   ],
-   "context": 192000,
-   "output": 64000,
-   "reasoning": 1
-  },
-  {
-   "id": "cn:hy3-x",
-   "modalities": [
-    "text",
-    "image"
-   ],
-   "context": 192000,
-   "output": 64000,
-   "reasoning": 1
-  },
-  {
-   "id": "cn:hy4-preview-exp",
-   "modalities": [
-    "text",
-    "image"
-   ],
-   "context": 960000,
-   "output": 64000,
-   "reasoning": 1
-  },
-  {
-   "id": "cn:hy4-preview-ctrl",
-   "modalities": [
-    "text",
-    "image"
-   ],
-   "context": 960000,
-   "output": 64000,
-   "reasoning": 1
-  },
-  {
-   "id": "cn:hy4-preview-x",
-   "modalities": [
-    "text",
-    "image"
-   ],
-   "context": 960000,
-   "output": 64000,
-   "reasoning": 1
-  },
-  {
-   "id": "cn:hy4free",
-   "modalities": [
-    "text",
-    "image"
-   ],
-   "context": 960000,
-   "output": 64000,
-   "reasoning": 1
-  },
-  {
-   "id": "cn:hy4preview-exp1",
-   "modalities": [
-    "text",
-    "image"
-   ],
-   "context": 960000,
-   "output": 64000,
-   "reasoning": 1
-  },
-  {
-   "id": "cn:hy4preview-exp2",
-   "modalities": [
-    "text",
-    "image"
-   ],
-   "context": 960000,
-   "output": 64000,
-   "reasoning": 1
-  },
-  {
-   "id": "cn:hy4std",
-   "modalities": [
-    "text",
-    "image"
-   ],
-   "context": 960000,
-   "output": 64000,
-   "reasoning": 1
-  },
-  {
-   "id": "cn:kimi-k2-thinking",
-   "modalities": [
-    "text",
-    "image"
-   ],
-   "context": 256000,
-   "output": 32000,
-   "reasoning": 1
-  },
-  {
-   "id": "cn:kimi-k2.5",
-   "modalities": [
-    "text",
-    "image"
-   ],
-   "context": 256000,
-   "output": 32000,
-   "reasoning": 1
+   "id": "hy4-preview"
   },
   {
    "id": "kimi-k2.6"
@@ -646,56 +334,19 @@
    "id": "kimi-k2.7-code-highspeed"
   },
   {
-   "id": "cn:kimi-k2.8-preview",
-   "modalities": [
-    "text",
-    "image"
-   ],
-   "context": 1000000,
-   "output": 64000,
-   "reasoning": 1
-  },
-  {
-   "id": "cn:kimi-k2-instruct-taiji",
-   "modalities": [
-    "text",
-    "image"
-   ],
-   "context": 31000,
-   "output": 8192
+   "id": "kimi-k2.8"
   },
   {
    "id": "kimi-k3"
   },
   {
-   "id": "cn:kimi-k3-1",
-   "modalities": [
-    "text",
-    "image"
-   ],
-   "context": 1000000,
-   "output": 32000,
-   "reasoning": 1
-  },
-  {
-   "id": "cn:kimi-k3.1-pro",
-   "modalities": [
-    "text",
-    "image"
-   ],
-   "context": 1000000,
-   "output": 32000,
-   "reasoning": 1
+   "id": "kimi-k3.1-pro"
   },
   {
    "id": "kimi-k3.1-pro-highspeed"
   },
   {
    "id": "kimi-k3-sjb"
-  },
-  {
-   "id": "cn:kling-video-v3",
-   "context": 1000000
   },
   {
    "id": "labs-leanstral-1-5",
@@ -746,34 +397,10 @@
    "id": "mimo-v2.6-flash"
   },
   {
-   "id": "cn:mimo-v2.6-pro",
-   "modalities": [
-    "text",
-    "image"
-   ],
-   "context": 1000000,
-   "output": 128000,
-   "reasoning": 1
+   "id": "mimo-v2.6-pro"
   },
   {
-   "id": "cn:minimax-m2.5",
-   "modalities": [
-    "text",
-    "image"
-   ],
-   "context": 200000,
-   "output": 48000,
-   "reasoning": 1
-  },
-  {
-   "id": "cn:minimax-m2.7",
-   "modalities": [
-    "text",
-    "image"
-   ],
-   "context": 200000,
-   "output": 48000,
-   "reasoning": 1
+   "id": "MiniMax-M2.7"
   },
   {
    "id": "MiniMax-M2.7-highspeed"
@@ -782,18 +409,7 @@
    "id": "MiniMax-M3"
   },
   {
-   "id": "cn:minimax-m3.1-flash",
-   "modalities": [
-    "text",
-    "image"
-   ],
-   "context": 1000000,
-   "output": 128000,
-   "reasoning": 1
-  },
-  {
-   "id": "cn:minimax-video-h3",
-   "context": 1000000
+   "id": "minimax-m3.1-flash"
   },
   {
    "id": "ministral-14b-latest",
@@ -1068,29 +684,6 @@
   },
   {
    "id": "qwen3.8-max"
-  },
-  {
-   "id": "seedream_4.6"
-  },
-  {
-   "id": "cn:space-bunny",
-   "modalities": [
-    "text",
-    "image"
-   ],
-   "context": 1000000,
-   "output": 128000,
-   "reasoning": 1
-  },
-  {
-   "id": "cn:step-5-preview",
-   "modalities": [
-    "text",
-    "image"
-   ],
-   "context": 1000000,
-   "output": 64000,
-   "reasoning": 1
   },
   {
    "id": "voxtral-mini-latest",
