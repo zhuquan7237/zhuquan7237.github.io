@@ -1,6 +1,6 @@
 {
  "version": 1,
- "generatedAt": "2026-11-16T22:40:23Z",
+ "generatedAt": "2026-11-17T22:40:22Z",
  "source": "gateway /v1/models probe (scripts/collect-gateway-capabilities.py)",
  "providers": {
   "agentrouter": {
@@ -19,9 +19,9 @@
    "error": "HTTP 404"
   },
   "api8888": {
-   "ok": false,
-   "count": 0,
-   "error": "HTTP 500"
+   "ok": true,
+   "count": 42,
+   "error": ""
   },
   "codego": {
    "ok": true,
@@ -55,7 +55,7 @@
   },
   "subds": {
    "ok": true,
-   "count": 3,
+   "count": 16,
    "error": ""
   },
   "subgpt": {
@@ -81,16 +81,49 @@
  },
  "models": [
   {
+   "id": "claude-fable-5"
+  },
+  {
    "id": "claude-fable-5-1"
+  },
+  {
+   "id": "claude-fable-5-2"
+  },
+  {
+   "id": "claude-haiku-4-5-20251001"
+  },
+  {
+   "id": "claude-haiku-5-5"
+  },
+  {
+   "id": "claude-mythos-5-2"
+  },
+  {
+   "id": "claude-opus-4-5-20251101"
   },
   {
    "id": "claude-opus-4-6-thinking"
   },
   {
+   "id": "claude-opus-4-7"
+  },
+  {
+   "id": "claude-opus-4-8"
+  },
+  {
+   "id": "claude-opus-5"
+  },
+  {
    "id": "claude-opus-5-5"
   },
   {
+   "id": "claude-sonnet-4-5-20250929"
+  },
+  {
    "id": "claude-sonnet-4-6"
+  },
+  {
+   "id": "claude-sonnet-5"
   },
   {
    "id": "claude-sonnet-5-5-high"
@@ -149,10 +182,25 @@
    "reasoning": 1
   },
   {
+   "id": "deepseek-v4.1-flash-1017-sjb"
+  },
+  {
+   "id": "deepseek-v4.1-flash-sjb"
+  },
+  {
    "id": "deepseek-v4-flash"
   },
   {
+   "id": "deepseek-v4-flash-0731"
+  },
+  {
+   "id": "deepseek-v4-flash-vision-exp"
+  },
+  {
    "id": "deepseek-v4-pro"
+  },
+  {
+   "id": "deepseek-v4-pro-0813"
   },
   {
    "id": "gemini-3.1-flash-image"
@@ -191,6 +239,15 @@
    "id": "gemini-4-hydrogen-xhigh"
   },
   {
+   "id": "glm-5"
+  },
+  {
+   "id": "glm-5.1"
+  },
+  {
+   "id": "glm-5.1-sjb"
+  },
+  {
    "id": "glm-5.2",
    "modalities": [
     "text"
@@ -199,10 +256,19 @@
    "reasoning": 1
   },
   {
+   "id": "glm-5.2-sjb"
+  },
+  {
    "id": "glm-5.3"
   },
   {
    "id": "glm-5.3-flash"
+  },
+  {
+   "id": "glm-5.3-flashx"
+  },
+  {
+   "id": "glm-5.3-sjb"
   },
   {
    "id": "glm-5v-turbo"
@@ -283,13 +349,37 @@
    "id": "grok-4.7"
   },
   {
+   "id": "hy3"
+  },
+  {
+   "id": "hy4-preview"
+  },
+  {
    "id": "kimi-k2.6"
+  },
+  {
+   "id": "kimi-k2.7"
+  },
+  {
+   "id": "kimi-k2.7-code"
+  },
+  {
+   "id": "kimi-k2.7-code-highspeed"
+  },
+  {
+   "id": "kimi-k2.8"
   },
   {
    "id": "kimi-k3"
   },
   {
    "id": "kimi-k3.1-pro"
+  },
+  {
+   "id": "kimi-k3.1-pro-highspeed"
+  },
+  {
+   "id": "kimi-k3-sjb"
   },
   {
    "id": "labs-leanstral-1-5",
@@ -331,7 +421,25 @@
    "id": "mercury-3"
   },
   {
+   "id": "mimo-v2.5"
+  },
+  {
+   "id": "mimo-v2.5-pro"
+  },
+  {
    "id": "mimo-v2.6-flash"
+  },
+  {
+   "id": "mimo-v2.6-pro"
+  },
+  {
+   "id": "MiniMax-M2.7"
+  },
+  {
+   "id": "MiniMax-M2.7-highspeed"
+  },
+  {
+   "id": "MiniMax-M3"
   },
   {
    "id": "minimax-m3.1-flash"
@@ -600,6 +708,15 @@
    ],
    "context": 262144,
    "reasoning": 1
+  },
+  {
+   "id": "qwen3.7-max"
+  },
+  {
+   "id": "qwen3.8-flash"
+  },
+  {
+   "id": "qwen3.8-max"
   },
   {
    "id": "voxtral-mini-latest",
