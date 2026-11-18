@@ -1,6 +1,6 @@
 {
  "version": 1,
- "generatedAt": "2026-11-17T22:40:22Z",
+ "generatedAt": "2026-11-18T22:40:22Z",
  "source": "gateway /v1/models probe (scripts/collect-gateway-capabilities.py)",
  "providers": {
   "agentrouter": {
@@ -10,7 +10,7 @@
   },
   "aiapi": {
    "ok": true,
-   "count": 1,
+   "count": 2,
    "error": ""
   },
   "anyrouter": {
@@ -20,7 +20,7 @@
   },
   "api8888": {
    "ok": true,
-   "count": 42,
+   "count": 29,
    "error": ""
   },
   "codego": {
@@ -45,7 +45,7 @@
   },
   "mistral": {
    "ok": true,
-   "count": 64,
+   "count": 62,
    "error": ""
   },
   "relayfor": {
@@ -60,7 +60,7 @@
   },
   "subgpt": {
    "ok": true,
-   "count": 20,
+   "count": 22,
    "error": ""
   },
   "syhub": {
@@ -182,19 +182,10 @@
    "reasoning": 1
   },
   {
-   "id": "deepseek-v4.1-flash-1017-sjb"
-  },
-  {
-   "id": "deepseek-v4.1-flash-sjb"
-  },
-  {
    "id": "deepseek-v4-flash"
   },
   {
    "id": "deepseek-v4-flash-0731"
-  },
-  {
-   "id": "deepseek-v4-flash-vision-exp"
   },
   {
    "id": "deepseek-v4-pro"
@@ -239,13 +230,7 @@
    "id": "gemini-4-hydrogen-xhigh"
   },
   {
-   "id": "glm-5"
-  },
-  {
    "id": "glm-5.1"
-  },
-  {
-   "id": "glm-5.1-sjb"
   },
   {
    "id": "glm-5.2",
@@ -256,9 +241,6 @@
    "reasoning": 1
   },
   {
-   "id": "glm-5.2-sjb"
-  },
-  {
    "id": "glm-5.3"
   },
   {
@@ -266,9 +248,6 @@
   },
   {
    "id": "glm-5.3-flashx"
-  },
-  {
-   "id": "glm-5.3-sjb"
   },
   {
    "id": "glm-5v-turbo"
@@ -305,6 +284,12 @@
   },
   {
    "id": "gpt-6.1-terra-fast"
+  },
+  {
+   "id": "gpt-6.2-astra"
+  },
+  {
+   "id": "gpt-6.2-sol"
   },
   {
    "id": "gpt-6-astra"
@@ -364,9 +349,6 @@
    "id": "kimi-k2.7-code"
   },
   {
-   "id": "kimi-k2.7-code-highspeed"
-  },
-  {
    "id": "kimi-k2.8"
   },
   {
@@ -374,30 +356,6 @@
   },
   {
    "id": "kimi-k3.1-pro"
-  },
-  {
-   "id": "kimi-k3.1-pro-highspeed"
-  },
-  {
-   "id": "kimi-k3-sjb"
-  },
-  {
-   "id": "labs-leanstral-1-5",
-   "modalities": [
-    "text",
-    "image"
-   ],
-   "context": 262144,
-   "reasoning": 1
-  },
-  {
-   "id": "labs-leanstral-1-5-1",
-   "modalities": [
-    "text",
-    "image"
-   ],
-   "context": 262144,
-   "reasoning": 1
   },
   {
    "id": "magistral-medium-latest",
