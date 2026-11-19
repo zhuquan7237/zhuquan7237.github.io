@@ -1,6 +1,6 @@
 {
  "version": 1,
- "generatedAt": "2026-11-18T22:40:22Z",
+ "generatedAt": "2026-11-19T22:40:11Z",
  "source": "gateway /v1/models probe (scripts/collect-gateway-capabilities.py)",
  "providers": {
   "agentrouter": {
@@ -30,7 +30,7 @@
   },
   "cpa-computer": {
    "ok": true,
-   "count": 13,
+   "count": 14,
    "error": ""
   },
   "hyb": {
@@ -228,6 +228,9 @@
   },
   {
    "id": "gemini-4-hydrogen-xhigh"
+  },
+  {
+   "id": "gemini-4-neon-xhigh"
   },
   {
    "id": "glm-5.1"
