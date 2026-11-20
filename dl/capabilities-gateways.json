@@ -1,8 +1,13 @@
 {
  "version": 1,
- "generatedAt": "2026-11-19T22:40:11Z",
+ "generatedAt": "2026-11-20T22:40:12Z",
  "source": "gateway /v1/models probe (scripts/collect-gateway-capabilities.py)",
  "providers": {
+  "a600": {
+   "ok": true,
+   "count": 1,
+   "error": ""
+  },
   "agentrouter": {
    "ok": false,
    "count": 0,
@@ -30,7 +35,7 @@
   },
   "cpa-computer": {
    "ok": true,
-   "count": 14,
+   "count": 62,
    "error": ""
   },
   "hyb": {
@@ -81,6 +86,9 @@
  },
  "models": [
   {
+   "id": "devin/claude-5-fable"
+  },
+  {
    "id": "claude-fable-5"
   },
   {
@@ -105,6 +113,9 @@
    "id": "claude-opus-4-6-thinking"
   },
   {
+   "id": "devin/claude-opus-4-6-1m"
+  },
+  {
    "id": "claude-opus-4-7"
   },
   {
@@ -123,10 +134,13 @@
    "id": "claude-sonnet-4-6"
   },
   {
+   "id": "devin/claude-sonnet-4-6-1m"
+  },
+  {
    "id": "claude-sonnet-5"
   },
   {
-   "id": "claude-sonnet-5-5-high"
+   "id": "devin/claude-sonnet-5-5"
   },
   {
    "id": "codestral-latest",
@@ -203,10 +217,16 @@
    "id": "gemini-3.1-pro-preview"
   },
   {
+   "id": "devin/gemini-3-5-flash"
+  },
+  {
    "id": "gemini-3.5-flash-lite"
   },
   {
    "id": "gemini-3.6-flash"
+  },
+  {
+   "id": "devin/gemini-3-7-flash"
   },
   {
    "id": "gemini-3.8-flash-high"
@@ -218,19 +238,13 @@
    "id": "gemini-3-flash"
   },
   {
-   "id": "gemini-4-argon-high"
+   "id": "devin/gemini-4-argon"
   },
   {
    "id": "gemini-4-carbon"
   },
   {
    "id": "gemini-4-hydrogen"
-  },
-  {
-   "id": "gemini-4-hydrogen-xhigh"
-  },
-  {
-   "id": "gemini-4-neon-xhigh"
   },
   {
    "id": "glm-5.1"
@@ -242,6 +256,9 @@
    ],
    "context": 1048576,
    "reasoning": 1
+  },
+  {
+   "id": "devin/glm-5-2-1m"
   },
   {
    "id": "glm-5.3"
@@ -256,7 +273,13 @@
    "id": "glm-5v-turbo"
   },
   {
-   "id": "gpt-5.5"
+   "id": "devin/gpt-5-4"
+  },
+  {
+   "id": "devin/gpt-5-4-mini"
+  },
+  {
+   "id": "devin/gpt-5-5"
   },
   {
    "id": "gpt-5.6-luna"
@@ -334,7 +357,10 @@
    "id": "gpt-reserve-fast"
   },
   {
-   "id": "grok-4.7"
+   "id": "devin/grok-4-6"
+  },
+  {
+   "id": "devin/grok-4-7"
   },
   {
    "id": "hy3"
@@ -671,6 +697,15 @@
    "reasoning": 1
   },
   {
+   "id": "devin/muse-wonder-1-0"
+  },
+  {
+   "id": "devin/nemotron-3-5-super"
+  },
+  {
+   "id": "devin/nemotron-3-ultra"
+  },
+  {
    "id": "qwen3.7-max"
   },
   {
@@ -678,6 +713,24 @@
   },
   {
    "id": "qwen3.8-max"
+  },
+  {
+   "id": "devin/swe-1-6"
+  },
+  {
+   "id": "devin/swe-1-6-slow"
+  },
+  {
+   "id": "devin/swe-1-7"
+  },
+  {
+   "id": "devin/swe-2"
+  },
+  {
+   "id": "devin/swe-2-flash"
+  },
+  {
+   "id": "devin/swe-2-lightning"
   },
   {
    "id": "voxtral-mini-latest",
