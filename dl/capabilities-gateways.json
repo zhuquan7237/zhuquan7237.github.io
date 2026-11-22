@@ -1,11 +1,11 @@
 {
  "version": 1,
- "generatedAt": "2026-11-20T22:40:12Z",
+ "generatedAt": "2026-11-22T22:40:36Z",
  "source": "gateway /v1/models probe (scripts/collect-gateway-capabilities.py)",
  "providers": {
   "a600": {
    "ok": true,
-   "count": 1,
+   "count": 23,
    "error": ""
   },
   "agentrouter": {
@@ -25,7 +25,7 @@
   },
   "api8888": {
    "ok": true,
-   "count": 29,
+   "count": 77,
    "error": ""
   },
   "codego": {
@@ -35,7 +35,7 @@
   },
   "cpa-computer": {
    "ok": true,
-   "count": 62,
+   "count": 53,
    "error": ""
   },
   "hyb": {
@@ -60,13 +60,13 @@
   },
   "subds": {
    "ok": true,
-   "count": 16,
+   "count": 4,
    "error": ""
   },
   "subgpt": {
-   "ok": true,
-   "count": 22,
-   "error": ""
+   "ok": false,
+   "count": 0,
+   "error": "HTTP 503"
   },
   "syhub": {
    "ok": true,
@@ -89,55 +89,40 @@
    "id": "devin/claude-5-fable"
   },
   {
-   "id": "claude-fable-5"
-  },
-  {
    "id": "claude-fable-5-1"
   },
   {
-   "id": "claude-fable-5-2"
+   "id": "devin/claude-fable-5-2"
   },
   {
-   "id": "claude-haiku-4-5-20251001"
+   "id": "devin/claude-haiku-5-5"
   },
   {
-   "id": "claude-haiku-5-5"
-  },
-  {
-   "id": "claude-mythos-5-2"
-  },
-  {
-   "id": "claude-opus-4-5-20251101"
-  },
-  {
-   "id": "claude-opus-4-6-thinking"
+   "id": "devin/claude-opus-4-6"
   },
   {
    "id": "devin/claude-opus-4-6-1m"
   },
   {
-   "id": "claude-opus-4-7"
+   "id": "devin/claude-opus-4-7"
   },
   {
-   "id": "claude-opus-4-8"
+   "id": "devin/claude-opus-4-8"
   },
   {
-   "id": "claude-opus-5"
+   "id": "devin/claude-opus-5"
   },
   {
    "id": "claude-opus-5-5"
   },
   {
-   "id": "claude-sonnet-4-5-20250929"
-  },
-  {
-   "id": "claude-sonnet-4-6"
+   "id": "devin/claude-sonnet-4-6"
   },
   {
    "id": "devin/claude-sonnet-4-6-1m"
   },
   {
-   "id": "claude-sonnet-5"
+   "id": "devin/claude-sonnet-5"
   },
   {
    "id": "devin/claude-sonnet-5-5"
@@ -178,7 +163,7 @@
    "id": "codex-auto-review"
   },
   {
-   "id": "codex-auto-review-fast"
+   "id": "cosyvoice-v3.5-flash"
   },
   {
    "id": "deepseek-flash"
@@ -208,10 +193,28 @@
    "id": "deepseek-v4-pro-0813"
   },
   {
-   "id": "gemini-3.1-flash-image"
+   "id": "doubao-seedance-2.0"
   },
   {
-   "id": "gemini-3.1-flash-lite"
+   "id": "doubao-seedance-2.0-fast"
+  },
+  {
+   "id": "doubao-seedance-2.0-mini"
+  },
+  {
+   "id": "doubao-seedance-2.5"
+  },
+  {
+   "id": "gemini-2.5-flash-image"
+  },
+  {
+   "id": "gemini-3.1-flash-image-preview"
+  },
+  {
+   "id": "gemini-3.1-flash-image-preview-2k"
+  },
+  {
+   "id": "gemini-3.1-flash-image-preview-4k"
   },
   {
    "id": "gemini-3.1-pro-preview"
@@ -220,22 +223,22 @@
    "id": "devin/gemini-3-5-flash"
   },
   {
-   "id": "gemini-3.5-flash-lite"
-  },
-  {
    "id": "gemini-3.6-flash"
   },
   {
    "id": "devin/gemini-3-7-flash"
   },
   {
-   "id": "gemini-3.8-flash-high"
+   "id": "devin/gemini-3-8-flash"
   },
   {
-   "id": "gemini-3.8-flash-tiered"
+   "id": "gemini-3-pro-image-preview"
   },
   {
-   "id": "gemini-3-flash"
+   "id": "gemini-3-pro-image-preview-2k"
+  },
+  {
+   "id": "gemini-3-pro-image-preview-4k"
   },
   {
    "id": "devin/gemini-4-argon"
@@ -273,6 +276,12 @@
    "id": "glm-5v-turbo"
   },
   {
+   "id": "gpt-5.2"
+  },
+  {
+   "id": "gpt-5.3-codex-spark"
+  },
+  {
    "id": "devin/gpt-5-4"
   },
   {
@@ -282,22 +291,19 @@
    "id": "devin/gpt-5-5"
   },
   {
-   "id": "gpt-5.6-luna"
+   "id": "gpt-5.6"
   },
   {
-   "id": "gpt-5.6-luna-fast"
+   "id": "gpt-5.6-luna"
   },
   {
    "id": "gpt-5.6-sol"
   },
   {
-   "id": "gpt-5.6-sol-fast"
-  },
-  {
    "id": "gpt-5.6-terra"
   },
   {
-   "id": "gpt-5.6-terra-fast"
+   "id": "gpt-6"
   },
   {
    "id": "gpt-6.1-sol"
@@ -312,16 +318,7 @@
    "id": "gpt-6.1-terra-fast"
   },
   {
-   "id": "gpt-6.2-astra"
-  },
-  {
-   "id": "gpt-6.2-sol"
-  },
-  {
    "id": "gpt-6-astra"
-  },
-  {
-   "id": "gpt-6-astra-fast"
   },
   {
    "id": "gpt-6-luna"
@@ -333,10 +330,19 @@
    "id": "gpt-6-sol"
   },
   {
-   "id": "gpt-6-sol-fast"
+   "id": "gpt-image-1"
+  },
+  {
+   "id": "gpt-image-1.5"
   },
   {
    "id": "gpt-image-2"
+  },
+  {
+   "id": "gpt-image-2-2k"
+  },
+  {
+   "id": "gpt-image-2-4k"
   },
   {
    "id": "gpt-image-2.5"
@@ -348,10 +354,10 @@
    "id": "gpt-image-2.5-sunburst"
   },
   {
-   "id": "gpt-oss-120b-medium"
+   "id": "gpt-image-2.6-flare"
   },
   {
-   "id": "gpt-reserve"
+   "id": "gpt-image-2.6-sunburst"
   },
   {
    "id": "gpt-reserve-fast"
@@ -361,6 +367,18 @@
   },
   {
    "id": "devin/grok-4-7"
+  },
+  {
+   "id": "happyhorse-1.0-video-edit"
+  },
+  {
+   "id": "happyhorse-1.1-i2v"
+  },
+  {
+   "id": "happyhorse-1.1-r2v"
+  },
+  {
+   "id": "happyhorse-1.1-t2v"
   },
   {
    "id": "hy3"
@@ -706,7 +724,37 @@
    "id": "devin/nemotron-3-ultra"
   },
   {
+   "id": "qwen-audio-3.0-tts-flash"
+  },
+  {
+   "id": "qwen-audio-3.0-tts-plus"
+  },
+  {
+   "id": "qwen-image-2.0"
+  },
+  {
+   "id": "qwen-image-2.0-pro"
+  },
+  {
+   "id": "qwen-image-3.0"
+  },
+  {
+   "id": "qwen-image-3.0-pro"
+  },
+  {
+   "id": "qwen-image-edit-max"
+  },
+  {
+   "id": "qwen3.6-flash"
+  },
+  {
+   "id": "qwen3.6-plus"
+  },
+  {
    "id": "qwen3.7-max"
+  },
+  {
+   "id": "qwen3.7-plus"
   },
   {
    "id": "qwen3.8-flash"
@@ -867,6 +915,30 @@
    ],
    "context": 65536,
    "reasoning": 0
+  },
+  {
+   "id": "wan2.7-i2v"
+  },
+  {
+   "id": "wan2.7-image"
+  },
+  {
+   "id": "wan2.7-image-pro"
+  },
+  {
+   "id": "wan2.7-r2v"
+  },
+  {
+   "id": "wan2.7-t2v"
+  },
+  {
+   "id": "wan2.7-videoedit"
+  },
+  {
+   "id": "wan3.0-video"
+  },
+  {
+   "id": "wan3.0-video-prime"
   },
   {
    "id": "zai-glm-latest",
