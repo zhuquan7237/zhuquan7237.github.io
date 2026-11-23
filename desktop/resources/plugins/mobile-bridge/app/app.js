@@ -530,6 +530,12 @@
       const time = Number(event.time) || 0;
       if (event.type === 'step/start') { stepStart = time; continue; }
       if (event.type === 'user/message') {
+        // Only the human's own turns belong in the chat. The engine also
+        // replays its injected context as user/message events (runtime
+        // snapshot, skill catalogue, time snapshot); rendering those puts
+        // paragraphs of machine prose inside a bubble labelled 「我」.
+        const source = data.source && typeof data.source === 'object' ? data.source : {};
+        if (source.kind && source.kind !== 'user') continue;
         const text = extractText(data);
         if (text) rows.push({ who: 'user', text });
       } else if (event.type === 'assistant/message') {
