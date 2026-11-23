@@ -1,6 +1,6 @@
 {
  "version": 1,
- "generatedAt": "2026-11-22T22:40:36Z",
+ "generatedAt": "2026-11-23T22:40:35Z",
  "source": "gateway /v1/models probe (scripts/collect-gateway-capabilities.py)",
  "providers": {
   "a600": {
@@ -50,7 +50,7 @@
   },
   "mistral": {
    "ok": true,
-   "count": 62,
+   "count": 63,
    "error": ""
   },
   "relayfor": {
@@ -248,6 +248,14 @@
   },
   {
    "id": "gemini-4-hydrogen"
+  },
+  {
+   "id": "glm-5-latest",
+   "modalities": [
+    "text"
+   ],
+   "context": 1048576,
+   "reasoning": 1
   },
   {
    "id": "glm-5.1"
