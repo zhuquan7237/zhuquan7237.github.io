@@ -24,14 +24,14 @@
 
       /* ── 语言切换器 ── */
       [data-lang="en"] .page-lead,[data-lang="en"] .panel p,[data-lang="en"] .step-card p{overflow-wrap:anywhere}
-      .lang-switch{display:inline-flex;align-items:center;gap:2px;padding:3px;
+      .lang-switch{display:inline-flex;align-items:center;gap:2px;padding:3px;white-space:nowrap;flex:0 0 auto;
         border:1px solid rgba(150,150,160,.35);border-radius:999px;background:rgba(160,160,170,.06);
         cursor:pointer;font:600 12.5px/1 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
         margin-left:14px;flex:0 0 auto}
       .lang-switch:hover{border-color:rgba(150,150,160,.7)}
       .lang-switch:focus-visible{outline:2px solid #ca5040;outline-offset:2px}
       .lang-switch .opt{display:inline-flex;align-items:center;justify-content:center;
-        min-width:34px;padding:5px 8px;border-radius:999px;color:#8a8a90;transition:.2s}
+        min-width:34px;padding:5px 8px;border-radius:999px;color:#8a8a90;white-space:nowrap;transition:.2s}
       .lang-switch .opt[aria-current="true"]{background:#ca5040;color:#fff;box-shadow:0 2px 8px rgba(202,80,64,.35)}
       @media (max-width:760px){.lang-switch{margin-left:auto;order:2;margin-right:6px}
         .lang-switch .opt{min-width:30px;padding:5px 6px;font-size:12px}}
