@@ -1,0 +1,61 @@
+# One-time setup (e.g., install system tools, global CLIs).
+initialize:
+  - name: Node 22 (matches CI)
+    uses: github.com/actions/setup-node@v4
+    with:
+      node-version: "22"
+# Install project dependencies (runs during builds, surfaced to agent at session start).
+maintenance: |
+  (cd desktop && npm install)
+  (cd deepseek-app && npm install)
+knowledge:
+  - name: test
+    contents: |
+      (cd desktop && npm test)        # vitest, ~530 tests
+      (cd deepseek-app && npm test)
+  - name: build
+    contents: |
+      (cd desktop && npm run build)   # icon gen (python3) + tsc + bundled plugins
+      (cd deepseek-app && npm run build)  # outputs into ../app (tracked Pages build)
+  - name: run
+    contents: |
+      (cd desktop && npm start)       # Electron; add --no-sandbox on Linux VMs; smoke: ./node_modules/.bin/electron . --no-sandbox --export-diagnostics
+      (cd deepseek-app && npm run dev)  # http://127.0.0.1:4173
+  - name: notes
+    contents: |
+      Desktop build rewrites tracked icon PNGs and desktop/resources/plugins/model-vision/data/catalogue.json; npm install bumps the stale version in desktop/package-lock.json. Revert these unless intentional. Installers: npm run dist:linux|dist:win|dist:mac.
+---
+runs-on: macos
+initialize: |
+  brew install node@22
+  echo "PATH=/opt/homebrew/opt/node@22/bin:$PATH" >> $ENVRC
+maintenance: |
+  export PATH=/opt/homebrew/opt/node@22/bin:$PATH
+  (cd desktop && npm install && node node_modules/electron/install.js)
+knowledge:
+  - name: test
+    contents: |
+      cd desktop && npm test   # vitest, Node 22 (/opt/homebrew/opt/node@22/bin)
+  - name: build
+    contents: |
+      cd desktop && npm run build   # regenerates tracked icons/favicons and plugin catalogue.json; git checkout them if unintended
+  - name: pack-mac
+    contents: |
+      cd desktop && CSC_IDENTITY_AUTO_DISCOVERY=false npx electron-builder --mac --dir --arm64 && bash scripts/verify-mac-signature.sh   # after npm run build; output in desktop/release
+---
+runs-on: windows
+maintenance: |
+  (cd desktop && npm.cmd install)
+knowledge:
+  - name: notes
+    contents: |
+      Electron app lives in desktop/. In Git Bash use npm.cmd/npx.cmd (the bash npm shim fails). A build rewrites tracked icon PNGs and plugin lib/*.js (CRLF); revert them with git checkout -- if you did not mean to change them.
+  - name: test
+    contents: |
+      cd desktop && npm.cmd test
+  - name: build
+    contents: |
+      cd desktop && npm.cmd run build
+  - name: pack
+    contents: |
+      cd desktop && CSC_IDENTITY_AUTO_DISCOVERY=false npx.cmd electron-builder --win --dir --x64   # full installer: npm.cmd run dist:win
