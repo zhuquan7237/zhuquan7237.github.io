@@ -5,6 +5,9 @@
  */
 (function () {
   var KEY = "dsh.lang";
+  /* 资源版本：改词条/脚本后改这一处，配合 <script src="...?v="> 一起 bump，
+     绕开 Cloudflare 对 i18n.js 与 *.json 的边缘缓存（TTL 4h，否则访客会拿到旧词典）。 */
+  var VERSION = "20261124b";
   var LS = (function () {
     try { var t = "__dsh"; localStorage.setItem(t, "1"); localStorage.removeItem(t); return localStorage; }
     catch (e) {
@@ -178,7 +181,7 @@
   function loadDict(file, cb) {
     if (cache[file]) return cb(null, cache[file]);
     var xhr = new XMLHttpRequest();
-    xhr.open("GET", dictBase() + file + ".json", true);
+    xhr.open("GET", dictBase() + file + ".json?v=" + VERSION, true);
     xhr.onload = function () {
       if (xhr.status >= 200 && xhr.status < 300) {
         try { cache[file] = JSON.parse(xhr.responseText); return cb(null, cache[file]); }
