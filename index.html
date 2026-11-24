@@ -469,6 +469,53 @@ footer{background:linear-gradient(180deg,rgba(238,233,220,.012),transparent),var
 }
 
 </style>
+
+<style>
+
+/* 英文模式：长句放宽行距与容器，避免孤字与贴边 */
+[data-lang="en"] .hero .lead,[data-lang="en"] .feat-list li,[data-lang="en"] .upd li{line-height:1.78}
+[data-lang="en"] .compare-table td,[data-lang="en"] .compare-table th{padding-left:18px;padding-right:18px}
+[data-lang="en"] .steps{gap:14px}
+[data-lang="en"] .hero h1{text-wrap:balance}
+[data-lang="en"] h2{text-wrap:balance}
+[data-lang="en"] .section-index .chapter{letter-spacing:.18em}
+/* ── 语言切换器 ── */
+.lang-switch{
+  position:relative;display:inline-flex;align-items:center;gap:2px;
+  padding:3px;border:1px solid var(--line);border-radius:999px;
+  background:rgba(238,233,220,.04);cursor:pointer;
+  font:600 12.5px/1 var(--sans);letter-spacing:.02em;
+  transition:border-color .25s var(--ease),background .25s var(--ease);
+}
+.lang-switch:hover{border-color:rgba(238,233,220,.4);background:rgba(238,233,220,.07)}
+.lang-switch:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+.lang-switch .opt{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-width:34px;padding:5px 8px;border-radius:999px;color:var(--muted);
+  transition:color .2s var(--ease),background .2s var(--ease);
+}
+.lang-switch .opt[aria-current="true"]{background:var(--red);color:#f7f1e4;box-shadow:0 2px 10px rgba(202,80,64,.35)}
+.lang-switch .opt-en{letter-spacing:.06em}
+/* 首屏给外国访客的一句话引导：只在中文模式显示（切到英文后由 CSS 撤掉，不依赖词条） */
+.hero .hero-en-hint{color:var(--paper)}
+[data-lang="en"] .hero .hero-en-hint{display:none}
+/* 英文模式：标题字号略调，避免长句孤字换行 */
+[data-lang="en"] .hero h1{letter-spacing:-.015em;line-height:1.02}
+[data-lang="en"] .hero h1 .p{display:none}  /* 英文标题自带标点，朱砂装饰点撤掉 */
+[data-lang="en"] h2{letter-spacing:-.012em}
+[data-lang="en"] .faq-list summary,[data-lang="en"] .upd li{line-height:1.75}
+[data-lang="en"] .orbit-label{letter-spacing:.3em}
+@media (max-width:620px){
+  .lang-switch{order:-1}
+  .lang-switch .opt{min-width:30px;padding:5px 6px;font-size:12px}
+}
+</style>
+<script>
+/* 首帧语言：在 CSS 渲染前就打上 data-lang，避免切到英文时先闪一下中文。
+   这里只做标记，真正的文案替换由 i18n/i18n.js 在 DOMContentLoaded 后完成。 */
+(function(){try{var v=localStorage.getItem("dsh.lang");document.documentElement.setAttribute("data-lang",v==="en"?"en":"zh");}catch(e){document.documentElement.setAttribute("data-lang","zh");}})();
+</script>
+<script src="./i18n/i18n.js" defer></script>
 </head>
 <body>
 
@@ -495,6 +542,10 @@ footer{background:linear-gradient(180deg,rgba(238,233,220,.012),transparent),var
       <a href="#feedback">反馈</a>
     </nav>
     <div class="nav-right">
+      <button class="lang-switch" type="button" data-lang-switch aria-pressed="false" aria-label="切换语言 / Switch language" title="中文 / English">
+        <span class="opt opt-zh" data-lang-zh aria-current="true">中文</span>
+        <span class="opt opt-en" data-lang-en>EN</span>
+      </button>
       <a class="gh-link" href="https://github.com/zhuquan7237/zhuquan7237.github.io" target="_blank" rel="noopener">
         <svg viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.4 7.4 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
         GitHub
@@ -523,6 +574,7 @@ footer{background:linear-gradient(180deg,rgba(238,233,220,.012),transparent),var
           <a class="btn btn-quiet btn-lg" data-dl-secondary href="https://relay.zhuquan.xyz/dl/dsh-mobile.apk">下载安卓 APK</a>
         </div>
         <p class="detect-badge" data-detect-badge>正在识别你的系统…</p>
+        <p class="meta-sub hero-en-hint">阅读英文版？右上角 <b>中文 / EN</b> 一点就切；下面的内容完全一样，下载入口也一样。</p>
         <p class="meta-sub">Windows 10+ · Android 8+ · 国内直连下载 · 免费开源<br />朱泉制作的社区项目 · 非 DeepSeek 官方产品</p>
       </div>
       <div class="stage">
@@ -1072,42 +1124,61 @@ footer{background:linear-gradient(180deg,rgba(238,233,220,.012),transparent),var
     if(p.os==="linux")  return p.arch==="arm64" ? "linux-arm64" : "linux-x64";
     return "";
   }
-  var LABEL = {
-    "windows-x64":"Windows 安装版","windows-arm64":"Windows ARM64",
-    "macos-arm64":"macOS（Apple 芯片）","macos-x64":"macOS（Intel）",
-    "linux-x64":"Linux x64","linux-arm64":"Linux arm64","android-any":"安卓 APK"
-  };
+  function LABEL_OF(){
+    return EN() ? {
+      "windows-x64":"Windows installer","windows-arm64":"Windows ARM64",
+      "macos-arm64":"macOS (Apple silicon)","macos-x64":"macOS (Intel)",
+      "linux-x64":"Linux x64","linux-arm64":"Linux arm64","android-any":"Android APK"
+    } : {
+      "windows-x64":"Windows 安装版","windows-arm64":"Windows ARM64",
+      "macos-arm64":"macOS（Apple 芯片）","macos-x64":"macOS（Intel）",
+      "linux-x64":"Linux x64","linux-arm64":"Linux arm64","android-any":"安卓 APK"
+    };
+  }
+  var LABEL = LABEL_OF();
+  /* 文案随语言切换：EN() 取英文，中文原样 */
+  function EN(){ return !!(window.DSH_I18N && window.DSH_I18N.lang() === "en"); }
+  function T(zh, en){ return EN() ? en : zh; }
+  var whaleRelabel = null;
   function apply(p){
     var badge = document.querySelector("[data-detect-badge]");
     var k = key(p);
     if(WECHAT){
-      if(badge) badge.innerHTML = "检测到微信内置浏览器：下载可能被拦截，请点右上角「…」选择<b>用浏览器打开</b>";
+      if(badge) badge.innerHTML = T("检测到微信内置浏览器：下载可能被拦截，请点右上角「…」选择<b>用浏览器打开</b>",
+        "WeChat’s in-app browser detected: downloads may be blocked. Tap “…” in the top-right and choose <b>Open in browser</b>");
       return;
     }
     if(!k){
-      if(badge) badge.textContent = "没有识别出你的系统？在下面手动选择即可。";
+      if(badge) badge.textContent = T("没有识别出你的系统？在下面手动选择即可。", "Couldn’t detect your system? Pick a build below.");
       return;
     }
     var card = document.querySelector('[data-dl-key="'+k+'"]');
     if(card && k!=="macos-any"){
       card.classList.add("is-recommended");
-      if(badge) badge.textContent = "已按这台设备选好：" + (LABEL[k]||k);
+      LABEL = LABEL_OF();
+      if(badge) badge.textContent = T("已按这台设备选好：", "Picked for this device: ") + (LABEL[k]||k);
     }else{
-      if(badge) badge.textContent = p.os==="macos" ? "检测到 macOS：下载时请确认芯片类型（Apple 芯片 / Intel）" : "按需选择下面的版本。";
+      if(badge) badge.textContent = p.os==="macos"
+        ? T("检测到 macOS：下载时请确认芯片类型（Apple 芯片 / Intel）", "macOS detected: choose Apple silicon or Intel")
+        : T("按需选择下面的版本。", "Pick the build you need below.");
     }
-    if(k==="android-any" && badge) badge.textContent = "检测到安卓设备：直接下载 APK 安装即可";
+    if(k==="android-any" && badge) badge.textContent = T("检测到安卓设备：直接下载 APK 安装即可", "Android detected: grab the APK and install it");
     var primary = document.querySelector("[data-dl-primary]");
     var secondary = document.querySelector("[data-dl-secondary]");
     var APK = "https://relay.zhuquan.xyz/dl/dsh-mobile.apk";
-    var BTN = {
+    var BTN = EN() ? {
+      "windows-x64":"Download for Windows","windows-arm64":"Download for Windows ARM64",
+      "macos-arm64":"Download for macOS","macos-x64":"Download for macOS Intel",
+      "linux-x64":"Download for Linux","linux-arm64":"Download for Linux ARM64","android-any":"Get the Android APK"
+    } : {
       "windows-x64":"下载 Windows 版","windows-arm64":"下载 Windows ARM64 版",
       "macos-arm64":"下载 macOS 版","macos-x64":"下载 macOS Intel 版",
       "linux-x64":"下载 Linux 版","linux-arm64":"下载 Linux ARM64 版","android-any":"下载安卓 APK"
     };
     /* 次按钮：安卓设备时让位（主按钮已是 APK），其余一直指向 APK */
     if(secondary){
-      if(k==="android-any"){ secondary.textContent = "选择其他版本"; secondary.href = "#downloads"; }
-      else{ secondary.textContent = "下载安卓 APK"; secondary.href = APK; }
+      if(k==="android-any"){ secondary.textContent = T("选择其他版本", "See other builds"); secondary.href = "#downloads"; }
+      else{ secondary.textContent = T("下载安卓 APK", "Get the Android APK"); secondary.href = APK; }
     }
     if(primary && BTN[k]){
       if(k==="android-any"){ primary.href = APK; }
@@ -1141,7 +1212,7 @@ footer{background:linear-gradient(180deg,rgba(238,233,220,.012),transparent),var
       }).catch(function(){/* 离线保持静态回退 */});
   }
   /* ── 3. 版本清单：从 /dl/latest.json 读取，替换所有下载链接与版本号 ── */
-  function fmtSize(n){ return n ? "约 " + Math.round(n/1048576) + " MB" : ""; }
+  function fmtSize(n){ return n ? T("约 ", "~") + Math.round(n/1048576) + " MB" : ""; }
   function loadManifest(){
     function safeUrl(u){
       try{ var h = new URL(u).host; return /(^|\.)zhuquan\.xyz$/.test(h) ? u : null; }catch(e){ return null; }
@@ -1217,12 +1288,29 @@ footer{background:linear-gradient(180deg,rgba(238,233,220,.012),transparent),var
       }, ms || 2800);
     }
     function setSel(f){ S.sel = f; paint(f || "wave"); }
-    var eggs = [
-      ["happy","任务干完了！开心！"],
-      ["shy","别摸啦…会害羞的"],
-      ["sleepy","呼…好困，我先眯一会儿"],
-      ["normal","我在呢，随时待命～"]
-    ];
+    function eggsNow(){
+      return EN() ? [
+        ["happy","All done! Yay!"],
+        ["shy","Hey… that tickles"],
+        ["sleepy","Mmh… sleepytime"],
+        ["normal","Right here, ready when you are."]
+      ] : [
+        ["happy","任务干完了！开心！"],
+        ["shy","别摸啦…会害羞的"],
+        ["sleepy","呼…好困，我先眯一会儿"],
+        ["normal","我在呢，随时待命～"]
+      ];
+    }
+    var eggs = eggsNow();
+    /* 语言切换后：台词表与气泡文案一起换（情绪状态保留） */
+    function relabelWhale(){
+      eggs = eggsNow();
+      bubbles.forEach(function(o){
+        if(o.root.id === "whaleHero") o.el.textContent = T("你好呀～","Hi there!");
+        else o.el.textContent = T("你好呀～我是鲸鱼娘","Hi! I’m Whale Girl");
+      });
+    }
+    whaleRelabel = relabelWhale;
     var ei = 0;
     function pat(){
       var e = eggs[ei % eggs.length]; ei++;
@@ -1242,13 +1330,13 @@ footer{background:linear-gradient(180deg,rgba(238,233,220,.012),transparent),var
           o.setAttribute("aria-pressed", on ? "true" : "false");
         });
         if(next){ say(f.getAttribute("data-line") || "嗨～", 2600); }
-        else{ say("好，我回到平常的样子～", 2200); }
+        else{ say(T("好，我回到平常的样子～","Okay, back to normal."), 2200); }
       });
     });
     var chip = document.getElementById("whaleDemo");
     if(chip) chip.addEventListener("click", function(){
       clearTimeout(S.t);
-      paint("happy"); say("任务完成啦！（App 里她会这样来叫你）", 3400);
+      paint("happy"); say(T("任务完成啦！（App 里她会这样来叫你）","Task finished! (that’s how she calls you in the app)"), 3400);
       S.t = setTimeout(function(){ S.t = null; paint(S.sel || "wave"); }, 3400);
     });
   }
@@ -1273,7 +1361,7 @@ footer{background:linear-gradient(180deg,rgba(238,233,220,.012),transparent),var
       burger.addEventListener("click", function(){
         var open = head.classList.toggle("nav-open");
         burger.setAttribute("aria-expanded", open ? "true" : "false");
-        burger.setAttribute("aria-label", open ? "关闭菜单" : "打开菜单");
+        burger.setAttribute("aria-label", open ? T("关闭菜单","Close menu") : T("打开菜单","Open menu"));
       });
       document.querySelectorAll("#navLinks a").forEach(function(a){
         a.addEventListener("click", function(){
@@ -1283,6 +1371,11 @@ footer{background:linear-gradient(180deg,rgba(238,233,220,.012),transparent),var
       });
     }
   }
+  /* 语言切换后：重绘所有 JS 写进去的文案（按钮、徽章、鲸鱼气泡） */
+  window.__dshRelabel = function(){
+    if(whaleRelabel) whaleRelabel();
+    if(window.__pf) apply(window.__pf);
+  };
   document.addEventListener("DOMContentLoaded", function(){
     reveal(); stars(); loadManifest();
   loadAppVersion(); whaleController(); nav();

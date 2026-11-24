@@ -1,0 +1,332 @@
+{
+ "title": "Project scope — DeepSeek Harness Desktop",
+ "text": [
+  [
+   "产品",
+   "Product"
+  ],
+  [
+   "皮肤",
+   "Skins"
+  ],
+  [
+   "全部下载",
+   "All downloads"
+  ],
+  [
+   "项目对照",
+   "Project scope"
+  ],
+  [
+   "macOS 帮助",
+   "macOS help"
+  ],
+  [
+   "朱泉",
+   "Quan Zhu"
+  ],
+  [
+   "下载 Windows 安装包",
+   "Download for Windows"
+  ],
+  [
+   "不是另一个 Harness fork。",
+   "Not another Harness fork."
+  ],
+  [
+   "是朱泉做的社区",
+   "is a community"
+  ],
+  [
+   "Electron 桌面端",
+   "Electron desktop shell by Quan Zhu"
+  ],
+  [
+   "。它负责安装包、窗口和本地启动； Harness 引擎始终来自 npm 的",
+   ". It handles installers, the window and local startup; the Harness engine always comes from the npm package"
+  ],
+  [
+   "，不整仓拷贝官方 monorepo。",
+   ", never a copy of the official monorepo."
+  ],
+  [
+   "返回产品与下载",
+   "Back to product & downloads"
+  ],
+  [
+   "打开搜索落地仓库",
+   "Open the search landing repo"
+  ],
+  [
+   "认准项目：",
+   "Find the right project:"
+  ],
+  [
+   "GitHub 搜索落地仓库是",
+   "The search landing repo is"
+  ],
+  [
+   "； 实际源码、Release 与站点在",
+   "; the real sources, releases and site live at"
+  ],
+  [
+   "。 这是社区项目，不代表 DeepSeek Inc.",
+   "  This is a community project, not affiliated with DeepSeek Inc."
+  ],
+  [
+   "方案差别",
+   "How the approaches differ"
+  ],
+  [
+   "对照项",
+   "Aspect"
+  ],
+  [
+   "这个桌面端",
+   "This desktop shell"
+  ],
+  [
+   "整仓复制方案",
+   "Full-repo fork"
+  ],
+  [
+   "仓库内容",
+   "What's in the repo"
+  ],
+  [
+   "Electron 壳、打包脚本、皮肤运行时",
+   "Electron shell, build scripts, skin runtime"
+  ],
+  [
+   "官方 monorepo 的副本，再加桌面封装",
+   "A copy of the official monorepo plus a desktop wrapper"
+  ],
+  [
+   "引擎来源",
+   "Where the engine comes from"
+  ],
+  [
+   "运行时从 npm 安装官方",
+   "Installed from npm at runtime: the official"
+  ],
+  [
+   "使用仓库中同步到某个时点的源码",
+   "Uses whatever the synced source tree was at some point"
+  ],
+  [
+   "引擎更新",
+   "Engine updates"
+  ],
+  [
+   "应用内检查 Harness 更新，不必重装桌面壳",
+   "Check for Harness updates in-app; no need to reinstall the shell"
+  ],
+  [
+   "需要维护者同步源码并重新发布",
+   "Maintainers must re-sync sources and re-release"
+  ],
+  [
+   "开始使用",
+   "First run"
+  ],
+  [
+   "下载安装包；自动准备 Node 和启动服务",
+   "Grab an installer; Node and the service are set up for you"
+  ],
+  [
+   "通常需要 clone、安装依赖或等待完整打包",
+   "Usually means cloning, installing deps, or waiting on a full build"
+  ],
+  [
+   "桌面系统",
+   "Desktop platforms"
+  ],
+  [
+   "Windows、Linux、macOS Apple Silicon 与 Intel",
+   "Windows, Linux, macOS on Apple silicon and Intel"
+  ],
+  [
+   "具体看各项目发布内容",
+   "Depends on each project's releases"
+  ],
+  [
+   "默认皮肤",
+   "Default skin"
+  ],
+  [
+   "「深海女仆工坊」成品随安装包内置",
+   "“Maid Atelier” ships inside the installer"
+  ],
+  [
+   "具体看各项目；版权也应单独核对",
+   "Depends on the project; check the licensing separately"
+  ],
+  [
+   "旧 API Key",
+   "Existing API keys"
+  ],
+  [
+   "启动时尽量从旧 userData 与",
+   "Migrated from the old userData and"
+  ],
+  [
+   "迁移",
+   "on launch where possible"
+  ],
+  [
+   "具体看各项目的迁移实现",
+   "Depends on each project's migration"
+  ],
+  [
+   "这个项目只做这些事",
+   "What this project does — and nothing more"
+  ],
+  [
+   "把本地 Web UI 放进窗口",
+   "Puts the local web UI in a window"
+  ],
+  [
+   "提供桌面图标、快捷方式、工作区和中文菜单。它不是另做一个聊天网页。",
+   "Desktop icon, shortcuts, workspace and menus. It is not another chat page."
+  ],
+  [
+   "把启动环境准备好",
+   "Prepares the runtime"
+  ],
+  [
+   "首次运行准备 Node，从 npm 安装引擎，再启动官方 Harness 服务。",
+   "First run sets up Node, installs the engine from npm, then starts the official Harness service."
+  ],
+  [
+   "发布跨平台安装包",
+   "Ships cross-platform installers"
+  ],
+  [
+   "0.8.5 提供 Windows（x64 / ARM64）、Linux x64 / arm64 tar.gz / deb / rpm、macOS arm64 / x64。",
+   "0.8.5 covers Windows (x64 / ARM64), Linux x64 / arm64 as tar.gz / deb / rpm, and macOS arm64 / x64."
+  ],
+  [
+   "清楚保留上游边界",
+   "Keeps the upstream boundary clear"
+  ],
+  [
+   "Harness 归官方项目；默认皮肤也有自己的 CC BY-NC-SA 4.0 署名链。",
+   "Harness belongs to the official project; the default skin carries its own CC BY-NC-SA 4.0 credit chain."
+  ],
+  [
+   "0.8.5 · 社区项目 · 作者朱泉",
+   "0.8.5 · community project · by Quan Zhu"
+  ],
+  [
+   "产品与下载",
+   "Product & downloads"
+  ],
+  [
+   "皮肤署名",
+   "Skin credits"
+  ],
+  [
+   "关于作者",
+   "About the author"
+  ],
+  [
+   "DeepSeek Harness Desktop 首页",
+   "DeepSeek Harness Desktop home"
+  ],
+  [
+   "打开导航",
+   "Open navigation"
+  ],
+  [
+   "关闭导航",
+   "Close navigation"
+  ],
+  [
+   "主导航",
+   "Main navigation"
+  ],
+  [
+   "页脚导航",
+   "Footer navigation"
+  ],
+  [
+   "终端命令",
+   "Terminal commands"
+  ],
+  [
+   "作者与项目",
+   "Author and project"
+  ],
+  [
+   "项目关键词",
+   "Project tags"
+  ],
+  [
+   "切换语言 / Switch language",
+   "Switch language"
+  ],
+  [
+   "中文 / English",
+   "中文 / English"
+  ],
+  [
+   "摸摸鲸鱼娘的头",
+   "Pat Whale Girl on the head"
+  ],
+  [
+   "摸摸头",
+   "Head pat"
+  ],
+  [
+   "DeepSeek Harness 桌面端界面",
+   "DeepSeek Harness desktop interface"
+  ],
+  [
+   "手机端聊天界面",
+   "Phone chat interface"
+  ],
+  [
+   "手机端对话界面",
+   "Phone chat interface"
+  ],
+  [
+   "模型管理界面",
+   "Model settings screen"
+  ],
+  [
+   "图形预览",
+   "Chart preview"
+  ]
+ ],
+ "sel": {},
+ "html": {},
+ "attrs": {
+  "[aria-label=\"DeepSeek Harness Desktop 首页\"]": {
+   "aria-label": "DeepSeek Harness Desktop home"
+  },
+  "[aria-label=\"打开导航\"]": {
+   "aria-label": "Open navigation"
+  },
+  "[aria-label=\"主导航\"]": {
+   "aria-label": "Main navigation"
+  },
+  "[aria-label=\"页脚导航\"]": {
+   "aria-label": "Footer navigation"
+  },
+  "[aria-label=\"终端命令\"]": {
+   "aria-label": "Terminal commands"
+  },
+  "[aria-label=\"作者与项目\"]": {
+   "aria-label": "Author and project"
+  },
+  "[aria-label=\"项目关键词\"]": {
+   "aria-label": "Project tags"
+  },
+  "[aria-label=\"切换语言 / Switch language\"]": {
+   "aria-label": "Switch language"
+  },
+  "[data-lang-switch]": {
+   "title": "中文 / English"
+  }
+ }
+}

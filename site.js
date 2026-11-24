@@ -1,38 +1,55 @@
 (function () {
   "use strict";
 
+  function T(zh, en) {
+    return window.DSH_I18N && window.DSH_I18N.lang() === "en" ? en : zh;
+  }
+
   var downloads = {
     win: {
       href: "https://dsh.zhuquan.xyz/dl/DeepSeek-0.2.1-win.exe",
       label: "下载 Windows 安装包",
+      labelEn: "Download for Windows",
       family: "win",
       status: "已按这台电脑选好 Windows",
+      statusEn: "Picked for this PC — Windows",
       chosen: "已切换为 Windows",
+      chosenEn: "Switched to Windows",
     },
     linux: {
       href: "https://dsh.zhuquan.xyz/dl/DeepSeek-0.2.1-linux-x64.tar.gz",
       label: "下载 Linux tar.gz",
+      labelEn: "Download Linux tar.gz",
       family: "linux",
       status: "已按这台电脑选好 Linux",
+      statusEn: "Picked for this PC — Linux",
       chosen: "已切换为 Linux",
+      chosenEn: "Switched to Linux",
     },
     "mac-arm": {
       href: "https://dsh.zhuquan.xyz/dl/DeepSeek-0.2.1-mac-arm64.dmg",
       label: "下载 Mac M 系列",
+      labelEn: "Download for Apple silicon",
       family: "mac",
       status: "已按这台 Mac 选好 Apple 芯片",
+      statusEn: "Picked for this Mac — Apple silicon",
       chosen: "已切换为 Mac M 系列",
+      chosenEn: "Switched to Apple silicon",
     },
     "mac-intel": {
       href: "https://dsh.zhuquan.xyz/dl/DeepSeek-0.2.1-mac-x64.dmg",
       label: "下载 Intel Mac",
+      labelEn: "Download for Intel Mac",
       family: "mac",
       status: "已按这台 Mac 选好 Intel",
+      statusEn: "Picked for this Mac — Intel",
       chosen: "已切换为 Intel Mac",
+      chosenEn: "Switched to Intel Mac",
     },
   };
 
   var userChoseTarget = false;
+  var currentTarget = "win";
   var handheldVisitor = false;
 
   function isHandheld(source) {
@@ -69,23 +86,24 @@
       link.classList.toggle("download-link", matching);
       link.classList.toggle("sub-link", !matching);
       link.classList.toggle("is-mac-recommended", matching);
-      if (matching) link.setAttribute("aria-label", link.textContent.trim() + "，为这台 Mac 推荐");
+      if (matching) link.setAttribute("aria-label", link.textContent.trim() + T("，为这台 Mac 推荐", " — recommended for this Mac"));
       else link.removeAttribute("aria-label");
     });
   }
 
   function statusText(target, selected) {
-    if (userChoseTarget) return selected.chosen;
-    if (handheldVisitor) return "这台设备不是电脑，请选择要安装的系统";
-    return selected.status;
+    if (userChoseTarget) return T(selected.chosen, selected.chosenEn);
+    if (handheldVisitor) return T("这台设备不是电脑，请选择要安装的系统", "This isn’t a computer — pick the system you want to install on");
+    return T(selected.status, selected.statusEn);
   }
 
   function applyTarget(target) {
     var selected = downloads[target] || downloads.win;
+    currentTarget = downloads[target] ? target : "win";
 
     document.querySelectorAll("[data-hero-download]").forEach(function (link) {
       link.href = selected.href;
-      link.textContent = selected.label;
+      link.textContent = T(selected.label, selected.labelEn);
     });
 
     document.querySelectorAll("[data-os-choice]").forEach(function (button) {
@@ -113,6 +131,8 @@
 
   var initialTarget = detectTargetSync();
   applyTarget(initialTarget);
+  /* 语言切换后重算一次按钮文案与状态（href 不变，只换字） */
+  document.addEventListener("dsh:lang", function () { applyTarget(currentTarget); });
 
   document.querySelectorAll("[data-os-choice]").forEach(function (button) {
     button.addEventListener("click", function () {
@@ -147,7 +167,7 @@
     if (!topbar || !navToggle) return;
     topbar.classList.toggle("is-open", open);
     navToggle.setAttribute("aria-expanded", open ? "true" : "false");
-    navToggle.setAttribute("aria-label", open ? "关闭导航" : "打开导航");
+    navToggle.setAttribute("aria-label", open ? T("关闭导航", "Close navigation") : T("打开导航", "Open navigation"));
   }
 
   if (topbar && navToggle) {

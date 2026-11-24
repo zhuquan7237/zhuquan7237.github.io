@@ -1,0 +1,184 @@
+{
+ "title": "Download DeepSeek Harness Desktop — dsh.zhuquan.xyz",
+ "text": [
+  [
+   "产品",
+   "Product"
+  ],
+  [
+   "下载",
+   "Download"
+  ],
+  [
+   "项目对照",
+   "Project scope"
+  ],
+  [
+   "macOS 帮助",
+   "macOS help"
+  ],
+  [
+   "从本域名下载安装包",
+   "Download installers from this domain"
+  ],
+  [
+   "地址是",
+   "URLs look like "
+  ],
+  [
+   "https://dsh.zhuquan.xyz/dl/文件名",
+   "https://dsh.zhuquan.xyz/dl/<filename>"
+  ],
+  [
+   "直接扫二维码",
+   "scan the QR code"
+  ],
+  [
+   "下载 .exe",
+   "Download .exe"
+  ],
+  [
+   "下载 tar.gz",
+   "Download tar.gz"
+  ],
+  [
+   "下载 deb（Ubuntu / Debian）",
+   "Download deb (Ubuntu / Debian)"
+  ],
+  [
+   "下载 rpm（Fedora / openSUSE）",
+   "Download rpm (Fedora / openSUSE)"
+  ],
+  [
+   "AppImage（需 libfuse2）",
+   "AppImage (needs libfuse2)"
+  ],
+  [
+   "无 FUSE 启动脚本",
+   "No-FUSE launcher script"
+  ],
+  [
+   "M 系列 dmg",
+   "Apple silicon dmg"
+  ],
+  [
+   "备用：",
+   "Mirror: "
+  ],
+  [
+   "。请用",
+   ". Use "
+  ],
+  [
+   "，不要用更早的版本。",
+   ", not an older build."
+  ],
+  [
+   "。浏览器和软件内更新都走这里，不必再直连 GitHub 文件 CDN。 装好后打开「设置 → 手机配对」，让手机",
+   " — browser downloads and in-app updates both come from here, so no direct hit on the GitHub CDN. Once installed, open Settings → Phone pairing and let the phone "
+  ],
+  [
+   "即可连上你自己的电脑（已内置云端中继，不用配置公网地址）。 Linux 请优先 tar.gz / deb。AppImage 在 Ubuntu 24.04 常因缺少 libfuse2 双击没窗口。",
+   " to reach your own computer (a cloud relay is built in, so there’s no public address to configure). On Linux prefer tar.gz / deb; on Ubuntu 24.04 the AppImage often opens nothing because libfuse2 is missing."
+  ],
+  [
+   "DeepSeek Harness Desktop 首页",
+   "DeepSeek Harness Desktop home"
+  ],
+  [
+   "打开导航",
+   "Open navigation"
+  ],
+  [
+   "关闭导航",
+   "Close navigation"
+  ],
+  [
+   "主导航",
+   "Main navigation"
+  ],
+  [
+   "页脚导航",
+   "Footer navigation"
+  ],
+  [
+   "终端命令",
+   "Terminal commands"
+  ],
+  [
+   "作者与项目",
+   "Author and project"
+  ],
+  [
+   "项目关键词",
+   "Project tags"
+  ],
+  [
+   "切换语言 / Switch language",
+   "Switch language"
+  ],
+  [
+   "中文 / English",
+   "中文 / English"
+  ],
+  [
+   "摸摸鲸鱼娘的头",
+   "Pat Whale Girl on the head"
+  ],
+  [
+   "摸摸头",
+   "Head pat"
+  ],
+  [
+   "DeepSeek Harness 桌面端界面",
+   "DeepSeek Harness desktop interface"
+  ],
+  [
+   "手机端聊天界面",
+   "Phone chat interface"
+  ],
+  [
+   "手机端对话界面",
+   "Phone chat interface"
+  ],
+  [
+   "模型管理界面",
+   "Model settings screen"
+  ],
+  [
+   "图形预览",
+   "Chart preview"
+  ]
+ ],
+ "sel": {},
+ "html": {},
+ "attrs": {
+  "[aria-label=\"DeepSeek Harness Desktop 首页\"]": {
+   "aria-label": "DeepSeek Harness Desktop home"
+  },
+  "[aria-label=\"打开导航\"]": {
+   "aria-label": "Open navigation"
+  },
+  "[aria-label=\"主导航\"]": {
+   "aria-label": "Main navigation"
+  },
+  "[aria-label=\"页脚导航\"]": {
+   "aria-label": "Footer navigation"
+  },
+  "[aria-label=\"终端命令\"]": {
+   "aria-label": "Terminal commands"
+  },
+  "[aria-label=\"作者与项目\"]": {
+   "aria-label": "Author and project"
+  },
+  "[aria-label=\"项目关键词\"]": {
+   "aria-label": "Project tags"
+  },
+  "[aria-label=\"切换语言 / Switch language\"]": {
+   "aria-label": "Switch language"
+  },
+  "[data-lang-switch]": {
+   "title": "中文 / English"
+  }
+ }
+}

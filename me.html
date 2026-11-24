@@ -21,7 +21,27 @@
         overflow-x: hidden;
         max-width: 100%;
       }
+
+      /* ── 语言切换器 ── */
+      [data-lang="en"] .page-lead,[data-lang="en"] .panel p,[data-lang="en"] .step-card p{overflow-wrap:anywhere}
+      .lang-switch{display:inline-flex;align-items:center;gap:2px;padding:3px;
+        border:1px solid rgba(150,150,160,.35);border-radius:999px;background:rgba(160,160,170,.06);
+        cursor:pointer;font:600 12.5px/1 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+        margin-left:14px;flex:0 0 auto}
+      .lang-switch:hover{border-color:rgba(150,150,160,.7)}
+      .lang-switch:focus-visible{outline:2px solid #ca5040;outline-offset:2px}
+      .lang-switch .opt{display:inline-flex;align-items:center;justify-content:center;
+        min-width:34px;padding:5px 8px;border-radius:999px;color:#8a8a90;transition:.2s}
+      .lang-switch .opt[aria-current="true"]{background:#ca5040;color:#fff;box-shadow:0 2px 8px rgba(202,80,64,.35)}
+      @media (max-width:760px){.lang-switch{margin-left:auto;order:2;margin-right:6px}
+        .lang-switch .opt{min-width:30px;padding:5px 6px;font-size:12px}}
+
     </style>
+    <script>
+      /* 首帧语言标记：避免切到英文时先闪中文 */
+      (function(){try{var v=localStorage.getItem("dsh.lang");document.documentElement.setAttribute("data-lang",v==="en"?"en":"zh");}catch(e){document.documentElement.setAttribute("data-lang","zh");}})();
+    </script>
+    <script src="./i18n/i18n.js" defer></script>
   </head>
   <body>
     <header class="topbar">
@@ -38,6 +58,10 @@
           aria-label="打开导航"
         >
           <span></span><span></span><span></span>
+        </button>
+        <button class="lang-switch" type="button" data-lang-switch aria-pressed="false" aria-label="切换语言 / Switch language" title="中文 / English">
+          <span class="opt opt-zh" data-lang-zh aria-current="true">中文</span>
+          <span class="opt opt-en" data-lang-en>EN</span>
         </button>
         <nav id="site-nav" class="nav-links" aria-label="主导航">
           <a href="./">产品</a>

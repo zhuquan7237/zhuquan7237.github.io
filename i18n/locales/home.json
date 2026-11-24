@@ -1,0 +1,1080 @@
+{
+ "title": "DeepSeek Harness — Put a desktop AI agent in your pocket",
+ "text": [
+  [
+   "DeepSeek Harness — 把电脑上的 AI Agent，装进你的手机",
+   "DeepSeek Harness — Put a desktop AI agent in your pocket"
+  ],
+  [
+   "桌面端 v0.8.5",
+   "Desktop v0.8.5"
+  ],
+  [
+   "手机端 v0.6.3",
+   "Mobile v0.6.3"
+  ],
+  [
+   "已发布",
+   "out now"
+  ],
+  [
+   "看看更新了什么 →",
+   "See what changed →"
+  ],
+  [
+   "桌面引擎 × 手机遥控",
+   "Desktop engine × phone remote"
+  ],
+  [
+   "为什么",
+   "Why"
+  ],
+  [
+   "手机遥控",
+   "Remote"
+  ],
+  [
+   "鲸鱼娘",
+   "Whale Girl"
+  ],
+  [
+   "模型",
+   "Models"
+  ],
+  [
+   "下载",
+   "Download"
+  ],
+  [
+   "反馈",
+   "Feedback"
+  ],
+  [
+   "桌面引擎 × 手机遥控 · 开源免费",
+   "Desktop engine × phone remote · free and open source"
+  ],
+  [
+   "身在远处",
+   "Far from your desk."
+  ],
+  [
+   "事在掌中",
+   "The work, in your hand."
+  ],
+  [
+   "把电脑上的 AI Agent，装进你的手机。",
+   "Put a desktop AI agent on your phone."
+  ],
+  [
+   "DeepSeek Harness 是跑在你电脑上的 AI 干活引擎：文件、终端、浏览器都归它管； 手机配对后，人在外面也能指挥它——发任务、看进度、取文件。",
+   "DeepSeek Harness is a do-the-work AI engine running on your own computer, with direct control of your files, terminal and browser. Pair your phone once and you can run it from anywhere — send tasks, watch progress, collect the files."
+  ],
+  [
+   "任务在电脑执行 · 会话与密钥留在本机",
+   "Work runs on your desktop · sessions and keys stay on your machine"
+  ],
+  [
+   "选择下载版本",
+   "Choose your download"
+  ],
+  [
+   "下载安卓 APK",
+   "Get the Android APK"
+  ],
+  [
+   "正在识别你的系统…",
+   "Detecting your system…"
+  ],
+  [
+   "Windows 10+ · Android 8+ · 国内直连下载 · 免费开源",
+   "Windows 10+ · Android 8+ · direct download in China · free and open source"
+  ],
+  [
+   "朱泉制作的社区项目 · 非 DeepSeek 官方产品",
+   "A community project by Quan Zhu · not an official DeepSeek product"
+  ],
+  [
+   "一方天地 · 尽在掌中",
+   "A whole world in your palm"
+  ],
+  [
+   "掌中",
+   "Held"
+  ],
+  [
+   "有鲸",
+   "in hand"
+  ],
+  [
+   "DeepSeek Harness — 桌面端",
+   "DeepSeek Harness — Desktop"
+  ],
+  [
+   "你好呀～",
+   "Hi there!"
+  ],
+  [
+   "会话、文件与密钥",
+   "Sessions, files and keys"
+  ],
+  [
+   "保存在你自己的电脑",
+   " stay on your own computer"
+  ],
+  [
+   "配对码直连 ·",
+   "Pair-code direct link ·"
+  ],
+  [
+   "无需公网 IP",
+   " no public IP needed"
+  ],
+  [
+   "国内直连下载",
+   "Direct download in China"
+  ],
+  [
+   "，不用代理",
+   " — no proxy needed"
+  ],
+  [
+   "喜欢的话，去",
+   "If you like it, drop a"
+  ],
+  [
+   "GitHub 点个 Star",
+   "star on GitHub"
+  ],
+  [
+   "* 调用在线模型时，会向所选服务商发送完成任务所需的内容；异地连接会经过中继转发。存储与传输是两件事，这里都说清楚。",
+   "* Calling an online model sends what it needs to the provider you picked, and remote connections are relayed. Storage and transmission are two different things — both are stated plainly here."
+  ],
+  [
+   "壹 / 差异",
+   "01 / Difference"
+  ],
+  [
+   "它不是「又一个聊天客户端」",
+   "Not just another chat client"
+  ],
+  [
+   "聊天客户端让你和模型说话；DeepSeek Harness 让你把活交出去——",
+   "A chat client lets you talk to a model. DeepSeek Harness lets you hand the work over."
+  ],
+  [
+   "干活在你电脑上",
+   "The work happens on your computer"
+  ],
+  [
+   "文件、终端、浏览器都在本机执行。它真的会动手干活，不是嘴上说说。",
+   "Files, terminal, browser — all executed locally. It actually does the work instead of talking about it."
+  ],
+  [
+   "手机是遥控器",
+   "Your phone is the remote"
+  ],
+  [
+   "配对码 10 秒连上。发任务、看进度、收文件——人不在电脑前，活照常干。",
+   "Pair in about ten seconds. Send tasks, watch progress, collect files — the work carries on while you’re away from the desk."
+  ],
+  [
+   "数据留在本机",
+   "Your data stays put"
+  ],
+  [
+   "不用注册云账号。手机与电脑直接配对通信，会话、文件与密钥保存在你自己的电脑上。",
+   "No cloud account. Your phone talks straight to your computer, and sessions, files and keys live there."
+  ],
+  [
+   "电脑安装桌面端",
+   "Install the desktop app"
+  ],
+  [
+   "下载安装，配好你的模型",
+   "Download it and point it at your model"
+  ],
+  [
+   "手机扫码或输配对码",
+   "Scan the QR code or type the pair code"
+  ],
+  [
+   "十秒内连上自己的电脑",
+   "Connected to your own computer in seconds"
+  ],
+  [
+   "手机发任务，电脑执行",
+   "Send from the phone, run on the desktop"
+  ],
+  [
+   "结果回到手机上",
+   "Results land back on your phone"
+  ],
+  [
+   "遥控时需要已配对的电脑保持运行并可连接；断线后会自动重连。",
+   "Remote control needs the paired computer up and reachable; dropped connections reconnect automatically."
+  ],
+  [
+   "贰 / 遥控",
+   "02 / Remote"
+  ],
+  [
+   "人在外面，",
+   "You’re out there."
+  ],
+  [
+   "任务在家里跑",
+   "The work runs back home."
+  ],
+  [
+   "她是配套的控制器：配对一次，随时回来接着用。",
+   "A companion controller: pair once, pick up right where you left off."
+  ],
+  [
+   "配对码或扫码连接；同一 Wi-Fi 直连，异地自动走中继",
+   "Pair with a code or a scan. On the same Wi-Fi it connects directly; off-network it falls back to the relay."
+  ],
+  [
+   "顶栏实时三态：已连接 / 正在连接 / 未连接，心里有数",
+   "Live status in the top bar — connected, connecting, offline. Always know where you stand."
+  ],
+  [
+   "任务进度、思考过程、生成的文件，手机上全程可见",
+   "Progress, the model’s reasoning and the files it generates stay visible on the phone throughout."
+  ],
+  [
+   "不在电脑前也能插话、排队、叫停",
+   "Chime in, queue another task or stop it — without being at the desk."
+  ],
+  [
+   "叁 / 鲸鱼娘",
+   "03 / Whale Girl"
+  ],
+  [
+   "她叫鲸鱼娘，",
+   "Meet Whale Girl —"
+  ],
+  [
+   "是会陪你干活的看板娘",
+   "a mascot who hangs around while you work"
+  ],
+  [
+   "这是手机端花心思最多的部分——她不是装饰，她有自己的小情绪。",
+   "This is where the mobile app put the most care. She isn’t decoration — she has moods of her own."
+  ],
+  [
+   "你好呀～我是鲸鱼娘",
+   "Hi! I’m Whale Girl"
+  ],
+  [
+   "▶ 模拟一次「任务完成」",
+   "▶ Simulate a finished task"
+  ],
+  [
+   "平常",
+   "Neutral"
+  ],
+  [
+   "开心",
+   "Happy"
+  ],
+  [
+   "害羞",
+   "Shy"
+  ],
+  [
+   "困了",
+   "Sleepy"
+  ],
+  [
+   "网页互动演示 · 点她试试——App 里她真的会跟着任务变情绪，悬浮球双击还能摸头。",
+   "Interactive demo — give her a tap. In the app she really does change mood with your tasks, and double-tapping the floating bubble pets her."
+  ],
+  [
+   "肆 / 模型",
+   "04 / Models"
+  ],
+  [
+   "不同服务商，",
+   "Every provider,"
+  ],
+  [
+   "各走各的网络。",
+   "its own route."
+  ],
+  [
+   "聊天页、模型页、网络路由，手机上一站式管理（作用于桌面端引擎的模型请求）。",
+   "Chat, models and network routing managed in one place on your phone (applies to the desktop engine’s model requests)."
+  ],
+  [
+   "支持兼容接口的服务商：DeepSeek、Claude、GPT、国内中转……（能力取决于服务与模型）",
+   "Any API-compatible provider: DeepSeek, Claude, GPT, Chinese relays… (what you get depends on the service and the model)"
+  ],
+  [
+   "「代理 / 直连」按服务商单独设——必须走代理的、必须直连的，互不打架",
+   "Proxy or direct, set per provider — the ones that must tunnel and the ones that must go straight stop fighting each other"
+  ],
+  [
+   "上游清单有更新？一键同步服务商提供的模型清单",
+   "Upstream list changed? Sync the provider’s model list in one tap"
+  ],
+  [
+   "电脑端官方登录 / 官方 API key 的模型也会列出来，标为「只读」——能选、能当默认，但删不掉也改不坏",
+   "Models from the desktop’s official sign-in or official API key show up too, marked read-only: you can pick them and make them the default, but you can’t delete or break them"
+  ],
+  [
+   "代理",
+   "Proxy"
+  ],
+  [
+   "国内中转服务",
+   "China relay"
+  ],
+  [
+   "直连",
+   "Direct"
+  ],
+  [
+   "默认路由",
+   "Default route"
+  ],
+  [
+   "跟随系统",
+   "Follow system"
+  ],
+  [
+   "配置示例，以你的网络环境为准",
+   "Example config — your network may differ"
+  ],
+  [
+   "伍 / 成果",
+   "05 / Results"
+  ],
+  [
+   "它画的东西，",
+   "What it makes,"
+  ],
+  [
+   "手机上就能看",
+   "shows up on your phone"
+  ],
+  [
+   "干活过程与成果都在两端无缝流转。",
+   "The work and its output flow between both ends without friction."
+  ],
+  [
+   "图形 / 网页预览，居中呈现；代码可复制、可存成文件",
+   "Charts and web previews render centred; code can be copied or saved as a file"
+  ],
+  [
+   "会话生成的文件按会话归属，点开即看",
+   "Files are grouped by session — tap to open"
+  ],
+  [
+   "桌面端是完整工作台：3.3 万+ 插件市场、皮肤、多会话并行",
+   "The desktop is the full workbench: a 33,000+ plugin market, skins, parallel sessions"
+  ],
+  [
+   "陆 / 对照",
+   "06 / Comparison"
+  ],
+  [
+   "和你用过的那些，不太一样",
+   "Not quite like what you’ve used"
+  ],
+  [
+   "不做贬低式对比，只讲机制差异；「普通聊天客户端」指典型形态，不代表每一家都如此。",
+   "No trash talk — just how the mechanics differ. “Typical chat client” describes the usual shape, not every product."
+  ],
+  [
+   "普通聊天客户端",
+   "Typical chat client"
+  ],
+  [
+   "任务在哪执行",
+   "Where the work runs"
+  ],
+  [
+   "在云端运行，接触不到你本机的文件",
+   "In the cloud, with no access to your local files"
+  ],
+  [
+   "你自己的电脑：文件、终端、浏览器",
+   "Your own computer: files, terminal, browser"
+  ],
+  [
+   "全能动",
+   " all within reach"
+  ],
+  [
+   "手机的角色",
+   "The phone’s role"
+  ],
+  [
+   "另一个独立客户端，与桌面互不相通",
+   "A separate client, disconnected from the desktop"
+  ],
+  [
+   "配套",
+   "The paired"
+  ],
+  [
+   "遥控器",
+   "remote"
+  ],
+  [
+   "，指挥同一台电脑",
+   " driving the same computer"
+  ],
+  [
+   "账号体系",
+   "Accounts"
+  ],
+  [
+   "通常需要账号登录与云同步",
+   "Usually means a login and cloud sync"
+  ],
+  [
+   "不用注册",
+   "No sign-up"
+  ],
+  [
+   "，配对码直连",
+   " , just a pair code"
+  ],
+  [
+   "国内下载",
+   "Downloading in China"
+  ],
+  [
+   "视网络情况，有时需要代理",
+   "Sometimes needs a proxy"
+  ],
+  [
+   "国内直连",
+   "Direct"
+  ],
+  [
+   "，点开就下",
+   " — click and go"
+  ],
+  [
+   "角色化交互",
+   "Character interaction"
+  ],
+  [
+   "少见此类设计",
+   "Rarely seen"
+  ],
+  [
+   "鲸鱼娘：情绪、悬浮球、",
+   "Whale Girl: moods, a floating bubble,"
+  ],
+  [
+   "摸头彩蛋",
+   "head-pat easter egg"
+  ],
+  [
+   "（本产品特色）",
+   " (a signature touch here)"
+  ],
+  [
+   "柒 / 下载",
+   "07 / Download"
+  ],
+  [
+   "选你的版本，开始干活",
+   "Pick your build and get to work"
+  ],
+  [
+   "自动识别当前设备并高亮推荐；全部安装包也可以在",
+   "We detect your device and highlight the right build. Every installer is also on the"
+  ],
+  [
+   "下载页",
+   "downloads page"
+  ],
+  [
+   "里找到。",
+   "."
+  ],
+  [
+   "电脑端",
+   "Desktop"
+  ],
+  [
+   "Windows 安装版",
+   "Windows installer"
+  ],
+  [
+   "win.exe · 约 194 MB",
+   "win.exe · ~194 MB"
+  ],
+  [
+   "快捷方式、开始菜单项一步到位；还有",
+   "Shortcuts and Start-menu entries handled for you; there’s also a"
+  ],
+  [
+   "便携版",
+   "portable build"
+  ],
+  [
+   "win-arm64.exe · 约 95 MB",
+   "win-arm64.exe · ~95 MB"
+  ],
+  [
+   "骁龙 X 等 ARM 处理器的笔记本",
+   "Snapdragon X and other ARM laptops"
+  ],
+  [
+   "macOS · Apple 芯片",
+   "macOS · Apple silicon"
+  ],
+  [
+   "mac-arm64.dmg · 约 115 MB",
+   "mac-arm64.dmg · ~115 MB"
+  ],
+  [
+   "下载 .dmg",
+   "Download .dmg"
+  ],
+  [
+   "M1 / M2 / M3 / M4 芯片",
+   "M1 / M2 / M3 / M4"
+  ],
+  [
+   "mac-x64.dmg · 约 122 MB",
+   "mac-x64.dmg · ~122 MB"
+  ],
+  [
+   "2020 年前的 Intel Mac",
+   "Pre-2020 Intel Macs"
+  ],
+  [
+   "linux-x64.tar.gz · 约 117 MB",
+   "linux-x64.tar.gz · ~117 MB"
+  ],
+  [
+   "也有",
+   "Also"
+  ],
+  [
+   "linux-arm64.tar.gz · 约 117 MB",
+   "linux-arm64.tar.gz · ~117 MB"
+  ],
+  [
+   "树莓派 / ARM 服务器",
+   "Raspberry Pi / ARM servers"
+  ],
+  [
+   "手机端",
+   "Mobile"
+  ],
+  [
+   "安卓 APK",
+   "Android APK"
+  ],
+  [
+   "dsh-mobile.apk · 约 3.7 MB",
+   "dsh-mobile.apk · ~3.7 MB"
+  ],
+  [
+   "直接下载",
+   "Direct download"
+  ],
+  [
+   "GitHub 备用",
+   "GitHub mirror"
+  ],
+  [
+   "Android 8.0+ · 与电脑端配对使用",
+   "Android 8.0+ · pairs with the desktop app"
+  ],
+  [
+   "手机端源码",
+   "Mobile source"
+  ],
+  [
+   "去 GitHub",
+   "View on GitHub"
+  ],
+  [
+   "Kotlin · Compose · 欢迎参与",
+   "Kotlin · Compose · contributions welcome"
+  ],
+  [
+   "电脑端源码",
+   "Desktop source"
+  ],
+  [
+   "安装包发布也在这里 · 欢迎 Star",
+   "Installers ship from here too · stars welcome"
+  ],
+  [
+   "下载不动？试试「直连加速」链接，或挂上代理走 GitHub Releases。每个版本都附更新日志与哈希校验。",
+   "Download crawling? Try the direct-acceleration link, or reach GitHub Releases through a proxy. Every release ships changelog notes and a hash."
+  ],
+  [
+   "捌 / 更新",
+   "08 / Updates"
+  ],
+  [
+   "最近几个版本，更新了这些",
+   "What the last few releases changed"
+  ],
+  [
+   "桌面端 0.8.5",
+   "Desktop 0.8.5"
+  ],
+  [
+   "手机上只看见你说的话",
+   "Only your own words on the phone"
+  ],
+  [
+   "引擎每回合会把运行环境、技能目录、时间快照当成「用户消息」重放进历史，手机端原来一律渲染成你发的——气泡里全是大段英文机器文本，你自己的提问反而被淹掉",
+   "Each turn the engine replays the runtime environment, the skill list and a time snapshot into history as “user” messages. The phone rendered all of that as yours, so bubbles filled with machine boilerplate and your own question got buried."
+  ],
+  [
+   "现在只显示真人发言（旧历史没有来源标记的照常显示）；实测一次手机发起的长任务，4 条用户消息只渲染 1 条，工具调用与结果不受影响",
+   "Now only real messages show (older history without source tags renders as before). On a long phone-initiated task, 4 user entries collapsed to the 1 real one; tool calls and results are untouched."
+  ],
+  [
+   "本次改内置 mobile-bridge 插件（0.2.48），手机 App 无需更新",
+   "Touches the bundled mobile-bridge plugin (0.2.48); the phone app needs no update."
+  ],
+  [
+   "桌面端 0.8.3 – 0.8.4",
+   "Desktop 0.8.3 – 0.8.4"
+  ],
+  [
+   "思考不串味，档位按线路走",
+   "Cleaner reasoning, effort per route"
+  ],
+  [
+   "Mistral 这类严格服务商开启思考后返回的是块数组，正文不会再显示成",
+   "Strict providers like Mistral return reasoning as block arrays; the message no longer renders as"
+  ],
+  [
+   "；桌面端启动时自动给引擎打兼容补丁，引擎升级后自动重打，打不中只记日志不挡启动",
+   ". The desktop patches the engine for compatibility at launch, re-applies it after engine upgrades, and only logs a miss rather than blocking startup."
+  ],
+  [
+   "「从上游同步模型」不再 30 秒超时——桥接改走引擎自己的代理调度器后，实测 Mistral 返回 64 个模型",
+   "“Sync models from upstream” no longer times out at 30s — the bridge now uses the engine’s own proxy dispatcher, and Mistral returns 64 models in testing."
+  ],
+  [
+   "思考档位可以按线路单独覆盖：同一个模型在 A 家支持 6 档、B 家只支持 4 档时，同步后不会再被写回上游不支持的档位",
+   "Reasoning effort can be overridden per route: when the same model offers 6 levels at provider A but only 4 at B, a sync no longer writes back levels the upstream rejects."
+  ],
+  [
+   "桌面端 0.8.0 – 0.8.2",
+   "Desktop 0.8.0 – 0.8.2"
+  ],
+  [
+   "稳定入口，官方模型上手机",
+   "Stable entry, official models on mobile"
+  ],
+  [
+   "配对二维码与链接固定给稳定入口（Cloudflare 隧道，进同一台中继）：此前给直连地址时，部分手机在 TLS 握手前被掐断，App 每次启动都提示「建议重新配对」——换入口后不再出现",
+   "Pairing QR codes and links now use a stable entry point (a Cloudflare tunnel into the same relay). The old direct address was cut before the TLS handshake on some phones, so the app asked you to re-pair on every launch. That prompt is gone."
+  ],
+  [
+   "手机端能看到引擎自己管理的提供商模型（官方账号登录、官方 API key），标为「只读」：不显示编辑 / 删除，任何写回官方配置的提交都会被丢弃，不会写坏电脑端设置",
+   "The phone lists models from providers the engine manages itself (official sign-in, official API key), marked read-only: no edit or delete, and any write-back into the official config is discarded, so desktop settings can’t be corrupted."
+  ],
+  [
+   "网页版（PWA）切换模型不再只列前 60 条；中继日志追加 via=direct / via=cf，一条日志就能看出手机走的是直连还是隧道。直连 8443 与 443 都保留可用",
+   "Switching models in the web app (PWA) no longer stops at the first 60 entries. Relay logs now tag via=direct / via=cf, so a single line tells you whether the phone went direct or through the tunnel. Direct ports 8443 and 443 both stay available."
+  ],
+  [
+   "手机端 0.6.3",
+   "Mobile 0.6.3"
+  ],
+  [
+   "官方 DeepSeek 模型，直接选",
+   "Official DeepSeek models, right there"
+  ],
+  [
+   "模型列表会列出电脑端正用着的提供商——官方账号登录、官方 API key 都在内，可直接切换或设为新对话默认",
+   "The model list includes the providers your desktop already uses — official sign-in and official API key among them — ready to switch to or set as the default for new chats."
+  ],
+  [
+   "这些提供商在模型页标为「只读」，不会误删或写坏电脑端配置",
+   "They’re marked read-only, so they can’t be deleted by accident or damage your desktop config."
+  ],
+  [
+   "思考强度补上「关」，默认档位跟随引擎；修复模型菜单把第一档误当默认的问题",
+   "Reasoning effort gained an “off” step, the default follows the engine, and the model menu no longer mistakes the first level for the default."
+  ],
+  [
+   "手机端 0.6.1",
+   "Mobile 0.6.1"
+  ],
+  [
+   "蓝色主题，清晰首页",
+   "Blue theme, clearer home"
+  ],
+  [
+   "冷灰与蓝色统一跨端配色，深浅主题跟随系统；文字、按钮和代码具有清晰对比度",
+   "Cool grey and blue unify both apps, light and dark follow the system, and text, buttons and code all keep clear contrast."
+  ],
+  [
+   "首页增加继续会话和状态筛选，标题、摘要、时间与附件分层，代码和表格只显示短提示",
+   "The home screen gained resume-session and status filters; title, summary, time and attachments are layered, and code and tables collapse to short hints."
+  ],
+  [
+   "相同列表请求在途时共享结果，减少重复刷新；窄屏与大字体下状态文字完整显示",
+   "Duplicate list requests share one in-flight result, cutting refreshes; status text stays legible on narrow screens and with large fonts."
+  ],
+  [
+   "桌面端 0.7.1 – 0.7.2",
+   "Desktop 0.7.1 – 0.7.2"
+  ],
+  [
+   "插件市场与连接诊断",
+   "Plugin market and connection diagnosis"
+  ],
+  [
+   "插件市场",
+   "Plugin market"
+  ],
+  [
+   "：内置 3.3 万+ 插件目录（多源聚合、每日自动更新、安全标注），支持分类筛选、热度 / 星标 / 最新 / 下载排序与分页浏览",
+   ": a built-in catalogue of 33,000+ plugins (multi-source, refreshed daily, safety-tagged) with category filters, sorting by popularity / stars / recency / downloads, and paging"
+  ],
+  [
+   "「AI 帮我选」与「今日日报」：一句话描述需求，AI 从全库挑出合适插件并附推荐理由；日报每天汇总插件生态动态",
+   "“Let AI pick” and a daily digest: describe what you need in one sentence and AI shortlists plugins with reasons; the digest rounds up the ecosystem every day."
+  ],
+  [
+   "「连不上」一键定位：连接失败时错误信息自动附带引擎诊断——试过的接口、引擎与桥接版本、可用服务清单",
+   "One-tap diagnosis for “can’t connect”: failures now carry engine diagnostics — endpoints tried, engine and bridge versions, available services."
+  ],
+  [
+   "玖 / 反馈",
+   "09 / Feedback"
+  ],
+  [
+   "你的每一句吐槽，",
+   "Every gripe you post"
+  ],
+  [
+   "都会变成下一个版本",
+   "ends up in the next release"
+  ],
+  [
+   "这个项目由一个人开发维护，每一条反馈作者都会看。",
+   "One person builds and maintains this, and reads every piece of feedback."
+  ],
+  [
+   "报告问题",
+   "Report a bug"
+  ],
+  [
+   "崩溃、卡住、下载不动？把版本和现象发过来。",
+   "Crashes, freezes, stalled downloads — send the version and what happened."
+  ],
+  [
+   "去 GitHub Issues →",
+   "Open a GitHub issue →"
+  ],
+  [
+   "功能建议",
+   "Suggest a feature"
+  ],
+  [
+   "想让它多会点什么？说说你的使用场景。",
+   "Want it to do more? Tell me about your workflow."
+  ],
+  [
+   "讨论交流",
+   "Join the discussion"
+  ],
+  [
+   "不会用、想看看别人怎么玩，来讨论区坐坐。",
+   "Stuck, or curious how others use it? Drop by the discussions."
+  ],
+  [
+   "去 GitHub Discussions →",
+   "Go to GitHub Discussions →"
+  ],
+  [
+   "📮 站点评论区（基于 GitHub Discussions）正在接入；暂时先用上面的入口，作者都会看到。",
+   "📮 An on-site comment box (via GitHub Discussions) is on the way; use the links above for now — the author reads them all."
+  ],
+  [
+   "拾 / 问答",
+   "10 / FAQ"
+  ],
+  [
+   "常见问题",
+   "Frequently asked questions"
+  ],
+  [
+   "这是 DeepSeek 官方软件吗？",
+   "Is this official DeepSeek software?"
+  ],
+  [
+   "不是。这是社区项目，由个人开发者制作。核心引擎使用官方 npm 包",
+   "No. It’s a community project by an individual developer. The core engine is the official npm package"
+  ],
+  [
+   "，桌面端与手机端是围绕它做的配套客户端；与 DeepSeek 公司没有隶属关系。",
+   ", and the desktop and mobile apps are companion clients built around it. It is not affiliated with DeepSeek."
+  ],
+  [
+   "免费吗？开源吗？",
+   "Is it free? Is it open source?"
+  ],
+  [
+   "客户端免费。桌面端与手机端源码都在",
+   "The clients are free. Both desktop and mobile sources live on"
+  ],
+  [
+   "上公开；模型费用由你使用的服务商收取（用自己的 API Key）。",
+   "; model usage is billed by whichever provider you point it at, with your own API key."
+  ],
+  [
+   "我的数据存在哪里？",
+   "Where is my data stored?"
+  ],
+  [
+   "全部在你自己的电脑上：会话、生成的文件、密钥都在本机。没有云账号，手机只是通过配对的加密通道遥控电脑，",
+   "Entirely on your own computer: sessions, generated files and keys all stay local. There’s no cloud account — the phone only drives that computer over a paired encrypted channel, and"
+  ],
+  [
+   "不经过我们的任何服务器存储",
+   "nothing is stored on any server of ours"
+  ],
+  [
+   "手机和电脑怎么连？需要公网 IP 吗？",
+   "How do the phone and desktop connect? Do I need a public IP?"
+  ],
+  [
+   "不需要。同一 Wi-Fi 下直接局域网连接；不在同一网络时自动走中继（含国内直连节点）。配对码或扫码即可完成。",
+   "No. On the same Wi-Fi they connect over the LAN; on different networks it falls back to the relay, including China-based nodes. A pair code or a QR scan is all it takes."
+  ],
+  [
+   "iPhone 能用吗？",
+   "Can I use an iPhone?"
+  ],
+  [
+   "App Store 上没有。手机上目前是 Android APK；iPhone 可用网页版（PWA，用 Safari 打开电脑端给出的手机入口后「添加到主屏幕」），iOS 源码也已公开，可自行编译。Windows 电脑端 + 任意手机浏览器是最省事的一组。",
+   "There’s no App Store build. The phone app ships as an Android APK; on iPhone use the web app — open the mobile link the desktop gives you in Safari, then “Add to Home Screen”. The iOS source is public if you’d rather build it. Easiest combo: the Windows desktop app plus any phone browser."
+  ],
+  [
+   "插件市场里到底有多少插件？",
+   "How many plugins are in the market?"
+  ],
+  [
+   "当前目录",
+   "The current catalogue holds"
+  ],
+  [
+   "3.3 万条",
+   "33,000 entries"
+  ],
+  [
+   "（其中可一键安装的约 3 万条），覆盖界面美化、主题皮肤、模型接入、工作流、工具增强、记忆检索、安全等 11 类，每天 04:30 重建一次。目录也可以直接在浏览器里翻：",
+   " (about 30,000 one-click installable), across 11 categories — UI, themes, model providers, workflow, tools, memory and search, security and more — rebuilt daily at 04:30. You can also browse it in a browser:"
+  ],
+  [
+   "支持哪些模型？",
+   "Which models are supported?"
+  ],
+  [
+   "任何兼容 OpenAI / Anthropic 接口的服务商都可以接进来：DeepSeek 官方、Claude、GPT、以及国内各家 API 中转。每家公司还能单独设「代理 / 直连」路由。电脑端自己管理的官方登录 / 官方 API key 模型也会出现在手机上（标「只读」，不会被手动修改覆盖）。",
+   "Any provider speaking the OpenAI or Anthropic API: official DeepSeek, Claude, GPT, and Chinese API relays. Each gets its own proxy/direct route. Models from the desktop’s official sign-in or official API key also appear on the phone, marked read-only so manual edits can’t overwrite them."
+  ],
+  [
+   "它和 Cherry Studio、Chatbox 这类客户端有什么不同？",
+   "How is this different from Cherry Studio or Chatbox?"
+  ],
+  [
+   "那些是「聊天客户端」——你和模型对话。DeepSeek Harness 是「干活引擎 + 遥控器」——任务在你电脑上真实执行（能碰文件、能跑命令），你用手机在外面指挥它、看进度、取结果。两者可以共存，但解决的问题不一样。",
+   "Those are chat clients — you talk to a model. DeepSeek Harness is a work engine plus a remote: tasks really execute on your computer (touching files, running commands) while you direct it, watch progress and collect results from your phone. They can coexist; they solve different problems."
+  ],
+  [
+   "怎么更新？",
+   "How do updates work?"
+  ],
+  [
+   "桌面端启动时自动检查新版本；手机端在「设置 → 检查更新」里升级；官网提供当前最新版本。更新过程中你的数据与配置都会保留。",
+   "The desktop checks for updates at launch; the phone app updates under Settings → Check for updates; this site always carries the latest build. Your data and settings survive an update."
+  ],
+  [
+   "遇到问题找谁？",
+   "Who do I ask when something breaks?"
+  ],
+  [
+   "上面反馈区的三个入口作者都会看。报告问题时附上：系统版本、软件版本、复现步骤，有截图更好。",
+   "The author reads all three channels in the feedback section above. Include your OS version, app version and steps to reproduce — a screenshot helps."
+  ],
+  [
+   "现在，把鲸鱼娘带回家",
+   "Take Whale Girl home"
+  ],
+  [
+   "电脑端和手机端是配套的，两个都装上才是完整体验。",
+   "The desktop and phone apps are a pair — install both for the full experience."
+  ],
+  [
+   "跑在你自己电脑上的 AI Agent 引擎，配一只随时待命的手机遥控器和一位会撒娇的鲸鱼娘。",
+   "An AI agent engine that runs on your own computer, a phone remote that’s always standing by, and a Whale Girl who likes a head pat."
+  ],
+  [
+   "产品",
+   "Product"
+  ],
+  [
+   "更新日志",
+   "Changelog"
+  ],
+  [
+   "对比",
+   "Compare"
+  ],
+  [
+   "全部安装包",
+   "All installers"
+  ],
+  [
+   "社区",
+   "Community"
+  ],
+  [
+   "桌面端 GitHub",
+   "Desktop on GitHub"
+  ],
+  [
+   "手机端 GitHub",
+   "Mobile on GitHub"
+  ],
+  [
+   "问题反馈",
+   "Report an issue"
+  ],
+  [
+   "关于",
+   "About"
+  ],
+  [
+   "项目对照",
+   "Project scope"
+  ],
+  [
+   "作者",
+   "Author"
+  ],
+  [
+   "© 2026 zhuquan · 社区项目，非 DeepSeek 官方软件 · 引擎版权归 DeepSeek 所有",
+   "© 2026 zhuquan · community project, not official DeepSeek software · engine © DeepSeek"
+  ],
+  [
+   "DeepSeek Harness 桌面端界面",
+   "DeepSeek Harness desktop interface"
+  ],
+  [
+   "手机端聊天界面",
+   "Phone chat interface"
+  ],
+  [
+   "手机端对话界面",
+   "Phone chat interface"
+  ],
+  [
+   "摸摸鲸鱼娘的头",
+   "Pat Whale Girl on the head"
+  ],
+  [
+   "摸摸头",
+   "Head pat"
+  ],
+  [
+   "模型管理界面",
+   "Model settings screen"
+  ],
+  [
+   "图形预览",
+   "Chart preview"
+  ],
+  [
+   "手机端图形预览",
+   "Chart preview on the phone"
+  ],
+  [
+   "DeepSeek Harness 手机端",
+   "DeepSeek Harness mobile"
+  ],
+  [
+   "切换语言 / Switch language",
+   "Switch language"
+  ],
+  [
+   "DeepSeek Harness Desktop 首页",
+   "DeepSeek Harness Desktop home"
+  ],
+  [
+   "打开导航",
+   "Open navigation"
+  ],
+  [
+   "关闭导航",
+   "Close navigation"
+  ],
+  [
+   "主导航",
+   "Main navigation"
+  ],
+  [
+   "页脚导航",
+   "Footer navigation"
+  ],
+  [
+   "终端命令",
+   "Terminal commands"
+  ],
+  [
+   "作者与项目",
+   "Author and project"
+  ],
+  [
+   "项目关键词",
+   "Project tags"
+  ],
+  [
+   "中文 / English",
+   "中文 / English"
+  ]
+ ],
+ "sel": {},
+ "html": {},
+ "attrs": {
+  "[aria-label=\"DeepSeek Harness Desktop 首页\"]": {
+   "aria-label": "DeepSeek Harness Desktop home"
+  },
+  "[aria-label=\"打开导航\"]": {
+   "aria-label": "Open navigation"
+  },
+  "[aria-label=\"主导航\"]": {
+   "aria-label": "Main navigation"
+  },
+  "[aria-label=\"页脚导航\"]": {
+   "aria-label": "Footer navigation"
+  },
+  "[aria-label=\"终端命令\"]": {
+   "aria-label": "Terminal commands"
+  },
+  "[aria-label=\"作者与项目\"]": {
+   "aria-label": "Author and project"
+  },
+  "[aria-label=\"项目关键词\"]": {
+   "aria-label": "Project tags"
+  },
+  "[aria-label=\"切换语言 / Switch language\"]": {
+   "aria-label": "Switch language"
+  },
+  "[data-lang-switch]": {
+   "title": "中文 / English"
+  }
+ }
+}

@@ -1,0 +1,216 @@
+{
+ "title": "Quan Zhu — author of DeepSeek Harness Desktop",
+ "text": [
+  [
+   "产品",
+   "Product"
+  ],
+  [
+   "皮肤",
+   "Skins"
+  ],
+  [
+   "全部下载",
+   "All downloads"
+  ],
+  [
+   "项目对照",
+   "Project scope"
+  ],
+  [
+   "macOS 帮助",
+   "macOS help"
+  ],
+  [
+   "朱泉",
+   "Quan Zhu"
+  ],
+  [
+   "下载 Windows 安装包",
+   "Download for Windows"
+  ],
+  [
+   "QUAN ZHU · 朱泉",
+   "QUAN ZHU"
+  ],
+  [
+   "让“能运行”再向前一步。",
+   "One step past “it runs”."
+  ],
+  [
+   "我是朱泉，广东海洋大学材料科学与工程专业学生。 课余会做桌面应用、安装包和公开发布：目标不是只在自己的开发环境里跑起来， 而是让没有配过 Node 或终端的人也能下载、双击并知道出了什么问题。",
+   "I’m Quan Zhu, a materials science and engineering student at Guangdong Ocean University. Between classes I build desktop apps, installers and public releases. The goal isn’t “works on my machine” — it’s that someone who has never installed Node or opened a terminal can still download it, double-click, and understand what went wrong if it breaks."
+  ],
+  [
+   "查看 DeepSeek Harness Desktop",
+   "See DeepSeek Harness Desktop"
+  ],
+  [
+   "GitHub 主页",
+   "GitHub profile"
+  ],
+  [
+   "一个社区 Electron 桌面端：自动准备 Node，从 npm 安装官方",
+   "A community Electron shell: it prepares Node, installs the official"
+  ],
+  [
+   "，再把本地 Harness 界面放进独立窗口。 项目不整仓拷贝官方源码，也不代表 DeepSeek Inc.",
+   " from npm, then hosts the local Harness UI in its own window. The project doesn’t fork the official sources and isn’t affiliated with DeepSeek Inc."
+  ],
+  [
+   "找到我",
+   "Find me"
+  ],
+  [
+   "广东海洋大学",
+   "Guangdong Ocean University"
+  ],
+  [
+   "搜索落地仓库",
+   "Search landing repo"
+  ],
+  [
+   "作品与素材分开署名",
+   "Credits, kept separate"
+  ],
+  [
+   "Harness 引擎",
+   "The Harness engine"
+  ],
+  [
+   "来自 DeepSeek 官方 npm 包。这个项目只做桌面壳、启动流程与安装包。",
+   "Comes from DeepSeek’s official npm package. This project only adds the desktop shell, startup flow and installers."
+  ],
+  [
+   "默认皮肤",
+   "Default skin"
+  ],
+  [
+   "署名链为上善 → ZipZipPipe → Small-tailqwq，采用 CC BY-NC-SA 4.0，禁止商用。",
+   "Credits run Shangshan → ZipZipPipe → Small-tailqwq under CC BY-NC-SA 4.0; commercial use is not permitted."
+  ],
+  [
+   "查看完整致谢",
+   "See the full credits"
+  ],
+  [
+   "朱泉 / Quan Zhu",
+   "Quan Zhu"
+  ],
+  [
+   "广东海洋大学 · 材料科学与工程",
+   "Guangdong Ocean University · Materials Science & Engineering"
+  ],
+  [
+   "产品与下载",
+   "Product & downloads"
+  ],
+  [
+   "更新日志",
+   "Changelog"
+  ],
+  [
+   "0.8.5 提供 Windows（含 ARM64）、Linux x64 / arm64（tar.gz / deb / rpm / AppImage）、Apple Silicon 与 Intel Mac 安装包； 默认内置「深海女仆工坊」皮肤，并尝试迁移旧版 API Key。",
+   "0.8.5 ships installers for Windows (including ARM64), Linux x64 / arm64 (tar.gz / deb / rpm / AppImage), and both Apple silicon and Intel Macs, with the “Maid Atelier” skin bundled and existing API keys migrated where possible."
+  ],
+  [
+   "DeepSeek Harness Desktop 首页",
+   "DeepSeek Harness Desktop home"
+  ],
+  [
+   "打开导航",
+   "Open navigation"
+  ],
+  [
+   "关闭导航",
+   "Close navigation"
+  ],
+  [
+   "主导航",
+   "Main navigation"
+  ],
+  [
+   "页脚导航",
+   "Footer navigation"
+  ],
+  [
+   "终端命令",
+   "Terminal commands"
+  ],
+  [
+   "作者与项目",
+   "Author and project"
+  ],
+  [
+   "项目关键词",
+   "Project tags"
+  ],
+  [
+   "切换语言 / Switch language",
+   "Switch language"
+  ],
+  [
+   "中文 / English",
+   "中文 / English"
+  ],
+  [
+   "摸摸鲸鱼娘的头",
+   "Pat Whale Girl on the head"
+  ],
+  [
+   "摸摸头",
+   "Head pat"
+  ],
+  [
+   "DeepSeek Harness 桌面端界面",
+   "DeepSeek Harness desktop interface"
+  ],
+  [
+   "手机端聊天界面",
+   "Phone chat interface"
+  ],
+  [
+   "手机端对话界面",
+   "Phone chat interface"
+  ],
+  [
+   "模型管理界面",
+   "Model settings screen"
+  ],
+  [
+   "图形预览",
+   "Chart preview"
+  ]
+ ],
+ "sel": {},
+ "html": {},
+ "attrs": {
+  "[aria-label=\"DeepSeek Harness Desktop 首页\"]": {
+   "aria-label": "DeepSeek Harness Desktop home"
+  },
+  "[aria-label=\"打开导航\"]": {
+   "aria-label": "Open navigation"
+  },
+  "[aria-label=\"主导航\"]": {
+   "aria-label": "Main navigation"
+  },
+  "[aria-label=\"页脚导航\"]": {
+   "aria-label": "Footer navigation"
+  },
+  "[aria-label=\"终端命令\"]": {
+   "aria-label": "Terminal commands"
+  },
+  "[aria-label=\"作者与项目\"]": {
+   "aria-label": "Author and project"
+  },
+  "[aria-label=\"项目关键词\"]": {
+   "aria-label": "Project tags"
+  },
+  "[aria-label=\"切换语言 / Switch language\"]": {
+   "aria-label": "Switch language"
+  },
+  "[data-lang-switch]": {
+   "title": "中文 / English"
+  }
+ }
+}

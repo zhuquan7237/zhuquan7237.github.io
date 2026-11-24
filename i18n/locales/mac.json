@@ -1,0 +1,240 @@
+{
+ "title": "macOS says “damaged” — DeepSeek Harness Desktop",
+ "text": [
+  [
+   "产品",
+   "Product"
+  ],
+  [
+   "皮肤",
+   "Skins"
+  ],
+  [
+   "全部下载",
+   "All downloads"
+  ],
+  [
+   "项目对照",
+   "Project scope"
+  ],
+  [
+   "macOS 帮助",
+   "macOS help"
+  ],
+  [
+   "朱泉",
+   "Quan Zhu"
+  ],
+  [
+   "下载 macOS 安装包",
+   "Download for macOS"
+  ],
+  [
+   "提示“已损坏”，通常只是被隔离。",
+   "“Damaged” usually just means quarantined."
+  ],
+  [
+   "当前版本（0.8.5）还没有使用付费 Apple Developer 证书签名和公证。 浏览器下载的 App 会带隔离标记，Gatekeeper 因此可能显示“已损坏”或“无法验证开发者”。 这不是让你关闭系统安全功能。",
+   "Version 0.8.5 isn’t signed and notarised with a paid Apple Developer certificate yet. Apps downloaded in a browser carry a quarantine flag, so Gatekeeper may say “damaged” or “cannot verify the developer”. Nothing here asks you to switch off system security."
+  ],
+  [
+   "下载 M 系列 dmg",
+   "Download the Apple silicon dmg"
+  ],
+  [
+   "下载 Intel dmg",
+   "Download the Intel dmg"
+  ],
+  [
+   "先确认芯片：",
+   "Check your chip first:"
+  ],
+  [
+   "苹果菜单 →“关于本机”。M1 / M2 / M3 / M4 等选 arm64；显示 Intel 选 x64。 不要为了打开应用而关闭 SIP，也不要执行",
+   "Apple menu → “About This Mac”. M1 / M2 / M3 / M4 take arm64; Intel takes x64. Don’t disable SIP or run"
+  ],
+  [
+   "按顺序做",
+   "Do these in order"
+  ],
+  [
+   "下载正确版本",
+   "Download the right build"
+  ],
+  [
+   "Apple M 系列下载 arm64 dmg；Intel Mac 下载 x64 dmg。",
+   "Apple silicon takes the arm64 dmg; Intel Macs take the x64 dmg."
+  ],
+  [
+   "拖进“应用程序”",
+   "Drag it into Applications"
+  ],
+  [
+   "打开 dmg，把 DeepSeek 拖到 Applications。不要只在安装盘里运行。",
+   "Open the dmg and drag DeepSeek into Applications. Don’t just run it from the mounted image."
+  ],
+  [
+   "移除隔离标记",
+   "Clear the quarantine flag"
+  ],
+  [
+   "打开“终端”，粘贴下面两行。无需输入密码。",
+   "Open Terminal and paste the two lines below. No password needed."
+  ],
+  [
+   "仍被拦截时",
+   "If it’s still blocked"
+  ],
+  [
+   "系统设置 → 隐私与安全性 → 找到拦截记录 →“仍要打开”。",
+   "System Settings → Privacy & Security → find the blocked entry → “Open Anyway”."
+  ],
+  [
+   "仍然打不开",
+   "Still won’t open"
+  ],
+  [
+   "确认是否还在隔离",
+   "Check whether it’s still quarantined"
+  ],
+  [
+   "运行",
+   "Run"
+  ],
+  [
+   "。如果仍有",
+   " If it still lists"
+  ],
+  [
+   "，重新执行上面的",
+   " re-run the"
+  ],
+  [
+   "确认应用位置与架构",
+   "Confirm the location and architecture"
+  ],
+  [
+   "和",
+   "and"
+  ],
+  [
+   "。前者显示 arm64 应使用 M 系列包，x86_64 应使用 Intel 包。",
+   " The first prints arm64 for Apple silicon, x86_64 for Intel — match the installer to it."
+  ],
+  [
+   "0.2.0 · 社区 Electron 桌面端 · 作者朱泉",
+   "0.8.5 · community Electron desktop shell · by Quan Zhu"
+  ],
+  [
+   "返回产品页",
+   "Back to the product page"
+  ],
+  [
+   "全部安装包",
+   "All installers"
+  ],
+  [
+   "下载 Windows 安装包",
+   "Download for Windows"
+  ],
+  [
+   "DeepSeek Harness Desktop 首页",
+   "DeepSeek Harness Desktop home"
+  ],
+  [
+   "打开导航",
+   "Open navigation"
+  ],
+  [
+   "关闭导航",
+   "Close navigation"
+  ],
+  [
+   "主导航",
+   "Main navigation"
+  ],
+  [
+   "页脚导航",
+   "Footer navigation"
+  ],
+  [
+   "终端命令",
+   "Terminal commands"
+  ],
+  [
+   "作者与项目",
+   "Author and project"
+  ],
+  [
+   "项目关键词",
+   "Project tags"
+  ],
+  [
+   "切换语言 / Switch language",
+   "Switch language"
+  ],
+  [
+   "中文 / English",
+   "中文 / English"
+  ],
+  [
+   "摸摸鲸鱼娘的头",
+   "Pat Whale Girl on the head"
+  ],
+  [
+   "摸摸头",
+   "Head pat"
+  ],
+  [
+   "DeepSeek Harness 桌面端界面",
+   "DeepSeek Harness desktop interface"
+  ],
+  [
+   "手机端聊天界面",
+   "Phone chat interface"
+  ],
+  [
+   "手机端对话界面",
+   "Phone chat interface"
+  ],
+  [
+   "模型管理界面",
+   "Model settings screen"
+  ],
+  [
+   "图形预览",
+   "Chart preview"
+  ]
+ ],
+ "sel": {},
+ "html": {},
+ "attrs": {
+  "[aria-label=\"DeepSeek Harness Desktop 首页\"]": {
+   "aria-label": "DeepSeek Harness Desktop home"
+  },
+  "[aria-label=\"打开导航\"]": {
+   "aria-label": "Open navigation"
+  },
+  "[aria-label=\"主导航\"]": {
+   "aria-label": "Main navigation"
+  },
+  "[aria-label=\"页脚导航\"]": {
+   "aria-label": "Footer navigation"
+  },
+  "[aria-label=\"终端命令\"]": {
+   "aria-label": "Terminal commands"
+  },
+  "[aria-label=\"作者与项目\"]": {
+   "aria-label": "Author and project"
+  },
+  "[aria-label=\"项目关键词\"]": {
+   "aria-label": "Project tags"
+  },
+  "[aria-label=\"切换语言 / Switch language\"]": {
+   "aria-label": "Switch language"
+  },
+  "[data-lang-switch]": {
+   "title": "中文 / English"
+  }
+ }
+}
