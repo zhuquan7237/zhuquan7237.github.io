@@ -73,8 +73,17 @@
       todo.push(node);
     }
     todo.forEach(function (tn) {
-      var k = norm(tn.nodeValue);
-      if (Object.prototype.hasOwnProperty.call(map, k)) { tn.nodeValue = map[k]; hit++; }
+      var raw = tn.nodeValue;
+      var k = norm(raw);
+      if (!Object.prototype.hasOwnProperty.call(map, k)) return;
+      /* 保留原文首尾空白：英文词条常缺这两侧的空白，直接替换会让词粘在一起 */
+      var lead = /^\s+/.test(raw) ? " " : "";
+      var tail = /\s+$/.test(raw) ? " " : "";
+      var out = map[k];
+      if (lead && !/^\s/.test(out)) out = lead + out;
+      if (tail && !/\s$/.test(out)) out = out + tail;
+      tn.nodeValue = out;
+      hit++;
     });
     /* 属性值：同样按原文精确匹配 */
     var ATTRS = ["aria-label", "title", "placeholder", "alt"];
