@@ -1,6 +1,6 @@
 {
  "version": 1,
- "generatedAt": "2026-11-24T22:40:27Z",
+ "generatedAt": "2026-11-25T22:40:29Z",
  "source": "gateway /v1/models probe (scripts/collect-gateway-capabilities.py)",
  "providers": {
   "a600": {
@@ -35,7 +35,7 @@
   },
   "cpa-computer": {
    "ok": true,
-   "count": 53,
+   "count": 61,
    "error": ""
   },
   "hyb": {
@@ -55,7 +55,7 @@
   },
   "relayfor": {
    "ok": true,
-   "count": 5,
+   "count": 12,
    "error": ""
   },
   "subds": {
@@ -69,9 +69,9 @@
    "error": "HTTP 503"
   },
   "syhub": {
-   "ok": true,
-   "count": 2,
-   "error": ""
+   "ok": false,
+   "count": 0,
+   "error": "<urlopen error [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1082)>"
   },
   "wb2api": {
    "ok": false,
@@ -89,7 +89,7 @@
    "id": "devin/claude-5-fable"
   },
   {
-   "id": "claude-fable-5-1"
+   "id": "devin/claude-fable-5-1"
   },
   {
    "id": "devin/claude-fable-5-2"
@@ -113,7 +113,7 @@
    "id": "devin/claude-opus-5"
   },
   {
-   "id": "claude-opus-5-5"
+   "id": "devin/claude-opus-5-5"
   },
   {
    "id": "devin/claude-sonnet-4-6"
@@ -250,6 +250,9 @@
    "id": "gemini-4-hydrogen"
   },
   {
+   "id": "devin/gemini-4-neon"
+  },
+  {
    "id": "glm-5-latest",
    "modalities": [
     "text"
@@ -315,6 +318,12 @@
   },
   {
    "id": "gpt-6.1-terra-fast"
+  },
+  {
+   "id": "devin/gpt-6-2-astra"
+  },
+  {
+   "id": "devin/gpt-6-2-sol"
   },
   {
    "id": "gpt-6-astra"
@@ -705,6 +714,9 @@
    "id": "devin/muse-wonder-1-0"
   },
   {
+   "id": "devin/nemotron-3-5-lightning"
+  },
+  {
    "id": "devin/nemotron-3-5-super"
   },
   {
@@ -762,7 +774,16 @@
    "id": "devin/swe-2"
   },
   {
+   "id": "devin/swe-2-1"
+  },
+  {
+   "id": "devin/swe-2-1-lightning"
+  },
+  {
    "id": "devin/swe-2-flash"
+  },
+  {
+   "id": "devin/swe-2-flash-lightning"
   },
   {
    "id": "devin/swe-2-lightning"
