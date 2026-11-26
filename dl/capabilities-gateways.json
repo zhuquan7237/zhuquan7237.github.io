@@ -1,6 +1,6 @@
 {
  "version": 1,
- "generatedAt": "2026-11-25T22:40:29Z",
+ "generatedAt": "2026-11-26T22:40:30Z",
  "source": "gateway /v1/models probe (scripts/collect-gateway-capabilities.py)",
  "providers": {
   "a600": {
@@ -55,7 +55,7 @@
   },
   "relayfor": {
    "ok": true,
-   "count": 12,
+   "count": 7,
    "error": ""
   },
   "subds": {
@@ -64,14 +64,14 @@
    "error": ""
   },
   "subgpt": {
-   "ok": false,
-   "count": 0,
-   "error": "HTTP 503"
+   "ok": true,
+   "count": 24,
+   "error": ""
   },
   "syhub": {
-   "ok": false,
-   "count": 0,
-   "error": "<urlopen error [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1082)>"
+   "ok": true,
+   "count": 2,
+   "error": ""
   },
   "wb2api": {
    "ok": false,
@@ -161,6 +161,9 @@
   },
   {
    "id": "codex-auto-review"
+  },
+  {
+   "id": "codex-auto-review-fast"
   },
   {
    "id": "cosyvoice-v3.5-flash"
@@ -302,10 +305,19 @@
    "id": "devin/gpt-5-6-luna"
   },
   {
+   "id": "gpt-5.6-luna-fast"
+  },
+  {
    "id": "gpt-5.6-sol"
   },
   {
+   "id": "gpt-5.6-sol-fast"
+  },
+  {
    "id": "gpt-5.6-terra"
+  },
+  {
+   "id": "gpt-5.6-terra-fast"
   },
   {
    "id": "gpt-6.1-sol"
@@ -323,10 +335,19 @@
    "id": "devin/gpt-6-2-astra"
   },
   {
+   "id": "gpt-6.2-astra-fast"
+  },
+  {
    "id": "devin/gpt-6-2-sol"
   },
   {
+   "id": "gpt-6.2-sol-fast"
+  },
+  {
    "id": "gpt-6-astra"
+  },
+  {
+   "id": "gpt-6-astra-fast"
   },
   {
    "id": "devin/gpt-6-luna"
@@ -336,6 +357,9 @@
   },
   {
    "id": "gpt-6-sol"
+  },
+  {
+   "id": "gpt-6-sol-fast"
   },
   {
    "id": "gpt-image-2"
@@ -354,6 +378,9 @@
   },
   {
    "id": "gpt-image-2.5-sunburst"
+  },
+  {
+   "id": "gpt-reserve"
   },
   {
    "id": "gpt-reserve-fast"
@@ -417,9 +444,6 @@
    ],
    "context": 262144,
    "reasoning": 1
-  },
-  {
-   "id": "mercury-3"
   },
   {
    "id": "mimo-v2.5"
